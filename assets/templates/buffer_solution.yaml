@@ -1,0 +1,161 @@
+experiment:
+  id: "EXP-BUFFER-001"
+  title: "缓冲溶液配制实验 - HAc/NaAc体系"
+  title_en: "Buffer Solution Preparation - HAc/NaAc System"
+  level: "intermediate"
+  duration_min: 40
+
+  goals:
+    - name: "配制目标pH的缓冲液"
+      metric: "final_ph"
+      gte: 4.6
+      lte: 4.8
+    - name: "缓冲液总体积达标"
+      metric: "total_volume"
+      gte: 95
+      lte: 105
+
+  reagents:
+    - id: "acetic_acid"
+      name: "醋酸(HAc, 0.2M)"
+      amount: "适量"
+      hazard_level: "warning"
+    - id: "sodium_acetate"
+      name: "醋酸钠(NaAc, 0.2M)"
+      amount: "适量"
+      hazard_level: "info"
+    - id: "distilled_water"
+      name: "蒸馏水"
+      amount: "适量"
+      hazard_level: "info"
+
+  steps:
+    - id: "understand_principle"
+      text: "理解缓冲溶液原理：使用Henderson-Hasselbalch方程 pH = pKa + lg([A-]/[HA])，醋酸pKa=4.76"
+      check:
+        type: "confirm"
+        fail_hint: "理解原理是正确配制的基础"
+
+    - id: "calculate_ratio"
+      text: "计算配制pH=4.7缓冲液所需的HAc和NaAc体积比"
+      check:
+        type: "select"
+        input:
+          key: "volume_ratio"
+          label: "选择HAc:NaAc的体积比(两者浓度相同)"
+          options:
+            - value: "1:1.15"
+              label: "1:1.15 (HAc:NaAc)"
+              correct: true
+            - value: "1:1"
+              label: "1:1"
+              correct: false
+            - value: "1.15:1"
+              label: "1.15:1"
+              correct: false
+        fail_hint: "根据H-H方程，pH=4.7时，lg([NaAc]/[HAc])=-0.06，比值约1.15:1"
+
+    - id: "select_glassware"
+      text: "选择100mL容量瓶用于配制"
+      check:
+        type: "confirm"
+        fail_hint: "容量瓶用于配制精确体积的溶液"
+
+    - id: "measure_hac"
+      text: "用移液管准确量取HAc溶液"
+      check:
+        type: "input"
+        input:
+          key: "hac_volume"
+          label: "量取HAc体积(mL)"
+          input_type: "float"
+          range: [40, 50]
+          tolerance: 1
+          unit: "mL"
+        fail_hint: "参考计算的体积比"
+
+    - id: "measure_naac"
+      text: "用移液管准确量取NaAc溶液"
+      check:
+        type: "input"
+        input:
+          key: "naac_volume"
+          label: "量取NaAc体积(mL)"
+          input_type: "float"
+          range: [50, 60]
+          tolerance: 1
+          unit: "mL"
+        fail_hint: "NaAc体积应约为HAc的1.15倍"
+
+    - id: "transfer_to_flask"
+      text: "将HAc和NaAc溶液转移至容量瓶中"
+      check:
+        type: "sequence"
+        require:
+          - "measure_hac"
+          - "measure_naac"
+        fail_hint: "必须先完成溶液量取"
+
+    - id: "dilute_to_mark"
+      text: "用蒸馏水稀释至100mL刻度线，充分摇匀"
+      check:
+        type: "input"
+        input:
+          key: "total_volume"
+          label: "最终溶液体积(mL)"
+          input_type: "float"
+          range: [95, 105]
+          tolerance: 2
+          unit: "mL"
+        fail_hint: "应稀释至刻度线，体积为100mL"
+
+    - id: "measure_ph"
+      text: "用pH计测定缓冲液的pH值"
+      check:
+        type: "input"
+        input:
+          key: "final_ph"
+          label: "测定pH值"
+          input_type: "float"
+          range: [4.5, 4.9]
+          tolerance: 0.15
+          unit: ""
+        fail_hint: "目标pH为4.7，允许偏差±0.1"
+      hints:
+        - text: "pH偏低说明HAc过量，pH偏高说明NaAc过量"
+          trigger: "True"
+
+    - id: "test_buffer_capacity"
+      text: "测试缓冲容量：向10mL缓冲液中加入1滴0.1M HCl，观察pH变化"
+      check:
+        type: "input"
+        input:
+          key: "ph_change"
+          label: "加酸后pH变化值"
+          input_type: "float"
+          range: [0, 0.3]
+          unit: ""
+        fail_hint: "良好的缓冲液pH变化应小于0.3"
+
+    - id: "label_and_store"
+      text: "标注缓冲液成分、pH和配制日期，密封保存"
+      check:
+        type: "confirm"
+        fail_hint: "标注信息便于后续使用"
+
+  score:
+    rules:
+      - when: "final_ph >= 4.65 and final_ph <= 4.75"
+        then: 40
+      - when: "final_ph >= 4.6 and final_ph <= 4.8"
+        then: 30
+      - when: "final_ph >= 4.5 and final_ph <= 4.9"
+        then: 20
+      - when: "volume_ratio == '1:1.15'"
+        then: 20
+      - when: "total_volume >= 98 and total_volume <= 102"
+        then: 15
+      - when: "ph_change <= 0.2"
+        then: 15
+      - when: "abs(naac_volume - hac_volume * 1.15) <= 2"
+        then: 10

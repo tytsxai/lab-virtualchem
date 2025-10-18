@@ -1,0 +1,110 @@
+experiment:
+  id: "EXP-RECRYSTALLIZATION-001"
+  title: "重结晶实验 - 氯化钠的提纯"
+  title_en: "Recrystallization of Sodium Chloride"
+  level: "basic"
+  duration_min: 25
+
+  goals:
+    - name: "回收率"
+      metric: "recovery_percentage"
+      gte: 70
+
+  objectives:
+    - 掌握水溶性盐类的重结晶方法
+    - 理解饱和溶液与结晶的关系
+    - 学习干燥和称量技术
+
+  apparatus:
+    - id: beaker_250ml
+      name: 250ml烧杯
+      required: true
+    - id: stirrer
+      name: 搅拌器
+      required: true
+    - id: funnel
+      name: 漏斗
+      required: true
+    - id: filter_paper
+      name: 滤纸
+      required: true
+    - id: watch_glass
+      name: 表面皿
+      required: true
+
+  reagents:
+    - id: crude_nacl
+      name: 粗制氯化钠
+      amount: "10.0 g"
+      hazard_level: "info"
+    - id: water
+      name: 蒸馏水
+      amount: "100.0 mL"
+      hazard_level: "info"
+
+  steps:
+    - id: step_1
+      text: "将10g粗制氯化钠加入250ml烧杯中"
+      check:
+        type: "confirm"
+        fail_hint: "确保称量准确"
+      safety_level: "info"
+
+    - id: step_2
+      text: "加入适量热水溶解（建议20mL左右）"
+      check:
+        type: "input"
+        input:
+          key: "water_volume"
+          label: "水量"
+          input_type: "float"
+          range: [15, 25]
+          unit: "mL"
+        fail_hint: "水量过多或过少都会影响结晶效果"
+      safety_level: "info"
+
+    - id: step_3
+      text: "加热并搅拌至完全溶解（温度约90°C）"
+      check:
+        type: "confirm"
+        fail_hint: "确保粗盐完全溶解"
+      safety_level: "warning"
+
+    - id: step_4
+      text: "趁热过滤除去不溶性杂质"
+      check:
+        type: "confirm"
+        fail_hint: "热过滤可以防止溶质析出"
+      safety_level: "warning"
+
+    - id: step_5
+      text: "冷却至室温，静置15分钟使晶体析出"
+      check:
+        type: "confirm"
+        fail_hint: "冷却速度影响晶体质量"
+      safety_level: "info"
+
+    - id: step_6
+      text: "过滤收集氯化钠晶体"
+      check:
+        type: "confirm"
+        fail_hint: "操作要轻柔，避免晶体损失"
+      safety_level: "info"
+
+    - id: step_7
+      text: "干燥并称量产物"
+      check:
+        type: "input"
+        input:
+          key: "product_mass"
+          label: "产物质量"
+          input_type: "float"
+          range: [5, 10]
+          unit: "g"
+        fail_hint: "回收率偏低，检查操作步骤"
+      safety_level: "info"
+
+  safety_notes:
+    - 加热时注意防止液体溅出
+    - 热过滤时小心烫伤
+    - 干燥时注意温度控制

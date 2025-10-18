@@ -1,0 +1,152 @@
+experiment:
+  id: "EXP-TITRATION-001"
+  title: "酸碱滴定实验 - NaOH标定HCl"
+  title_en: "Acid-Base Titration (NaOH titrates HCl)"
+  level: "basic"
+  duration_min: 45
+
+  goals:
+    - name: "等当点误差(mL)"
+      metric: "endpoint_error_ml"
+      lte: 0.5
+
+  reagents:
+    - id: "naoh_solution"
+      name: "氢氧化钠溶液(0.1 mol/L)"
+      amount: "50 mL"
+      hazard_level: "warning"
+
+    - id: "hcl_solution"
+      name: "盐酸溶液(0.1 mol/L)"
+      amount: "25 mL"
+      hazard_level: "warning"
+
+    - id: "phenolphthalein"
+      name: "酚酞指示剂"
+      amount: "2-3滴"
+      hazard_level: "info"
+
+  steps:
+    - id: "wash_burette"
+      text: "用蒸馏水洗涤滴定管,再用NaOH溶液润洗2-3次"
+      check:
+        type: "confirm"
+        fail_hint: "未润洗会引入系统误差,影响实验结果"
+      hints:
+        - text: "润洗时应使溶液充分接触管壁"
+      safety_level: "info"
+
+    - id: "fill_burette"
+      text: "将NaOH溶液装入滴定管,排除气泡,调整液面至0刻度附近"
+      check:
+        type: "confirm"
+        fail_hint: "气泡会导致读数误差"
+      hints:
+        - text: "快速打开活塞排除尖嘴处的气泡"
+      safety_level: "info"
+
+    - id: "record_initial"
+      text: "记录滴定管初始读数(mL)"
+      check:
+        type: "input"
+        input:
+          key: "v0"
+          label: "初始读数"
+          input_type: "float"
+          range: [0, 50]
+          unit: "mL"
+        fail_hint: "读数超出合理范围"
+      safety_level: "info"
+
+    - id: "prepare_flask"
+      text: "用移液管准确移取25.00 mL HCl溶液于锥形瓶中"
+      check:
+        type: "confirm"
+        fail_hint: "移液管使用不当会影响体积准确度"
+      hints:
+        - text: "移液管也需要润洗"
+        - text: "读数时眼睛应与凹液面最低处保持水平"
+      safety_level: "info"
+
+    - id: "add_indicator"
+      text: "向锥形瓶中加入2-3滴酚酞指示剂"
+      check:
+        type: "select"
+        input:
+          key: "indicator"
+          label: "选择指示剂"
+          options:
+            - value: "phenolphthalein"
+              label: "酚酞"
+              correct: true
+            - value: "methyl_orange"
+              label: "甲基橙"
+              correct: false
+            - value: "litmus"
+              label: "石蕊"
+              correct: false
+        fail_hint: "此实验应使用酚酞指示剂(变色范围 pH 8.2-10.0)"
+      safety_level: "info"
+
+    - id: "titrate"
+      text: "滴定:左手控制活塞,右手摇动锥形瓶,边滴边摇。接近终点时放慢滴速,改为逐滴加入"
+      check:
+        type: "sequence"
+        require: ["add_indicator", "fill_burette"]
+        fail_hint: "请先完成前置步骤"
+      hints:
+        - text: "眼睛注视锥形瓶中溶液颜色变化"
+        - text: "当出现粉红色且半分钟不褪色时,即为终点"
+      safety_level: "info"
+
+    - id: "record_final"
+      text: "记录滴定管终点读数(mL)"
+      check:
+        type: "input"
+        input:
+          key: "v1"
+          label: "终点读数"
+          input_type: "float"
+          range: [0, 50]
+          unit: "mL"
+        fail_hint: "读数超出合理范围"
+      safety_level: "info"
+
+    - id: "calculate_volume"
+      text: "计算消耗的NaOH溶液体积"
+      check:
+        type: "input"
+        input:
+          key: "v_consumed"
+          label: "消耗体积"
+          input_type: "float"
+          range: [20, 30]
+          unit: "mL"
+        correct_value: 25.0
+        fail_hint: "理论值应接近25.00 mL(C·V = C·V)"
+      safety_level: "info"
+
+  curves:
+    - id: "ph_curve"
+      type: "titration_ph"
+      params:
+        acid_type: "strong"
+        acid_M: 0.1
+        acid_V_ml: 25.0
+        base_M: 0.1
+      x_label: "NaOH体积"
+      y_label: "pH"
+      x_unit: "mL"
+      y_unit: ""
+
+  score_rules:
+    - when: "abs(v_consumed - 25.0) <= 0.5"
+      then: 50
+    - when: "all_steps_passed"
+      then: 30
+    - when: "no_safety_warning"
+      then: 10
+    - when: "abs(v_consumed - 25.0) <= 0.2"
+      then: 10
+
+  version: "1.0.0"

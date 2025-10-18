@@ -1,0 +1,249 @@
+{
+    "frontend": {
+        "lazy_loading": {
+            "enabled": true,
+            "threshold": 100,
+            "components": [
+                "experiment_view",
+                "knowledge_browser",
+                "record_browser",
+                "chart_widget"
+            ]
+        },
+        "virtual_list": {
+            "enabled": true,
+            "item_height": 50,
+            "buffer_size": 3,
+            "render_interval": 16
+        },
+        "request_merger": {
+            "enabled": true,
+            "batch_size": 10,
+            "batch_timeout": 0.1,
+            "max_concurrent": 6
+        },
+        "code_splitting": {
+            "enabled": true,
+            "chunks": {
+                "vendor": [
+                    "PySide6",
+                    "numpy",
+                    "matplotlib"
+                ],
+                "features": [
+                    "plugins",
+                    "visualization"
+                ],
+                "utils": [
+                    "tools",
+                    "helpers"
+                ]
+            }
+        },
+        "image_optimization": {
+            "lazy_load_images": true,
+            "webp_support": true,
+            "max_size": {
+                "thumbnail": [
+                    200,
+                    200
+                ],
+                "preview": [
+                    800,
+                    600
+                ],
+                "full": [
+                    1920,
+                    1080
+                ]
+            }
+        }
+    },
+    "backend": {
+        "redis_cache": {
+            "enabled": true,
+            "host": "localhost",
+            "port": 6379,
+            "db": 0,
+            "prefix": "vcl:",
+            "ttl": {
+                "default": 300,
+                "experiments": 600,
+                "user_records": 180,
+                "static_data": 3600
+            }
+        },
+        "database": {
+            "connection_pool": {
+                "enabled": true,
+                "min_connections": 2,
+                "max_connections": 10,
+                "timeout": 60,
+                "wait_timeout": 30,
+                "retry_on_timeout": true
+            },
+            "query_cache": {
+                "enabled": true,
+                "max_size": 100,
+                "ttl": 300
+            },
+            "optimization": {
+                "slow_query_threshold": 1.0,
+                "enable_indexing": true,
+                "auto_analyze": true,
+                "auto_create_indexes": true,
+                "index_priorities": [
+                    "high"
+                ],
+                "analyze_query_patterns": true
+            }
+        },
+        "bff_layer": {
+            "enabled": true,
+            "endpoints": {
+                "experiment_page": {
+                    "parallel": true,
+                    "services": [
+                        "experiment",
+                        "user_record",
+                        "knowledge_cards",
+                        "related_experiments"
+                    ]
+                },
+                "dashboard": {
+                    "parallel": true,
+                    "services": [
+                        "user_profile",
+                        "recent_experiments",
+                        "statistics",
+                        "achievements"
+                    ]
+                }
+            },
+            "data_prefetch": {
+                "enabled": true,
+                "rules": {
+                    "view_experiment": [
+                        "next_experiment",
+                        "related_knowledge"
+                    ],
+                    "open_dashboard": [
+                        "recent_data",
+                        "notifications"
+                    ]
+                }
+            }
+        }
+    },
+    "cdn": {
+        "enabled": false,
+        "provider": "local",
+        "base_url": "/static",
+        "cache_rules": {
+            "image": 2592000,
+            "css": 604800,
+            "js": 604800,
+            "font": 31536000,
+            "video": 2592000
+        },
+        "preload": {
+            "enabled": true,
+            "resources": [
+                {
+                    "url": "/static/fonts/main.woff2",
+                    "type": "font"
+                },
+                {
+                    "url": "/static/styles/main.css",
+                    "type": "style"
+                },
+                {
+                    "url": "/static/scripts/app.js",
+                    "type": "script"
+                }
+            ]
+        },
+        "dns_prefetch": {
+            "enabled": true,
+            "domains": []
+        }
+    },
+    "monitoring": {
+        "enabled": true,
+        "metrics": {
+            "system": {
+                "interval": 60,
+                "collect": [
+                    "cpu",
+                    "memory",
+                    "disk",
+                    "network"
+                ]
+            },
+            "response_time": {
+                "track_all": true,
+                "percentiles": [
+                    50,
+                    95,
+                    99
+                ]
+            },
+            "throughput": {
+                "report_interval": 60
+            }
+        },
+        "alerts": {
+            "cpu_threshold": 80,
+            "memory_threshold": 85,
+            "response_time_threshold": 1000,
+            "error_rate_threshold": 5
+        }
+    },
+    "optimization_strategies": {
+        "multi_level_cache": {
+            "enabled": true,
+            "levels": [
+                {
+                    "type": "memory",
+                    "max_size": 100,
+                    "strategy": "LRU"
+                },
+                {
+                    "type": "redis",
+                    "ttl": 300
+                }
+            ]
+        },
+        "request_coalescing": {
+            "enabled": true,
+            "window_ms": 100
+        },
+        "response_compression": {
+            "enabled": true,
+            "algorithms": [
+                "gzip",
+                "deflate"
+            ],
+            "min_size": 1024
+        },
+        "connection_keep_alive": {
+            "enabled": true,
+            "timeout": 30
+        }
+    },
+    "performance_targets": {
+        "response_time": {
+            "api_p95": 200,
+            "api_p99": 500,
+            "ui_render": 100
+        },
+        "throughput": {
+            "min_qps": 100,
+            "target_qps": 500
+        },
+        "resource_usage": {
+            "max_cpu": 70,
+            "max_memory_mb": 512
+        }
+    }
+}

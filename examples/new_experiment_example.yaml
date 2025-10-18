@@ -1,0 +1,129 @@
+experiment:
+  id: "combustion_magnesium_v1"
+  title: "镁带燃烧实验"
+  title_en: "Magnesium Combustion Experiment"
+  description: "观察镁带在空气中燃烧的现象,学习氧化还原反应"
+  category: "无机化学"
+  level: "basic"
+  duration_min: 30
+
+  goals:
+    - name: "正确观察到白光"
+      metric: "observed_white_light"
+      eq: 1
+    - name: "正确识别生成物"
+      metric: "product_identified"
+      eq: 1
+
+  reagents:
+    - id: "mg_ribbon"
+      name: "镁带"
+      amount: "5-10 cm"
+      hazard_level: "warning"
+
+  steps:
+    - id: "prepare_mg"
+      text: "用砂纸打磨镁带表面,去除氧化膜"
+      check:
+        type: "confirm"
+        fail_hint: "未打磨会影响燃烧效果"
+      hints:
+        - text: "打磨至表面光亮"
+      safety_level: "info"
+
+    - id: "ignite"
+      text: "用坩埚钳夹持镁带,在酒精灯火焰上点燃"
+      check:
+        type: "confirm"
+        fail_hint: "注意安全,不要直视强光"
+      hints:
+        - text: "不要直视燃烧时的强光,以免损伤眼睛"
+      safety_level: "severe"
+
+    - id: "observe_light"
+      text: "观察镁带燃烧时发出的光"
+      check:
+        type: "select"
+        input:
+          key: "light_color"
+          label: "光的颜色"
+          options:
+            - value: "white"
+              label: "耀眼的白光"
+              correct: true
+            - value: "yellow"
+              label: "黄色火焰"
+              correct: false
+            - value: "blue"
+              label: "蓝色火焰"
+              correct: false
+        fail_hint: "镁在空气中燃烧发出耀眼的白光"
+      hints:
+        - text: "观察燃烧时的颜色和亮度"
+      safety_level: "info"
+
+    - id: "observe_product"
+      text: "观察燃烧后的生成物"
+      check:
+        type: "select"
+        input:
+          key: "product_appearance"
+          label: "生成物外观"
+          options:
+            - value: "white_powder"
+              label: "白色粉末"
+              correct: true
+            - value: "black_powder"
+              label: "黑色粉末"
+              correct: false
+            - value: "no_change"
+              label: "无变化"
+              correct: false
+        fail_hint: "生成物为白色的氧化镁粉末"
+      hints:
+        - text: "观察坩埚中残留物的颜色和状态"
+      safety_level: "info"
+
+    - id: "write_equation"
+      text: "写出镁带燃烧的化学方程式"
+      check:
+        type: "confirm"
+        fail_hint: "化学方程式: 2Mg + O₂ = 2MgO"
+      hints:
+        - text: "这是一个氧化反应"
+        - text: "镁失去电子,氧得到电子"
+      safety_level: "info"
+
+    - id: "analyze_type"
+      text: "判断反应类型"
+      check:
+        type: "select"
+        input:
+          key: "reaction_type"
+          label: "反应类型"
+          options:
+            - value: "oxidation"
+              label: "氧化还原反应"
+              correct: true
+            - value: "decomposition"
+              label: "分解反应"
+              correct: false
+            - value: "neutralization"
+              label: "中和反应"
+              correct: false
+        fail_hint: "这是一个氧化还原反应"
+      safety_level: "info"
+
+  score_rules:
+    - when: "light_color == 'white'"
+      then: 25
+    - when: "product_appearance == 'white_powder'"
+      then: 25
+    - when: "reaction_type == 'oxidation'"
+      then: 20
+    - when: "all_steps_passed"
+      then: 20
+    - when: "no_safety_warning"
+      then: 10
+
+  version: "1.0.0"

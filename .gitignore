@@ -1,0 +1,122 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Ruff
+.ruff_cache/
+
+# Project specific
+logs/
+data/
+*.log
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+temp/
+output_*.png
+output_*.txt
+*.pyc
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Security
+keys/private_key.pem
+keys/*.pem
+
+# Coverage reports
+coverage_reports/
+coverage.json
+.coverage.*
+htmlcov/
+
+# Test data
+test_data/
+
+# Backups
+backups/
+
+# Build artifacts
+build/
+dist/
+*.spec
+
+# Reports
+reports/
+*.log
+logs/
+
+# Archive
+archive/
+
+# User data
+user_data/
+
+# Temporary scripts
+*_temp.py
+*_demo.py
+*_test_*.py
+验证*.py
+检查*.py
+测试*.py
+
+# 上线前修复脚本添加
+secrets.txt

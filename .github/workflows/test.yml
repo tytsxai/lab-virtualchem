@@ -1,0 +1,192 @@
+name: 自动化测试
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # 每天凌晨2点运行
+    - cron: '0 2 * * *'
+
+jobs:
+  test:
+    name: 测试 Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 设置 Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: 代码质量检查 (Ruff)
+      run: |
+        ruff check src/ tests/ --output-format=github
+
+    - name: 类型检查 (MyPy)
+      run: |
+        mypy src/ --no-error-summary
+      continue-on-error: true
+
+    - name: 运行单元测试
+      run: |
+        pytest tests/unit -v --cov=src --cov-report=xml --cov-report=term
+
+    - name: 运行集成测试
+      run: |
+        pytest tests/integration -v --cov=src --cov-append --cov-report=xml
+
+    - name: 运行性能测试
+      run: |
+        pytest tests/performance -v
+      continue-on-error: true
+
+    - name: 上传覆盖率报告到 Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
+        fail_ci_if_error: false
+
+    - name: 生成覆盖率徽章
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+      run: |
+        pip install coverage-badge
+        coverage-badge -o coverage.svg -f
+
+    - name: 上传测试报告
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results-${{ matrix.os }}-py${{ matrix.python-version }}
+        path: |
+          htmlcov/
+          coverage.xml
+          .coverage
+
+  lint:
+    name: 代码质量检查
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 设置 Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install ruff black isort mypy
+
+    - name: Ruff 检查
+      run: ruff check src/ tests/ --output-format=github
+
+    - name: Black 格式检查
+      run: black --check src/ tests/
+
+    - name: isort 导入排序检查
+      run: isort --check-only src/ tests/
+
+    - name: MyPy 类型检查
+      run: mypy src/
+      continue-on-error: true
+
+  security:
+    name: 安全扫描
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 设置 Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: 安装 safety
+      run: pip install safety
+
+    - name: 检查依赖安全性
+      run: |
+        pip install -r requirements.txt
+        safety check --json
+      continue-on-error: true
+
+    - name: 运行 Bandit 安全扫描
+      run: |
+        pip install bandit
+        bandit -r src/ -f json -o bandit-report.json
+      continue-on-error: true
+
+    - name: 上传安全报告
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+
+  build:
+    name: 构建测试
+    runs-on: windows-latest
+    needs: [test, lint]
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 设置 Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+
+    - name: 构建应用程序
+      run: |
+        python -m PyInstaller VirtualChemLab.spec
+
+    - name: 测试构建产物
+      run: |
+        if (Test-Path "dist/VirtualChemLab/VirtualChemLab.exe") {
+          Write-Host "✅ 构建成功"
+        } else {
+          Write-Host "❌ 构建失败"
+          exit 1
+        }
+      shell: pwsh
+
+    - name: 上传构建产物
+      uses: actions/upload-artifact@v3
+      with:
+        name: virtualchemlab-build
+        path: dist/VirtualChemLab/
+        retention-days: 7

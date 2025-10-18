@@ -1,0 +1,167 @@
+# ChemLab 集成工具配置文件
+# 版本: 1.0.0
+
+# ==================== 源配置 ====================
+source:
+  # ChemLab GitHub 仓库
+  repository: "https://github.com/chemlab/chemlab.git"
+  branch: "master"
+
+  # 本地克隆路径 (临时目录)
+  clone_path: "./temp/chemlab"
+
+  # 是否自动更新 (每次运行时拉取最新代码)
+  auto_update: true
+
+  # 数据路径 (相对于 chemlab 根目录)
+  data_paths:
+    experiments: "examples"     # 实验示例路径
+    molecules: "chemlab/db"     # 分子数据库路径
+    docs: "docs"                # 文档路径
+
+# ==================== 输出配置 ====================
+output:
+  # 输出目录 (相对于本工具根目录)
+  experiments_dir: "../../data/templates"
+  knowledge_dir: "../../data/knowledge"
+
+  # 备份设置
+  backup:
+    enabled: true
+    backup_dir: "./backups"
+    max_backups: 5  # 保留最近5个备份
+
+  # 文件命名规则
+  naming:
+    experiment_prefix: "chemlab_exp_"      # 实验文件前缀
+    knowledge_prefix: "chemlab_"           # 知识文件前缀
+    use_timestamp: false                   # 是否添加时间戳
+
+# ==================== 过滤规则 ====================
+filters:
+  # 实验过滤
+  experiments:
+    # 包含的难度级别
+    include_levels: ["basic", "intermediate", "advanced"]
+
+    # 排除的标签
+    exclude_tags: []
+
+    # 最小步骤数 (过滤太简单的实验)
+    min_steps: 3
+
+    # 最大步骤数 (过滤太复杂的实验)
+    max_steps: 50
+
+  # 知识库过滤
+  knowledge:
+    # 包含的类型
+    include_types: ["reagent", "apparatus", "procedure"]
+
+    # 是否包含常见分子
+    include_common_molecules: true
+
+    # CAS号过滤 (仅导入有CAS号的化合物)
+    require_cas: false
+
+# ==================== 转换选项 ====================
+conversion:
+  # 实验转换
+  experiments:
+    # 添加元数据 (来源、版本、许可证等)
+    add_metadata: true
+
+    # 自动生成评分规则
+    auto_generate_scoring: true
+
+    # 默认时长 (分钟)
+    default_duration: 45
+
+    # 默认难度级别 (当源数据无难度信息时)
+    default_level: "basic"
+
+    # 步骤映射规则
+    step_mapping:
+      split_long_descriptions: true   # 拆分长描述为多个步骤
+      max_description_length: 200     # 每步最大描述长度
+      add_safety_hints: true          # 自动添加安全提示
+
+  # 知识库转换
+  knowledge:
+    # 添加元数据
+    add_metadata: true
+
+    # 自动查询 PubChem (获取更多化学数据)
+    query_pubchem: false  # 默认关闭,可手动开启
+
+    # 图片处理
+    images:
+      download: false      # 是否下载图片到本地
+      max_size_mb: 5       # 最大图片大小
+
+    # 物理性质映射
+    property_mapping:
+      density: true
+      boiling_point: true
+      melting_point: true
+      molecular_weight: true
+
+# ==================== 验证设置 ====================
+validation:
+  # 是否在保存前验证
+  validate_on_save: true
+
+  # 严格模式 (验证失败时是否跳过该数据)
+  strict_mode: true
+
+  # 自动修复 (尝试修复常见错误)
+  auto_fix:
+    enabled: true
+    fix_encoding: true       # 修复编码问题
+    fix_missing_fields: true # 补全缺失字段(使用默认值)
+    fix_invalid_ids: true    # 修复无效ID格式
+
+# ==================== 日志设置 ====================
+logging:
+  # 日志级别: DEBUG, INFO, WARNING, ERROR
+  level: "INFO"
+
+  # 日志文件
+  file: "./logs/import.log"
+
+  # 控制台输出
+  console: true
+
+  # 彩色输出
+  colored: true
+
+# ==================== 性能设置 ====================
+performance:
+  # 并发数 (处理数据时的线程数)
+  workers: 4
+
+  # 批处理大小
+  batch_size: 10
+
+  # 缓存设置
+  cache:
+    enabled: true
+    cache_dir: "./cache"
+    ttl_hours: 24  # 缓存有效期
+
+# ==================== 高级选项 ====================
+advanced:
+  # 自定义转换脚本路径
+  custom_converters: []
+
+  # 钩子脚本 (在特定阶段执行)
+  hooks:
+    pre_import: null      # 导入前执行
+    post_import: null     # 导入后执行
+    pre_validate: null    # 验证前执行
+    post_validate: null   # 验证后执行
+
+  # 实验性功能
+  experimental:
+    use_ai_enhancement: false   # 使用AI增强描述
+    translate_to_chinese: true  # 自动翻译为中文

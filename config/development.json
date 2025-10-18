@@ -1,0 +1,13 @@
+{
+    "app": {
+        "environment": "development",
+        "debug": true
+    },
+    "monitoring": {
+        "log_level": "DEBUG"
+    },
+    "performance": {
+        "cache_enabled": true,
+        "cache_type": "memory"
+    }
+}

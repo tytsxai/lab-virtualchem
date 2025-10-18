@@ -1,0 +1,579 @@
+experiment:
+  id: EXP-INTERACTIVE-001
+  title: 交互式酸碱滴定实验
+  description: 通过增强的交互功能完成酸碱滴定实验，体验手势控制、智能引导等特性
+  category: analytical_chemistry
+  difficulty: intermediate
+  estimated_time: 30
+  version: '2.0'
+  interaction:
+    enable_gesture: true
+    enable_smart_guide: true
+    enable_feedback: true
+    enable_recording: true
+    enable_collaboration: false
+  gestures:
+    tap:
+    - action: select_equipment
+      description: 点击选择实验器材
+    double_tap:
+    - action: confirm_selection
+      description: 双击确认选择
+    long_press:
+    - action: show_equipment_info
+      description: 长按查看器材详情
+    swipe:
+    - action: switch_step
+      direction: left
+      description: 向左滑动进入下一步
+    - action: switch_step
+      direction: right
+      description: 向右滑动返回上一步
+    pinch:
+    - action: zoom_scene
+      description: 双指捏合缩放场景
+    rotate:
+    - action: rotate_equipment
+      description: 双指旋转调整器材角度
+  smart_guide:
+    user_level: auto
+    show_welcome: true
+    auto_hint_threshold: 3
+    timeout_hint: 120
+  feedback:
+    enable_sound: true
+    enable_animation: true
+    enable_particles: true
+    success_animation: bounce
+    error_animation: shake
+    warning_animation: pulse
+  steps:
+  - id: step_001
+    text: 实验准备与安全检查
+    instruction: 请确认已穿戴好实验防护装备
+    check:
+      type: confirm
+      items:
+      - 已穿戴护目镜
+      - 已穿戴实验服
+      - 已了解实验安全注意事项
+    hints:
+    - 安全是实验的第一要务
+    - 请仔细阅读每一项安全要求
+    feedback:
+      success:
+        message: 安全准备完成！开始实验吧
+        type: success
+        animation: bounce
+      error:
+        message: 请确认完成所有安全准备
+        type: warning
+        animation: shake
+    guide:
+      type: tutorial
+      title: 安全第一
+      content: 虚拟实验也要养成良好的安全习惯。在真实实验中，这些准备至关重要。
+      show_on_first_time: true
+  - id: step_002
+    text: 准备实验器材
+    instruction: 从器材库中选择并放置所需器材到工作台
+    check:
+      type: interactive
+      required_items:
+      - burette_50ml
+      - flask_250ml
+      - pipette_25ml
+      - phenolphthalein
+      correct_positions:
+        burette_50ml:
+          x: 300
+          y: 100
+        flask_250ml:
+          x: 300
+          y: 400
+        pipette_25ml:
+          x: 100
+          y: 200
+    hints:
+    - 💡 提示：点击器材库选择器材
+    - 💡 提示：拖动器材到工作台合适位置
+    - 💡 提示：长按器材可查看详细信息
+    feedback:
+      success:
+        message: 器材准备完成！布局合理
+        type: success
+        animation: glow
+        particles: true
+      error:
+        message: 器材位置不当，请重新调整
+        type: error
+        animation: shake
+    guide:
+      type: hint
+      title: 器材布局
+      content: 合理的器材布局能提高实验效率。滴定管应固定在支架上，锥形瓶放在下方。
+      auto_trigger:
+        condition: time_spent > 30
+    interactions:
+    - type: drag_drop
+      description: 拖动器材到工作台
+    - type: gesture
+      gesture: pinch
+      description: 缩放场景以查看细节
+  - id: step_003
+    text: 润洗滴定管
+    instruction: 使用NaOH标准溶液润洗滴定管3次
+    check:
+      type: action_sequence
+      required_actions:
+      - action: select_item
+        target: burette_50ml
+      - action: select_reagent
+        target: naoh_solution
+      - action: rinse
+        target: burette_50ml
+        repeat: 3
+      tolerance: 0
+    hints:
+    - 润洗是为了去除管内残留的水分
+    - 每次用少量溶液润洗，然后从下端放出
+    - 需要重复3次
+    feedback:
+      success:
+        message: 润洗完成！滴定管已准备就绪
+        type: success
+        animation: bounce
+        sound: success
+      error:
+        message: 润洗操作不正确，请重试
+        type: error
+        animation: shake
+    guide:
+      type: tutorial
+      title: 为什么要润洗？
+      content: 润洗可以确保滴定管内壁完全被标准溶液润湿，避免浓度变化。
+      show_on_error: true
+    interactions:
+    - type: gesture
+      gesture: swipe_down
+      target: burette_50ml
+      description: 向下滑动放出液体
+  - id: step_004
+    text: 装填标准溶液
+    instruction: 将NaOH标准溶液装入滴定管至0刻度线以上
+    check:
+      type: input
+      input_type: volume
+      parameter: initial_volume
+      expected: 0
+      tolerance: 0.1
+      unit: mL
+    hints:
+    - 液面应在0刻度线以上
+    - 注意排除气泡
+    - 调整液面至0刻度线
+    feedback:
+      success:
+        message: 装填完成！初读数准确
+        type: success
+      error:
+        message: 初读数不准确，请重新调整
+        type: error
+    guide:
+      type: hint
+      title: 读数技巧
+      content: 读取滴定管读数时，视线应与液面最低点（凹液面）保持水平。
+    interactions:
+    - type: gesture
+      gesture: tap
+      description: 点击刻度线读数
+    - type: zoom
+      description: 放大查看刻度
+  - id: step_005
+    text: 移取待测溶液
+    instruction: 用移液管准确移取25.00mL待测HCl溶液于锥形瓶中
+    check:
+      type: input
+      input_type: volume
+      parameter: sample_volume
+      expected: 25.0
+      tolerance: 0.05
+      unit: mL
+    hints:
+    - 使用移液管前要先润洗
+    - 吸取液体至刻度线以上
+    - 调整液面至刻度线
+    - 将液体放入锥形瓶
+    feedback:
+      success:
+        message: 移液准确！体积为25.00mL
+        type: success
+        animation: glow
+      error:
+        message: 体积不准确，期望25.00±0.05mL
+        type: error
+        animation: pulse
+    guide:
+      type: tutorial
+      title: 移液管使用方法
+      content: '1. 润洗移液管2-3次
+
+        2. 用洗耳球吸取溶液至刻度线以上
+
+        3. 调整液面至刻度线
+
+        4. 移至容器上方，放出溶液
+
+        5. 保留管内残留液体（不要吹出）
+
+        '
+      show_button: 查看演示视频
+    interactions:
+    - type: action_sequence
+      description: 按步骤完成移液操作
+  - id: step_006
+    text: 添加指示剂
+    instruction: 向锥形瓶中加入2-3滴酚酞指示剂
+    check:
+      type: select
+      parameter: indicator_drops
+      options:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      expected:
+      - 2
+      - 3
+    hints:
+    - 酚酞适用于强碱滴定强酸
+    - 指示剂用量要适中
+    - 2-3滴即可
+    feedback:
+      success:
+        message: 指示剂添加完成！
+        type: success
+        animation: bounce
+      error:
+        message: 指示剂用量不当
+        type: warning
+    guide:
+      type: info
+      title: 指示剂的作用
+      content: 酚酞在酸性溶液中无色，在碱性溶液中呈粉红色，用于指示滴定终点。
+    interactions:
+    - type: gesture
+      gesture: tap
+      target: phenolphthalein
+      description: 点击指示剂瓶添加
+  - id: step_007
+    text: 进行滴定
+    instruction: 滴加NaOH溶液至溶液刚好变为浅红色且半分钟不褪色
+    check:
+      type: interactive
+      validation:
+      - parameter: color_change
+        expected: light_pink
+      - parameter: stable_time
+        expected: 30
+        unit: seconds
+    hints:
+    - 开始时可以快速滴加
+    - 接近终点时要逐滴滴加
+    - 边滴加边摇动锥形瓶
+    - 观察溶液颜色变化
+    feedback:
+      success:
+        message: 滴定成功！终点判断准确
+        type: achievement
+        animation: particle
+        particles:
+          color: pink
+          count: 30
+      error:
+        message: 滴定过量或未到终点
+        type: error
+    guide:
+      type: tutorial
+      title: 滴定操作要点
+      content: '1. 左手控制滴定管活塞
+
+        2. 右手摇动锥形瓶
+
+        3. 眼睛观察溶液颜色
+
+        4. 接近终点时改为半滴或逐滴
+
+        5. 终点时溶液呈浅红色且半分钟不褪色
+
+        '
+      auto_trigger:
+        condition: attempts > 2
+    interactions:
+    - type: gesture
+      gesture: swipe_down
+      target: burette_50ml
+      description: 向下滑动滴加溶液
+    - type: gesture
+      gesture: rotate
+      target: flask_250ml
+      description: 旋转摇动锥形瓶
+    - type: visual_feedback
+      description: 观察颜色变化动画
+    animation:
+      color_transition:
+        from: transparent
+        to: light_pink
+        duration: 2000
+        trigger: near_endpoint
+  - id: step_008
+    text: 记录终点读数
+    instruction: 读取并记录滴定管的终点读数
+    check:
+      type: input
+      input_type: volume
+      parameter: final_volume
+      expected: 24.95
+      tolerance: 0.1
+      unit: mL
+    hints:
+    - 读数要准确到小数点后两位
+    - 视线与凹液面最低点平齐
+    - 避免视差
+    feedback:
+      success:
+        message: 读数准确！
+        type: success
+      error:
+        message: 读数误差过大
+        type: error
+    guide:
+      type: hint
+      title: 读数注意事项
+      content: 滴定管最小刻度为0.1mL，读数应估计到0.01mL。
+    interactions:
+    - type: zoom
+      target: burette_50ml
+      description: 放大查看刻度
+    - type: measurement_aid
+      description: 使用测量辅助线
+  - id: step_009
+    text: 重复滴定
+    instruction: 重复滴定2-3次，取平均值
+    check:
+      type: multi_trial
+      min_trials: 3
+      max_trials: 5
+      consistency_check: true
+      max_deviation: 0.15
+    hints:
+    - 平行实验可以提高结果准确性
+    - 结果偏差过大应重做
+    - 至少需要3次一致的结果
+    feedback:
+      success:
+        message: 实验数据可靠！平行性良好
+        type: success
+        animation: glow
+      error:
+        message: 数据偏差过大，请重新滴定
+        type: warning
+    guide:
+      type: info
+      title: 为什么要平行实验？
+      content: 多次重复可以减小随机误差，提高结果的可靠性。
+  - id: step_010
+    text: 计算浓度
+    instruction: 根据滴定数据计算待测HCl溶液的浓度
+    check:
+      type: calculation
+      formula: c(HCl) = c(NaOH) × V(NaOH) / V(HCl)
+      parameters:
+        c_naoh: 0.1
+        v_naoh: average_volume
+        v_hcl: 25.0
+      expected: 0.0998
+      tolerance: 0.0005
+      unit: mol/L
+    hints:
+    - 使用中和反应计量关系
+    - n(HCl) = n(NaOH)
+    - c = n / V
+    feedback:
+      success:
+        message: 计算正确！实验成功完成
+        type: achievement
+        animation: particle
+        sound: achievement
+        show_report: true
+      error:
+        message: 计算有误，请检查公式和数据
+        type: error
+    guide:
+      type: tutorial
+      title: 浓度计算
+      content: '根据酸碱中和反应:
+
+        HCl + NaOH = NaCl + H₂O
+
+
+        物质的量关系:
+
+        n(HCl) = n(NaOH)
+
+
+        因此:
+
+        c(HCl) × V(HCl) = c(NaOH) × V(NaOH)
+
+
+        c(HCl) = c(NaOH) × V(NaOH) / V(HCl)
+
+        '
+  scoring:
+    total_points: 100
+    step_weights:
+      step_001: 5
+      step_002: 10
+      step_003: 10
+      step_004: 10
+      step_005: 15
+      step_006: 5
+      step_007: 20
+      step_008: 10
+      step_009: 10
+      step_010: 15
+    penalties:
+      time_exceeded: -2
+      mistakes: -1
+    bonuses:
+      perfect_score: 10
+      fast_completion: 5
+      good_technique: 5
+  achievements:
+  - id: first_titration
+    name: 初次滴定
+    description: 完成第一次酸碱滴定实验
+    icon: 🎯
+  - id: accurate_result
+    name: 精确大师
+    description: 计算结果误差小于0.1%
+    icon: 🎓
+  - id: perfect_technique
+    name: 操作规范
+    description: 所有操作步骤一次通过
+    icon: ⭐
+  - id: speed_runner
+    name: 效率之星
+    description: 15分钟内完成实验
+    icon: ⚡
+  - id: gesture_master
+    name: 手势达人
+    description: 使用5种以上手势完成实验
+    icon: 👌
+  experiment_flow:
+    allow_skip: false
+    allow_back: true
+    save_progress: true
+    auto_save_interval: 30
+  report:
+    sections:
+    - type: summary
+      include:
+      - experiment_info
+      - final_score
+      - time_spent
+      - achievements
+    - type: data_table
+      title: 实验数据记录
+      columns:
+      - 试验次数
+      - 初读数(mL)
+      - 终读数(mL)
+      - 消耗体积(mL)
+    - type: calculation
+      title: 数据处理
+      include:
+      - average_volume
+      - concentration
+      - error_analysis
+    - type: interaction_stats
+      title: 交互统计
+      include:
+      - gesture_usage
+      - guide_accessed
+      - feedback_received
+    - type: recommendations
+      title: 改进建议
+      auto_generate: true
+metadata:
+  author: VirtualChemLab Team
+  created_at: '2025-10-07'
+  tags:
+  - interactive
+  - titration
+  - analytical
+  - enhanced_ux
+  learning_objectives:
+  - 掌握酸碱滴定的基本操作
+  - 学习使用手势进行实验操作
+  - 体验智能引导系统
+  knowledge_points:
+  - id: kb_001
+    title: 酸碱中和反应
+    content: 酸和碱发生中和反应生成盐和水
+  - id: kb_002
+    title: 指示剂的选择
+    content: 根据滴定类型选择合适的指示剂
+  - id: kb_003
+    title: 滴定终点判断
+    content: 观察溶液颜色变化判断滴定终点
+equipment:
+  required:
+  - id: burette_50ml
+    name: 酸式滴定管
+    type: glassware
+    capacity: 50
+    unit: mL
+    interactive: true
+    gestures:
+      tap: select
+      double_tap: use
+      swipe_down: release_liquid
+  - id: flask_250ml
+    name: 锥形瓶
+    type: glassware
+    capacity: 250
+    unit: mL
+    interactive: true
+    gestures:
+      tap: select
+      rotate: swirl
+  - id: pipette_25ml
+    name: 移液管
+    type: glassware
+    capacity: 25
+    unit: mL
+    interactive: true
+    gestures:
+      tap: select
+      long_press: show_usage
+  - id: phenolphthalein
+    name: 酚酞指示剂
+    type: indicator
+    interactive: true
+  - id: wash_bottle
+    name: 洗瓶
+    type: tool
+    interactive: true
+  reagents:
+  - id: naoh_solution
+    name: NaOH标准溶液
+    concentration: 0.1
+    unit: mol/L
+    volume: 100
+  - id: hcl_unknown
+    name: 待测HCl溶液
+    concentration: unknown
+    volume: 100

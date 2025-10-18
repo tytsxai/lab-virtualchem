@@ -1,0 +1,286 @@
+# =============================================================================
+# VirtualChemLab - 生产环境配置
+# =============================================================================
+
+# 应用配置
+app:
+  name: "VirtualChemLab"
+  version: "2.0.0"
+  environment: "production"
+  debug: false
+
+  # 启动配置
+  startup:
+    show_splash: true
+    check_updates: true
+    load_last_experiment: false
+    show_welcome: false
+
+# 日志配置
+logging:
+  level: "WARNING" # 生产环境使用WARNING级别
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+  # 文件日志
+  file:
+    enabled: true
+    path: "logs/app.log"
+    max_size: 10485760 # 10MB
+    backup_count: 5
+    level: "INFO"
+
+  # 控制台日志
+  console:
+    enabled: false # 生产环境关闭控制台日志
+    level: "WARNING"
+
+  # 错误日志
+  error:
+    enabled: true
+    path: "logs/error.log"
+    level: "ERROR"
+
+# 性能配置
+performance:
+  # 缓存设置
+  cache:
+    enabled: true
+    max_size_mb: 200
+    ttl_seconds: 3600
+
+  # 图表渲染
+  chart:
+    quality: "high"
+    dpi: 100
+    animation: true
+    hardware_acceleration: true
+
+  # 内存管理
+  memory:
+    max_usage_mb: 500
+    auto_cleanup: true
+    cleanup_threshold: 0.8
+
+# 数据存储
+storage:
+  # 数据目录
+  data_dir: "data"
+
+  # 实验记录
+  experiments:
+    auto_save: true
+    save_interval_seconds: 300 # 5分钟
+    max_records: 1000
+
+  # 备份
+  backup:
+    enabled: true
+    interval_hours: 24
+    keep_days: 30
+    path: "data/backups"
+
+# 安全配置
+security:
+  # 许可证验证
+  license:
+    check_on_startup: true
+    check_interval_hours: 24
+    offline_grace_days: 7
+
+  # 数据加密
+  encryption:
+    enabled: false # 根据需要启用
+    algorithm: "AES-256"
+
+  # 文件权限
+  file_permissions:
+    strict: true
+    allow_external_load: false
+
+# UI配置
+ui:
+  # 主题
+  theme: "auto" # auto, light, dark
+
+  # 字体
+  font:
+    family: "Microsoft YaHei" # Windows默认
+    size: 10
+
+  # 窗口
+  window:
+    remember_size: true
+    remember_position: true
+    min_width: 1024
+    min_height: 768
+
+  # 动画
+  animation:
+    enabled: true
+    duration_ms: 200
+
+# 网络配置
+network:
+  # 更新检查
+  update_check:
+    enabled: true
+    url: "https://api.virtualchemlab.com/version"
+    timeout_seconds: 10
+
+  # 许可证验证
+  license_check:
+    url: "https://api.virtualchemlab.com/license/verify"
+    timeout_seconds: 10
+
+  # 代理设置
+  proxy:
+    enabled: false
+    http: ""
+    https: ""
+
+# 错误处理
+error_handling:
+  # 错误报告
+  reporting:
+    enabled: false # 用户隐私，默认关闭
+    endpoint: ""
+    include_system_info: false
+
+  # 崩溃恢复
+  crash_recovery:
+    enabled: true
+    auto_save_interval: 60
+    max_recovery_attempts: 3
+
+  # 用户提示
+  user_feedback:
+    show_error_dialog: true
+    show_stack_trace: false # 生产环境不显示堆栈
+    suggest_restart: true
+
+# 游戏化系统
+gamification:
+  enabled: true
+
+  # 经验值系统
+  experience:
+    enabled: true
+    show_level_up: true
+    show_gain_animation: true
+
+  # 成就系统
+  achievements:
+    enabled: true
+    show_unlock_animation: true
+
+# 监控配置
+monitoring:
+  # 性能监控
+  performance:
+    enabled: true
+    interval_seconds: 60
+    metrics:
+      - cpu_usage
+      - memory_usage
+      - response_time
+
+  # 健康检查
+  health_check:
+    enabled: true
+    interval_seconds: 300
+    checks:
+      - storage
+      - memory
+      - dependencies
+
+# 实验配置
+experiments:
+  # 默认设置
+  defaults:
+    temperature_unit: "celsius"
+    volume_unit: "ml"
+    concentration_unit: "mol/L"
+
+  # 安全限制
+  safety:
+    max_temperature: 150 # °C
+    max_volume: 1000 # ml
+    require_confirmation: true
+
+# 数据导出
+export:
+  # 支持的格式
+  formats:
+    - pdf
+    - csv
+    - json
+
+  # 导出路径
+  default_path: "exports"
+
+  # 质量设置
+  pdf:
+    dpi: 300
+    compress: true
+
+# 多语言
+localization:
+  default_language: "zh_CN"
+  fallback_language: "en_US"
+  available_languages:
+    - zh_CN
+    - en_US
+
+# 插件系统（预留）
+plugins:
+  enabled: false
+  auto_load: false
+  whitelist: []
+
+# 开发者工具
+developer:
+  console_enabled: false # 生产环境关闭
+  debug_mode: false
+  profiling: false
+
+# 特性开关（Feature Flags）
+features:
+  voice_control: false # 语音控制（实验性）
+  advanced_charts: true # 高级图表
+  3d_molecules: true # 3D分子结构
+  cloud_sync: false # 云同步（未实现）
+  collaborative: false # 协作模式（未实现）
+
+# 资源限制
+limits:
+  max_concurrent_experiments: 5
+  max_chart_data_points: 10000
+  max_file_size_mb: 50
+  max_history_entries: 100
+
+# 通知设置
+notifications:
+  enabled: true
+  types:
+    - achievement_unlock
+    - level_up
+    - experiment_complete
+
+  duration_ms: 3000
+  position: "top_right"
+
+# 遥测（匿名使用统计）
+telemetry:
+  enabled: false # 默认关闭，尊重用户隐私
+  anonymous: true
+  collect:
+    - app_version
+    - os_version
+    - feature_usage
+    # 不收集个人信息、实验数据等
+
+# 维护模式
+maintenance:
+  enabled: false
+  message: "系统维护中，请稍后再试"
+  allow_admin: true

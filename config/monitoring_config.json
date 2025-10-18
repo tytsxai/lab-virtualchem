@@ -1,0 +1,122 @@
+{
+    "monitoring": {
+        "enabled": true,
+        "app_name": "VirtualChemLab",
+        "frontend": {
+            "error_tracking": {
+                "enabled": true,
+                "max_errors": 1000,
+                "log_dir": "logs/frontend"
+            },
+            "behavior_tracking": {
+                "enabled": true,
+                "max_events": 10000,
+                "log_dir": "logs/behavior"
+            }
+        },
+        "backend": {
+            "apm": {
+                "enabled": true,
+                "log_dir": "logs/apm"
+            },
+            "resource_monitoring": {
+                "enabled": true,
+                "interval_seconds": 60
+            },
+            "health_check": {
+                "enabled": true,
+                "thresholds": {
+                    "cpu_warning": 70,
+                    "cpu_critical": 85,
+                    "memory_warning": 80,
+                    "memory_critical": 90,
+                    "disk_warning": 80,
+                    "disk_critical": 90
+                }
+            }
+        },
+        "tracing": {
+            "enabled": true,
+            "service_name": "VirtualChemLab",
+            "log_dir": "logs/traces",
+            "sample_rate": 1.0
+        },
+        "alerting": {
+            "enabled": true,
+            "auto_check": true,
+            "check_interval_seconds": 60,
+            "channels": {
+                "console": {
+                    "enabled": true
+                },
+                "file": {
+                    "enabled": true,
+                    "log_dir": "logs/alerts"
+                },
+                "webhook": {
+                    "enabled": false,
+                    "url": "https://your-webhook-url.com/alerts"
+                },
+                "email": {
+                    "enabled": false,
+                    "smtp_host": "smtp.example.com",
+                    "smtp_port": 587,
+                    "username": "alerts@example.com",
+                    "password": "your-password",
+                    "from": "alerts@example.com",
+                    "to": [
+                        "admin@example.com"
+                    ]
+                }
+            },
+            "rules": [
+                {
+                    "name": "high_cpu_usage",
+                    "metric": "system.cpu.percent",
+                    "threshold": 85,
+                    "operator": ">",
+                    "severity": "critical",
+                    "duration_seconds": 120,
+                    "cooldown_seconds": 300,
+                    "message": "CPU使用率超过85%"
+                },
+                {
+                    "name": "high_memory_usage",
+                    "metric": "system.memory.percent",
+                    "threshold": 90,
+                    "operator": ">",
+                    "severity": "critical",
+                    "duration_seconds": 120,
+                    "cooldown_seconds": 300,
+                    "message": "内存使用率超过90%"
+                },
+                {
+                    "name": "low_disk_space",
+                    "metric": "system.disk.percent",
+                    "threshold": 90,
+                    "operator": ">",
+                    "severity": "warning",
+                    "duration_seconds": 300,
+                    "cooldown_seconds": 600,
+                    "message": "磁盘使用率超过90%"
+                },
+                {
+                    "name": "high_error_rate",
+                    "metric": "errors.rate",
+                    "threshold": 10,
+                    "operator": ">",
+                    "severity": "error",
+                    "duration_seconds": 60,
+                    "cooldown_seconds": 300,
+                    "message": "错误率过高"
+                }
+            ]
+        },
+        "retention": {
+            "metrics_days": 30,
+            "traces_days": 7,
+            "logs_days": 30,
+            "alerts_days": 90
+        }
+    }
+}

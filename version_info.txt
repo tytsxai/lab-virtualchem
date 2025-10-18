@@ -1,0 +1,67 @@
+# UTF-8
+#
+# VirtualChemLab Windows 版本信息文件
+# 用于PyInstaller打包时嵌入到exe文件中
+#
+
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    # 文件版本号 (主版本, 次版本, 修订版, 构建号)
+    filevers=(3, 0, 0, 0),
+    # 产品版本号
+    prodvers=(3, 0, 0, 0),
+    # 包含 VS_FF_DEBUG、VS_FF_PRERELEASE、VS_FF_PATCHED 等标志
+    mask=0x3f,
+    # 文件标志 (0x0 = 正式版本)
+    flags=0x0,
+    # 操作系统类型 (VOS_NT_WINDOWS32 = 0x40004)
+    OS=0x40004,
+    # 文件类型 (VFT_APP = 0x1)
+    fileType=0x1,
+    # 文件子类型
+    subtype=0x0,
+    # 文件日期 (高位, 低位)
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo(
+      [
+      StringTable(
+        u'040904B0',  # 语言代码: 0409 = 英语(美国), 04B0 = Unicode
+        [
+          StringStruct(u'CompanyName', u'VirtualChemLab Team'),
+          StringStruct(u'FileDescription', u'Virtual Chemistry Laboratory - 虚拟化学实验室'),
+          StringStruct(u'FileVersion', u'3.0.0.0'),
+          StringStruct(u'InternalName', u'VirtualChemLab'),
+          StringStruct(u'LegalCopyright', u'Copyright © 2025 VirtualChemLab Team. All rights reserved.'),
+          StringStruct(u'LegalTrademarks', u'VirtualChemLab™'),
+          StringStruct(u'OriginalFilename', u'VirtualChemLab.exe'),
+          StringStruct(u'ProductName', u'VirtualChemLab'),
+          StringStruct(u'ProductVersion', u'3.0.0'),
+          StringStruct(u'Comments', u'高性能虚拟化学实验室桌面应用'),
+          StringStruct(u'CompanyShortName', u'VCL'),
+          StringStruct(u'PrivateBuild', u''),
+          StringStruct(u'SpecialBuild', u''),
+        ]
+      ),
+      StringTable(
+        u'080404B0',  # 语言代码: 0804 = 中文(简体), 04B0 = Unicode
+        [
+          StringStruct(u'CompanyName', u'VirtualChemLab团队'),
+          StringStruct(u'FileDescription', u'虚拟化学实验室 - 高性能桌面版'),
+          StringStruct(u'FileVersion', u'3.0.0.0'),
+          StringStruct(u'InternalName', u'VirtualChemLab'),
+          StringStruct(u'LegalCopyright', u'版权所有 © 2025 VirtualChemLab团队。保留所有权利。'),
+          StringStruct(u'LegalTrademarks', u'VirtualChemLab™'),
+          StringStruct(u'OriginalFilename', u'VirtualChemLab.exe'),
+          StringStruct(u'ProductName', u'虚拟化学实验室'),
+          StringStruct(u'ProductVersion', u'3.0.0'),
+          StringStruct(u'Comments', u'一个具有高性能和游戏化交互体验的虚拟化学实验室应用程序'),
+        ]
+      )
+      ]
+    ),
+    VarFileInfo([VarStruct(u'Translation', [0x0409, 0x04B0, 0x0804, 0x04B0])])
+  ]
+)
+

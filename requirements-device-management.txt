@@ -1,0 +1,23 @@
+# 设备管理和防作弊系统依赖
+
+# Flask用于管理后台API
+Flask>=2.3.0
+flask-cors>=4.0.0
+
+# 系统信息采集
+psutil>=5.9.0
+
+# 网络请求（用于IP地理位置查询）
+urllib3>=2.0.0
+
+# 已包含在主依赖中的包：
+# - json (内置)
+# - hashlib (内置)
+# - socket (内置)
+# - platform (内置)
+# - subprocess (内置)
+# - uuid (内置)
+# - pathlib (内置)
+# - dataclasses (内置)
+# - logging (内置)
+# - datetime (内置)

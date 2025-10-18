@@ -1,0 +1,135 @@
+experiment:
+  id: "EXP-ESTERIFICATION-001"
+  title: "酯化反应实验 - 乙酸乙酯的制备"
+  title_en: "Esterification Reaction - Preparation of Ethyl Acetate"
+  level: "intermediate"
+  duration_min: 50
+
+  goals:
+    - name: "产率"
+      metric: "yield_percentage"
+      gte: 60
+    - name: "纯度"
+      metric: "purity_percentage"
+      gte: 85
+
+  objectives:
+    - 掌握酯化反应的实验操作
+    - 学习蒸馏分离技术
+    - 理解催化剂的作用
+
+  apparatus:
+    - id: round_flask
+      name: 圆底烧瓶
+      required: true
+    - id: reflux_condenser
+      name: 回流冷凝管
+      required: true
+    - id: distillation_setup
+      name: 蒸馏装置
+      required: true
+    - id: separatory_funnel
+      name: 分液漏斗
+      required: true
+    - id: drying_tube
+      name: 干燥管
+      required: true
+
+  reagents:
+    - id: acetic_acid
+      name: 乙酸
+      amount: "12.0 mL"
+      hazard_level: "warning"
+      properties:
+        density: 1.05
+        boiling_point: 118
+    - id: ethanol
+      name: 无水乙醇
+      amount: "10.0 mL"
+      hazard_level: "warning"
+      properties:
+        density: 0.789
+        boiling_point: 78
+    - id: sulfuric_acid
+      name: 浓硫酸
+      amount: "1.5 mL"
+      hazard_level: "danger"
+      properties:
+        concentration: 98
+    - id: sodium_carbonate
+      name: 饱和碳酸钠溶液
+      amount: "50.0 mL"
+      hazard_level: "info"
+    - id: calcium_chloride
+      name: 无水氯化钙
+      amount: "5.0 g"
+      hazard_level: "info"
+
+  steps:
+    - id: step_1
+      text: "配制反应液：按顺序加入反应物"
+      check:
+        type: "confirm"
+        fail_hint: "请按照正确顺序添加试剂"
+      safety_level: "warning"
+
+    - id: step_2
+      text: "回流反应：安装回流装置并加热至70°C，维持40分钟"
+      check:
+        type: "confirm"
+        fail_hint: "确保冷凝水循环畅通"
+      safety_level: "warning"
+
+    - id: step_3
+      text: "粗产物处理：将反应液转移并用碳酸钠溶液中和"
+      check:
+        type: "confirm"
+        fail_hint: "注意分液时及时放气"
+      safety_level: "warning"
+
+    - id: step_4
+      text: "萃取分液：震荡后静置分液，收集有机层"
+      check:
+        type: "confirm"
+        fail_hint: "静置时间要充分，确保分层清晰"
+      safety_level: "info"
+
+    - id: step_5
+      text: "干燥：用无水氯化钙干燥有机层"
+      check:
+        type: "confirm"
+        fail_hint: "确保干燥完全"
+      safety_level: "info"
+
+    - id: step_6
+      text: "蒸馏纯化：收集74-78°C馏分"
+      check:
+        type: "confirm"
+        fail_hint: "注意温度控制，防止暴沸"
+      safety_level: "warning"
+
+    - id: step_7
+      text: "称量产物并计算产率"
+      check:
+        type: "input"
+        input:
+          key: "product_mass"
+          label: "产物质量"
+          input_type: "float"
+          range: [5, 15]
+          unit: "g"
+        fail_hint: "产率偏低，检查操作是否规范"
+      safety_level: "info"
+
+  safety_notes:
+    - 浓硫酸加入时要小心，防止放热过猛
+    - 回流时确保冷凝水循环畅通
+    - 分液时及时放气，防止压力过大
+    - 乙酸乙酯易燃，操作时远离明火
+    - 蒸馏时注意温度控制，防止暴沸
+
+  knowledge_points:
+    - 酯化反应是可逆反应，需要催化剂
+    - 浓硫酸既是催化剂又是脱水剂
+    - 用饱和碳酸钠溶液中和并减少酯的溶解
+    - 蒸馏时收集正确温度范围的馏分

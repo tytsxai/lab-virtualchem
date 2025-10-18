@@ -1,0 +1,181 @@
+{
+    "payment": {
+        "enabled": true,
+        "mode": "offline",
+        "auto_generate_license": false,
+        "supported_currencies": [
+            {
+                "code": "BTC",
+                "name": "比特币",
+                "network": "mainnet",
+                "address": "请替换为您的BTC收款地址",
+                "min_confirmations": 3,
+                "enabled": true
+            },
+            {
+                "code": "ETH",
+                "name": "以太坊",
+                "network": "mainnet",
+                "address": "请替换为您的ETH收款地址",
+                "min_confirmations": 12,
+                "enabled": true
+            },
+            {
+                "code": "USDT",
+                "name": "泰达币 (ERC20)",
+                "network": "ethereum",
+                "address": "请替换为您的USDT收款地址",
+                "min_confirmations": 12,
+                "enabled": true
+            },
+            {
+                "code": "USDC",
+                "name": "USD Coin",
+                "network": "ethereum",
+                "address": "请替换为您的USDC收款地址",
+                "min_confirmations": 12,
+                "enabled": false
+            },
+            {
+                "code": "TRX",
+                "name": "波场",
+                "network": "mainnet",
+                "address": "请替换为您的TRX收款地址",
+                "min_confirmations": 19,
+                "enabled": true
+            },
+            {
+                "code": "BNB",
+                "name": "币安币",
+                "network": "bsc",
+                "address": "请替换为您的BNB收款地址",
+                "min_confirmations": 15,
+                "enabled": false
+            },
+            {
+                "code": "SOL",
+                "name": "Solana",
+                "network": "mainnet",
+                "address": "请替换为您的SOL收款地址",
+                "min_confirmations": 32,
+                "enabled": false
+            }
+        ],
+        "pricing": {
+            "trial": {
+                "name": "试用版",
+                "duration_days": 7,
+                "price_usd": 0,
+                "features": [
+                    "basic_experiments",
+                    "limited_reports"
+                ]
+            },
+            "personal": {
+                "name": "个人版",
+                "duration_days": 365,
+                "price_usd": 99,
+                "price_btc": 0.0025,
+                "price_eth": 0.04,
+                "price_usdt": 99,
+                "features": [
+                    "all_experiments",
+                    "full_reports",
+                    "data_export"
+                ]
+            },
+            "education": {
+                "name": "教育版",
+                "duration_days": 365,
+                "price_usd": 299,
+                "price_btc": 0.0075,
+                "price_eth": 0.12,
+                "price_usdt": 299,
+                "features": [
+                    "all_experiments",
+                    "full_reports",
+                    "data_export"
+                ]
+            },
+            "commercial": {
+                "name": "商业版",
+                "duration_days": 365,
+                "price_usd": 999,
+                "price_btc": 0.025,
+                "price_eth": 0.40,
+                "price_usdt": 999,
+                "features": [
+                    "all_experiments",
+                    "full_reports",
+                    "data_export",
+                    "api_access",
+                    "priority_support"
+                ]
+            },
+            "enterprise": {
+                "name": "企业版",
+                "duration_days": 365,
+                "price_usd": 2999,
+                "price_btc": 0.075,
+                "price_eth": 1.20,
+                "price_usdt": 2999,
+                "features": [
+                    "all_experiments",
+                    "full_reports",
+                    "data_export",
+                    "api_access",
+                    "priority_support",
+                    "custom_integration",
+                    "on_premise_deployment"
+                ]
+            }
+        }
+    },
+    "license": {
+        "secret_key": "${LICENSE_SECRET_KEY}",
+        "license_file": "data/license.json",
+        "strict_mode": true,
+        "trial_days": 7,
+        "check_interval_hours": 24,
+        "allow_grace_period_days": 7
+    },
+    "blockchain_api": {
+        "btc": {
+            "provider": "blockchain.info",
+            "endpoint": "https://blockchain.info/rawtx/{tx_hash}",
+            "api_key": ""
+        },
+        "eth": {
+            "provider": "etherscan",
+            "endpoint": "https://api.etherscan.io/api",
+            "api_key": "${ETHERSCAN_API_KEY}"
+        },
+        "trx": {
+            "provider": "trongrid",
+            "endpoint": "https://api.trongrid.io",
+            "api_key": ""
+        }
+    },
+    "webhook": {
+        "enabled": false,
+        "host": "0.0.0.0",
+        "port": 8888,
+        "secret": "${WEBHOOK_SECRET}",
+        "auto_generate_license": false
+    },
+    "notifications": {
+        "email": {
+            "enabled": false,
+            "smtp_host": "smtp.gmail.com",
+            "smtp_port": 587,
+            "smtp_user": "${SMTP_USER}",
+            "smtp_password": "${SMTP_PASSWORD}",
+            "from_address": "noreply@virtualchemlab.com"
+        },
+        "telegram": {
+            "enabled": false,
+            "bot_token": "${TELEGRAM_BOT_TOKEN}",
+            "chat_id": "${TELEGRAM_CHAT_ID}"
+        }
+    }
+}

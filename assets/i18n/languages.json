@@ -1,0 +1,198 @@
+{
+    "metadata": {
+        "version": "1.0.0",
+        "last_updated": "2025-10-06",
+        "description": "语言配置元数据 / Language Configuration Metadata"
+    },
+    "languages": {
+        "zh_CN": {
+            "name": "简体中文",
+            "native_name": "简体中文",
+            "direction": "ltr",
+            "locale": "zh_CN",
+            "region": "China",
+            "iso_639_1": "zh",
+            "iso_639_2": "chi",
+            "enabled": true,
+            "completion": 100
+        },
+        "zh_TW": {
+            "name": "繁體中文",
+            "native_name": "繁體中文",
+            "direction": "ltr",
+            "locale": "zh_TW",
+            "region": "Taiwan",
+            "iso_639_1": "zh",
+            "iso_639_2": "chi",
+            "enabled": false,
+            "completion": 0,
+            "note": "未来版本支持"
+        },
+        "en_US": {
+            "name": "English",
+            "native_name": "English",
+            "direction": "ltr",
+            "locale": "en_US",
+            "region": "United States",
+            "iso_639_1": "en",
+            "iso_639_2": "eng",
+            "enabled": true,
+            "completion": 100
+        },
+        "ja_JP": {
+            "name": "日本語",
+            "native_name": "日本語",
+            "direction": "ltr",
+            "locale": "ja_JP",
+            "region": "Japan",
+            "iso_639_1": "ja",
+            "iso_639_2": "jpn",
+            "enabled": true,
+            "completion": 80,
+            "note": "部分翻译完成"
+        },
+        "ko_KR": {
+            "name": "한국어",
+            "native_name": "한국어",
+            "direction": "ltr",
+            "locale": "ko_KR",
+            "region": "Korea",
+            "iso_639_1": "ko",
+            "iso_639_2": "kor",
+            "enabled": true,
+            "completion": 80,
+            "note": "部分翻译完成"
+        },
+        "fr_FR": {
+            "name": "Français",
+            "native_name": "Français",
+            "direction": "ltr",
+            "locale": "fr_FR",
+            "region": "France",
+            "iso_639_1": "fr",
+            "iso_639_2": "fre",
+            "enabled": true,
+            "completion": 80,
+            "note": "部分翻译完成"
+        },
+        "de_DE": {
+            "name": "Deutsch",
+            "native_name": "Deutsch",
+            "direction": "ltr",
+            "locale": "de_DE",
+            "region": "Germany",
+            "iso_639_1": "de",
+            "iso_639_2": "ger",
+            "enabled": true,
+            "completion": 80,
+            "note": "部分翻译完成"
+        },
+        "es_ES": {
+            "name": "Español",
+            "native_name": "Español",
+            "direction": "ltr",
+            "locale": "es_ES",
+            "region": "Spain",
+            "iso_639_1": "es",
+            "iso_639_2": "spa",
+            "enabled": true,
+            "completion": 80,
+            "note": "部分翻译完成"
+        },
+        "ru_RU": {
+            "name": "Русский",
+            "native_name": "Русский",
+            "direction": "ltr",
+            "locale": "ru_RU",
+            "region": "Russia",
+            "iso_639_1": "ru",
+            "iso_639_2": "rus",
+            "enabled": false,
+            "completion": 0,
+            "note": "未来版本支持"
+        },
+        "ar_SA": {
+            "name": "العربية",
+            "native_name": "العربية",
+            "direction": "rtl",
+            "locale": "ar_SA",
+            "region": "Saudi Arabia",
+            "iso_639_1": "ar",
+            "iso_639_2": "ara",
+            "enabled": false,
+            "completion": 0,
+            "note": "未来版本支持，需要RTL支持"
+        }
+    },
+    "pluralization_rules": {
+        "default": {
+            "zero": "count == 0",
+            "one": "count == 1",
+            "two": "count == 2",
+            "few": "3 <= count <= 4",
+            "many": "count >= 5",
+            "other": "default"
+        },
+        "zh_CN": {
+            "other": "always"
+        },
+        "en_US": {
+            "one": "count == 1",
+            "other": "count != 1"
+        },
+        "ja_JP": {
+            "other": "always"
+        },
+        "ko_KR": {
+            "other": "always"
+        }
+    },
+    "date_formats": {
+        "zh_CN": "YYYY年MM月DD日",
+        "en_US": "MM/DD/YYYY",
+        "ja_JP": "YYYY年MM月DD日",
+        "ko_KR": "YYYY년 MM월 DD일",
+        "fr_FR": "DD/MM/YYYY",
+        "de_DE": "DD.MM.YYYY",
+        "es_ES": "DD/MM/YYYY"
+    },
+    "time_formats": {
+        "zh_CN": "HH:mm:ss",
+        "en_US": "hh:mm:ss A",
+        "ja_JP": "HH:mm:ss",
+        "ko_KR": "HH:mm:ss",
+        "fr_FR": "HH:mm:ss",
+        "de_DE": "HH:mm:ss",
+        "es_ES": "HH:mm:ss"
+    },
+    "number_formats": {
+        "zh_CN": {
+            "decimal_separator": ".",
+            "thousands_separator": ","
+        },
+        "en_US": {
+            "decimal_separator": ".",
+            "thousands_separator": ","
+        },
+        "ja_JP": {
+            "decimal_separator": ".",
+            "thousands_separator": ","
+        },
+        "ko_KR": {
+            "decimal_separator": ".",
+            "thousands_separator": ","
+        },
+        "fr_FR": {
+            "decimal_separator": ",",
+            "thousands_separator": " "
+        },
+        "de_DE": {
+            "decimal_separator": ",",
+            "thousands_separator": "."
+        },
+        "es_ES": {
+            "decimal_separator": ",",
+            "thousands_separator": "."
+        }
+    }
+}

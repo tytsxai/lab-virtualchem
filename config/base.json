@@ -1,0 +1,50 @@
+{
+    "app": {
+        "name": "VirtualChemLab",
+        "version": "2.0.0",
+        "environment": "development",
+        "debug": false,
+        "host": "127.0.0.1",
+        "port": 8000
+    },
+    "paths": {
+        "templates": "assets/templates",
+        "knowledge": "assets/knowledge",
+        "i18n": "assets/i18n",
+        "user_data": "user_data",
+        "reports": "reports",
+        "logs": "logs",
+        "data": "data",
+        "backups": "backups"
+    },
+    "database": {
+        "type": "sqlite",
+        "path": "data/virtualchemlab.db",
+        "url": "sqlite:///data/virtualchemlab.db",
+        "pool_size": 10,
+        "pool_max_overflow": 20
+    },
+    "security": {
+        "password_min_length": 8,
+        "session_timeout": 3600
+    },
+    "cache": {
+        "enabled": true,
+        "type": "memory",
+        "max_size": 500,
+        "ttl": 300
+    },
+    "performance": {
+        "cache_enabled": true,
+        "cache_type": "memory",
+        "cache_ttl": 300,
+        "max_workers": 4,
+        "request_timeout": 30
+    },
+    "monitoring": {
+        "enabled": true,
+        "metrics_enabled": true,
+        "health_check_interval": 60,
+        "log_level": "INFO"
+    }
+}

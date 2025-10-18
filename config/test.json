@@ -1,0 +1,16 @@
+{
+    "app": {
+        "environment": "test",
+        "debug": true
+    },
+    "database": {
+        "path": "test_data/",
+        "backup_enabled": false
+    },
+    "monitoring": {
+        "log_level": "ERROR"
+    },
+    "performance": {
+        "cache_enabled": false
+    }
+}

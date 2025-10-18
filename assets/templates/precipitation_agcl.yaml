@@ -1,0 +1,192 @@
+experiment:
+  id: "EXP-PRECIPITATION-001"
+  title: "沉淀溶解平衡实验 - AgCl的生成与溶解"
+  title_en: "Precipitation Equilibrium - AgCl Formation and Dissolution"
+  level: "intermediate"
+  duration_min: 45
+
+  goals:
+    - name: "观察沉淀生成"
+      metric: "precipitation_observed"
+      eq: 1
+    - name: "验证溶解平衡"
+      metric: "equilibrium_verified"
+      eq: 1
+    - name: "计算Ksp误差小于20%"
+      metric: "ksp_error_percent"
+      lte: 20
+
+  reagents:
+    - id: "agno3"
+      name: "硝酸银溶液(AgNO₃, 0.01M)"
+      amount: "20mL"
+      hazard_level: "warning"
+    - id: "nacl"
+      name: "氯化钠溶液(NaCl, 0.01M)"
+      amount: "20mL"
+      hazard_level: "info"
+    - id: "nh3_solution"
+      name: "氨水(NH₃·H₂O, 2M)"
+      amount: "适量"
+      hazard_level: "warning"
+    - id: "hno3"
+      name: "硝酸(HNO₃, 2M)"
+      amount: "适量"
+      hazard_level: "severe"
+
+  steps:
+    - id: "understand_ksp"
+      text: "理解溶度积原理：AgCl ⇌ Ag⁺ + Cl⁻，Ksp = [Ag⁺][Cl⁻] = 1.8×10⁻¹⁰(25°C)"
+      check:
+        type: "confirm"
+        fail_hint: "理解Ksp是沉淀平衡实验的基础"
+
+    - id: "prepare_test_tubes"
+      text: "准备3支洁净试管，分别标记为A、B、C"
+      check:
+        type: "confirm"
+        fail_hint: "试管必须洁净，避免杂质干扰"
+
+    - id: "mix_solutions_a"
+      text: "试管A：加入5mL AgNO₃溶液，再滴加NaCl溶液至出现白色沉淀"
+      check:
+        type: "input"
+        input:
+          key: "nacl_drops_a"
+          label: "记录滴加NaCl的滴数"
+          input_type: "int"
+          range: [3, 10]
+          unit: "滴"
+        fail_hint: "应观察到明显白色沉淀(AgCl)"
+      hints:
+        - text: "AgCl为白色沉淀，不溶于水和稀酸"
+          trigger: "True"
+
+    - id: "observe_precipitation"
+      text: "观察并确认白色沉淀的生成"
+      check:
+        type: "select"
+        input:
+          key: "precipitation_observed"
+          label: "是否观察到白色沉淀？"
+          options:
+            - value: 1
+              label: "是，观察到白色沉淀"
+              correct: true
+            - value: 0
+              label: "否，未观察到沉淀"
+              correct: false
+        fail_hint: "AgCl应该生成白色沉淀"
+
+    - id: "test_with_nh3"
+      text: "试管B：取部分A管沉淀，加入2M氨水，观察沉淀溶解（生成[Ag(NH₃)₂]⁺配离子）"
+      check:
+        type: "select"
+        input:
+          key: "dissolve_in_nh3"
+          label: "加氨水后沉淀是否溶解？"
+          options:
+            - value: "yes"
+              label: "溶解，溶液变澄清"
+              correct: true
+            - value: "no"
+              label: "不溶解"
+              correct: false
+        fail_hint: "AgCl能溶于氨水，生成配合物[Ag(NH₃)₂]⁺"
+
+    - id: "re_precipitate"
+      text: "向B管溶液中滴加硝酸，观察沉淀重新生成"
+      check:
+        type: "select"
+        input:
+          key: "re_precipitation"
+          label: "加硝酸后是否重新生成沉淀？"
+          options:
+            - value: "yes"
+              label: "是，重新出现白色沉淀"
+              correct: true
+            - value: "no"
+              label: "否，仍然澄清"
+              correct: false
+        fail_hint: "酸破坏配合物，AgCl重新沉淀"
+
+    - id: "verify_equilibrium"
+      text: "根据沉淀的生成、溶解、再生成，验证沉淀溶解平衡的可逆性"
+      check:
+        type: "input"
+        input:
+          key: "equilibrium_verified"
+          label: "平衡可逆性已验证？(1=是, 0=否)"
+          input_type: "int"
+          range: [0, 1]
+          unit: ""
+        fail_hint: "溶解平衡是可逆的"
+
+    - id: "calculate_ion_product"
+      text: "试管C：混合等体积(10mL)的AgNO₃和NaCl，计算离子积Qc=[Ag⁺][Cl⁻]"
+      check:
+        type: "input"
+        input:
+          key: "ion_product"
+          label: "计算离子积Qc (×10⁻⁵)"
+          input_type: "float"
+          range: [2.0, 3.0]
+          tolerance: 0.3
+          unit: "×10⁻⁵"
+        fail_hint: "混合后浓度均为0.005M，Qc = 0.005×0.005 = 2.5×10⁻⁵"
+
+    - id: "compare_ksp"
+      text: "比较Qc与Ksp(1.8×10⁻¹⁰)，判断是否生成沉淀"
+      check:
+        type: "select"
+        input:
+          key: "precipitation_prediction"
+          label: "根据Qc > Ksp，应该："
+          options:
+            - value: "precipitate"
+              label: "生成沉淀"
+              correct: true
+            - value: "no_precipitate"
+              label: "不生成沉淀"
+              correct: false
+        fail_hint: "Qc(2.5×10⁻⁵) >> Ksp(1.8×10⁻¹⁰)，应生成沉淀"
+
+    - id: "calculate_error"
+      text: "实验测得Ksp约为2.0×10⁻¹⁰，计算与理论值的相对误差"
+      check:
+        type: "input"
+        input:
+          key: "ksp_error_percent"
+          label: "相对误差(%)"
+          input_type: "float"
+          range: [0, 25]
+          unit: "%"
+        fail_hint: "相对误差 = |实验值-理论值|/理论值 × 100%"
+
+    - id: "waste_disposal"
+      text: "将含银废液倒入指定回收瓶，不得倒入水槽"
+      check:
+        type: "confirm"
+        fail_hint: "银离子属于重金属，必须回收处理"
+      hints:
+        - text: "含银废液必须回收，避免环境污染和资源浪费"
+          trigger: "True"
+
+  score:
+    rules:
+      - when: "precipitation_observed == 1"
+        then: 15
+      - when: "dissolve_in_nh3 == 'yes'"
+        then: 15
+      - when: "re_precipitation == 'yes'"
+        then: 15
+      - when: "equilibrium_verified == 1"
+        then: 15
+      - when: "precipitation_prediction == 'precipitate'"
+        then: 15
+      - when: "ksp_error_percent <= 15"
+        then: 15
+      - when: "ksp_error_percent <= 20"
+        then: 10
+      - when: "abs(ion_product - 2.5) <= 0.3"
+        then: 10

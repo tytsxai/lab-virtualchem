@@ -1,0 +1,92 @@
+experiment:
+  id: "EXP-RECRYSTALLIZATION-002"
+  title: "简单重结晶实验"
+  title_en: "Simple Recrystallization Experiment"
+  level: "basic"
+  duration_min: 30
+
+  goals:
+    - name: "完成实验"
+      metric: "completion"
+      gte: 75
+
+  objectives:
+    - 掌握重结晶的基本原理
+    - 学会选择合适的溶剂
+    - 理解温度对溶解度的影响
+
+  apparatus:
+    - id: beaker_100ml
+      name: 100ml烧杯
+      required: true
+    - id: hot_plate
+      name: 加热板
+      required: true
+    - id: funnel
+      name: 漏斗
+      required: true
+    - id: filter_paper
+      name: 滤纸
+      required: true
+
+  reagents:
+    - id: crude_sample
+      name: 粗产物
+      amount: "5.0 g"
+      hazard_level: "info"
+    - id: water
+      name: 水
+      amount: "50.0 mL"
+      hazard_level: "info"
+    - id: ethanol
+      name: 乙醇
+      amount: "0 mL"
+      hazard_level: "warning"
+
+  steps:
+    - id: step_1
+      text: "选择合适的重结晶溶剂"
+      check:
+        type: "select"
+        options:
+          - value: "water"
+            label: "水"
+            correct: true
+          - value: "ethanol"
+            label: "乙醇"
+            correct: false
+        fail_hint: "根据溶质性质选择溶剂。提示：水是该化合物的良好重结晶溶剂"
+      safety_level: "info"
+
+    - id: step_2
+      text: "将粗产物加入烧杯，加30mL水并加热至80°C使其完全溶解"
+      check:
+        type: "confirm"
+        fail_hint: "加热时注意防止暴沸"
+      safety_level: "warning"
+
+    - id: step_3
+      text: "趁热过滤除去不溶物"
+      check:
+        type: "confirm"
+        fail_hint: "热过滤可以防止溶质提前析出"
+      safety_level: "warning"
+
+    - id: step_4
+      text: "将滤液冷却至室温，静置10分钟"
+      check:
+        type: "confirm"
+        fail_hint: "慢速冷却有利于得到较大晶体"
+      safety_level: "info"
+
+    - id: step_5
+      text: "过滤收集结晶产物"
+      check:
+        type: "confirm"
+        fail_hint: "用少量冷溶剂洗涤晶体"
+      safety_level: "info"
+
+  safety_notes:
+    - 加热时注意防止液体暴沸
+    - 热过滤时小心烫伤
+    - 使用加热设备时保持通风

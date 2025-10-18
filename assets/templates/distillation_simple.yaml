@@ -1,0 +1,153 @@
+experiment:
+  id: "EXP-DISTILLATION-001"
+  title: "简单蒸馏实验 - 乙醇水溶液分离"
+  title_en: "Simple Distillation - Ethanol-Water Separation"
+  level: "basic"
+  duration_min: 50
+
+  goals:
+    - name: "获得高纯度馏分"
+      metric: "purity_percent"
+      gte: 90
+    - name: "控制加热温度"
+      metric: "max_temp"
+      lte: 85
+
+  reagents:
+    - id: "ethanol_water"
+      name: "乙醇水溶液(40%)"
+      amount: "50mL"
+      hazard_level: "warning"
+    - id: "boiling_stones"
+      name: "沸石"
+      amount: "2-3粒"
+      hazard_level: "info"
+
+  steps:
+    - id: "check_apparatus"
+      text: "检查蒸馏装置：确认蒸馏烧瓶、冷凝管、接收瓶连接正确，温度计位置在蒸馏烧瓶支管口处"
+      check:
+        type: "confirm"
+        fail_hint: "装置连接不正确可能导致危险或实验失败"
+
+    - id: "add_sample"
+      text: "将50mL乙醇水溶液加入蒸馏烧瓶，加入2-3粒沸石防止暴沸"
+      check:
+        type: "confirm"
+        fail_hint: "未加沸石会导致液体暴沸"
+      hints:
+        - text: "沸石必须在加热前加入，否则会引起剧烈沸腾"
+          trigger: "True"
+
+    - id: "check_cooling"
+      text: "开启冷凝水，确保水流方向为下进上出"
+      check:
+        type: "select"
+        input:
+          key: "water_flow"
+          label: "选择正确的冷凝水方向"
+          options:
+            - value: "bottom_to_top"
+              label: "下进上出"
+              correct: true
+            - value: "top_to_bottom"
+              label: "上进下出"
+              correct: false
+        fail_hint: "冷凝水应该下进上出，确保冷凝效果"
+
+    - id: "start_heating"
+      text: "开始加热，使用电热套或水浴加热，控制加热速度"
+      check:
+        type: "confirm"
+        fail_hint: "加热速度过快会导致馏分不纯"
+
+    - id: "monitor_temp"
+      text: "当温度计读数升至78-80°C时，开始收集第一馏分"
+      check:
+        type: "input"
+        input:
+          key: "start_temp"
+          label: "记录开始收集时的温度(°C)"
+          input_type: "float"
+          range: [75, 82]
+          tolerance: 2
+          unit: "°C"
+        fail_hint: "乙醇沸点约78°C，温度偏差过大说明加热不当"
+
+    - id: "collect_distillate"
+      text: "收集78-82°C温度范围内的馏分至接收瓶，控制蒸馏速度约1-2滴/秒"
+      check:
+        type: "input"
+        input:
+          key: "distillate_volume"
+          label: "记录收集的馏分体积(mL)"
+          input_type: "float"
+          range: [15, 25]
+          unit: "mL"
+        fail_hint: "馏分体积应在理论值附近"
+
+    - id: "record_max_temp"
+      text: "记录蒸馏过程中的最高温度"
+      check:
+        type: "input"
+        input:
+          key: "max_temp"
+          label: "记录最高温度(°C)"
+          input_type: "float"
+          range: [78, 100]
+          unit: "°C"
+        fail_hint: "温度异常可能导致馏分不纯"
+
+    - id: "stop_heating"
+      text: "当温度快速上升超过85°C时停止加热，停止收集"
+      check:
+        type: "confirm"
+        fail_hint: "温度过高会收集到水分，降低纯度"
+
+    - id: "estimate_purity"
+      text: "根据沸程判断馏分纯度（沸程越窄，纯度越高）"
+      check:
+        type: "input"
+        input:
+          key: "purity_percent"
+          label: "估算馏分纯度(%)"
+          input_type: "float"
+          range: [80, 95]
+          unit: "%"
+        fail_hint: "控制沸程在78-82°C可获得较高纯度"
+
+    - id: "cleanup"
+      text: "停止冷凝水，待装置冷却后拆卸，清洗仪器"
+      check:
+        type: "sequence"
+        require:
+          - "stop_heating"
+        fail_hint: "必须先停止加热并冷却"
+
+  curves:
+    - id: "temp_time_curve"
+      type: "temp_time"
+      params:
+        initial_temp: 25
+        target_temp: 85
+        heating_rate: 3.0
+        cooling_rate: 0.8
+      x_label: "时间 (分钟)"
+      y_label: "温度 (°C)"
+
+  score:
+    rules:
+      - when: "purity_percent >= 90"
+        then: 35
+      - when: "purity_percent >= 85 and purity_percent < 90"
+        then: 25
+      - when: "purity_percent >= 80 and purity_percent < 85"
+        then: 15
+      - when: "start_temp >= 77 and start_temp <= 80"
+        then: 20
+      - when: "max_temp <= 85"
+        then: 20
+      - when: "distillate_volume >= 18 and distillate_volume <= 22"
+        then: 15
+      - when: "water_flow == 'bottom_to_top'"
+        then: 10

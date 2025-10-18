@@ -1,0 +1,97 @@
+[MASTER]
+# 使用多个进程加速pylint
+jobs=4
+
+# Python代码文件扩展名
+py-version=3.10
+
+# 忽略的文件或目录模式
+ignore=CVS,.git,__pycache__,build,dist,*.egg-info,archive,htmlcov,coverage_reports,temp
+
+# 使用的插件
+load-plugins=
+
+[MESSAGES CONTROL]
+# 禁用的检查
+disable=
+    C0111,  # missing-docstring (文档字符串可选)
+    C0103,  # invalid-name
+    C0301,  # line-too-long (由ruff处理)
+    C0305,  # trailing-newlines
+    C0415,  # import-outside-toplevel (有些是必需的)
+    E0611,  # no-name-in-module (PySide6动态加载问题)
+    E1101,  # no-member (动态属性问题)
+    R0801,  # duplicate-code
+    R0902,  # too-many-instance-attributes
+    R0903,  # too-few-public-methods
+    R0913,  # too-many-arguments
+    R0914,  # too-many-locals
+    R0915,  # too-many-statements
+    R0917,  # too-many-positional-arguments
+    W0105,  # pointless-string-statement
+    W0201,  # attribute-defined-outside-init (Qt UI组件常见模式)
+    W0511,  # fixme (TODO注释)
+    W0603,  # global-statement (某些情况下必需)
+    W0611,  # unused-import (由ruff处理)
+    W0613,  # unused-argument (接口实现需要)
+    W0621,  # redefined-outer-name (测试文件常见)
+    W0622,  # redefined-builtin
+    W0718,  # broad-exception-caught (将单独处理)
+    W1203,  # logging-fstring-interpolation (将单独处理)
+
+[REPORTS]
+# 简化输出
+output-format=text
+reports=yes
+score=yes
+
+[BASIC]
+# 变量命名风格 (兼容Qt的camelCase)
+argument-naming-style=any
+attr-naming-style=any
+class-attribute-naming-style=any
+class-naming-style=PascalCase
+const-naming-style=any
+function-naming-style=any
+method-naming-style=any
+module-naming-style=snake_case
+variable-naming-style=any
+
+[FORMAT]
+# 最大行长度
+max-line-length=120
+
+# 每个文件最大行数
+max-module-lines=2000
+
+[DESIGN]
+# 每个类最大属性数
+max-attributes=15
+
+# 每个函数最大参数数
+max-args=10
+
+# 最大分支数
+max-branches=15
+
+# 最大返回语句数
+max-returns=8
+
+[SIMILARITIES]
+# 最小相似代码行数
+min-similarity-lines=10
+
+[TYPECHECK]
+# 忽略的模块
+ignored-modules=PySide6,PyQt6,matplotlib
+
+# 忽略的类
+ignored-classes=PySide6,PyQt6,matplotlib
+
+[IMPORTS]
+# 允许通配符导入的模块
+allow-wildcard-with-all=no
+
+[EXCEPTIONS]
+# 可以捕获的异常
+overgeneral-exceptions=BaseException,Exception

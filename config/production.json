@@ -1,0 +1,21 @@
+{
+    "app": {
+        "environment": "production",
+        "debug": false
+    },
+    "monitoring": {
+        "log_level": "WARNING"
+    },
+    "performance": {
+        "cache_enabled": true,
+        "cache_type": "redis",
+        "max_workers": 8
+    },
+    "security": {
+        "password_min_length": 12,
+        "session_timeout": 1800
+    },
+    "developer": {
+        "enabled": false
+    }
+}

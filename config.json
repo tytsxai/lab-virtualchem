@@ -1,0 +1,129 @@
+{
+    "app": {
+        "name": "VirtualChemLab",
+        "version": "2.0.0",
+        "debug": false,
+        "environment": "production",
+        "language": "zh_CN"
+    },
+    "paths": {
+        "templates": "assets/templates",
+        "knowledge": "assets/knowledge",
+        "i18n": "assets/i18n",
+        "user_data": "user_data",
+        "reports": "reports"
+    },
+    "database": {
+        "type": "sqlite",
+        "path": "data/virtualchemlab.db",
+        "url": "sqlite:///data/virtualchemlab.db",
+        "pool_size": 10,
+        "pool_max_overflow": 20
+    },
+    "redis": {
+        "enabled": false,
+        "host": "localhost",
+        "port": 6379,
+        "db": 0
+    },
+    "cache": {
+        "enabled": true,
+        "default_ttl": 300,
+        "max_size": 1000,
+        "backend": "memory"
+    },
+    "monitoring": {
+        "enabled": true,
+        "performance_tracking": true,
+        "error_tracking": true,
+        "health_check_interval": 60
+    },
+    "storage": {
+        "type": "file",
+        "base_path": "data/storage",
+        "max_file_size": 10485760,
+        "backup_count": 5
+    },
+    "log": {
+        "level": "INFO",
+        "format": "[{level}] {name}: {message}",
+        "file": "logs/app.log",
+        "max_size": 10485760,
+        "backup_count": 5
+    },
+    "event_bus": {
+        "max_history": 1000,
+        "async_enabled": true
+    },
+    "middleware": {
+        "performance_threshold_ms": 1000,
+        "rate_limit": {
+            "enabled": true,
+            "max_requests": 100,
+            "time_window": 60
+        }
+    },
+    "security": {
+        "jwt_secret_key": "dev-secret-key-change-in-production-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "jwt_algorithm": "HS256",
+        "jwt_expiration": 3600,
+        "expression_timeout": 1.0,
+        "max_file_size_mb": 10,
+        "api_auth_enabled": true
+    },
+    "plugins": {
+        "enabled": [
+            "rdkit",
+            "reportlab"
+        ],
+        "auto_load": true
+    },
+    "experiment": {
+        "auto_save": true,
+        "save_interval": 60,
+        "max_undo_steps": 50,
+        "enable_hints": true,
+        "allow_skip_steps": false
+    },
+    "reporting": {
+        "format": "html",
+        "include_charts": true,
+        "include_data": true
+    },
+    "features": {
+        "experiment_management": true,
+        "data_analysis": true,
+        "report_generation": true,
+        "user_collaboration": false,
+        "mistake_book": true
+    },
+    "ui": {
+        "theme": "system",
+        "language": "zh-CN",
+        "dpi_scaling": "auto",
+        "font_size": 12,
+        "window_width": 1200,
+        "window_height": 800
+    },
+    "developer": {
+        "enabled": true,
+        "key_hash": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8$default_salt",
+        "session_timeout_hours": 24,
+        "enabled_features": [
+            "debug_console",
+            "log_viewer",
+            "performance_monitor",
+            "config_editor",
+            "database_viewer",
+            "api_tester"
+        ],
+        "secret_sequences": [
+            "DEVMODE",
+            "DEVELOPER",
+            "DEBUG",
+            "CONSOLE"
+        ],
+        "max_login_attempts": 5,
+        "lockout_duration_minutes": 15
+    }
+}

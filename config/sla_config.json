@@ -1,0 +1,235 @@
+{
+    "sla": {
+        "version": "1.0.0",
+        "effective_date": "2025-10-06",
+        "service_name": "VirtualChemLab",
+        "availability": {
+            "target_uptime_percentage": 99.5,
+            "measurement_window": "monthly",
+            "allowed_downtime_minutes_per_month": 216,
+            "maintenance_windows": {
+                "scheduled": "每月第一个周日 02:00-06:00 UTC+8",
+                "advance_notice_days": 7
+            },
+            "high_availability": {
+                "enabled": false,
+                "redundancy_type": "active-passive",
+                "failover_time_seconds": 60
+            }
+        },
+        "performance_slo": {
+            "response_time": {
+                "api_requests": {
+                    "p50_ms": 100,
+                    "p95_ms": 200,
+                    "p99_ms": 500,
+                    "max_ms": 2000
+                },
+                "ui_operations": {
+                    "page_load_ms": 1000,
+                    "render_ms": 100,
+                    "interaction_response_ms": 50
+                },
+                "database_queries": {
+                    "simple_query_ms": 50,
+                    "complex_query_ms": 500,
+                    "batch_operation_ms": 2000
+                }
+            },
+            "throughput": {
+                "concurrent_users": {
+                    "target": 100,
+                    "max": 500,
+                    "sustained": 300
+                },
+                "requests_per_second": {
+                    "min": 50,
+                    "target": 100,
+                    "max": 500
+                },
+                "experiments_per_hour": {
+                    "target": 1000,
+                    "peak": 2000
+                }
+            },
+            "resource_limits": {
+                "cpu_usage_percent": {
+                    "normal": 50,
+                    "warning": 70,
+                    "critical": 85,
+                    "max": 95
+                },
+                "memory_usage": {
+                    "normal_mb": 256,
+                    "warning_mb": 384,
+                    "critical_mb": 512,
+                    "max_mb": 768
+                },
+                "disk_io": {
+                    "read_mbps": 100,
+                    "write_mbps": 50,
+                    "iops": 1000
+                },
+                "network": {
+                    "bandwidth_mbps": 100,
+                    "max_connections": 1000
+                }
+            },
+            "latency_budget": {
+                "frontend_to_backend_ms": 10,
+                "backend_processing_ms": 150,
+                "database_access_ms": 30,
+                "external_api_ms": 100,
+                "total_request_ms": 300
+            }
+        },
+        "capacity_planning": {
+            "current_capacity": {
+                "max_concurrent_users": 100,
+                "max_experiments_per_day": 10000,
+                "storage_gb": 100,
+                "data_retention_days": 365
+            },
+            "growth_projections": {
+                "monthly_user_growth_percent": 10,
+                "annual_review_required": true
+            },
+            "scaling_triggers": {
+                "cpu_threshold_percent": 70,
+                "memory_threshold_percent": 75,
+                "storage_threshold_percent": 80,
+                "response_time_degradation_percent": 20
+            },
+            "resource_buffers": {
+                "cpu_buffer_percent": 30,
+                "memory_buffer_percent": 25,
+                "storage_buffer_percent": 40
+            }
+        },
+        "reliability": {
+            "error_rate": {
+                "target_percentage": 0.1,
+                "warning_percentage": 1.0,
+                "critical_percentage": 5.0
+            },
+            "success_rate": {
+                "target_percentage": 99.9,
+                "warning_percentage": 99.0,
+                "critical_percentage": 95.0
+            },
+            "data_integrity": {
+                "backup_frequency_hours": 24,
+                "backup_retention_days": 30,
+                "checksum_validation": true,
+                "corruption_tolerance": 0
+            },
+            "recovery": {
+                "rto_minutes": 30,
+                "rpo_minutes": 60,
+                "backup_tested_monthly": true
+            }
+        },
+        "compatibility": {
+            "supported_platforms": {
+                "windows": [
+                    "10",
+                    "11",
+                    "Server 2019",
+                    "Server 2022"
+                ],
+                "linux": [
+                    "Ubuntu 20.04+",
+                    "CentOS 7+",
+                    "Debian 10+"
+                ],
+                "macos": [
+                    "10.15+",
+                    "11.0+",
+                    "12.0+"
+                ]
+            },
+            "python_versions": [
+                "3.10",
+                "3.11",
+                "3.12"
+            ],
+            "browser_support": {
+                "chrome": "90+",
+                "firefox": "88+",
+                "edge": "90+",
+                "safari": "14+"
+            },
+            "screen_resolutions": {
+                "minimum": "1024x768",
+                "recommended": "1920x1080",
+                "supported_dpi": [
+                    96,
+                    120,
+                    144,
+                    192
+                ]
+            }
+        },
+        "monitoring_requirements": {
+            "metrics_collection_interval_seconds": 60,
+            "log_retention_days": 30,
+            "trace_sampling_rate": 1.0,
+            "alerting": {
+                "critical_response_minutes": 15,
+                "high_response_minutes": 60,
+                "medium_response_hours": 4,
+                "low_response_hours": 24
+            },
+            "health_checks": {
+                "interval_seconds": 60,
+                "timeout_seconds": 10,
+                "failure_threshold": 3,
+                "success_threshold": 2
+            }
+        },
+        "degraded_mode": {
+            "enabled": true,
+            "triggers": {
+                "high_load": true,
+                "resource_exhaustion": true,
+                "dependency_failure": true
+            },
+            "limitations": {
+                "disable_non_essential_features": true,
+                "reduce_data_retention": true,
+                "throttle_requests": true,
+                "simplified_ui": false
+            },
+            "recovery": {
+                "auto_recovery": true,
+                "recovery_threshold_minutes": 10,
+                "manual_override": true
+            }
+        },
+        "sla_credits": {
+            "enabled": false,
+            "uptime_ranges": [
+                {
+                    "min_percent": 99.5,
+                    "max_percent": 100,
+                    "credit_percent": 0
+                },
+                {
+                    "min_percent": 99.0,
+                    "max_percent": 99.5,
+                    "credit_percent": 10
+                },
+                {
+                    "min_percent": 95.0,
+                    "max_percent": 99.0,
+                    "credit_percent": 25
+                },
+                {
+                    "min_percent": 0,
+                    "max_percent": 95.0,
+                    "credit_percent": 50
+                }
+            ]
+        }
+    }
+}

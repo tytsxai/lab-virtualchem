@@ -1,0 +1,41 @@
+# VirtualChemLab 性能优化依赖
+
+# ===== 必需依赖 =====
+
+# 系统监控
+psutil>=5.9.0
+
+# ===== 可选依赖 =====
+
+# Redis缓存 (推荐用于生产环境)
+redis>=5.0.0
+
+# 性能分析工具 (开发调试用)
+# memory-profiler>=0.61.0
+# py-spy>=0.3.14
+
+# ===== 说明 =====
+#
+# 基础功能 (无需Redis):
+# - 懒加载
+# - 虚拟列表
+# - 请求合并
+# - 性能监控
+# - BFF层
+#
+# 高级功能 (需要Redis):
+# - 分布式缓存
+# - 跨进程缓存共享
+# - 缓存集群
+#
+# 安装方式:
+#
+# 1. 仅安装必需依赖:
+#    pip install -r requirements-performance.txt
+#
+# 2. 安装完整依赖(包括Redis):
+#    pip install -r requirements-performance.txt redis
+#
+# 3. 安装开发调试工具:
+#    pip install memory-profiler py-spy
+

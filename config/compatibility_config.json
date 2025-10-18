@@ -1,0 +1,414 @@
+{
+    "compatibility": {
+        "version": "1.0.0",
+        "last_updated": "2025-10-06",
+        "platform_support": {
+            "operating_systems": {
+                "windows": {
+                    "supported_versions": [
+                        "10",
+                        "11",
+                        "Server 2019",
+                        "Server 2022"
+                    ],
+                    "minimum_version": "10",
+                    "architectures": [
+                        "x86_64",
+                        "ARM64"
+                    ],
+                    "special_requirements": {
+                        "vcredist": "Microsoft Visual C++ 2015-2022 Redistributable",
+                        "dotnet": "Optional: .NET Framework 4.8+"
+                    }
+                },
+                "linux": {
+                    "supported_distributions": {
+                        "ubuntu": [
+                            "20.04",
+                            "22.04",
+                            "23.04"
+                        ],
+                        "debian": [
+                            "10",
+                            "11",
+                            "12"
+                        ],
+                        "centos": [
+                            "7",
+                            "8",
+                            "9"
+                        ],
+                        "rhel": [
+                            "7",
+                            "8",
+                            "9"
+                        ],
+                        "fedora": [
+                            "35",
+                            "36",
+                            "37",
+                            "38"
+                        ]
+                    },
+                    "architectures": [
+                        "x86_64",
+                        "ARM64"
+                    ],
+                    "special_requirements": {
+                        "glibc": "2.27+",
+                        "libxcb": "required for GUI",
+                        "libxkbcommon": "required for GUI"
+                    }
+                },
+                "macos": {
+                    "supported_versions": [
+                        "10.15",
+                        "11.0",
+                        "12.0",
+                        "13.0",
+                        "14.0"
+                    ],
+                    "minimum_version": "10.15",
+                    "architectures": [
+                        "x86_64",
+                        "ARM64"
+                    ],
+                    "special_requirements": {
+                        "xcode": "Command Line Tools recommended"
+                    }
+                }
+            },
+            "python_compatibility": {
+                "supported_versions": [
+                    "3.10",
+                    "3.11",
+                    "3.12"
+                ],
+                "recommended_version": "3.11",
+                "minimum_version": "3.10.0",
+                "api_compatibility": {
+                    "breaking_changes_policy": "semantic_versioning",
+                    "deprecation_notice_versions": 2,
+                    "minimum_supported_api_version": "1.0.0"
+                }
+            },
+            "hardware_requirements": {
+                "minimum": {
+                    "cpu_cores": 2,
+                    "cpu_frequency_ghz": 2.0,
+                    "ram_gb": 4,
+                    "storage_gb": 10,
+                    "screen_resolution": "1024x768"
+                },
+                "recommended": {
+                    "cpu_cores": 4,
+                    "cpu_frequency_ghz": 2.5,
+                    "ram_gb": 8,
+                    "storage_gb": 20,
+                    "screen_resolution": "1920x1080"
+                },
+                "optimal": {
+                    "cpu_cores": 8,
+                    "cpu_frequency_ghz": 3.0,
+                    "ram_gb": 16,
+                    "storage_gb": 50,
+                    "screen_resolution": "2560x1440"
+                }
+            }
+        },
+        "ui_compatibility": {
+            "frameworks": {
+                "qt": {
+                    "library": "PySide6",
+                    "minimum_version": "6.6.0",
+                    "tested_versions": [
+                        "6.6.0",
+                        "6.6.1",
+                        "6.7.0"
+                    ]
+                }
+            },
+            "display": {
+                "minimum_resolution": "1024x768",
+                "recommended_resolution": "1920x1080",
+                "supported_aspect_ratios": [
+                    "16:9",
+                    "16:10",
+                    "4:3"
+                ],
+                "dpi_scaling": {
+                    "supported": true,
+                    "tested_scales": [
+                        100,
+                        125,
+                        150,
+                        175,
+                        200
+                    ],
+                    "auto_detection": true
+                },
+                "color_depth": {
+                    "minimum_bits": 24,
+                    "hdr_support": false
+                }
+            },
+            "themes": {
+                "light_mode": true,
+                "dark_mode": true,
+                "high_contrast": true,
+                "custom_themes": true,
+                "system_theme_detection": true
+            },
+            "accessibility": {
+                "screen_reader_support": true,
+                "keyboard_navigation": true,
+                "high_contrast_mode": true,
+                "font_scaling": true,
+                "color_blind_modes": [
+                    "deuteranopia",
+                    "protanopia",
+                    "tritanopia"
+                ]
+            },
+            "touch_support": {
+                "enabled": true,
+                "minimum_touch_points": 1,
+                "gesture_support": true,
+                "tablet_mode": true
+            }
+        },
+        "data_compatibility": {
+            "file_formats": {
+                "supported_read": [
+                    ".json",
+                    ".yaml",
+                    ".yml",
+                    ".csv",
+                    ".txt"
+                ],
+                "supported_write": [
+                    ".json",
+                    ".yaml",
+                    ".csv",
+                    ".txt",
+                    ".pdf"
+                ],
+                "version_compatibility": {
+                    "backward_compatible_versions": 2,
+                    "forward_compatible": false,
+                    "auto_migration": true
+                }
+            },
+            "encoding": {
+                "default": "UTF-8",
+                "supported": [
+                    "UTF-8",
+                    "UTF-16",
+                    "GBK",
+                    "GB2312"
+                ],
+                "auto_detection": true
+            },
+            "data_migration": {
+                "enabled": true,
+                "auto_backup": true,
+                "rollback_support": true,
+                "validation": true
+            }
+        },
+        "api_compatibility": {
+            "rest_api": {
+                "version": "1.0",
+                "versioning_strategy": "url_path",
+                "backward_compatible_versions": [
+                    "1.0"
+                ],
+                "deprecation_policy": {
+                    "notice_period_months": 6,
+                    "supported_old_versions": 2,
+                    "sunset_warnings": true
+                }
+            },
+            "event_protocol": {
+                "version": "1.0",
+                "backward_compatible": true,
+                "schema_validation": true
+            }
+        },
+        "dependency_compatibility": {
+            "python_packages": {
+                "pyside6": {
+                    "min_version": "6.6.0",
+                    "max_version": "6.7.99",
+                    "tested": [
+                        "6.6.0",
+                        "6.6.1",
+                        "6.7.0"
+                    ]
+                },
+                "numpy": {
+                    "min_version": "1.24.0",
+                    "max_version": "1.26.99",
+                    "tested": [
+                        "1.24.0",
+                        "1.26.0"
+                    ]
+                },
+                "pydantic": {
+                    "min_version": "2.5.0",
+                    "max_version": "2.99.99",
+                    "tested": [
+                        "2.5.0",
+                        "2.6.0"
+                    ]
+                },
+                "pyyaml": {
+                    "min_version": "6.0.0",
+                    "max_version": "6.99.99",
+                    "tested": [
+                        "6.0.1"
+                    ]
+                }
+            },
+            "system_libraries": {
+                "windows": [
+                    "vcredist140.dll"
+                ],
+                "linux": [
+                    "libxcb.so",
+                    "libxkbcommon.so"
+                ],
+                "macos": []
+            },
+            "optional_dependencies": {
+                "matplotlib": {
+                    "purpose": "图表绘制",
+                    "min_version": "3.7.0",
+                    "graceful_fallback": true
+                },
+                "reportlab": {
+                    "purpose": "PDF报告生成",
+                    "min_version": "4.0.0",
+                    "graceful_fallback": true
+                },
+                "psutil": {
+                    "purpose": "系统监控",
+                    "min_version": "5.9.0",
+                    "graceful_fallback": true
+                },
+                "redis": {
+                    "purpose": "分布式缓存",
+                    "min_version": "4.5.0",
+                    "graceful_fallback": true
+                }
+            }
+        },
+        "network_compatibility": {
+            "protocols": {
+                "http": [
+                    "1.1",
+                    "2.0"
+                ],
+                "websocket": [
+                    "13"
+                ],
+                "tcp": true,
+                "udp": false
+            },
+            "proxy_support": {
+                "http_proxy": true,
+                "https_proxy": true,
+                "socks_proxy": false,
+                "pac_file": false
+            },
+            "ssl_tls": {
+                "minimum_version": "TLS 1.2",
+                "recommended_version": "TLS 1.3",
+                "certificate_validation": true
+            }
+        },
+        "internationalization": {
+            "languages": {
+                "supported": [
+                    "zh_CN",
+                    "en_US"
+                ],
+                "default": "zh_CN",
+                "fallback": "en_US"
+            },
+            "localization": {
+                "date_format": "locale_aware",
+                "number_format": "locale_aware",
+                "currency_format": "locale_aware",
+                "timezone_support": true
+            },
+            "text_encoding": {
+                "default": "UTF-8",
+                "rtl_support": false,
+                "emoji_support": true
+            }
+        },
+        "backward_compatibility": {
+            "config_files": {
+                "auto_migration": true,
+                "version_detection": true,
+                "backup_old_config": true
+            },
+            "database_schema": {
+                "migration_scripts": true,
+                "rollback_support": true,
+                "version_tracking": true
+            },
+            "api_endpoints": {
+                "deprecated_warning": true,
+                "sunset_period_months": 6,
+                "redirect_to_new": true
+            }
+        },
+        "testing_matrix": {
+            "continuous_integration": {
+                "platforms": [
+                    "ubuntu-latest",
+                    "windows-latest",
+                    "macos-latest"
+                ],
+                "python_versions": [
+                    "3.10",
+                    "3.11",
+                    "3.12"
+                ],
+                "qt_versions": [
+                    "6.6.0",
+                    "6.7.0"
+                ]
+            },
+            "compatibility_tests": {
+                "cross_platform": true,
+                "cross_version": true,
+                "upgrade_downgrade": true,
+                "data_migration": true
+            }
+        },
+        "known_issues": {
+            "platform_specific": {
+                "windows_7": {
+                    "status": "unsupported",
+                    "reason": "Python 3.10+ requires Windows 10+",
+                    "workaround": "使用 Python 3.9 和旧版本"
+                },
+                "macos_catalina": {
+                    "status": "limited",
+                    "reason": "部分UI功能可能不稳定",
+                    "workaround": "升级到 Big Sur 或更高版本"
+                }
+            },
+            "dependency_conflicts": {
+                "pydantic_v1": {
+                    "status": "deprecated",
+                    "migration_guide": "docs/MIGRATION_PYDANTIC_V2.md",
+                    "auto_migration": false
+                }
+            }
+        }
+    }
+}

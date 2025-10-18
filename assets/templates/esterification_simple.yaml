@@ -1,0 +1,90 @@
+experiment:
+  id: "EXP-ESTERIFICATION-002"
+  title: "简单酯化反应"
+  title_en: "Simple Esterification Reaction"
+  level: "basic"
+  duration_min: 40
+
+  goals:
+    - name: "完成实验"
+      metric: "completion"
+      gte: 80
+
+  objectives:
+    - 理解酯化反应机理
+    - 掌握回流操作技术
+    - 学习产物分离提纯
+
+  apparatus:
+    - id: round_flask
+      name: 圆底烧瓶
+      required: true
+    - id: reflux_condenser
+      name: 回流冷凝管
+      required: true
+    - id: hot_plate
+      name: 加热板
+      required: true
+    - id: separatory_funnel
+      name: 分液漏斗
+      required: true
+
+  reagents:
+    - id: acetic_acid
+      name: 乙酸
+      amount: "10.0 mL"
+      hazard_level: "warning"
+    - id: ethanol
+      name: 乙醇
+      amount: "15.0 mL"
+      hazard_level: "warning"
+    - id: sulfuric_acid
+      name: 浓硫酸
+      amount: "2.0 mL"
+      hazard_level: "danger"
+    - id: sodium_carbonate
+      name: 碳酸钠溶液
+      amount: "50.0 mL"
+      hazard_level: "info"
+
+  steps:
+    - id: step_1
+      text: "准备反应混合物：在圆底烧瓶中按顺序加入乙酸、乙醇和浓硫酸"
+      check:
+        type: "confirm"
+        fail_hint: "加入浓硫酸时要特别小心"
+      safety_level: "danger"
+
+    - id: step_2
+      text: "安装回流冷凝管，确保连接紧密"
+      check:
+        type: "confirm"
+        fail_hint: "检查冷凝水循环是否正常"
+      safety_level: "info"
+
+    - id: step_3
+      text: "加热回流30分钟，温度控制在80°C"
+      check:
+        type: "confirm"
+        fail_hint: "保持温度稳定很重要"
+      safety_level: "warning"
+
+    - id: step_4
+      text: "用碳酸钠溶液中和反应液"
+      check:
+        type: "confirm"
+        fail_hint: "中和反应会放热，注意安全"
+      safety_level: "warning"
+
+    - id: step_5
+      text: "分离有机层，收集产物"
+      check:
+        type: "confirm"
+        fail_hint: "静置分层后再进行分液"
+      safety_level: "info"
+
+  safety_notes:
+    - 浓硫酸具有强腐蚀性，小心操作
+    - 回流时注意冷凝水循环
+    - 分液时注意放气
+    - 反应混合物易燃，远离明火

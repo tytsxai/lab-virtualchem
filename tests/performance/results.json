@@ -1,0 +1,10 @@
+{
+  "startup_time": 0.0541682243347168,
+  "memory_usage_mb": 40.078125,
+  "avg_template_load_ms": 0.0005066394805908203,
+  "avg_curve_gen_ms": 5.254586537679036,
+  "controller_init_ms": 0.301361083984375,
+  "storage_save_ms": 10.29360294342041,
+  "storage_query_ms": 9.242534637451172,
+  "storage_search_ms": 0.5407333374023438
+}

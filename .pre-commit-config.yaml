@@ -1,0 +1,154 @@
+# Pre-commit hooks configuration for VirtualChemLab
+# See https://pre-commit.com for more information
+
+default_language_version:
+  python: python3.10
+
+repos:
+  # 通用检查
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      # 文件检查
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      
+      # 代码检查
+      - id: check-ast
+      - id: check-builtin-literals
+      - id: check-docstring-first
+      - id: debug-statements
+      
+      # 文件格式
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+      
+      # 安全检查
+      - id: detect-private-key
+      
+      # Python 特定
+      - id: fix-byte-order-marker
+      - id: name-tests-test
+        args: ['--pytest-test-first']
+
+  # Python 代码格式化 - Ruff (替代 Black + isort + flake8)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.9
+    hooks:
+      # 代码检查
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      # 代码格式化
+      - id: ruff-format
+
+  # 类型检查 - MyPy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        args: [--ignore-missing-imports, --check-untyped-defs]
+        additional_dependencies:
+          - types-PyYAML
+          - types-requests
+          - types-jsonschema
+
+  # 安全检查 - Bandit
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.6
+    hooks:
+      - id: bandit
+        args: ['-c', 'pyproject.toml']
+        additional_dependencies: ['bandit[toml]']
+
+  # 依赖安全检查
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
+    rev: v1.3.3
+    hooks:
+      - id: python-safety-dependencies-check
+        files: requirements.*\.txt$
+
+  # YAML 格式化
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        types_or: [yaml, json, markdown]
+        exclude: ^CHANGELOG\.md$
+
+  # 提交信息检查
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.13.0
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+  # 文档检查
+  - repo: https://github.com/pycqa/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        args: [--convention=google]
+        exclude: ^(tests|examples)/
+
+  # Git 提交检查
+  - repo: https://github.com/jorisroovers/gitlint
+    rev: v0.19.1
+    hooks:
+      - id: gitlint
+        stages: [commit-msg]
+
+  # 敏感信息检查
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: package.lock.json
+
+# 本地 hooks (项目特定)
+  - repo: local
+    hooks:
+      # 检查版本号一致性
+      - id: check-version-consistency
+        name: Check version consistency
+        entry: python scripts/check_version.py
+        language: system
+        pass_filenames: false
+        always_run: false
+        files: ^(pyproject\.toml|src/__init__\.py)$
+      
+      # 运行快速测试
+      - id: pytest-quick
+        name: Run quick tests
+        entry: pytest tests/unit -v --tb=short
+        language: system
+        pass_filenames: false
+        stages: [push]
+      
+      # 检查 TODO/FIXME
+      - id: check-todos
+        name: Check for unresolved TODOs
+        entry: sh -c 'if git diff --cached --name-only | xargs grep -nE "TODO\(urgent\)|FIXME\(critical\)"; then echo "Found critical TODOs/FIXMEs"; exit 1; fi'
+        language: system
+        pass_filenames: false
+
+# CI 配置
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit hooks
+    
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: 'develop'
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: [pytest-quick, check-version-consistency]
+  submodules: false

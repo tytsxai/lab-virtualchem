@@ -1,0 +1,258 @@
+# 简单交互式酸碱滴定实验模板
+experiment:
+  id: "EXP-SIMPLE-TITRATION-001"
+  title: "简单酸碱滴定实验 - HCl滴定NaOH"
+  title_en: "Simple Acid-Base Titration (HCl titrates NaOH)"
+  level: "basic"
+  duration_min: 30
+
+  # 交互式模式配置
+  metadata:
+    interactive_mode: true
+    scene_config:
+      width: 1000
+      height: 700
+      background_color: "#f0f8ff"
+
+      # 可拖拽物品
+      draggable_items:
+        - id: "burette"
+          type: "burette"
+          position: [150, 100]
+          size: [60, 200]
+          image: "burette.png"
+
+        - id: "beaker_250ml"
+          type: "beaker"
+          position: [400, 350]
+          size: [100, 120]
+          image: "beaker.png"
+
+        - id: "pipette_10ml"
+          type: "pipette"
+          position: [600, 100]
+          size: [40, 150]
+          image: "pipette.png"
+
+      # 可点击物品（试剂瓶）
+      clickable_items:
+        - id: "hcl_bottle"
+          type: "reagent"
+          position: [50, 50]
+          size: [60, 80]
+          image: "reagent_bottle.png"
+
+        - id: "naoh_bottle"
+          type: "reagent"
+          position: [150, 50]
+          size: [60, 80]
+          image: "reagent_bottle.png"
+
+        - id: "phenolphthalein_bottle"
+          type: "indicator"
+          position: [250, 50]
+          size: [50, 70]
+          image: "indicator_bottle.png"
+
+        - id: "distilled_water_bottle"
+          type: "reagent"
+          position: [350, 50]
+          size: [60, 80]
+          image: "reagent_bottle.png"
+
+      # 放置区域
+      drop_zones:
+        - id: "work_area"
+          rect: [350, 300, 300, 250]
+          accepted_types: ["beaker"]
+
+        - id: "titration_stand"
+          rect: [120, 150, 120, 200]
+          accepted_types: ["burette"]
+
+        - id: "pipette_area"
+          rect: [550, 200, 150, 100]
+          accepted_types: ["pipette"]
+
+  goals:
+    - name: "滴定终点误差(mL)"
+      metric: "endpoint_error_ml"
+      lte: 1.0
+
+  reagents:
+    - id: "hcl_solution"
+      name: "盐酸溶液(0.1 mol/L)"
+      amount: "50 mL"
+      hazard_level: "warning"
+      color: "#ffffff"
+      ph: 1.0
+
+    - id: "naoh_solution"
+      name: "氢氧化钠溶液(0.1 mol/L)"
+      amount: "25 mL"
+      hazard_level: "warning"
+      color: "#ffffff"
+      ph: 13.0
+
+    - id: "phenolphthalein"
+      name: "酚酞指示剂"
+      amount: "2-3滴"
+      hazard_level: "info"
+      color: "#ffffff"
+      ph_range: [8.2, 10.0]
+
+    - id: "distilled_water"
+      name: "蒸馏水"
+      amount: "100 mL"
+      hazard_level: "info"
+      color: "#ffffff"
+      ph: 7.0
+
+  steps:
+    - id: "setup_equipment"
+      text: "准备实验器材：将滴定管固定在滴定架上，将烧杯放在工作区域"
+      check:
+        type: "confirm"
+        interactive_check:
+          type: "combined"
+          actions:
+            - {type: "drop", item_id: "burette", zone_id: "titration_stand"}
+            - {type: "drop", item_id: "beaker_250ml", zone_id: "work_area"}
+        fail_hint: "请将滴定管放在滴定架上，烧杯放在工作区域"
+      safety_level: "info"
+
+    - id: "wash_burette"
+      text: "洗涤滴定管：用蒸馏水洗涤，再用HCl溶液润洗2-3次"
+      check:
+        type: "confirm"
+        interactive_check:
+          type: "sequence"
+          required_sequence:
+            - "click:distilled_water_bottle"
+            - "click:hcl_bottle"
+            - "click:hcl_bottle"
+            - "click:hcl_bottle"
+        fail_hint: "润洗步骤很重要，能减少误差"
+      hints:
+        - text: "润洗时应让溶液充分接触管壁"
+      safety_level: "info"
+
+    - id: "fill_burette"
+      text: "装液：将HCl溶液装入滴定管，排除气泡，调整液面至0刻度"
+      check:
+        type: "confirm"
+        interactive_check:
+          type: "click"
+          item_id: "hcl_bottle"
+          required_times: 1
+        fail_hint: "气泡会影响读数准确性"
+      hints:
+        - text: "快速打开活塞排除尖嘴处的气泡"
+      safety_level: "info"
+
+    - id: "record_initial_volume"
+      text: "记录滴定管初始读数(mL)"
+      check:
+        type: "input"
+        input:
+          key: "initial_volume"
+          label: "初始读数"
+          input_type: "float"
+          range: [0, 50]
+          unit: "mL"
+        fail_hint: "读数应在0-50mL范围内"
+      safety_level: "info"
+
+    - id: "prepare_naoh_solution"
+      text: "准备NaOH溶液：用移液管准确移取25.00 mL NaOH溶液于烧杯中"
+      check:
+        type: "confirm"
+        interactive_check:
+          type: "combined"
+          actions:
+            - {type: "drop", item_id: "pipette_10ml", zone_id: "pipette_area"}
+            - {type: "click", item_id: "naoh_bottle", required_times: 1}
+        fail_hint: "移液管需要润洗，移取要准确"
+      hints:
+        - text: "移液管也需要润洗"
+        - text: "读数时眼睛应与凹液面最低处保持水平"
+      safety_level: "info"
+
+    - id: "add_indicator"
+      text: "加入指示剂：向NaOH溶液中加入2-3滴酚酞指示剂"
+      check:
+        type: "confirm"
+        interactive_check:
+          type: "click"
+          item_id: "phenolphthalein_bottle"
+          required_times: 1
+        fail_hint: "酚酞在碱性溶液中呈粉红色"
+      hints:
+        - text: "酚酞在pH>8.2时呈粉红色"
+      safety_level: "info"
+
+    - id: "start_titration"
+      text: "开始滴定：左手控制活塞，右手摇动烧杯，边滴边摇"
+      check:
+        type: "confirm"
+        interactive_check:
+          type: "click"
+          item_id: "hcl_bottle"
+          required_times: 1
+        fail_hint: "滴定过程中要边滴边摇"
+      hints:
+        - text: "眼睛注视烧杯中溶液颜色变化"
+        - text: "当粉红色消失时，即为终点"
+      safety_level: "info"
+
+    - id: "record_final_volume"
+      text: "记录滴定管终点读数(mL)"
+      check:
+        type: "input"
+        input:
+          key: "final_volume"
+          label: "终点读数"
+          input_type: "float"
+          range: [20, 50]
+          unit: "mL"
+        fail_hint: "终点读数应大于初始读数"
+      safety_level: "info"
+
+    - id: "calculate_result"
+      text: "计算消耗的HCl溶液体积"
+      check:
+        type: "input"
+        input:
+          key: "consumed_volume"
+          label: "消耗体积"
+          input_type: "float"
+          range: [20, 30]
+          unit: "mL"
+        correct_value: 25.0
+        fail_hint: "理论值应接近25.00 mL"
+      safety_level: "info"
+
+  curves:
+    - id: "ph_curve"
+      type: "titration_ph"
+      params:
+        acid_type: "strong"
+        acid_M: 0.1
+        acid_V_ml: 25.0
+        base_M: 0.1
+      x_label: "HCl体积"
+      y_label: "pH"
+      x_unit: "mL"
+      y_unit: ""
+
+  score_rules:
+    - when: "abs(consumed_volume - 25.0) <= 1.0"
+      then: 50
+    - when: "all_steps_passed"
+      then: 30
+    - when: "no_safety_warning"
+      then: 10
+    - when: "abs(consumed_volume - 25.0) <= 0.5"
+      then: 10
+
+  version: "1.0.0"
