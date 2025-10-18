@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 class DatabaseManager:
     """数据库管理器
-    
+
     特性：
     - 连接池管理
     - 事务支持
@@ -33,7 +33,7 @@ class DatabaseManager:
     - 性能优化
     - 错误处理
     """
-    
+
     def __init__(
         self,
         db_path: str = 'data/virtualchemlab.db',
@@ -42,7 +42,7 @@ class DatabaseManager:
         max_overflow: int = 20
     ):
         """初始化数据库管理器
-        
+
         Args:
             db_path: 数据库文件路径
             echo: 是否输出SQL语句
@@ -51,7 +51,7 @@ class DatabaseManager:
         """
         # 确保目录存在
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
-        
+
         # 创建引擎
         db_url = f'sqlite:///{db_path}'
         self.engine = create_engine(
@@ -63,22 +63,22 @@ class DatabaseManager:
             pool_pre_ping=True,  # 连接池预检测
             connect_args={'check_same_thread': False}  # SQLite多线程支持
         )
-        
+
         # 创建会话工厂
         self.SessionLocal = sessionmaker(
             autocommit=False,
             autoflush=False,
             bind=self.engine
         )
-        
+
         # 创建所有表
         Base.metadata.create_all(bind=self.engine)
-        
+
         # 初始化数据库版本
         self._init_database_version()
-        
+
         logger.info(f"数据库管理器初始化完成: {db_path}")
-    
+
     def _init_database_version(self):
         """初始化数据库版本"""
         with self.get_session() as session:
@@ -91,11 +91,11 @@ class DatabaseManager:
                 session.add(version)
                 session.commit()
                 logger.info("数据库版本已初始化: 3.0.0")
-    
+
     @contextmanager
     def get_session(self) -> Session:
         """获取数据库会话（上下文管理器）
-        
+
         使用示例：
             with db.get_session() as session:
                 user = session.query(User).first()
@@ -110,11 +110,11 @@ class DatabaseManager:
             raise
         finally:
             session.close()
-    
+
     # ========================================================================
     # 用户操作
     # ========================================================================
-    
+
     def create_user(
         self,
         user_id: str,
@@ -124,14 +124,14 @@ class DatabaseManager:
         preferences: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """创建用户
-        
+
         Args:
             user_id: 用户ID
             username: 用户名
             email: 邮箱
             role: 角色
             preferences: 偏好设置
-            
+
         Returns:
             用户数据字典
         """
@@ -146,7 +146,7 @@ class DatabaseManager:
             session.add(user)
             session.commit()
             session.refresh(user)
-            
+
             # 转换为字典避免分离问题
             user_dict = {
                 'id': user.id,
@@ -157,16 +157,16 @@ class DatabaseManager:
                 'preferences': user.preferences,
                 'created_at': user.created_at
             }
-            
+
             logger.info(f"创建用户: {user_id}")
             return user_dict
-    
+
     def get_user(self, user_id: str) -> Optional[Dict[str, Any]]:
         """获取用户
-        
+
         Args:
             user_id: 用户ID
-            
+
         Returns:
             用户数据字典或None
         """
@@ -174,7 +174,7 @@ class DatabaseManager:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
                 return None
-            
+
             return {
                 'id': user.id,
                 'user_id': user.user_id,
@@ -184,14 +184,14 @@ class DatabaseManager:
                 'preferences': user.preferences,
                 'created_at': user.created_at
             }
-    
+
     def update_user(self, user_id: str, **kwargs) -> bool:
         """更新用户信息
-        
+
         Args:
             user_id: 用户ID
             **kwargs: 要更新的字段
-            
+
         Returns:
             是否成功
         """
@@ -199,21 +199,21 @@ class DatabaseManager:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
                 return False
-            
+
             for key, value in kwargs.items():
                 if hasattr(user, key):
                     setattr(user, key, value)
-            
+
             session.commit()
             logger.info(f"更新用户: {user_id}")
             return True
-    
+
     def delete_user(self, user_id: str) -> bool:
         """删除用户
-        
+
         Args:
             user_id: 用户ID
-            
+
         Returns:
             是否成功
         """
@@ -221,12 +221,12 @@ class DatabaseManager:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
                 return False
-            
+
             session.delete(user)
             session.commit()
             logger.info(f"删除用户: {user_id}")
             return True
-    
+
     def list_users(
         self,
         role: Optional[str] = None,
@@ -235,26 +235,26 @@ class DatabaseManager:
         offset: int = 0
     ) -> List[Dict[str, Any]]:
         """列出用户
-        
+
         Args:
             role: 角色过滤
             is_active: 活跃状态过滤
             limit: 限制数量
             offset: 偏移量
-            
+
         Returns:
             用户数据字典列表
         """
         with self.get_session() as session:
             query = session.query(User)
-            
+
             if role:
                 query = query.filter(User.role == role)
             if is_active is not None:
                 query = query.filter(User.is_active == is_active)
-            
+
             users = query.limit(limit).offset(offset).all()
-            
+
             # 转换为字典列表
             return [{
                 'id': u.id,
@@ -265,17 +265,17 @@ class DatabaseManager:
                 'is_active': u.is_active,
                 'created_at': u.created_at
             } for u in users]
-    
+
     # ========================================================================
     # 实验记录操作
     # ========================================================================
-    
+
     def save_experiment_record(self, record: UserRecord) -> Dict[str, Any]:
         """保存实验记录
-        
+
         Args:
             record: 用户记录对象
-            
+
         Returns:
             数据库记录字典
         """
@@ -284,7 +284,7 @@ class DatabaseManager:
             existing = session.query(ExperimentRecord).filter(
                 ExperimentRecord.record_id == record.record_id
             ).first()
-            
+
             if existing:
                 # 更新
                 existing.status = record.status
@@ -299,10 +299,10 @@ class DatabaseManager:
                 existing.context = record.context
                 existing.curve_data = record.curve_data
                 existing.mistakes_summary = [m.model_dump() for m in record.mistakes_summary]
-                
+
                 session.commit()
                 session.refresh(existing)
-                
+
                 logger.debug(f"更新实验记录: {record.record_id}")
                 return existing.to_dict()
             else:
@@ -330,16 +330,16 @@ class DatabaseManager:
                 session.add(db_record)
                 session.commit()
                 session.refresh(db_record)
-                
+
                 logger.info(f"创建实验记录: {record.record_id}")
                 return db_record.to_dict()
-    
+
     def get_experiment_record(self, record_id: str) -> Optional[Dict[str, Any]]:
         """获取实验记录
-        
+
         Args:
             record_id: 记录ID
-            
+
         Returns:
             记录字典或None
         """
@@ -347,12 +347,12 @@ class DatabaseManager:
             record = session.query(ExperimentRecord).filter(
                 ExperimentRecord.record_id == record_id
             ).first()
-            
+
             if not record:
                 return None
-            
+
             return record.to_dict()
-    
+
     def list_user_experiments(
         self,
         user_id: str,
@@ -361,13 +361,13 @@ class DatabaseManager:
         offset: int = 0
     ) -> List[Dict[str, Any]]:
         """列出用户的实验记录
-        
+
         Args:
             user_id: 用户ID
             status: 状态过滤
             limit: 限制数量
             offset: 偏移量
-            
+
         Returns:
             记录字典列表
         """
@@ -375,23 +375,23 @@ class DatabaseManager:
             query = session.query(ExperimentRecord).filter(
                 ExperimentRecord.user_id == user_id
             )
-            
+
             if status:
                 query = query.filter(ExperimentRecord.status == status)
-            
+
             records = query.order_by(
                 ExperimentRecord.started_at.desc()
             ).limit(limit).offset(offset).all()
-            
+
             # 转换为字典列表
             return [r.to_dict() for r in records]
-    
+
     def delete_experiment_record(self, record_id: str) -> bool:
         """删除实验记录
-        
+
         Args:
             record_id: 记录ID
-            
+
         Returns:
             是否成功
         """
@@ -399,19 +399,19 @@ class DatabaseManager:
             record = session.query(ExperimentRecord).filter(
                 ExperimentRecord.record_id == record_id
             ).first()
-            
+
             if not record:
                 return False
-            
+
             session.delete(record)
             session.commit()
             logger.info(f"删除实验记录: {record_id}")
             return True
-    
+
     # ========================================================================
     # 模板操作
     # ========================================================================
-    
+
     def save_template(
         self,
         template_id: str,
@@ -421,14 +421,14 @@ class DatabaseManager:
         **kwargs
     ) -> Template:
         """保存模板
-        
+
         Args:
             template_id: 模板ID
             name: 模板名称
             category: 分类
             content: 模板内容
             **kwargs: 其他字段
-            
+
         Returns:
             模板对象
         """
@@ -437,7 +437,7 @@ class DatabaseManager:
             existing = session.query(Template).filter(
                 Template.template_id == template_id
             ).first()
-            
+
             if existing:
                 # 更新
                 existing.name = name
@@ -446,11 +446,11 @@ class DatabaseManager:
                 for key, value in kwargs.items():
                     if hasattr(existing, key):
                         setattr(existing, key, value)
-                
+
                 session.commit()
                 session.refresh(existing)
                 session.expunge(existing)
-                
+
                 logger.debug(f"更新模板: {template_id}")
                 return existing
             else:
@@ -466,20 +466,20 @@ class DatabaseManager:
                 session.commit()
                 session.refresh(template)
                 session.expunge(template)
-                
+
                 logger.info(f"创建模板: {template_id}")
                 return template
-    
+
     def get_template(self, template_id: str) -> Optional[Dict[str, Any]]:
         """获取模板"""
         with self.get_session() as session:
             template = session.query(Template).filter(
                 Template.template_id == template_id
             ).first()
-            
+
             if not template:
                 return None
-            
+
             return {
                 'template_id': template.template_id,
                 'name': template.name,
@@ -488,7 +488,7 @@ class DatabaseManager:
                 'difficulty': template.difficulty,
                 'version': template.version
             }
-    
+
     def list_templates(
         self,
         category: Optional[str] = None,
@@ -498,14 +498,14 @@ class DatabaseManager:
         """列出模板"""
         with self.get_session() as session:
             query = session.query(Template)
-            
+
             if category:
                 query = query.filter(Template.category == category)
             if difficulty:
                 query = query.filter(Template.difficulty == difficulty)
-            
+
             templates = query.order_by(Template.usage_count.desc()).limit(limit).all()
-            
+
             return [{
                 'template_id': t.template_id,
                 'name': t.name,
@@ -513,11 +513,11 @@ class DatabaseManager:
                 'difficulty': t.difficulty,
                 'usage_count': t.usage_count
             } for t in templates]
-    
+
     # ========================================================================
     # 配置操作
     # ========================================================================
-    
+
     def set_config(
         self,
         key: str,
@@ -544,12 +544,12 @@ class DatabaseManager:
             else:
                 value_type = 'string'
                 value_str = str(value)
-            
+
             # 检查是否已存在
             existing = session.query(Configuration).filter(
                 Configuration.key == key
             ).first()
-            
+
             if existing:
                 existing.value = value_str
                 existing.value_type = value_type
@@ -564,64 +564,64 @@ class DatabaseManager:
                     description=description
                 )
                 session.add(existing)
-            
+
             session.commit()
             session.refresh(existing)
             session.expunge(existing)
-            
+
             return existing
-    
+
     def get_config(self, key: str, default: Any = None) -> Any:
         """获取配置"""
         with self.get_session() as session:
             config = session.query(Configuration).filter(
                 Configuration.key == key
             ).first()
-            
+
             if not config:
                 return default
-            
+
             return config.get_value()
-    
+
     def get_configs_by_category(self, category: str) -> Dict[str, Any]:
         """获取某分类的所有配置"""
         with self.get_session() as session:
             configs = session.query(Configuration).filter(
                 Configuration.category == category
             ).all()
-            
+
             return {c.key: c.get_value() for c in configs}
-    
+
     # ========================================================================
     # 统计和分析
     # ========================================================================
-    
+
     def get_user_stats(self, user_id: str) -> Dict[str, Any]:
         """获取用户统计信息"""
         with self.get_session() as session:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
                 return {}
-            
+
             # 统计实验记录
             total_experiments = session.query(func.count(ExperimentRecord.id)).filter(
                 ExperimentRecord.user_id == user_id
             ).scalar()
-            
+
             completed_experiments = session.query(func.count(ExperimentRecord.id)).filter(
                 and_(
                     ExperimentRecord.user_id == user_id,
                     ExperimentRecord.status == 'completed'
                 )
             ).scalar()
-            
+
             avg_score = session.query(func.avg(ExperimentRecord.total_score)).filter(
                 and_(
                     ExperimentRecord.user_id == user_id,
                     ExperimentRecord.status == 'completed'
                 )
             ).scalar() or 0.0
-            
+
             return {
                 'user_id': user_id,
                 'username': user.username,
@@ -631,20 +631,20 @@ class DatabaseManager:
                 'created_at': user.created_at.isoformat(),
                 'last_login': user.last_login.isoformat() if user.last_login else None
             }
-    
+
     def get_experiment_statistics(self) -> Dict[str, Any]:
         """获取实验统计信息"""
         with self.get_session() as session:
             total_records = session.query(func.count(ExperimentRecord.id)).scalar()
-            
+
             completed_records = session.query(func.count(ExperimentRecord.id)).filter(
                 ExperimentRecord.status == 'completed'
             ).scalar()
-            
+
             avg_score = session.query(func.avg(ExperimentRecord.total_score)).filter(
                 ExperimentRecord.status == 'completed'
             ).scalar() or 0.0
-            
+
             # 最受欢迎的实验
             popular_experiments = session.query(
                 ExperimentRecord.experiment_id,
@@ -652,7 +652,7 @@ class DatabaseManager:
             ).group_by(ExperimentRecord.experiment_id).order_by(
                 func.count(ExperimentRecord.id).desc()
             ).limit(10).all()
-            
+
             return {
                 'total_records': total_records,
                 'completed_records': completed_records,
@@ -663,17 +663,17 @@ class DatabaseManager:
                     for exp_id, count in popular_experiments
                 ]
             }
-    
+
     # ========================================================================
     # 批量操作
     # ========================================================================
-    
+
     def bulk_save_experiments(self, records: List[UserRecord]) -> int:
         """批量保存实验记录
-        
+
         Args:
             records: 记录列表
-            
+
         Returns:
             保存的数量
         """
@@ -705,16 +705,16 @@ class DatabaseManager:
                     count += 1
                 except Exception as e:
                     logger.error(f"保存记录失败 {record.record_id}: {e}")
-            
+
             session.commit()
             logger.info(f"批量保存 {count} 条实验记录")
-        
+
         return count
-    
+
     # ========================================================================
     # 实用方法
     # ========================================================================
-    
+
     def close(self):
         """关闭数据库连接"""
         try:
@@ -722,12 +722,11 @@ class DatabaseManager:
             logger.info("数据库连接已关闭")
         except Exception as e:
             logger.error(f"关闭数据库连接失败: {e}")
-    
+
     def __enter__(self):
         """上下文管理器"""
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """上下文管理器退出"""
         self.close()
-
