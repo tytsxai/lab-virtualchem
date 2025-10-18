@@ -40,11 +40,11 @@ def _strong_acid_strong_base_titration_numba(
     V_eq: float,
 ) -> np.ndarray:
     """强酸-强碱滴定pH计算（Numba加速）
-    
+
     性能提升：约50-100倍
     """
     pH = np.zeros_like(V)
-    
+
     for i in range(len(V)):
         v = V[i]
         if v < V_eq * 0.001:
@@ -66,7 +66,7 @@ def _strong_acid_strong_base_titration_numba(
             OH_concentration = n_base_excess / V_total
             pOH = -np.log10(max(OH_concentration, 1e-14))
             pH[i] = 14 - pOH
-    
+
     return pH
 
 
@@ -80,12 +80,12 @@ def _weak_acid_strong_base_titration_numba(
     pKa: float,
 ) -> np.ndarray:
     """弱酸-强碱滴定pH计算（Numba加速）
-    
+
     使用Henderson-Hasselbalch方程
     性能提升：约50-100倍
     """
     pH = np.zeros_like(V)
-    
+
     for i in range(len(V)):
         v = V[i]
         if v < V_eq * 0.001:
@@ -111,7 +111,7 @@ def _weak_acid_strong_base_titration_numba(
             OH_concentration = n_base_excess / V_total
             pOH = -np.log10(max(OH_concentration, 1e-14))
             pH[i] = 14 - pOH
-    
+
     return pH
 
 
@@ -125,17 +125,17 @@ def _heating_curve_numba(
     boiling_point: float
 ) -> np.ndarray:
     """加热曲线计算（Numba加速）
-    
+
     恒功率加热: T = T0 + (P*t)/(m*c)
     """
     temp = np.zeros_like(t)
-    
+
     for i in range(len(t)):
         temp[i] = initial_temp + (power_W * t[i]) / (mass_g * specific_heat)
         # 到达沸点后恒定
         if temp[i] > boiling_point:
             temp[i] = boiling_point
-    
+
     return temp
 
 
@@ -147,7 +147,7 @@ def _cooling_curve_numba(
     k: float
 ) -> np.ndarray:
     """冷却曲线计算（Numba加速）
-    
+
     牛顿冷却定律: T(t) = T_amb + (T0 - T_amb) * exp(-kt)
     """
     temp = ambient_temp + (initial_temp - ambient_temp) * np.exp(-k * t)
@@ -160,13 +160,13 @@ def _cooling_curve_numba(
 
 class CurveGenerator:
     """曲线生成器（Numba加速版本）
-    
+
     性能提升：
     - 小数据集（100点）：约10-20倍
     - 中数据集（1000点）：约50-70倍
     - 大数据集（10000点）：约80-100倍
     """
-    
+
     # pKa值数据库(来源: CRC Handbook)
     PKA_VALUES = {
         "acetic_acid": 4.76,  # 醋酸
@@ -177,14 +177,14 @@ class CurveGenerator:
         "phosphoric_acid_2": 7.20,  # 磷酸第二电离
         "phosphoric_acid_3": 12.35,  # 磷酸第三电离
     }
-    
+
     def __init__(self) -> None:
         """初始化曲线生成器"""
         if NUMBA_AVAILABLE:
             logger.info("✓ Numba加速已启用，性能提升50-100倍")
         else:
             logger.warning("⚠ Numba不可用，使用纯Python实现")
-    
+
     def generate(
         self,
         curve_type: str,
@@ -192,15 +192,15 @@ class CurveGenerator:
         num_points: int = 100
     ) -> tuple[np.ndarray, np.ndarray]:
         """生成曲线数据
-        
+
         Args:
             curve_type: 曲线类型("titration_ph" / "temp_time" / ...)
             params: 参数字典(浓度、体积、温度等)
             num_points: 采样点数
-        
+
         Returns:
             (x_data, y_data) 元组
-        
+
         Raises:
             CurveGenerationError: 曲线生成失败
         """
@@ -222,13 +222,13 @@ class CurveGenerator:
                 )
             else:
                 raise CurveGenerationError(f"不支持的曲线类型: {curve_type}")
-        
+
         except KeyError as e:
             raise CurveGenerationError(f"缺少必要参数: {e}") from e
         except Exception as e:
             logger.error(f"曲线生成失败: {e}")
             raise CurveGenerationError(f"曲线生成失败: {e}") from e
-    
+
     def generate_titration_curve(
         self,
         acid_type: str,
@@ -238,26 +238,26 @@ class CurveGenerator:
         num_points: int = 100,
     ) -> tuple[np.ndarray, np.ndarray]:
         """生成滴定曲线(pH-体积)
-        
+
         Args:
             acid_type: 酸类型("strong" / "weak" / "acetic_acid" / ...)
             acid_M: 酸浓度(mol/L)
             acid_V_ml: 酸体积(mL)
             base_M: 碱浓度(mol/L)
             num_points: 采样点数
-        
+
         Returns:
             (体积数组, pH数组)
         """
         # 计算等当点体积
         V_eq = acid_M * acid_V_ml / base_M
-        
+
         # 生成体积点(等当点附近加密)
         V_before = np.linspace(0, V_eq * 0.9, num_points // 3)
         V_near = np.linspace(V_eq * 0.9, V_eq * 1.1, num_points // 3)
         V_after = np.linspace(V_eq * 1.1, V_eq * 2, num_points // 3)
         V = np.concatenate([V_before, V_near, V_after])
-        
+
         if acid_type == "strong":
             # 强酸-强碱滴定（使用Numba加速）
             pH = _strong_acid_strong_base_titration_numba(
@@ -269,13 +269,13 @@ class CurveGenerator:
             pH = _weak_acid_strong_base_titration_numba(
                 V, acid_M, acid_V_ml, base_M, V_eq, pKa
             )
-        
+
         # 添加随机噪声(±0.05 pH)
         noise = np.random.normal(0, 0.05, size=pH.shape)
         pH = np.clip(pH + noise, 0, 14)
-        
+
         return V, pH
-    
+
     def generate_temperature_curve(
         self,
         mode: str,
@@ -284,26 +284,26 @@ class CurveGenerator:
         num_points: int = 100,
     ) -> tuple[np.ndarray, np.ndarray]:
         """生成温度曲线(温度-时间)
-        
+
         Args:
             mode: 模式("heating" / "cooling")
             initial_temp: 初始温度(°C)
             params: 参数字典
             num_points: 采样点数
-        
+
         Returns:
             (时间数组, 温度数组)
         """
         total_time = params.get("total_time_s", 600)  # 默认10分钟
         t = np.linspace(0, total_time, num_points)
-        
+
         if mode == "heating":
             # 加热曲线（使用Numba加速）
             power_W = params.get("power_W", 100)  # 加热功率
             mass_g = params.get("mass_g", 100)  # 质量
             specific_heat = params.get("specific_heat", 4.18)  # 比热容 J/(g·K)
             boiling_point = params.get("boiling_point", 100)  # 沸点
-            
+
             temp = _heating_curve_numba(
                 t, initial_temp, power_W, mass_g, specific_heat, boiling_point
             )
@@ -311,12 +311,11 @@ class CurveGenerator:
             # 冷却曲线（使用Numba加速）
             ambient_temp = params.get("ambient_temp", 25)  # 环境温度
             k = params.get("cooling_constant", 0.01)  # 冷却常数
-            
+
             temp = _cooling_curve_numba(t, initial_temp, ambient_temp, k)
-        
+
         # 添加随机噪声(±0.5°C)
         noise = np.random.normal(0, 0.5, size=temp.shape)
         temp = temp + noise
-        
-        return t, temp
 
+        return t, temp
