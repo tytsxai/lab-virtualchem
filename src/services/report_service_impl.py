@@ -332,15 +332,11 @@ class ReportServiceImpl(ReportService):
             return []
 
         try:
-            # 获取用户的所有记录
-            # 优先使用通用的 find_by 接口，如果仓储实现不支持则回退到其他方法
-            if hasattr(self.record_repository, "find_by"):
-                all_records = self.record_repository.find_by(lambda r: r.user_id == user_id)
-            elif hasattr(self.record_repository, "find"):
-                # 兼容旧版或自定义实现
+            if hasattr(self.record_repository, "find"):
                 all_records = self.record_repository.find(user_id)
+            elif hasattr(self.record_repository, "find_by"):
+                all_records = self.record_repository.find_by(lambda r: r.user_id == user_id)
             elif hasattr(self.record_repository, "find_all"):
-                # 最后退方案：获取全部记录后在内存中过滤
                 all_records = [
                     r
                     for r in self.record_repository.find_all()
@@ -349,11 +345,9 @@ class ReportServiceImpl(ReportService):
             else:
                 return []
 
-            # 日期过滤
             if start_date or end_date:
-                filtered_records = []
+                filtered_records: list[UserRecord] = []
                 for record in all_records:
-                    # 简单的日期字符串比较（假设格式为 YYYY-MM-DD）
                     record_date = record.started_at.strftime("%Y-%m-%d")
                     if start_date and record_date < start_date:
                         continue

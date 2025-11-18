@@ -153,3 +153,32 @@ class PluginServiceImpl(PluginService):
 
         except Exception:
             return False
+
+    def reload_plugin(self, plugin_name: str) -> bool:
+        """重新加载插件"""
+        try:
+            if not self.loader.reload_plugin(plugin_name):
+                return False
+
+            plugin = self.loader.get_plugin(plugin_name)
+            if not plugin:
+                return False
+
+            self.registry.unregister(plugin_name)
+            return self.registry.register(plugin)
+        except Exception:
+            return False
+
+    def find_plugins_by_capability(self, capability: str) -> list[PluginInfo]:
+        """根据能力查找插件"""
+        try:
+            plugins = self.registry.find_by_capability(capability)
+        except Exception:
+            return []
+
+        results: list[PluginInfo] = []
+        for plugin in plugins:
+            info = self.get_plugin_info(plugin.name)
+            if info:
+                results.append(info)
+        return results

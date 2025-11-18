@@ -12,12 +12,15 @@ logger = logging.getLogger(__name__)
 class ReagentDatabase:
     """试剂数据库"""
 
-    def __init__(self, knowledge_dir: Path) -> None:
+    def __init__(self, knowledge_dir: Path | None = None) -> None:
         """初始化试剂数据库
 
         Args:
-            knowledge_dir: 知识库目录
+            knowledge_dir: 知识库目录，如果为 None 则使用默认 assets/knowledge 目录
         """
+        if knowledge_dir is None:
+            knowledge_dir = Path(__file__).parent.parent.parent / "assets" / "knowledge"
+
         self.loader = KnowledgeLoader(knowledge_dir)
         self._reagents: dict[str, KnowledgeCard] = {}
         self._load_reagents()

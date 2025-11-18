@@ -14,9 +14,10 @@
 import logging
 import time
 import uuid
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, List
 
 from src.core.curve_generator import CurveGenerator
 from src.core.rule_validator import RuleValidator
@@ -71,6 +72,23 @@ class SafetyLevel(Enum):
     CRITICAL = "critical"
 
 
+@dataclass
+class StepResult:
+    """步骤提交结果（兼容 tuple 解包与属性访问）"""
+
+    is_valid: bool
+    message: str
+    mistake: Mistake | None = None
+    errors: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
+
+    def __iter__(self):
+        """支持 (passed, message, mistake) 解包，用于兼容服务层接口"""
+        yield self.is_valid
+        yield self.message
+        yield self.mistake
+
+
 class ExperimentController:
     """实验流程控制器"""
 
@@ -79,6 +97,7 @@ class ExperimentController:
         template: ExperimentTemplate,
         user_id: str,
         validator: RuleValidator | None = None,
+        storage: Any | None = None,
         curve_generator: CurveGenerator | None = None,
         enable_monitoring: bool = True,
         mode: ExperimentMode = ExperimentMode.PRACTICE,
@@ -92,6 +111,7 @@ class ExperimentController:
             template: 实验模板
             user_id: 用户ID
             validator: 规则验证器(可选)
+            storage: 实验记录存储引擎(可选, 例如 JSONStore)
             curve_generator: 曲线生成器(可选)
             enable_monitoring: 是否启用监控(默认True)
             mode: 实验模式(默认练习模式)
@@ -117,6 +137,7 @@ class ExperimentController:
         self.template = template
         self.user_id = user_id
         self.validator = validator or RuleValidator()
+        self.storage = storage
         self.curve_generator = curve_generator or CurveGenerator()
         self.mode = mode
         self.session_id = session_id or str(uuid.uuid4())
@@ -216,8 +237,11 @@ class ExperimentController:
             return self.template.steps[self.record.current_step_index]
         return None
 
-    @safe_execute(context="提交实验步骤", default_return=(False, "系统错误,请稍后重试", None))  # type: ignore[misc]
-    def submit_step(self, user_input: dict[str, Any]) -> tuple[bool, str, Mistake | None]:
+    @safe_execute(
+        context="提交实验步骤",
+        default_return=StepResult(False, "系统错误,请稍后重试", None, errors=["系统错误,请稍后重试"]),
+    )  # type: ignore[misc]
+    def submit_step(self, user_input: dict[str, Any]) -> StepResult:
         """提交步骤
 
         Args:
@@ -238,17 +262,20 @@ class ExperimentController:
         # 检查实验状态
         if self.record.status not in ["in_progress", "not_started"]:
             logger.warning(f"实验状态异常: {self.record.status}")
-            return False, f"实验当前状态({self.record.status})不允许提交步骤", None
+            msg = f"实验当前状态({self.record.status})不允许提交步骤"
+            return StepResult(False, msg, None, errors=[msg])
 
         current_step = self.get_current_step()
         if current_step is None:
             logger.error(f"无法获取当前步骤,索引: {self.record.current_step_index}")
-            return False, "没有当前步骤", None
+            msg = "没有当前步骤"
+            return StepResult(False, msg, None, errors=[msg])
 
         step_record = self.record.get_current_step_record()
         if step_record is None:
             logger.error(f"无法获取步骤记录: {current_step.id}")
-            return False, "步骤记录不存在", None
+            msg = "步骤记录不存在"
+            return StepResult(False, msg, None, errors=[msg])
 
         # 开始步骤追踪
         if self._monitoring_enabled and self._trace_context:
@@ -278,7 +305,8 @@ class ExperimentController:
             logger.error(f"步骤验证失败: {e}", exc_info=True)
             if self._monitoring_enabled and self._trace_context:
                 self._trace_manager.finish_span(step_trace_ctx, status="error")
-            return False, f"验证过程出错: {e!s}", None
+            msg = f"验证过程出错: {e!s}"
+            return StepResult(False, msg, None, errors=[msg])
 
         # 更新步骤记录
         try:
@@ -287,7 +315,8 @@ class ExperimentController:
             step_record.completed_at = datetime.now()
         except Exception as e:
             logger.error(f"更新步骤记录失败: {e}", exc_info=True)
-            return False, "保存步骤结果失败", None
+            msg = "保存步骤结果失败"
+            return StepResult(False, msg, None, errors=[msg])
 
         # 记录错误
         mistake = None
@@ -356,8 +385,16 @@ class ExperimentController:
                 step_id=current_step.id,
                 passed=str(passed),
             )
+        errors: List[str] = []
+        warnings: List[str] = []
+        if not passed and message:
+            errors.append(message)
 
-        return passed, message, mistake
+        # 成功时自动前进到下一步（符合集成测试对流程控制的期望）
+        if passed:
+            self.next_step()
+
+        return StepResult(passed, message, mistake, errors=errors, warnings=warnings)
 
     def next_step(self) -> bool:
         """前进到下一步
@@ -378,6 +415,13 @@ class ExperimentController:
         """
         if self.record.current_step_index > 0:
             self.record.current_step_index -= 1
+            return True
+        return False
+
+    def go_to_step(self, index: int) -> bool:
+        """跳转到指定步骤索引"""
+        if 0 <= index < len(self.template.steps):
+            self.record.current_step_index = index
             return True
         return False
 
@@ -562,12 +606,19 @@ class ExperimentController:
         Returns:
             进度信息字典
         """
+        total_steps = len(self.template.steps)
+        completed_steps = sum(1 for r in self.record.step_records if r.passed)
+        progress_percentage = int(self.record.completion_rate)
+
         return {
             "experiment_id": self.template.id,
             "experiment_title": self.template.title,
             "current_step": self.record.current_step_index,
-            "total_steps": len(self.template.steps),
+            "total_steps": total_steps,
             "completion_rate": self.record.completion_rate,
+            # 兼容集成测试使用的字段
+            "completed_steps": completed_steps,
+            "progress_percentage": progress_percentage,
             "total_mistakes": self.record.total_mistakes,
             "status": self.record.status,
         }
@@ -575,6 +626,20 @@ class ExperimentController:
     def get_record(self) -> UserRecord:
         """获取用户记录"""
         return self.record
+
+    @property
+    def current_step_index(self) -> int:
+        """当前步骤索引（兼容旧接口）"""
+        return self.record.current_step_index
+
+    def is_started(self) -> bool:
+        """实验是否已开始"""
+        return self.state != ExperimentState.NOT_STARTED
+
+    def is_completed(self) -> bool:
+        """实验是否已完成"""
+        # 视所有步骤通过为完成状态
+        return all(r.passed for r in self.record.step_records) if self.record.step_records else False
 
     def pause_experiment(self) -> bool:
         """暂停实验
@@ -768,12 +833,35 @@ class ExperimentController:
 
         return metrics
 
+    def get_results(self) -> list[dict[str, Any]]:
+        """获取每个步骤的结果摘要（用于报告/测试）"""
+        results: list[dict[str, Any]] = []
+
+        for step, record in zip(self.template.steps, self.record.step_records):
+            results.append(
+                {
+                    "step_id": record.step_id,
+                    "title": getattr(step, "title", record.step_id),
+                    "data": record.user_input.copy(),
+                    "is_correct": record.passed,
+                }
+            )
+
+        return results
+
     def _auto_save_state(self) -> None:
         """自动保存实验状态"""
         try:
-            # 这里可以集成到存储服务
-            # 暂时只记录日志
-            logger.debug(f"自动保存实验状态: {self.session_id}")
+            if self.storage is not None:
+                # 优先使用提供的存储引擎保存完整记录
+                save_method = getattr(self.storage, "save_record", None)
+                if callable(save_method):
+                    save_method(self.record)
+                    logger.debug(f"实验状态已保存到存储: {self.session_id}")
+                    return
+
+            # 未提供存储时，仅记录日志
+            logger.debug(f"自动保存实验状态(无外部存储): {self.session_id}")
         except Exception as e:
             logger.warning(f"自动保存失败: {e}")
 

@@ -68,6 +68,7 @@ class PluginExecuteResponse:
     message: str = ""  # 消息
     execution_time: float = 0.0  # 执行时间(秒)
     errors: list[str] = field(default_factory=list)  # 错误列表
+    error: str | None = None  # 主要错误信息(向后兼容字段)
 
 
 @dataclass
