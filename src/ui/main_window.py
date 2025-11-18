@@ -49,6 +49,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from .. import __version__ as APP_VERSION
 
 from ..core.auth import DeveloperAuth
 from ..core.di_container import DIContainer
@@ -2819,7 +2820,7 @@ class MainWindow(QMainWindow):
         QMessageBox.information(
             self,
             "检查更新",
-            "当前版本: v2.0.0\n\n"
+            f"当前版本: v{APP_VERSION}\n\n"
             "自动更新检查功能将在v2.1版本推出。\n"
             "您可以访问 https://github.com/VirtualChemLab/releases 查看最新版本。",
         )

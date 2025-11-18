@@ -14,6 +14,8 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import QueuePool
 from sqlalchemy.exc import SQLAlchemyError
 
+from .. import __version__ as APP_VERSION
+
 from ..models.database import (
     Base, User, ExperimentRecord, Template, Configuration,
     License, CacheEntry, AuditLog, DatabaseVersion
@@ -85,12 +87,12 @@ class DatabaseManager:
             version_count = session.query(DatabaseVersion).count()
             if version_count == 0:
                 version = DatabaseVersion(
-                    version='3.0.0',
+                    version=APP_VERSION,
                     description='初始化数据库'
                 )
                 session.add(version)
                 session.commit()
-                logger.info("数据库版本已初始化: 3.0.0")
+                logger.info("数据库版本已初始化: %s", APP_VERSION)
 
     @contextmanager
     def get_session(self) -> Session:

@@ -27,7 +27,7 @@ class ConfigManager:
         # 应用设置
         "app": {
             "name": "VirtualChemLab",
-            "version": "1.0.0",
+            "version": "2.0.0",
             "language": "zh_CN",
             "theme": "auto",  # auto, light, dark
         },

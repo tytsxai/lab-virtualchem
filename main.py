@@ -25,6 +25,10 @@ PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
+from src import __version__ as APP_VERSION  # noqa: E402
+
+DISPLAY_VERSION = f"v{APP_VERSION}"
+
 
 def setup_performance_optimizations() -> None:
     """配置性能优化（懒加载、Numba、对象池）"""
@@ -155,7 +159,7 @@ def main() -> int:
     """主函数"""
     print("=" * 60)
     print("VirtualChemLab - 虚拟化学实验室")
-    print("版本: v2.0.0")
+    print(f"版本: {DISPLAY_VERSION}")
     print("=" * 60)
     print()
 
@@ -191,7 +195,7 @@ def main() -> int:
         app = QApplication(sys.argv)
         app.setApplicationName("VirtualChemLab")
         app.setApplicationDisplayName("虚拟化学实验室")
-        app.setApplicationVersion("v2.0.0")
+        app.setApplicationVersion(APP_VERSION)
         app.setOrganizationName("VirtualChemLab")
 
         # 启用性能优化
@@ -226,7 +230,8 @@ def main() -> int:
             try:
                 import ctypes
 
-                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("VirtualChemLab.Desktop.2.0")
+                app_id = f"VirtualChemLab.Desktop.{APP_VERSION}"
+                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
             except Exception:
                 pass
 
@@ -244,7 +249,7 @@ def main() -> int:
         splash.set_progress(10, "正在初始化日志系统...")
 
         logger.info("=" * 60)
-        logger.info("VirtualChemLab v2.0.0 启动")
+        logger.info("VirtualChemLab %s 启动", DISPLAY_VERSION)
         logger.info("=" * 60)
 
         # 执行启动检查

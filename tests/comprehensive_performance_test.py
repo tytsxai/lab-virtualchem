@@ -6,6 +6,8 @@
 """
 
 import sys
+
+from src import __version__ as APP_VERSION
 from pathlib import Path
 import time
 import psutil
@@ -279,7 +281,7 @@ class PerformanceTestSuite:
 def main():
     """运行综合性能测试"""
     print("=" * 70)
-    print("VirtualChemLab v3.0.0 综合性能测试")
+    print(f"VirtualChemLab v{APP_VERSION} 综合性能测试")
     print("=" * 70)
 
     suite = PerformanceTestSuite()

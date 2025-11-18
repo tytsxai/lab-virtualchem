@@ -5,7 +5,7 @@
 ; ============================================================================
 
 #define MyAppName "VirtualChemLab"
-#define MyAppVersion "3.0.0"
+#define MyAppVersion "2.0.0"
 #define MyAppPublisher "VirtualChemLab Team"
 #define MyAppURL "https://virtualchemlab.com"
 #define MyAppExeName "VirtualChemLab.exe"

@@ -19,6 +19,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 import logging  # noqa: E402
+from . import __version__ as APP_VERSION  # noqa: E402
 
 from src.core.config_loader import get_config  # noqa: E402
 from src.core.service_registration import configure_container  # noqa: E402
@@ -27,6 +28,7 @@ from src.utils.logger import get_logger, setup_logger  # noqa: E402
 # 设置日志
 setup_logger("virtualchemlab", logging.INFO)
 logger = get_logger(__name__)
+DISPLAY_VERSION = f"v{APP_VERSION}"
 
 
 def main() -> int:
@@ -37,7 +39,7 @@ def main() -> int:
     """
     logger.info("=" * 60)
     logger.info("VirtualChemLab - 虚拟化学实验室")
-    logger.info("版本: v2.0.0")
+    logger.info("版本: %s", DISPLAY_VERSION)
     logger.info("=" * 60)
 
     try:
@@ -77,7 +79,7 @@ def main() -> int:
         app = QApplication(sys.argv)
         app.setApplicationName("VirtualChemLab")
         app.setApplicationDisplayName("虚拟化学实验室")
-        app.setApplicationVersion("v2.0.0")
+        app.setApplicationVersion(APP_VERSION)
         app.setOrganizationName("VirtualChemLab")
 
         # Windows任务栏图标设置
@@ -85,7 +87,8 @@ def main() -> int:
             try:
                 import ctypes
 
-                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("VirtualChemLab.Desktop.2.0")
+                app_id = f"VirtualChemLab.Desktop.{APP_VERSION}"
+                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
             except Exception:
                 pass
 

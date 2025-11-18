@@ -39,14 +39,14 @@
 
 统一的图形化开发工具管理界面，整合所有启动脚本：
 
-- ✅ **一键启动** - 双击 `开发者面板.bat` 即可
+- ✅ **一键启动** - 运行 `python tools/developer_panel.py`
 - ✅ **标签页分类** - 主应用、管理工具、许可证、开发工具、系统工具
 - ✅ **实时日志** - 所有输出实时显示，带时间戳
 - ✅ **进程管理** - 支持并行运行多个工具，一键停止
 - ✅ **功能整合** - 12+ 个启动脚本统一管理
 - ✅ **友好界面** - 现代化 GUI，操作简单直观
 
-📖 [查看完整文档](docs/DEVELOPER_PANEL.md) | [快速参考](开发者面板快速参考.md)
+📖 [查看完整文档](docs/DEVELOPER_PANEL.md)
 
 ### 🔧 系统稳定性与性能优化 (v2.0.0 新增)
 
@@ -160,6 +160,11 @@ isort src tests
 ruff check src tests --fix
 ```
 
+### 系统就绪检查与运维准备
+
+- 运行 `python scripts/readiness_check.py`，快速验证依赖、配置、安全与监控是否达标。
+- 更多上线、监控、回滚与性能调优细节见 `docs/OPERATIONS_READINESS.md`。
+
 ## 使用指南
 
 ### 快速开始
@@ -167,7 +172,7 @@ ruff check src tests --fix
 **方式1：开发者面板（推荐）✨**
 
 ```bash
-双击: 开发者面板.bat
+python tools/developer_panel.py
 ```
 
 **统一的图形化管理界面**，整合所有启动脚本和工具：
@@ -178,7 +183,7 @@ ruff check src tests --fix
 - 🛠️ 开发工具（构建、部署、测试、工具箱）
 - 🔧 系统工具（维护、诊断、流程检查）
 
-📖 [查看完整文档](docs/DEVELOPER_PANEL.md) | [快速参考](开发者面板快速参考.md)
+📖 [查看完整文档](docs/DEVELOPER_PANEL.md)
 
 **方式2：命令行启动**
 
@@ -196,7 +201,7 @@ python tools/hot_reload_launcher.py
 **方式3：许可证验证启动**
 
 ```bash
-双击: 启动带许可证验证.bat
+python -m src.main_with_license
 ```
 
 ### 基本操作

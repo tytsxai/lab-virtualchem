@@ -6,6 +6,7 @@
 import hashlib
 import hmac
 import json
+import os
 import secrets
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -36,9 +37,6 @@ class DevSession:
 class DeveloperAuth:
     """开发者模式认证管理器"""
 
-    # 默认开发者密钥 (生产环境必须修改)
-    DEFAULT_DEV_KEY = "dev_virtualchemlab_2024"
-
     def __init__(self, config_path: str = "config.json"):
         """初始化开发者认证管理器
 
@@ -51,6 +49,7 @@ class DeveloperAuth:
         self._max_attempts = 5
         self._lockout_duration = timedelta(minutes=15)
         self._lockout_until: datetime | None = None
+        self._app_environment = os.getenv("ENVIRONMENT", "development")
 
         # 加载配置
         self._load_config()
@@ -62,9 +61,11 @@ class DeveloperAuth:
                 config = json.load(f)
 
             self.dev_config = config.get("developer", {})
+            app_config = config.get("app", {})
+            self._app_environment = app_config.get("environment", self._app_environment)
 
-            # 获取开发者密钥哈希
-            self.dev_key_hash = self.dev_config.get("key_hash", "")
+            # 获取开发者密钥哈希（优先环境变量）
+            self.dev_key_hash = self._resolve_dev_key_hash()
 
             # 会话超时时间(小时)
             self.session_timeout = self.dev_config.get("session_timeout_hours", 24)
@@ -82,13 +83,37 @@ class DeveloperAuth:
                 ],
             )
 
+            if self.dev_config.get("enabled", False) and not self.dev_key_hash:
+                logger.error(
+                    "开发者模式已启用但未配置开发者密钥，已自动禁用。"
+                    "请通过环境变量 DEVELOPER_KEY_HASH 配置密钥哈希值。"
+                )
+                self.dev_config["enabled"] = False
+
         except FileNotFoundError:
             logger.warning(f"配置文件不存在: {self.config_path}, 使用默认配置")
-            self.dev_key_hash = self._hash_key(self.DEFAULT_DEV_KEY)
             self.session_timeout = 24
             self.enabled_features = ["debug_console", "log_viewer"]
+            self.dev_key_hash = ""
 
-    def _hash_key(self, key: str, salt: str = "") -> str:
+    def _resolve_dev_key_hash(self) -> str:
+        """解析开发者密钥哈希（优先使用环境变量）"""
+        env_key_hash = (os.getenv("DEVELOPER_KEY_HASH") or "").strip()
+        if env_key_hash:
+            return env_key_hash
+
+        file_key_hash = self.dev_config.get("key_hash", "") if hasattr(self, "dev_config") else ""
+        if file_key_hash:
+            logger.warning(
+                "检测到开发者密钥哈希存储在 config.json 中。"
+                "建议将其移动到环境变量 DEVELOPER_KEY_HASH，以避免敏感信息进入版本库。"
+            )
+            return file_key_hash
+
+        return ""
+
+    @staticmethod
+    def _hash_key(key: str, salt: str = "") -> str:
         """生成密钥哈希
 
         Args:
@@ -150,14 +175,15 @@ class DeveloperAuth:
             logger.warning(f"开发者模式已锁定，剩余 {remaining} 分钟")
             return False
 
-        # 验证密钥
-        is_valid = False
+        if not self.dev_key_hash:
+            logger.error(
+                "开发者密钥未配置，拒绝激活开发者模式。"
+                "请设置环境变量 DEVELOPER_KEY_HASH 或运行 tools/setup_dev_key.py 生成密钥。"
+            )
+            return False
 
-        if self.dev_key_hash:
-            is_valid = self._verify_key(dev_key, self.dev_key_hash)
-        else:
-            # 如果未配置，使用默认密钥
-            is_valid = dev_key == self.DEFAULT_DEV_KEY
+        # 验证密钥
+        is_valid = self._verify_key(dev_key, self.dev_key_hash)
 
         if is_valid:
             # 认证成功，创建会话

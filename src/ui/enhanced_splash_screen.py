@@ -9,6 +9,8 @@ from PySide6.QtCore import QPropertyAnimation, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QLinearGradient, QPainter, QPen
 from PySide6.QtWidgets import QLabel, QProgressBar, QSplashScreen, QVBoxLayout, QWidget
 
+from .. import __version__ as APP_VERSION
+
 from ..utils.logger import get_logger
 from ..utils.startup_optimizer import ProgressEstimator
 
@@ -102,7 +104,7 @@ class EnhancedSplashScreen(QSplashScreen):
         layout.addWidget(self.title_label)
 
         # 版本
-        version_label = QLabel("v2.0.0 - 虚拟化学实验室")
+        version_label = QLabel(f"v{APP_VERSION} - 虚拟化学实验室")
         version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         version_label.setFont(QFont("Arial", 10))
         version_label.setStyleSheet("color: #666;")

@@ -15,6 +15,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
+from .. import __version__ as APP_VERSION
+
 # 尝试导入额外的日志库
 try:
     import structlog  # noqa: F401
@@ -411,7 +413,7 @@ if __name__ == "__main__":
     # 3. 基础日志
     logger.info("1. 基础日志:")
     logger.info("应用程序启动")
-    logger.debug("调试信息", version="2.0.0")
+    logger.debug("调试信息", version=f"v{APP_VERSION}")
     logger.warning("这是一个警告")
 
     logger.info("\n2. 带上下文的日志:")

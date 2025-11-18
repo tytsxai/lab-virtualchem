@@ -17,6 +17,8 @@ from pathlib import Path
 from typing import Optional, Dict, Any, Callable
 from urllib.parse import urljoin
 
+from .. import __version__ as APP_VERSION
+
 try:
     import requests
     REQUESTS_AVAILABLE = True
@@ -52,7 +54,7 @@ class AutoUpdater:
 
     def __init__(
         self,
-        current_version: str = "3.0.0",
+        current_version: Optional[str] = None,
         update_url: str = "https://api.virtualchemlab.com/updates",
         check_interval: int = 86400  # 24小时
     ):
@@ -63,7 +65,7 @@ class AutoUpdater:
             update_url: 更新服务器URL
             check_interval: 检查间隔（秒）
         """
-        self.current_version = current_version
+        self.current_version = current_version or APP_VERSION
         self.update_url = update_url
         self.check_interval = check_interval
 
@@ -81,7 +83,7 @@ class AutoUpdater:
         self.temp_dir = Path(tempfile.gettempdir()) / 'virtualchemlab_updates'
         self.temp_dir.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"自动更新器初始化完成 (当前版本: {current_version})")
+        logger.info("自动更新器初始化完成 (当前版本: %s)", self.current_version)
 
     def _detect_platform(self) -> str:
         """检测平台"""

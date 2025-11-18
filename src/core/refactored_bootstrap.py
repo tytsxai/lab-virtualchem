@@ -13,6 +13,8 @@ from typing import Any, Dict, Optional
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
+from .. import __version__ as APP_VERSION
+
 from .common_exceptions import SystemError
 from .error_handler import get_error_handler, initialize_default_handlers
 from .import_manager import get_import_manager, register_lazy_module
@@ -129,7 +131,7 @@ class RefactoredBootstrap:
             self._app = QApplication(sys.argv)
             self._app.setApplicationName("VirtualChemLab")
             self._app.setApplicationDisplayName("虚拟化学实验室")
-            self._app.setApplicationVersion("2.0.0")
+            self._app.setApplicationVersion(APP_VERSION)
             self._app.setOrganizationName("VirtualChemLab")
 
             # 启用高DPI支持

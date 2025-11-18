@@ -20,9 +20,8 @@
 3. 或通过菜单：帮助 -> 开发者认证（菜单默认隐藏）
 4. 输入开发者密钥
 
-**默认开发者密钥**: `dev_virtualchemlab_2024`
-
-> ⚠️ **生产环境必须修改默认密钥！**
+> ⚠️ 在使用此方式之前，请先在环境变量中配置 `DEVELOPER_KEY_HASH`。
+> 建议使用 `tools/setup_dev_key.py` 来生成随机密钥并自动写入 `.env` 文件，避免将敏感信息保存在配置文件中。
 
 ### 方式2: 秘密按键序列
 
@@ -186,7 +185,6 @@ sys.version
 {
   "developer": {
     "enabled": true,                    // 是否启用开发者模式
-    "key_hash": "...",                  // 密钥哈希值
     "session_timeout_hours": 24,        // 会话超时时间（小时）
     "enabled_features": [               // 启用的功能列表
       "debug_console",
@@ -206,27 +204,39 @@ sys.version
 }
 ```
 
+> ✅ 开发者密钥哈希通过环境变量 `DEVELOPER_KEY_HASH` 提供。请勿在 `config.json` 中保存真实密钥或哈希值。
+
 ---
 
 ## 安全管理
 
 ### 生成新的开发者密钥
 
-使用Python脚本生成安全的开发者密钥：
+使用工具脚本生成随机密钥并写入 `.env` 文件：
+
+```bash
+python tools/setup_dev_key.py
+```
+
+> 运行后按照提示选择随机密钥或自定义密钥，并确认要写入的环境变量文件（默认 `.env`）。脚本会自动：
+> - 生成强随机密钥（或使用自定义密钥）
+> - 计算哈希并写入 `DEVELOPER_KEY_HASH`
+> - 在终端显示一次明文密钥，供您安全保存
+
+也可以手动生成：
 
 ```python
 from src.core.dev_auth import DeveloperAuth
 
-# 生成新密钥
-new_key = DeveloperAuth.setup_dev_key("config.json")
-
-print(f"新的开发者密钥: {new_key}")
-print("请妥善保存此密钥，它只会显示一次！")
+raw_key = DeveloperAuth.generate_dev_key()
+hashed = DeveloperAuth._hash_key(raw_key)
+print(raw_key)
+# 将 hashed 写入 DEVELOPER_KEY_HASH 环境变量
 ```
 
 ### 密钥安全建议
 
-1. ✅ 生产环境必须修改默认密钥
+1. ✅ 生产环境必须设置独立密钥（不要使用示例或测试密钥）
 2. ✅ 使用强密钥（32字符以上）
 3. ✅ 定期更换密钥
 4. ✅ 不要将密钥提交到版本控制
@@ -279,7 +289,7 @@ print("请妥善保存此密钥，它只会显示一次！")
 
 ### Q: 忘记开发者密钥怎么办？
 
-A: 可以直接编辑 `config.json`，删除或修改 `developer.key_hash` 字段，然后使用默认密钥 `dev_virtualchemlab_2024`。
+A: 重新生成即可。运行 `python tools/setup_dev_key.py` 生成新的随机密钥并写入 `DEVELOPER_KEY_HASH`，随后使用新的明文密钥登录。旧密钥将自动失效。
 
 ### Q: 开发者菜单不显示？
 
@@ -326,12 +336,12 @@ A: 在 `config.json` 中设置：
 
 1. **开发环境**:
    - 启用所有开发者功能
-   - 使用默认密钥或简单密钥
+   - 使用 `tools/setup_dev_key.py` 生成的测试密钥，并保存在本地 `.env`
    - 启用自动刷新和详细日志
 
 2. **测试环境**:
    - 启用开发者模式
-   - 使用中等强度密钥
+   - 使用专用测试密钥（与生产环境区分）
    - 启用性能监控
 
 3. **生产环境**:

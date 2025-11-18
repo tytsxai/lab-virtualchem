@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from .. import __version__ as APP_VERSION
+
 try:
     from fastapi import FastAPI
     from fastapi.openapi.utils import get_openapi
@@ -49,7 +51,7 @@ class APISchema:
 class APIDocumentationGenerator:
     """API文档生成器"""
 
-    def __init__(self, title: str = "VirtualChemLab API", version: str = "2.0.0"):
+    def __init__(self, title: str = "VirtualChemLab API", version: str = APP_VERSION):
         """初始化API文档生成器
 
         Args:

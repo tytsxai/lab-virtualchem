@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 """
 开发者密钥设置工具
-用于生成和设置开发者模式的访问密钥
+用于生成安全的开发者模式访问密钥，并写入 .env 文件
 """
 
+import re
 import sys
 from pathlib import Path
 
@@ -13,6 +14,52 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.core.dev_auth import DeveloperAuth  # noqa: E402
 
+ENV_VAR = "DEVELOPER_KEY_HASH"
+DEFAULT_ENV_FILE = PROJECT_ROOT / ".env"
+
+
+def _prompt_env_file() -> Path:
+    """提示用户选择要写入的环境变量文件"""
+    default = str(DEFAULT_ENV_FILE)
+    user_input = input(f"请输入要写入的环境变量文件路径 [{default}]: ").strip()
+    if not user_input:
+        return DEFAULT_ENV_FILE
+    return Path(user_input).expanduser().resolve()
+
+
+def _write_env_value(env_path: Path, key_hash: str) -> None:
+    """统一写入逻辑，保留已有注释"""
+    env_path.parent.mkdir(parents=True, exist_ok=True)
+    if not env_path.exists():
+        env_path.write_text(f"# VirtualChemLab 环境变量\n{ENV_VAR}={key_hash}\n", encoding="utf-8")
+        return
+
+    content = env_path.read_text(encoding="utf-8")
+    pattern = re.compile(rf"^{ENV_VAR}=.*$", re.MULTILINE)
+    if pattern.search(content):
+        new_content = pattern.sub(f"{ENV_VAR}={key_hash}", content)
+    else:
+        new_content = content if content.endswith("\n") else content + "\n"
+        new_content += f"{ENV_VAR}={key_hash}\n"
+
+    env_path.write_text(new_content, encoding="utf-8")
+
+
+def _handle_generated_key(key: str, env_path: Path) -> None:
+    """写入环境文件并提示用户"""
+    key_hash = DeveloperAuth._hash_key(key)
+    _write_env_value(env_path, key_hash)
+
+    print()
+    print("✅ 密钥已写入环境变量文件")
+    print(f"文件: {env_path}")
+    print(f"变量: {ENV_VAR}")
+    print()
+    print("⚠️  提示:")
+    print("  - 请妥善保存明文密钥，此处不会存储明文")
+    print("  - 如需重置，请重新运行本工具")
+    print()
+
 
 def main():
     """主函数"""
@@ -21,53 +68,36 @@ def main():
     print("=" * 60)
     print()
 
-    config_path = str(PROJECT_ROOT / "config.json")
-
-    print(f"配置文件: {config_path}")
-    print()
+    env_path = DEFAULT_ENV_FILE
 
     # 选择操作
     print("请选择操作:")
     print("1. 生成新的随机密钥")
     print("2. 使用自定义密钥")
-    print("3. 查看默认密钥")
     print("0. 退出")
     print()
 
-    choice = input("请输入选项 (0-3): ").strip()
+    choice = input("请输入选项 (0-2): ").strip()
 
     if choice == "0":
         print("已取消。")
-        return
+        return 0
 
-    elif choice == "1":
-        # 生成随机密钥
+    env_path = _prompt_env_file()
+
+    if choice == "1":
         print()
         print("正在生成随机密钥...")
+        new_key = DeveloperAuth.generate_dev_key()
+        print()
+        print("=" * 60)
+        print("新的开发者密钥:")
+        print(f"  {new_key}")
+        print("=" * 60)
+        _handle_generated_key(new_key, env_path)
+        return 0
 
-        try:
-            new_key = DeveloperAuth.setup_dev_key(config_path)
-
-            print()
-            print("✅ 成功！")
-            print()
-            print("=" * 60)
-            print("新的开发者密钥:")
-            print(f"  {new_key}")
-            print("=" * 60)
-            print()
-            print("⚠️  重要提示:")
-            print("  - 此密钥只会显示一次，请妥善保存！")
-            print("  - 密钥已保存到配置文件（加密存储）")
-            print("  - 请勿将密钥提交到版本控制系统")
-            print()
-
-        except Exception as e:
-            print(f"❌ 设置失败: {e}")
-            return 1
-
-    elif choice == "2":
-        # 自定义密钥
+    if choice == "2":
         print()
         custom_key = input("请输入自定义密钥（建议32字符以上）: ").strip()
 
@@ -78,39 +108,16 @@ def main():
         if len(custom_key) < 8:
             print("⚠️  警告: 密钥长度过短，不够安全！")
             confirm = input("是否继续？(y/n): ").strip().lower()
-            if confirm != 'y':
+            if confirm != "y":
                 print("已取消。")
-                return
+                return 1
 
-        try:
-            DeveloperAuth.setup_dev_key(config_path, custom_key)
+        _handle_generated_key(custom_key, env_path)
+        print("✅ 自定义密钥已写入环境变量文件")
+        return 0
 
-            print()
-            print("✅ 自定义密钥已设置！")
-            print()
-            print("密钥已保存到配置文件（加密存储）")
-            print()
-
-        except Exception as e:
-            print(f"❌ 设置失败: {e}")
-            return 1
-
-    elif choice == "3":
-        # 查看默认密钥
-        print()
-        print("默认开发者密钥:")
-        print(f"  {DeveloperAuth.DEFAULT_DEV_KEY}")
-        print()
-        print("⚠️  注意:")
-        print("  - 默认密钥仅用于开发和测试")
-        print("  - 生产环境必须更改为强密钥")
-        print()
-
-    else:
-        print("❌ 无效的选项！")
-        return 1
-
-    return 0
+    print("❌ 无效的选项！")
+    return 1
 
 
 if __name__ == "__main__":

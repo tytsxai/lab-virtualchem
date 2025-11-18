@@ -20,6 +20,8 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import QApplication, QWidget
 
+from .. import __version__ as APP_VERSION
+
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -330,7 +332,11 @@ class ModernSplashScreen(QWidget):
         version_font.setPointSize(8)
         painter.setFont(version_font)
         painter.setPen(QColor(120, 120, 120))
-        painter.drawText(QRect(10, self.height() - 25, self.width() - 20, 20), Qt.AlignmentFlag.AlignRight, "v2.0.0")
+        painter.drawText(
+            QRect(10, self.height() - 25, self.width() - 20, 20),
+            Qt.AlignmentFlag.AlignRight,
+            f"v{APP_VERSION}",
+        )
 
     def change_tip(self) -> None:
         """更换提示"""

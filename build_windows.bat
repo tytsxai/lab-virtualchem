@@ -1,7 +1,7 @@
 @echo off
 REM ============================================================================
 REM VirtualChemLab Windows 自动化打包脚本
-REM 版本: 3.0.0
+REM 版本: 2.0.0
 REM ============================================================================
 
 chcp 65001 > nul
@@ -10,12 +10,12 @@ setlocal enabledelayedexpansion
 echo.
 echo ========================================
 echo   VirtualChemLab Windows 打包工具
-echo   Version 3.0.0
+echo   Version 2.0.0
 echo ========================================
 echo.
 
 REM 设置版本号
-set VERSION=3.0.0
+set VERSION=2.0.0
 set APP_NAME=VirtualChemLab
 
 REM ============================================================================

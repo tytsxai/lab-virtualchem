@@ -3,7 +3,7 @@
 VirtualChemLab - 虚拟化学实验室 (优化版启动入口)
 使用智能懒加载和性能优化，启动时间减少70%
 
-版本: v3.0.0
+版本: v2.0.0
 作者: VirtualChemLab Team
 """
 
@@ -26,6 +26,10 @@ if sys.platform == "win32":
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+from src import __version__ as APP_VERSION  # noqa: E402
+
+DISPLAY_VERSION = f"v{APP_VERSION}"
 
 
 def check_critical_dependencies() -> bool:
@@ -72,7 +76,7 @@ def setup_lazy_loading():
 def main():
     """主函数"""
     print("=" * 70)
-    print("VirtualChemLab v3.0.0 - 虚拟化学实验室 (优化版)")
+    print(f"VirtualChemLab {DISPLAY_VERSION} - 虚拟化学实验室 (优化版)")
     print("=" * 70)
 
     # 1. 快速检查依赖
@@ -119,7 +123,7 @@ def main():
         # 创建应用
         app = QApplication(sys.argv)
         app.setApplicationName("VirtualChemLab")
-        app.setApplicationVersion("3.0.0")
+        app.setApplicationVersion(APP_VERSION)
 
         # 懒加载主窗口
         ui_module = loader.load('src.ui.main_window')

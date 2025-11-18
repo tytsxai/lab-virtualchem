@@ -23,12 +23,15 @@ sys.path.insert(0, str(PROJECT_ROOT))
 import asyncio  # noqa: E402
 import logging  # noqa: E402
 
+from . import __version__ as APP_VERSION  # noqa: E402
+
 from src.core.license_manager import LicenseManager  # noqa: E402
 from src.core.license_middleware import LicenseException, LicenseMiddleware  # noqa: E402
 from src.utils.config import Config  # noqa: E402
 from src.utils.logger import setup_logger  # noqa: E402
 
 logger = setup_logger("virtualchemlab", logging.INFO)
+DISPLAY_VERSION = f"v{APP_VERSION}"
 
 
 def check_license() -> bool:
@@ -139,7 +142,7 @@ def main() -> int:
     """
     logger.info("=" * 60)
     logger.info("VirtualChemLab - 虚拟化学实验室")
-    logger.info("版本: v2.0.0 (加密货币授权版)")
+    logger.info("版本: %s (加密货币授权版)", DISPLAY_VERSION)
     logger.info("=" * 60)
     logger.info("")
 

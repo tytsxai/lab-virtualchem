@@ -6,6 +6,7 @@
 import json
 import logging
 import os
+import secrets
 import threading
 from pathlib import Path
 from typing import Any, Literal
@@ -210,15 +211,16 @@ class Config(BaseModel):
         if not config_data.get("security"):
             config_data["security"] = {}
 
-        jwt_secret = os.getenv("JWT_SECRET_KEY")
+        jwt_secret = os.getenv("JWT_SECRET_KEY") or config_data["security"].get("jwt_secret_key")
         if jwt_secret:
             config_data["security"]["jwt_secret_key"] = jwt_secret
-        elif "jwt_secret_key" not in config_data["security"]:
-            # 开发环境使用默认值，生产环境抛出错误
+        else:
             env = config_data["app"]["environment"]
             if env == "production":
                 raise ValueError("生产环境必须设置 JWT_SECRET_KEY 环境变量")
-            config_data["security"]["jwt_secret_key"] = "dev-secret-key-change-in-production-" + "x" * 32
+            generated_secret = secrets.token_urlsafe(48)
+            config_data["security"]["jwt_secret_key"] = generated_secret
+            logger.warning("未配置JWT密钥，已为%s环境生成临时密钥，仅用于本次运行", env)
 
         # 开发者密钥
         dev_key = os.getenv("DEVELOPER_KEY_HASH")
@@ -296,7 +298,6 @@ class Config(BaseModel):
             "redis": {"enabled": False, "host": "localhost", "port": 6379},
             "cache": {"enabled": True, "default_ttl": 300, "max_size": 1000},
             "security": {
-                "jwt_secret_key": "dev-secret-key-change-in-production-" + "x" * 32,
                 "jwt_algorithm": "HS256",
                 "jwt_expiration": 3600,
             },

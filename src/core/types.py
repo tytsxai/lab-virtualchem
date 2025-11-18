@@ -22,6 +22,8 @@ from typing import (
     runtime_checkable,
 )
 
+from .. import __version__ as APP_VERSION
+
 # 基础类型别名
 StringDict: TypeAlias = dict[str, Any]
 Number: TypeAlias = int | float
@@ -236,7 +238,7 @@ class Constants:
     """应用常量"""
 
     # 版本信息
-    VERSION: Final[str] = "2.0.0"
+    VERSION: Final[str] = APP_VERSION
     BUILD: Final[str] = "20241201"
 
     # 默认值
