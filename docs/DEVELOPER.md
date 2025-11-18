@@ -573,7 +573,7 @@ pip install -r requirements.txt
 python scripts/setup_database.py
 
 # 启动服务
-python src/main.py
+python main.py
 ```
 
 ### 监控和调试

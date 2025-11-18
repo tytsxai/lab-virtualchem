@@ -1,6 +1,10 @@
 """
 资源管理器
 统一管理应用资源的创建和清理
+
+本模块同时提供：
+- 面向应用的 ResourceManager 类
+- 面向测试的简单函数式接口（register_resource / unregister_resource 等）
 """
 
 import atexit
@@ -11,61 +15,78 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+# 全局资源表与锁（测试直接引用）
+# _resources 的值为 (resource, cleanup_func)
+_resources: dict[str, tuple[Any, Callable[[Any | None], None]]] = {}
+_resource_lock = threading.Lock()
+
 
 class ResourceManager:
     """资源管理器 - 统一管理应用资源"""
 
     def __init__(self):
-        self._resources: dict[str, Any] = {}
-        self._cleanup_functions: list[Callable[[], None]] = []
-        self._lock = threading.RLock()
+        # 使用模块级全局结构，保证函数式接口与类共享状态
+        self._resources = _resources
+        self._lock = _resource_lock
         self._registered = False
 
-    def register_resource(self, name: str, resource: Any, cleanup_func: Callable[[], None] | None = None):
+    def register_resource(self, name: str, resource: Any, cleanup_func: Callable[[Any | None], None] | None = None) -> None:
         """注册资源
 
         Args:
-            name: 资源名称
+            name: 资源名称（非空字符串）
             resource: 资源对象
-            cleanup_func: 清理函数
+            cleanup_func: 清理函数，接受资源对象作为参数
         """
+        if not isinstance(name, str) or not name:
+            raise ValueError("资源名称不能为空")
+        if cleanup_func is None:
+            raise ValueError("清理函数不能为空")
+
         with self._lock:
-            self._resources[name] = resource
-            if cleanup_func:
-                self._cleanup_functions.append(cleanup_func)
+            # 存储为 (resource, cleanup_func) 元组，符合测试期望
+            self._resources[name] = (resource, cleanup_func)
             logger.debug(f"注册资源: {name}")
 
     def get_resource(self, name: str) -> Any | None:
-        """获取资源
-
-        Args:
-            name: 资源名称
-
-        Returns:
-            资源对象或None
-        """
+        """获取资源"""
         with self._lock:
-            return self._resources.get(name)
+            item = self._resources.get(name)
+            return item[0] if item is not None else None
 
-    def cleanup_all(self):
-        """清理所有资源"""
+    def unregister_resource(self, name: str) -> None:
+        """注销资源（不执行清理，仅移除引用）"""
+        with self._lock:
+            self._resources.pop(name, None)
+
+    def cleanup_all(self) -> None:
+        """清理所有资源（按注册的反向顺序执行清理函数）"""
         with self._lock:
             logger.info("开始清理应用资源...")
 
-            # 执行清理函数
-            for cleanup_func in self._cleanup_functions:
+            # 按注册顺序的反向执行清理
+            names = list(self._resources.keys())
+            for name in reversed(names):
+                entry = self._resources.get(name)
+                if entry is None:
+                    continue
+                resource, cleanup_func = entry
                 try:
-                    cleanup_func()
-                except Exception as e:
-                    logger.error(f"资源清理失败: {e}")
+                    # 兼容两种签名：当资源为 None 时不传参数
+                    if resource is None:
+                        cleanup_func()
+                    else:
+                        cleanup_func(resource)
+                except Exception as e:  # pragma: no cover - 防御性日志
+                    logger.error(f"资源清理失败 [{name}]: {e}")
 
-            # 清空资源
-            self._resources.clear()
-            self._cleanup_functions.clear()
+            # 只移除本次清理涉及的资源，保持清理期间新注册的资源
+            for name in names:
+                self._resources.pop(name, None)
 
             logger.info("应用资源清理完成")
 
-    def register_atexit(self):
+    def register_atexit(self) -> None:
         """注册退出时清理"""
         if not self._registered:
             atexit.register(self.cleanup_all)
@@ -82,14 +103,24 @@ def get_resource_manager() -> ResourceManager:
     return _resource_manager
 
 
-def register_resource(name: str, resource: Any, cleanup_func: Callable[[], None] | None = None):
+def register_resource(name: str, resource: Any, cleanup_func: Callable[[Any], None] | None = None) -> None:
     """注册资源（便捷函数）"""
     _resource_manager.register_resource(name, resource, cleanup_func)
 
 
-def cleanup_all_resources():
-    """清理所有资源（便捷函数）"""
+def unregister_resource(name: str) -> None:
+    """注销资源（便捷函数）"""
+    _resource_manager.unregister_resource(name)
+
+
+def cleanup_resources() -> None:
+    """清理所有资源（便捷函数，供测试使用）"""
     _resource_manager.cleanup_all()
+
+
+def cleanup_all_resources() -> None:
+    """兼容旧接口"""
+    cleanup_resources()
 
 
 # 自动注册退出时清理

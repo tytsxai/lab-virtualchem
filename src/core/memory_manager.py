@@ -1,6 +1,11 @@
 """
 内存管理器
 优化内存使用，防止内存泄漏，提供智能垃圾回收
+
+本模块在原有高阶内存管理功能基础上，增加了测试/旧版接口：
+- MemoryThreshold 枚举
+- check_interval / threshold_warning / threshold_critical 等配置
+- start_monitoring / stop_monitoring / get_current_metrics 等方法
 """
 
 import gc
@@ -12,7 +17,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 from weakref import WeakSet
 
 try:
@@ -58,6 +63,14 @@ class MemoryStrategy(str, Enum):
     MANUAL = "manual"  # 手动控制
 
 
+class MemoryThreshold(str, Enum):
+    """内存阈值枚举（测试/兼容用）"""
+
+    NORMAL = "normal"
+    WARNING = "warning"
+    CRITICAL = "critical"
+
+
 @dataclass
 class MemoryMetrics:
     """内存指标"""
@@ -67,10 +80,10 @@ class MemoryMetrics:
     vms_mb: float  # 虚拟内存
     percent: float  # 内存使用百分比
     available_mb: float  # 可用内存
-    gc_objects: int  # 垃圾回收对象数
-    weak_refs: int  # 弱引用数量
-    cache_size: int  # 缓存大小
-    fragmentation: float  # 内存碎片率
+    gc_objects: int = 0  # 垃圾回收对象数
+    weak_refs: int = 0  # 弱引用数量
+    cache_size: int = 0  # 缓存大小
+    fragmentation: float = 0.0  # 内存碎片率
 
 
 @dataclass
@@ -88,7 +101,21 @@ class MemoryLeak:
 class MemoryManager:
     """内存管理器"""
 
-    def __init__(self, strategy: MemoryStrategy = MemoryStrategy.BALANCED):
+    def __init__(
+        self,
+        strategy: MemoryStrategy = MemoryStrategy.BALANCED,
+        check_interval: float = 1.0,
+        threshold_warning: int = 70,
+        threshold_critical: int = 90,
+    ):
+        # 阈值校验（测试依赖）
+        if threshold_warning < 0 or threshold_warning > 100:
+            raise ValueError("threshold_warning 必须在 0-100 之间")
+        if threshold_critical < 0 or threshold_critical > 100:
+            raise ValueError("threshold_critical 必须在 0-100 之间")
+        if threshold_warning > threshold_critical:
+            raise ValueError("threshold_warning 不能大于 threshold_critical")
+
         self.strategy = strategy
         self.process = psutil.Process()
 
@@ -125,6 +152,18 @@ class MemoryManager:
         # 自动清理定时器
         self.cleanup_interval = 300  # 5分钟
         self.last_cleanup = time.time()
+
+        # -------- 兼容测试/旧版接口所需字段 --------
+        self.check_interval = check_interval
+        self.threshold_warning = threshold_warning
+        self.threshold_critical = threshold_critical
+
+        self.is_monitoring = False
+        self._monitor_thread: Optional[threading.Thread] = None
+        self._stop_event = threading.Event()
+        self.metrics_history: list[MemoryMetrics] = []
+        self.max_history: int = 1000
+        self._monitoring_callbacks: list[Callable[[MemoryMetrics], None]] = []
 
         # 内存泄漏检测阈值
         self.memory_growth_threshold = 50.0  # MB
@@ -254,6 +293,11 @@ class MemoryManager:
             # 更新历史记录
             self.memory_history.append(metrics)
 
+            # 同时维护兼容用的列表历史
+            self.metrics_history.append(metrics)
+            if len(self.metrics_history) > self.max_history:
+                self.metrics_history = self.metrics_history[-self.max_history :]
+
             return metrics
 
         except Exception as e:
@@ -264,10 +308,6 @@ class MemoryManager:
                 vms_mb=0.0,
                 percent=0.0,
                 available_mb=0.0,
-                gc_objects=0,
-                weak_refs=0,
-                cache_size=0,
-                fragmentation=0.0,
             )
 
     def _calculate_fragmentation(self) -> float:
@@ -618,6 +658,165 @@ class MemoryManager:
         """设置内存策略"""
         self.strategy = strategy
         logger.info(f"内存策略已更新: {strategy.value}")
+
+    # -------- 兼容测试/旧版接口的方法 --------
+
+    def start_monitoring(self) -> None:
+        """开始后台监控内存使用"""
+        if self.is_monitoring:
+            return
+
+        self.is_monitoring = True
+        self._stop_event.clear()
+
+        def _monitor_loop() -> None:
+            while not self._stop_event.is_set():
+                try:
+                    metrics = self.get_current_metrics()
+                    for callback in list(self._monitoring_callbacks):
+                        try:
+                            callback(metrics)
+                        except Exception as e:  # pragma: no cover - 防御性日志
+                            logger.debug(f"监控回调执行失败: {e}")
+                except Exception as e:  # pragma: no cover
+                    logger.debug(f"监控循环异常: {e}")
+                time.sleep(self.check_interval)
+
+        self._monitor_thread = threading.Thread(target=_monitor_loop, daemon=True)
+        self._monitor_thread.start()
+
+    def stop_monitoring(self) -> None:
+        """停止后台监控"""
+        if not self.is_monitoring:
+            return
+
+        self._stop_event.set()
+        if self._monitor_thread and self._monitor_thread.is_alive():
+            self._monitor_thread.join(timeout=1.0)
+        self.is_monitoring = False
+
+    def get_current_metrics(self) -> MemoryMetrics:
+        """获取当前内存指标（测试期望接口）"""
+        return self.get_memory_metrics()
+
+    def get_memory_usage(self) -> dict[str, Any]:
+        """获取当前内存使用情况（简化字典形式）"""
+        metrics = self.get_current_metrics()
+        return {
+            "rss_mb": metrics.rss_mb,
+            "vms_mb": metrics.vms_mb,
+            "percent": metrics.percent,
+            "available_mb": metrics.available_mb,
+            "timestamp": metrics.timestamp,
+        }
+
+    def check_memory_threshold(self) -> MemoryThreshold:
+        """根据当前使用率返回内存阈值等级"""
+        metrics = self.get_current_metrics()
+        if metrics.percent >= self.threshold_critical:
+            return MemoryThreshold.CRITICAL
+        if metrics.percent >= self.threshold_warning:
+            return MemoryThreshold.WARNING
+        return MemoryThreshold.NORMAL
+
+    def optimize_memory(self) -> dict[str, Any]:
+        """兼容方法名：调用 optimize_memory_usage"""
+        return self.optimize_memory_usage()
+
+    def force_garbage_collection(self) -> None:
+        """强制垃圾回收"""
+        self._perform_garbage_collection()
+
+    def detect_memory_leak(self) -> bool:
+        """检测内存泄漏"""
+        leaks = self._detect_memory_leaks()
+        return bool(leaks)
+
+    def get_memory_trend(self) -> dict[str, Any]:
+        """根据历史数据估算内存趋势"""
+        if len(self.metrics_history) < 2:
+            return {"direction": "stable", "rate": 0.0, "confidence": 0.0}
+
+        values = [m.rss_mb for m in self.metrics_history[-20:]]
+        deltas = [values[i] - values[i - 1] for i in range(1, len(values))]
+        avg_delta = sum(deltas) / len(deltas)
+
+        if avg_delta > 0.1:
+            direction = "increasing"
+        elif avg_delta < -0.1:
+            direction = "decreasing"
+        else:
+            direction = "stable"
+
+        rate = abs(avg_delta)
+        confidence = min(1.0, max(0.0, rate / max(values))) if max(values) > 0 else 0.0
+
+        return {"direction": direction, "rate": rate, "confidence": confidence}
+
+    def get_fragmentation_rate(self) -> float:
+        """获取碎片率（0-1 之间的浮点数，测试使用）"""
+        return max(0.0, min(1.0, self._calculate_fragmentation() / 100.0))
+
+    def get_gc_stats(self) -> dict[str, Any]:
+        """获取垃圾回收统计信息"""
+        try:
+            stats = gc.get_stats()
+            total_collections = sum(s.get("collections", 0) for s in stats)
+            total_collected = sum(s.get("collected", 0) for s in stats)
+            total_uncollectable = sum(s.get("uncollectable", 0) for s in stats)
+            return {
+                "collections": total_collections,
+                "collected": total_collected,
+                "uncollectable": total_uncollectable,
+            }
+        except Exception as e:  # pragma: no cover - 防御性
+            logger.debug(f"获取GC统计失败: {e}")
+            return {"collections": 0, "collected": 0, "uncollectable": 0}
+
+    def get_memory_alerts(self) -> list[dict[str, Any]]:
+        """根据阈值生成内存警报"""
+        alerts: list[dict[str, Any]] = []
+        metrics = self.get_current_metrics()
+
+        if metrics.percent >= self.threshold_critical:
+            alerts.append({"level": "critical", "message": "内存使用已达严重级别"})
+        elif metrics.percent >= self.threshold_warning:
+            alerts.append({"level": "warning", "message": "内存使用已达警告级别"})
+
+        return alerts
+
+    def add_monitoring_callback(self, callback: Callable[[MemoryMetrics], None]) -> None:
+        """添加监控回调（测试使用）"""
+        self._monitoring_callbacks.append(callback)
+
+    def _cleanup_history(self) -> None:
+        """清理历史记录，保持在 max_history 范围内"""
+        if len(self.metrics_history) > self.max_history:
+            self.metrics_history = self.metrics_history[-self.max_history :]
+
+    # 上下文管理器支持
+    def __enter__(self) -> "MemoryManager":
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.stop_monitoring()
+
+
+# 全局内存管理器实例与便捷函数
+memory_manager = MemoryManager()
+
+
+def get_memory_manager() -> MemoryManager:
+    """获取全局内存管理器单例"""
+    return memory_manager
+
+
+def close_memory_manager() -> None:
+    """关闭全局内存管理器（测试使用）"""
+    try:
+        memory_manager.stop_monitoring()
+    except Exception:  # pragma: no cover - 防御性
+        pass
 
     def set_gc_threshold(self, threshold_mb: float) -> None:
         """设置GC触发阈值"""

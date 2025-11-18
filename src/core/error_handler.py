@@ -1,6 +1,10 @@
 """
 统一错误处理器
 提供应用程序级别的错误处理、恢复和报告功能
+
+本模块同时承担两类职责：
+1. 新版系统错误处理（基于 VirtualChemLabError）
+2. 兼容旧版/测试使用的错误上下文与统计接口（ErrorContext 等）
 """
 
 from __future__ import annotations
@@ -8,29 +12,93 @@ from __future__ import annotations
 import logging
 import traceback
 from contextlib import contextmanager
+from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Type, Union
 
+from .common_error_handlers import safe_execute_with_default as _common_safe_execute_with_default
 from .common_exceptions import (
-    ErrorCategory,
-    ErrorSeverity,
+    ErrorCategory as CoreErrorCategory,
+    ErrorSeverity as CoreErrorSeverity,
     VirtualChemLabError,
 )
 
 logger = logging.getLogger(__name__)
 
 
+class ErrorSeverity(str, Enum):
+    """错误严重程度（测试/兼容用）"""
+
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
+class ErrorCategory(str, Enum):
+    """错误分类（测试/兼容用）"""
+
+    SYSTEM = "system"
+    USER = "user"
+    NETWORK = "network"
+    DATABASE = "database"
+    FILE = "file"
+    VALIDATION = "validation"
+    BUSINESS = "business"
+    UNKNOWN = "unknown"
+
+
+@dataclass
+class ErrorContext:
+    """错误上下文（测试/兼容用）"""
+
+    user_id: Optional[str] = None
+    session_id: Optional[str] = None
+    component: Optional[str] = None
+    operation: Optional[str] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class ErrorRecord:
+    """错误记录（测试/兼容用）"""
+
+    id: str
+    timestamp: float
+    exception: Exception
+    context: ErrorContext
+    severity: ErrorSeverity
+    category: ErrorCategory
+    message: str
+    traceback: str
+    recoverable: bool
+    handled: bool
+    recovery_attempts: int
+    max_recovery_attempts: int
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
 class ErrorHandler:
-    """统一错误处理器"""
+    """统一错误处理器（兼容新版与测试接口）"""
 
     def __init__(self):
-        self._error_callbacks: Dict[ErrorCategory, List[Callable]] = {}
+        # 新版错误处理所需结构（VirtualChemLabError）
+        self._error_callbacks: Dict[CoreErrorCategory, List[Callable[[VirtualChemLabError], None]]] = {}
         self._error_stats: Dict[str, int] = {}
-        self._recovery_strategies: Dict[Type[VirtualChemLabError], Callable] = {}
+        self._recovery_strategies: Dict[Type[VirtualChemLabError], Callable[[VirtualChemLabError], Any]] = {}
+
+        # 兼容测试要求的接口
+        self.error_handlers: Dict[Type[Exception], Callable[[Exception, ErrorContext], Any]] = {}
+        self.error_records: List[ErrorRecord] = []
+        self.max_error_records: int = 1000
+
+        # 注册一个默认处理器，保证 error_handlers 非空
+        self.register_handler(Exception, self._default_legacy_handler)
 
     def register_callback(
         self,
-        category: ErrorCategory,
-        callback: Callable[[VirtualChemLabError], None]
+        category: CoreErrorCategory,
+        callback: Callable[[VirtualChemLabError], None],
     ) -> None:
         """注册错误回调"""
         if category not in self._error_callbacks:
@@ -40,27 +108,39 @@ class ErrorHandler:
     def register_recovery_strategy(
         self,
         error_type: Type[VirtualChemLabError],
-        strategy: Callable[[VirtualChemLabError], Any]
+        strategy: Callable[[VirtualChemLabError], Any],
     ) -> None:
         """注册恢复策略"""
         self._recovery_strategies[error_type] = strategy
 
-    def handle_error(self, error: VirtualChemLabError) -> Any:
-        """处理错误"""
-        # 记录错误统计
-        error_key = f"{error.category.value}_{error.severity.value}"
-        self._error_stats[error_key] = self._error_stats.get(error_key, 0) + 1
+    # -------- 新版 VirtualChemLabError 处理逻辑 --------
 
-        # 调用注册的回调
-        if error.category in self._error_callbacks:
-            for callback in self._error_callbacks[error.category]:
-                try:
-                    callback(error)
-                except Exception as e:
-                    logger.error(f"Error callback failed: {e}")
+    def handle_error(self, error: Union[VirtualChemLabError, Exception], context: Optional[ErrorContext] = None) -> Any:
+        """
+        处理错误
 
-        # 尝试恢复
-        return self._attempt_recovery(error)
+        - 对 VirtualChemLabError 使用新版错误恢复逻辑
+        - 对普通 Exception 使用测试期望的 handler + 记录机制
+        """
+        if isinstance(error, VirtualChemLabError) and context is None:
+            # 兼容历史接口：仅传入 VirtualChemLabError
+            error_key = f"{error.category.value}_{error.severity.value}"
+            self._error_stats[error_key] = self._error_stats.get(error_key, 0) + 1
+
+            if error.category in self._error_callbacks:
+                for callback in self._error_callbacks[error.category]:
+                    try:
+                        callback(error)
+                    except Exception as e:  # pragma: no cover - 防御性日志
+                        logger.error(f"Error callback failed: {e}")
+
+            return self._attempt_recovery(error)
+
+        # 普通异常：走测试期望的处理路径
+        if context is None:
+            context = ErrorContext()
+
+        return self._handle_legacy_error(error, context)
 
     def _attempt_recovery(self, error: VirtualChemLabError) -> Any:
         """尝试错误恢复"""
@@ -79,7 +159,7 @@ class ErrorHandler:
 
     def _default_recovery(self, error: VirtualChemLabError) -> Any:
         """默认恢复策略（改进版）"""
-        if error.severity == ErrorSeverity.CRITICAL:
+        if error.severity == CoreErrorSeverity.CRITICAL:
             logger.critical(f"Critical error occurred: {error}")
             # 紧急恢复逻辑
             try:
@@ -90,7 +170,7 @@ class ErrorHandler:
             except Exception as e:
                 logger.critical(f"Emergency recovery failed: {e}")
             return None
-        elif error.severity == ErrorSeverity.HIGH:
+        elif error.severity == CoreErrorSeverity.HIGH:
             logger.error(f"High severity error: {error}")
             # 尝试降级处理
             return self._fallback_operation(error)
@@ -142,6 +222,94 @@ class ErrorHandler:
         """清除错误统计"""
         self._error_stats.clear()
 
+    # -------- 兼容旧版/测试用错误处理逻辑 --------
+
+    def _default_legacy_handler(self, error: Exception, context: ErrorContext) -> bool:
+        """默认错误处理器：记录并认为已处理"""
+        logger.error(f"Handled error: {error} (component={context.component}, operation={context.operation})")
+        return True
+
+    def register_handler(self, error_type: Type[Exception], handler: Callable[[Exception, ErrorContext], Any]) -> None:
+        """注册基于异常类型的处理器（测试使用）"""
+        self.error_handlers[error_type] = handler
+
+    def unregister_handler(self, error_type: Type[Exception]) -> bool:
+        """注销处理器（测试使用）"""
+        if error_type in self.error_handlers:
+            del self.error_handlers[error_type]
+            return True
+        return False
+
+    def _append_error_record(
+        self,
+        error: Exception,
+        context: ErrorContext,
+        handled: bool,
+        recovery_attempts: int = 0,
+    ) -> None:
+        """添加错误记录并维护最大数量"""
+        record = ErrorRecord(
+            id=f"error_{len(self.error_records) + 1}",
+            timestamp=__import__("time").time(),
+            exception=error,
+            context=context,
+            severity=ErrorSeverity.MEDIUM,
+            category=ErrorCategory.UNKNOWN,
+            message=str(error),
+            traceback=traceback.format_exc(),
+            recoverable=True,
+            handled=handled,
+            recovery_attempts=recovery_attempts,
+            max_recovery_attempts=self.max_error_records,
+            metadata=context.metadata.copy(),
+        )
+        self.error_records.append(record)
+
+        if len(self.error_records) > self.max_error_records:
+            # 仅保留最新的 max_error_records 条（测试有断言）
+            self.error_records = self.error_records[-self.max_error_records :]
+
+    def _handle_legacy_error(self, error: Exception, context: ErrorContext) -> bool:
+        """测试/旧版路径：按异常类型调用处理器并记录"""
+        handler = self.error_handlers.get(type(error)) or self.error_handlers.get(Exception)
+
+        handled = True
+        try:
+            if handler is not None:
+                result = handler(error, context)
+                handled = bool(result) is not False
+        except Exception as e:  # pragma: no cover - 防御性日志
+            logger.error(f"Legacy error handler failed: {e}")
+            handled = False
+
+        self._append_error_record(error, context, handled)
+        return True
+
+    def get_error_records(self, limit: Optional[int] = None) -> List[ErrorRecord]:
+        """获取错误记录（测试使用）"""
+        records = self.error_records
+        if limit is not None:
+            return records[-limit:]
+        return list(records)
+
+    def get_error_statistics(self) -> Dict[str, Any]:
+        """获取错误统计（测试使用）"""
+        total = len(self.error_records)
+        handled = sum(1 for r in self.error_records if r.handled)
+        unhandled = total - handled
+
+        type_counts: Dict[str, int] = {}
+        for r in self.error_records:
+            name = type(r.exception).__name__
+            type_counts[name] = type_counts.get(name, 0) + 1
+
+        return {
+            "total_errors": total,
+            "handled_errors": handled,
+            "unhandled_errors": unhandled,
+            "type_counts": type_counts,
+        }
+
 
 # 全局错误处理器实例
 _global_error_handler = ErrorHandler()
@@ -154,23 +322,21 @@ def get_error_handler() -> ErrorHandler:
 
 @contextmanager
 def error_context(
-    category: ErrorCategory = ErrorCategory.SYSTEM,
-    severity: ErrorSeverity = ErrorSeverity.MEDIUM,
-    error_class: Type[VirtualChemLabError] = VirtualChemLabError
+    category: CoreErrorCategory = CoreErrorCategory.SYSTEM,
+    severity: CoreErrorSeverity = CoreErrorSeverity.MEDIUM,
+    error_class: Type[VirtualChemLabError] = VirtualChemLabError,
 ):
-    """错误上下文管理器"""
+    """错误上下文管理器（新版 VirtualChemLabError 用）"""
     try:
         yield
     except VirtualChemLabError:
-        # 重新抛出VirtualChemLabError
         raise
     except Exception as e:
-        # 包装其他异常
         raise error_class(
             message=f"Unexpected error: {str(e)}",
             category=category,
             severity=severity,
-            cause=e
+            cause=e,
         )
 
 
@@ -178,12 +344,17 @@ def safe_execute(
     func: Callable,
     *args,
     error_class: Type[VirtualChemLabError] = VirtualChemLabError,
-    category: ErrorCategory = ErrorCategory.SYSTEM,
-    severity: ErrorSeverity = ErrorSeverity.MEDIUM,
+    category: CoreErrorCategory = CoreErrorCategory.SYSTEM,
+    severity: CoreErrorSeverity = CoreErrorSeverity.MEDIUM,
     fallback_value: Any = None,
-    **kwargs
+    default_return: Any = None,
+    **kwargs,
 ) -> Any:
-    """安全执行函数"""
+    """
+    安全执行函数
+
+    兼容测试用的 default_return 参数，内部仍使用新版错误系统。
+    """
     try:
         return func(*args, **kwargs)
     except VirtualChemLabError:
@@ -193,7 +364,7 @@ def safe_execute(
             message=f"Error executing {func.__name__}: {str(e)}",
             category=category,
             severity=severity,
-            cause=e
+            cause=e,
         )
 
         # 处理错误
@@ -201,10 +372,14 @@ def safe_execute(
 
         if result is not None:
             return result
-        elif fallback_value is not None:
+
+        # 兼容两种参数名
+        if fallback_value is not None:
             return fallback_value
-        else:
-            raise error
+        if default_return is not None:
+            return default_return
+
+        raise error
 
 
 def log_and_continue(
@@ -220,8 +395,8 @@ def log_and_continue(
 def log_and_raise(
     error: Exception,
     error_class: Type[VirtualChemLabError] = VirtualChemLabError,
-    category: ErrorCategory = ErrorCategory.SYSTEM,
-    severity: ErrorSeverity = ErrorSeverity.MEDIUM
+    category: CoreErrorCategory = CoreErrorCategory.SYSTEM,
+    severity: CoreErrorSeverity = CoreErrorSeverity.MEDIUM,
 ) -> None:
     """记录错误并重新抛出"""
     logger.error(f"Error occurred: {error}")
@@ -243,9 +418,9 @@ def create_ui_error_handler() -> Callable[[VirtualChemLabError], None]:
             from PySide6.QtWidgets import QMessageBox
 
             # 根据严重程度选择消息框类型
-            if error.severity == ErrorSeverity.CRITICAL:
+            if error.severity == CoreErrorSeverity.CRITICAL:
                 QMessageBox.critical(None, "严重错误", error.message)
-            elif error.severity == ErrorSeverity.HIGH:
+            elif error.severity == CoreErrorSeverity.HIGH:
                 QMessageBox.warning(None, "错误", error.message)
             else:
                 QMessageBox.information(None, "提示", error.message)
@@ -260,10 +435,10 @@ def create_logging_error_handler() -> Callable[[VirtualChemLabError], None]:
     """创建日志错误处理器"""
     def handler(error: VirtualChemLabError) -> None:
         log_level = {
-            ErrorSeverity.LOW: logging.DEBUG,
-            ErrorSeverity.MEDIUM: logging.INFO,
-            ErrorSeverity.HIGH: logging.WARNING,
-            ErrorSeverity.CRITICAL: logging.ERROR
+            CoreErrorSeverity.LOW: logging.DEBUG,
+            CoreErrorSeverity.MEDIUM: logging.INFO,
+            CoreErrorSeverity.HIGH: logging.WARNING,
+            CoreErrorSeverity.CRITICAL: logging.ERROR,
         }.get(error.severity, logging.ERROR)
 
         logger.log(log_level, f"[{error.category.value}] {error.message}")
@@ -278,16 +453,59 @@ def initialize_default_handlers() -> None:
     """初始化默认错误处理器"""
     # 注册日志处理器
     _global_error_handler.register_callback(
-        ErrorCategory.SYSTEM,
-        create_logging_error_handler()
+        CoreErrorCategory.SYSTEM,
+        create_logging_error_handler(),
     )
 
     # 注册UI处理器
     _global_error_handler.register_callback(
-        ErrorCategory.UI,
-        create_ui_error_handler()
+        CoreErrorCategory.UI,
+        create_ui_error_handler(),
     )
 
 
 # 自动初始化
 initialize_default_handlers()
+
+
+class ErrorContextManager:
+    """
+    错误上下文管理器（测试/兼容用）
+
+    with ErrorContextManager(component, operation, user_id=...) as ctx:
+        ...
+    """
+
+    def __init__(self, component: str, operation: str, **metadata: Any) -> None:
+        self.component = component
+        self.operation = operation
+        self.metadata = metadata
+        self.context = ErrorContext(component=component, operation=operation, metadata=dict(metadata))
+
+    def __enter__(self) -> ErrorContext:
+        return self.context
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
+        if exc_type is None:
+            return False
+
+        # 构造上下文并交由 handle_error_func 处理
+        handle_error_func(exc_val, self.context)
+        # 异常按照测试预期重新抛出
+        return False
+
+
+def handle_error_func(error: Exception, context: ErrorContext) -> bool:
+    """测试使用的便捷错误处理函数"""
+    handler = get_error_handler()
+    return bool(handler.handle_error(error, context))
+
+
+def safe_execute_with_default(default_value: Any, func: Callable, *args, **kwargs) -> Any:
+    """
+    兼容测试签名的 safe_execute_with_default
+
+    tests 中调用: safe_execute_with_default(\"default\", func)
+    实际委托给 common_error_handlers.safe_execute_with_default。
+    """
+    return _common_safe_execute_with_default(func, default_value, *args, **kwargs)
