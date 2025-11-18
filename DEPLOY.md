@@ -9,7 +9,7 @@
 ## 🚀 快速运行(开发模式)
 
 ### 前置要求
-- Python 3.10+ (已测试: Python 3.13)
+- Python 3.8+ (推荐 3.10+，已在 3.10–3.13 测试)
 - Windows 10+ / macOS 10.15+ / Linux
 
 ### 步骤
@@ -26,12 +26,12 @@
 
 2. **启动GUI应用**
    ```bash
-   python run_gui.py
+   python main.py
    ```
 
-3. **或测试核心功能**
+3. **或仅测试核心功能**
    ```bash
-   python src/main.py
+   python main.py --test-core
    ```
 
 ---
@@ -54,7 +54,7 @@ pyinstaller --onefile --windowed \
   --hidden-import PySide6.QtCore \
   --hidden-import PySide6.QtGui \
   --hidden-import PySide6.QtWidgets \
-  run_gui.py
+  main.py
 ```
 
 **Windows命令**(注意分号):
@@ -66,7 +66,7 @@ pyinstaller --onefile --windowed ^
   --hidden-import PySide6.QtCore ^
   --hidden-import PySide6.QtGui ^
   --hidden-import PySide6.QtWidgets ^
-  run_gui.py
+  main.py
 ```
 
 #### 1.3 打包为文件夹(启动更快)
@@ -75,7 +75,7 @@ pyinstaller --windowed \
   --name VirtualChemLab \
   --add-data "assets;assets" \
   --add-data "config.json;." \
-  run_gui.py
+  main.py
 ```
 
 #### 1.4 输出位置
@@ -108,7 +108,7 @@ setup(
     name="VirtualChemLab",
     version="1.0.0",
     description="Virtual Chemistry Laboratory",
-    executables=[Executable("run_gui.py", base=base, target_name="VirtualChemLab")],
+    executables=[Executable("main.py", base=base, target_name="VirtualChemLab")],
     options={
         "build_exe": {
             "packages": ["PySide6", "numpy", "yaml", "pydantic"],
@@ -144,7 +144,7 @@ python -m nuitka --standalone --windows-disable-console \
   --include-data-dir=assets=assets \
   --include-data-file=config.json=config.json \
   --output-dir=dist \
-  run_gui.py
+  main.py
 ```
 
 #### 3.3 输出
@@ -177,7 +177,7 @@ COPY . .
 # EXPOSE 8000
 
 # 启动命令
-CMD ["python", "run_gui.py"]
+CMD ["python", "main.py"]
 ```
 
 **注意**: GUI应用在Docker中运行需要X11转发,不建议用于桌面应用。
@@ -199,7 +199,7 @@ CMD ["python", "run_gui.py"]
    ```batch
    @echo off
    cd /d "%~dp0"
-   venv_portable\Scripts\python.exe run_gui.py
+   venv_portable\Scripts\python.exe main.py
    pause
    ```
 
@@ -209,7 +209,7 @@ CMD ["python", "run_gui.py"]
    ├── venv_portable/      (虚拟环境)
    ├── src/
    ├── assets/
-   ├── run_gui.py
+   ├── main.py
    ├── VirtualChemLab.bat  (启动器)
    └── README.txt
    ```
@@ -252,7 +252,7 @@ CMD ["python", "run_gui.py"]
 
 1. **核心功能测试**
    ```bash
-   python src/main.py
+   python main.py --test-core
    ```
    - [ ] 模板加载成功
    - [ ] 曲线生成正常
@@ -260,7 +260,7 @@ CMD ["python", "run_gui.py"]
 
 2. **GUI测试**
    ```bash
-   python run_gui.py
+   python main.py
    ```
    - [ ] 窗口正常打开
    - [ ] 实验列表显示
@@ -282,7 +282,7 @@ CMD ["python", "run_gui.py"]
 **A**: 可能缺少数据文件,检查 `--add-data` 是否正确:
 ```bash
 # 查看打包日志
-pyinstaller --onefile --windowed --log-level=DEBUG run_gui.py
+pyinstaller --onefile --windowed --log-level=DEBUG main.py
 ```
 
 ### Q2: 打包后文件过大?
@@ -382,7 +382,7 @@ git push origin v1.0.0
 
 ### 🎯 推荐部署方式
 
-**开发/测试**: 直接运行 `python run_gui.py`
+**开发/测试**: 直接运行 `python main.py`
 
 **分发给用户**: PyInstaller打包(文件夹模式)
 

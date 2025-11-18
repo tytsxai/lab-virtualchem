@@ -15,7 +15,7 @@
 
 ### 安装与启动
 
-1. **确保已安装Python 3.10+**
+1. **确保已安装Python 3.8+ (推荐 3.10+)**
    ```bash
    python --version
    ```
@@ -27,7 +27,7 @@
 
 3. **启动程序**
    ```bash
-   python run_gui.py
+   python main.py
    ```
 
 ### 第一次使用
@@ -363,8 +363,8 @@ source venv/bin/activate
 
 ### 联系支持
 
-- **GitHub Issues**: https://github.com/yourorg/VirtualChemLab/issues
-- **邮箱**: support@virtualchemlab.example.com
+- **GitHub Issues**: https://github.com/virtualchemlab/virtualchemlab/issues
+- **邮箱**: team@virtualchemlab.com
 
 ---
 

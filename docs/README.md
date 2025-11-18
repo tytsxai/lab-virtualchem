@@ -47,7 +47,7 @@ pip install -r requirements.txt
 1. 运行应用
 
 ```bash
-python src/main.py
+python main.py
 ```
 
 ### 首次使用

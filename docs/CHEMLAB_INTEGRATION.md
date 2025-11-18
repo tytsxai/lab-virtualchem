@@ -104,7 +104,7 @@ python scripts/validate_output.py ../../data/knowledge
 
 ```bash
 cd ../../
-python run_gui.py
+python main.py
 ```
 
 ---

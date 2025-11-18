@@ -122,7 +122,7 @@ ls ../../data/knowledge/reagent/chemlab_*.yaml
 
 ```bash
 cd ../..
-python run_gui.py
+python main.py
 ```
 
 在 VirtualChemLab 中:
