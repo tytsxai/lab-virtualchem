@@ -15,10 +15,39 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+
+class InspectableRLock:
+    """带 locked() 方法的可检测 RLock，用于测试"""
+
+    def __init__(self) -> None:
+        self._lock = threading.RLock()
+        self._depth = 0
+
+    def acquire(self, *args, **kwargs) -> bool:  # type: ignore[override]
+        acquired = self._lock.acquire(*args, **kwargs)
+        if acquired:
+            self._depth += 1
+        return acquired
+
+    def release(self) -> None:  # type: ignore[override]
+        self._lock.release()
+        self._depth = max(0, self._depth - 1)
+
+    def locked(self) -> bool:
+        return self._depth > 0
+
+    def __enter__(self):
+        self.acquire()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.release()
+
+
 # 全局资源表与锁（测试直接引用）
 # _resources 的值为 (resource, cleanup_func)
 _resources: dict[str, tuple[Any, Callable[[Any | None], None]]] = {}
-_resource_lock = threading.Lock()
+_resource_lock: InspectableRLock = InspectableRLock()
 
 
 class ResourceManager:
