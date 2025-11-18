@@ -33,8 +33,7 @@ class CacheEntry:
     size_bytes: int = 0
 
     def __post_init__(self):
-        if self.last_accessed is None:
-            self.last_accessed = self.created_at
+        pass
 
 
 class CacheStrategy:
@@ -57,6 +56,8 @@ class CacheManager:
         use_redis: bool = False,
         redis_config: dict | None = None,
         max_memory_mb: int = 100,  # 最大内存使用限制
+        ttl: int | None = None,
+        redis_url: str | None = None,
     ):
         """初始化缓存管理器
 
@@ -67,8 +68,21 @@ class CacheManager:
             use_redis: 是否使用Redis
             redis_config: Redis配置
         """
+        if max_size <= 0:
+            raise ValueError("max_size must be positive")
+
+        valid_strategies = {CacheStrategy.LRU, CacheStrategy.LFU, CacheStrategy.FIFO, CacheStrategy.TTL}
+        if strategy not in valid_strategies:
+            raise ValueError("Invalid cache strategy")
+
+        if ttl is not None:
+            if ttl < 0:
+                raise ValueError("ttl must be non-negative")
+            default_ttl = ttl
+
         self.max_size = max_size
         self.default_ttl = default_ttl
+        self.ttl = default_ttl
         self.strategy = strategy
         self.use_redis = use_redis and REDIS_AVAILABLE
         self.max_memory_mb = max_memory_mb
@@ -84,7 +98,12 @@ class CacheManager:
         self.redis_client = None
         if self.use_redis and redis is not None:
             try:
-                config = redis_config or {"host": "localhost", "port": 6379, "db": 0, "decode_responses": True}
+                base_config = {"decode_responses": True}
+                if redis_url:
+                    config = {"url": redis_url} | (redis_config or {})
+                else:
+                    config = redis_config or {"host": "localhost", "port": 6379, "db": 0}
+                config = base_config | config
                 self.redis_client = redis.Redis(**config)
                 # 测试连接
                 self.redis_client.ping()
@@ -213,8 +232,9 @@ class CacheManager:
             oldest_time = None
             key_to_evict = None
             for key, entry in self.cache.items():
-                if entry.last_accessed is not None and (oldest_time is None or entry.last_accessed < oldest_time):
-                    oldest_time = entry.last_accessed
+                access_time = entry.last_accessed or entry.created_at
+                if oldest_time is None or access_time < oldest_time:
+                    oldest_time = access_time
                     key_to_evict = key
         elif self.strategy == CacheStrategy.LFU:
             # 最少使用 - O(n) 查找
@@ -317,7 +337,7 @@ class CacheManager:
             ttl: 生存时间（秒）
         """
         cache_key = self._generate_key(key)
-        ttl = ttl or self.default_ttl
+        ttl = ttl if ttl is not None else self.ttl
 
         expires_at = datetime.now() + timedelta(seconds=ttl) if ttl > 0 else None
         size_bytes = self._calculate_size(value)
@@ -485,6 +505,13 @@ class CacheManager:
                 "entry_count": len(self.cache),
                 "average_entry_size": total_size / len(self.cache) if self.cache else 0,
             }
+
+    def get_stats(self) -> dict[str, Any]:
+        """获取综合统计信息"""
+        stats = self.get_statistics()
+        memory = self.get_memory_usage()
+        stats["memory_usage_mb"] = memory["total_size_mb"]
+        return stats
 
 
 # 全局缓存管理器（线程安全）

@@ -388,15 +388,26 @@ class PerformanceAlerting:
         return False
 
     def _notify_user(self, alert: Alert) -> None:
-        """通知用户"""
+        """通知用户（在测试环境中避免弹出 GUI）"""
         try:
+            import os
+
+            # 在 pytest 等非 GUI 环境中仅记录日志，避免 Qt 弹窗导致崩溃
+            if os.environ.get("PYTEST_CURRENT_TEST"):
+                logger.info(
+                    "Performance alert (test mode): "
+                    f"{alert.description} value={alert.current_value:.2f} "
+                    f"threshold={alert.threshold:.2f} metric={alert.metric_name}"
+                )
+                return
+
             from PySide6.QtWidgets import QMessageBox
 
             severity_map = {
                 AlertSeverity.INFO: QMessageBox.Information,
                 AlertSeverity.WARNING: QMessageBox.Warning,
                 AlertSeverity.ERROR: QMessageBox.Critical,
-                AlertSeverity.CRITICAL: QMessageBox.Critical
+                AlertSeverity.CRITICAL: QMessageBox.Critical,
             }
 
             icon = severity_map.get(alert.severity, QMessageBox.Warning)
@@ -407,7 +418,7 @@ class PerformanceAlerting:
                 f"{alert.description}\n\n"
                 f"当前值: {alert.current_value:.2f}\n"
                 f"阈值: {alert.threshold:.2f}\n"
-                f"指标: {alert.metric_name}"
+                f"指标: {alert.metric_name}",
             ).exec()
 
         except Exception as e:

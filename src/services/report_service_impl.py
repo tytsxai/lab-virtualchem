@@ -266,9 +266,41 @@ class ReportServiceImpl(ReportService):
 
     def get_available_templates(self, report_type: ReportType | None = None) -> list[str]:
         """获取可用模板"""
-        # TODO: 根据report_type筛选模板
-        _ = report_type  # 暂时标记为使用
-        return self.generator.list_templates()
+        templates = self.generator.list_templates()
+
+        # 如果未指定类型，直接返回全部模板
+        if report_type is None:
+            return templates
+
+        # 根据报告类型进行名称级别的筛选
+        type_value = str(report_type.value).lower()
+
+        def _match(name: str) -> bool:
+            """根据名称判断模板是否匹配指定报告类型"""
+            lowered = name.lower()
+
+            # 直接包含类型关键字
+            if type_value in lowered:
+                return True
+
+            # 常见缩写/别名的简单映射
+            aliases: dict[ReportType, list[str]] = {
+                ReportType.EXPERIMENT: ["experiment", "exp", "lab"],
+                ReportType.SUMMARY: ["summary", "sum", "overview"],
+                ReportType.ANALYSIS: ["analysis", "ana", "detail"],
+                ReportType.COMPARISON: ["comparison", "compare", "cmp"],
+                ReportType.PROGRESS: ["progress", "prog", "timeline"],
+            }
+            for alias in aliases.get(report_type, []):
+                if alias in lowered:
+                    return True
+
+            return False
+
+        filtered = [name for name in templates if _match(name)]
+
+        # 如果没有匹配结果，则回退到全部模板，避免返回空列表影响使用体验
+        return filtered or templates
 
     def preview_report(self, request: ReportRequest) -> str:
         """预览报告(HTML)"""
@@ -301,7 +333,21 @@ class ReportServiceImpl(ReportService):
 
         try:
             # 获取用户的所有记录
-            all_records = self.record_repository.find_by(lambda r: r.user_id == user_id)
+            # 优先使用通用的 find_by 接口，如果仓储实现不支持则回退到其他方法
+            if hasattr(self.record_repository, "find_by"):
+                all_records = self.record_repository.find_by(lambda r: r.user_id == user_id)
+            elif hasattr(self.record_repository, "find"):
+                # 兼容旧版或自定义实现
+                all_records = self.record_repository.find(user_id)
+            elif hasattr(self.record_repository, "find_all"):
+                # 最后退方案：获取全部记录后在内存中过滤
+                all_records = [
+                    r
+                    for r in self.record_repository.find_all()
+                    if getattr(r, "user_id", None) == user_id
+                ]
+            else:
+                return []
 
             # 日期过滤
             if start_date or end_date:
@@ -326,8 +372,49 @@ class ReportServiceImpl(ReportService):
         if report_id in self._report_cache:
             return self._report_cache[report_id]
 
-        # TODO: 从文件系统加载（如果启用了持久化）
-        return None
+        # 从文件系统加载（如果启用了持久化）
+        try:
+            output_dir = Path(self.config.output_dir)
+        except Exception:
+            return None
+
+        if not output_dir.exists() or not output_dir.is_dir():
+            return None
+
+        candidates: list[Path] = []
+
+        # 1. 尝试精确匹配文件名（不含扩展名）
+        for path in output_dir.iterdir():
+            if path.is_file() and path.stem == report_id:
+                candidates.append(path)
+
+        # 2. 如果没有精确匹配，尝试文件名中包含 report_id 的情况
+        if not candidates:
+            for path in output_dir.iterdir():
+                if path.is_file() and report_id in path.stem:
+                    candidates.append(path)
+
+        # 3. 针对 summary_xxx / comparison_xxx 等前缀的回退策略
+        if not candidates and "_" in report_id:
+            prefix = "_".join(report_id.split("_")[:2])
+            for path in output_dir.glob(f"{prefix}_*"):
+                if path.is_file():
+                    candidates.append(path)
+
+        if not candidates:
+            return None
+
+        # 选择最近修改的文件作为最终候选
+        candidate = max(candidates, key=lambda p: p.stat().st_mtime)
+
+        try:
+            content = candidate.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            return None
+
+        # 将加载的内容写入缓存，便于后续快速访问
+        self._report_cache[report_id] = content
+        return content
 
     def _cache_report(self, report_id: str, content: str) -> None:
         """缓存报告内容"""
