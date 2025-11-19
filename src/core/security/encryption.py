@@ -203,24 +203,32 @@ class PasswordManager:
         Returns:
             生成的密码
         """
-        if length < 8:
-            length = 8
+        minimum_length = max(8, 4)  # 至少覆盖四类字符并符合基本安全要求
+        if length < minimum_length:
+            raise ValueError(f"密码长度至少为{minimum_length}位")
 
-        # 包含大小写字母、数字和特殊字符
-        characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
-        password = "".join(secrets.choice(characters) for _ in range(length))
+        uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        lowercase = "abcdefghijklmnopqrstuvwxyz"
+        digits = "0123456789"
+        specials = "!@#$%^&*"
+        all_characters = uppercase + lowercase + digits + specials
+        rng = secrets.SystemRandom()
 
-        # 确保密码包含至少一个大写字母、一个小写字母、一个数字和一个特殊字符
-        if not any(c.isupper() for c in password):
-            password = password[:-1] + secrets.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-        if not any(c.islower() for c in password):
-            password = password[:-1] + secrets.choice("abcdefghijklmnopqrstuvwxyz")
-        if not any(c.isdigit() for c in password):
-            password = password[:-1] + secrets.choice("0123456789")
-        if not any(c in "!@#$%^&*" for c in password):
-            password = password[:-1] + secrets.choice("!@#$%^&*")
+        # 先保留每种字符类型至少一个
+        password_chars = [
+            rng.choice(uppercase),
+            rng.choice(lowercase),
+            rng.choice(digits),
+            rng.choice(specials),
+        ]
 
-        return password
+        # 填充剩余字符
+        remaining = length - len(password_chars)
+        password_chars.extend(rng.choice(all_characters) for _ in range(remaining))
+
+        # 打乱顺序，避免模式
+        rng.shuffle(password_chars)
+        return "".join(password_chars)
 
 
 class SecureToken:

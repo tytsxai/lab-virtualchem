@@ -13,7 +13,10 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from src import __version__ as APP_VERSION
+
 logger = logging.getLogger(__name__)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 class PathsConfig(BaseModel):
@@ -168,7 +171,13 @@ class Config(BaseModel):
         # 4. 合并环境变量
         config_data = cls._merge_env_vars(config_data, environment_override=environment)
 
-        # 5. 验证并返回
+        # 5. 对齐版本号
+        config_data = cls._ensure_version_alignment(config_data)
+
+        # 6. 准备运行环境（创建目录等）
+        cls._prepare_runtime_environment(config_data)
+
+        # 7. 验证并返回
         return cls(**config_data)
 
     @classmethod
@@ -298,6 +307,62 @@ class Config(BaseModel):
                 config_data["paths"][path_key] = env_value
 
         return config_data
+
+    @classmethod
+    def _ensure_version_alignment(cls, config_data: dict[str, Any]) -> dict[str, Any]:
+        """确保配置版本与应用版本保持一致"""
+        app_config = config_data.setdefault("app", {})
+        file_version = app_config.get("version")
+
+        if file_version and file_version != APP_VERSION:
+            logger.warning(
+                "配置文件版本(%s)与应用版本(%s)不一致，已自动对齐",
+                file_version,
+                APP_VERSION,
+            )
+
+        app_config["version"] = APP_VERSION
+        return config_data
+
+    @classmethod
+    def _prepare_runtime_environment(cls, config_data: dict[str, Any]) -> None:
+        """确保运行所需的目录存在"""
+        root = PROJECT_ROOT
+        paths_cfg = config_data.get("paths", {})
+
+        # 仅为可写目录自动建目录
+        writable_keys = ("user_data", "reports", "logs")
+        for key in writable_keys:
+            path_value = paths_cfg.get(key)
+            if path_value:
+                cls._ensure_directory(root / path_value, f"paths.{key}")
+
+        # 日志文件所在目录
+        log_cfg = config_data.get("log", {})
+        log_file = log_cfg.get("file")
+        if log_file:
+            cls._ensure_directory((root / log_file).parent, "log.file")
+
+        # 存储目录
+        storage_cfg = config_data.get("storage", {})
+        storage_base = storage_cfg.get("base_path")
+        if storage_base:
+            cls._ensure_directory(root / storage_base, "storage.base_path")
+
+        # 数据库文件目录
+        db_cfg = config_data.get("database", {})
+        db_path = db_cfg.get("path")
+        if db_path:
+            cls._ensure_directory((root / db_path).parent, "database.path")
+
+    @staticmethod
+    def _ensure_directory(path: Path, source: str) -> None:
+        """创建必需目录"""
+        try:
+            path.mkdir(parents=True, exist_ok=True)
+        except Exception as exc:  # noqa: BLE001
+            logger.error("创建目录失败 [%s]: %s (%s)", source, path, exc)
+            raise
 
     @classmethod
     def _get_default_config(cls) -> dict[str, Any]:

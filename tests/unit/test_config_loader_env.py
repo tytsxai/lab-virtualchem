@@ -1,9 +1,12 @@
 """Config loader environment handling tests."""
 
 import os
+from typing import Any
 
 import pytest
 
+from src import __version__ as APP_VERSION
+from src.core import config_loader
 from src.core.config_loader import Config
 
 
@@ -49,3 +52,114 @@ def test_merge_env_requires_admin_secret_in_production(monkeypatch: pytest.Monke
 
     with pytest.raises(ValueError, match="管理后台密钥环境变量"):
         Config._merge_env_vars(config_data)
+
+
+def test_load_enforces_version_alignment(monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
+    """Config.load should align app.version with the runtime version."""
+
+    def _fake_load_config_file(cls, environment: str) -> dict[str, Any]:  # type: ignore[override]
+        return {
+            "app": {
+                "name": "VirtualChemLab",
+                "version": "1.0.0",
+                "environment": environment,
+            },
+            "security": {"jwt_secret_key": "Z" * 40},
+        }
+
+    def _identity_merge(cls, config: dict[str, Any], environment_override: str | None = None) -> dict[str, Any]:  # type: ignore[override]
+        return config
+
+    monkeypatch.setattr(Config, "_load_config_file", classmethod(_fake_load_config_file))
+    monkeypatch.setattr(Config, "_merge_env_vars", classmethod(_identity_merge))
+
+    with caplog.at_level("WARNING"):
+        config = Config.load(env="development")
+
+    assert config.app.version == APP_VERSION
+    assert "配置文件版本" in caplog.text
+
+
+def test_load_keeps_version_when_already_aligned(monkeypatch: pytest.MonkeyPatch) -> None:
+    """No warning and version preserved when config already matches runtime."""
+
+    def _fake_load_config_file(cls, environment: str) -> dict[str, Any]:  # type: ignore[override]
+        return {
+            "app": {
+                "name": "VirtualChemLab",
+                "version": APP_VERSION,
+                "environment": environment,
+            },
+            "security": {"jwt_secret_key": "Y" * 40},
+        }
+
+    def _identity_merge(cls, config: dict[str, Any], environment_override: str | None = None) -> dict[str, Any]:  # type: ignore[override]
+        return config
+
+    monkeypatch.setattr(Config, "_load_config_file", classmethod(_fake_load_config_file))
+    monkeypatch.setattr(Config, "_merge_env_vars", classmethod(_identity_merge))
+
+    config = Config.load(env="development")
+
+    assert config.app.version == APP_VERSION
+
+
+def test_load_prepares_runtime_directories(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    """Writable directories should be created relative to the project root."""
+
+    def _fake_load_config_file(cls, environment: str) -> dict[str, Any]:  # type: ignore[override]
+        return {
+            "app": {"name": "VirtualChemLab", "version": APP_VERSION, "environment": environment},
+            "paths": {
+                "user_data": "user_data",
+                "reports": "reports",
+                "logs": "logs",
+            },
+            "log": {"file": "logs/app/app.log"},
+            "database": {"path": "data/virtualchemlab.db"},
+            "storage": {"base_path": "data/storage"},
+            "security": {"jwt_secret_key": "X" * 40},
+        }
+
+    def _identity_merge(cls, config: dict[str, Any], environment_override: str | None = None) -> dict[str, Any]:  # type: ignore[override]
+        return config
+
+    monkeypatch.setattr(config_loader, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(Config, "_load_config_file", classmethod(_fake_load_config_file))
+    monkeypatch.setattr(Config, "_merge_env_vars", classmethod(_identity_merge))
+
+    Config.load(env="development")
+
+    assert (tmp_path / "user_data").is_dir()
+    assert (tmp_path / "reports").is_dir()
+    assert (tmp_path / "logs").is_dir()
+    assert (tmp_path / "logs" / "app").is_dir()
+    assert (tmp_path / "data").is_dir()
+    assert (tmp_path / "data" / "storage").is_dir()
+
+
+def test_load_directory_creation_failure_raises(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    """Directory creation errors should propagate so deployment can fail fast."""
+
+    def _fake_load_config_file(cls, environment: str) -> dict[str, Any]:  # type: ignore[override]
+        return {
+            "app": {"name": "VirtualChemLab", "version": APP_VERSION, "environment": environment},
+            "paths": {"user_data": "user_data"},
+            "log": {"file": "logs/app.log"},
+            "database": {"path": "data/virtualchemlab.db"},
+            "security": {"jwt_secret_key": "X" * 40},
+        }
+
+    def _identity_merge(cls, config: dict[str, Any], environment_override: str | None = None) -> dict[str, Any]:  # type: ignore[override]
+        return config
+
+    # Use a path inside tmp but remove permissions by pointing to file
+    locked_path = tmp_path / "user_data"
+    locked_path.write_text("not a dir", encoding="utf-8")
+
+    monkeypatch.setattr(config_loader, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(Config, "_load_config_file", classmethod(_fake_load_config_file))
+    monkeypatch.setattr(Config, "_merge_env_vars", classmethod(_identity_merge))
+
+    with pytest.raises(Exception):
+        Config.load(env="development")

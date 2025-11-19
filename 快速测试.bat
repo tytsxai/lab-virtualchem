@@ -1,0 +1,3 @@
+@echo off
+echo Executing smoke tests...
+python -m pytest tests/integration/test_experiment_flow.py -q

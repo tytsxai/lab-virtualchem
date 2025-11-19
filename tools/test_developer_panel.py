@@ -12,31 +12,27 @@ project_root = Path(__file__).parent.parent.absolute()
 sys.path.insert(0, str(project_root))
 
 
-def test_files_exist():
+ESSENTIAL_TOOLS = [
+    "hot_reload_launcher.py",
+    "license_generator.py",
+    "teacher_console.py",
+    "admin_server_start.py",
+    "experiment_manager_tool.py",
+    "license_health_check.py",
+    "license_backup_tool.py",
+    "generate_secrets.py",
+    "test_coverage_tracker.py",
+    "system_health_check.py",
+    "maintenance_tool.py",
+    "maintenance_cli.py",
+    "workflow_checker.py",
+]
+
+
+def _check_files_exist():
     """测试所有工具文件是否存在"""
     tools_dir = project_root / "tools"
-
-    required_tools = [
-        # 主应用标签页
-        "hot_reload_launcher.py",
-        "license_generator.py",
-        # 管理工具标签页
-        "teacher_console.py",
-        "admin_server_start.py",
-        "experiment_manager_tool.py",
-        # 许可证标签页
-        "license_generator.py",
-        "license_health_check.py",
-        "license_backup_tool.py",
-        # 开发工具标签页
-        "generate_secrets.py",
-        "test_coverage_tracker.py",
-        "system_health_check.py",
-        # 系统工具标签页
-        "maintenance_tool.py",
-        "maintenance_cli.py",
-        "workflow_checker.py",
-    ]
+    required_tools = ESSENTIAL_TOOLS
 
     print("=" * 60)
     print("开发者面板工具验证")
@@ -143,7 +139,7 @@ def main():
     print()
 
     # 测试工具文件
-    all_tools_exist = test_files_exist()
+    all_tools_exist = _check_files_exist()
 
     # 测试主文件
     test_main_files()
@@ -165,3 +161,7 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+def test_files_exist():
+    assert _check_files_exist()

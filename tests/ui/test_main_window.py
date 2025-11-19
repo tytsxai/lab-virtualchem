@@ -39,10 +39,12 @@ class TestMainWindow:
 
     def test_window_default_size(self, main_window):
         """测试默认窗口大小"""
+        from src.ui.responsive import AdaptiveSize
+
         size = main_window.size()
-        # 窗口应该有合理的初始大小
-        assert size.width() >= 800
-        assert size.height() >= 600
+        expected = AdaptiveSize.window_size()
+
+        assert size == expected
 
     def test_window_close(self, main_window, qtbot):
         """测试窗口关闭"""

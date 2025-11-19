@@ -1,6 +1,6 @@
 """
 JSON存储引擎
-使用JSON文件存储用户实验记录
+使用JSON文件存储用户实验记录，提供兼容IStorage的键值访问能力
 
 增强功能:
 1. 数据压缩和加密存储
@@ -13,6 +13,7 @@ JSON存储引擎
 8. 云端同步支持
 """
 
+import dataclasses
 import hashlib
 import json
 import shutil
@@ -21,7 +22,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from threading import Lock, RLock
-from typing import Any
+from typing import Any, Iterable
 
 from ..models.user_record import UserRecord
 from ..core.validation import ValidationError
@@ -62,19 +63,11 @@ class JSONStore:
         enable_compression: bool = False,
         enable_encryption: bool = False,
     ):
-        """初始化存储系统
-
-        Args:
-            base_dir: 数据存储根目录
-            storage_mode: 存储模式
-            integrity_level: 数据完整性级别
-            enable_cache: 是否启用缓存
-            cache_size: 缓存大小
-            enable_compression: 是否启用压缩
-            enable_encryption: 是否启用加密
-        """
+        """初始化存储系统"""
         self.base_dir = Path(base_dir)
         self.base_dir.mkdir(parents=True, exist_ok=True)
+        self._kv_dir = self.base_dir / ".kv_store"
+        self._kv_dir.mkdir(parents=True, exist_ok=True)
 
         # 创建备份目录
         self.backup_dir = self.base_dir / ".backups"
@@ -117,6 +110,100 @@ class JSONStore:
         }
 
         logger.info(f"JSON存储系统初始化完成，目录: {self.base_dir}, 模式: {storage_mode.value}")
+
+    # ------------------------------------------------------------------
+    # IStorage 兼容接口
+    # ------------------------------------------------------------------
+
+    def save(self, key: str, value: Any, metadata: dict | None = None) -> bool:
+        """保存任意键值数据"""
+        try:
+            filepath = self._resolve_key_path(key)
+            serialized = self._serialize_value(value)
+            payload = {"data": serialized, "metadata": metadata or {}, "saved_at": datetime.utcnow().isoformat()}
+
+            with open(filepath, "w", encoding="utf-8") as f:
+                json.dump(payload, f, ensure_ascii=False, indent=2)
+
+            # 缓存命中
+            cache_key = str(filepath)
+            self._cache_data(cache_key, payload["data"])
+            return True
+        except Exception as e:  # noqa: BLE001
+            logger.error(f"保存键值数据失败({key}): {e}")
+            return False
+
+    def load(self, key: str) -> Any | None:
+        """加载任意键值数据"""
+        try:
+            filepath = self._resolve_key_path(key, ensure_parent=False)
+            cache_key = str(filepath)
+
+            if self.enable_cache and cache_key in self._cache:
+                self._stats["cache_hits"] += 1
+                return self._cache[cache_key]
+
+            if not filepath.exists():
+                self._stats["cache_misses"] += 1
+                return None
+
+            with open(filepath, encoding="utf-8") as f:
+                payload = json.load(f)
+
+            data = payload["data"] if isinstance(payload, dict) and "data" in payload else payload
+            self._cache_data(cache_key, data)
+            return data
+        except Exception as e:  # noqa: BLE001
+            logger.error(f"加载键值数据失败({key}): {e}")
+            return None
+
+    def delete(self, key: str) -> bool:
+        """删除键值数据"""
+        try:
+            filepath = self._resolve_key_path(key, ensure_parent=False)
+            if filepath.exists():
+                filepath.unlink()
+            cache_key = str(filepath)
+            if cache_key in self._cache:
+                with self._cache_lock:
+                    self._cache.pop(cache_key, None)
+                    self._cache_access_times.pop(cache_key, None)
+            return True
+        except Exception as e:  # noqa: BLE001
+            logger.error(f"删除键值数据失败({key}): {e}")
+            return False
+
+    def exists(self, key: str) -> bool:
+        """检查键是否存在"""
+        filepath = self._resolve_key_path(key, ensure_parent=False)
+        return filepath.exists()
+
+    def list_keys(self, prefix: str | None = None) -> list[str]:
+        """列出键列表"""
+        prefix = (prefix or "").strip().strip("/")
+        if prefix.startswith("records/"):
+            base_dir = self.base_dir
+            trimmed_prefix = prefix[len("records/") :]
+            return self._collect_keys(base_dir, trimmed_prefix, key_prefix="records/")
+
+        return self._collect_keys(self._kv_dir, prefix)
+
+    def clear(self) -> bool:
+        """清空键值存储(不影响实验记录)"""
+        try:
+            if self._kv_dir.exists():
+                for child in self._kv_dir.iterdir():
+                    if child.is_file():
+                        child.unlink()
+                    else:
+                        shutil.rmtree(child)
+            with self._cache_lock:
+                self._cache.clear()
+                self._cache_access_times.clear()
+            return True
+        except Exception as e:  # noqa: BLE001
+            logger.error(f"清空键值存储失败: {e}")
+            return False
 
     def _cache_data(self, key: str, data: Any) -> None:
         """缓存数据"""
@@ -164,6 +251,73 @@ class JSONStore:
         except Exception as e:
             logger.error(f"加载记录文件失败: {e}")
             return None
+
+    # ------------------------------------------------------------------
+    # 辅助方法
+    # ------------------------------------------------------------------
+
+    def _normalize_key(self, key: str) -> str:
+        sanitized = (key or "").strip().strip("/")
+        if not sanitized:
+            raise ValueError("键不能为空")
+        if ".." in sanitized:
+            raise ValueError("键名包含非法路径")
+        return sanitized
+
+    def _resolve_key_path(self, key: str, ensure_parent: bool = True) -> Path:
+        normalized = self._normalize_key(key)
+        base_dir = self._kv_dir
+        if normalized.startswith("records/"):
+            normalized = normalized[len("records/") :]
+            base_dir = self.base_dir
+
+        relative_path = Path(normalized)
+        if relative_path.suffix == "":
+            relative_path = relative_path.with_suffix(".json")
+
+        filepath = base_dir / relative_path
+        if ensure_parent:
+            filepath.parent.mkdir(parents=True, exist_ok=True)
+        return filepath
+
+    def _collect_keys(self, base_dir: Path, prefix: str | None, key_prefix: str = "") -> list[str]:
+        trimmed_prefix = (prefix or "").strip().strip("/")
+        keys: list[str] = []
+        if not base_dir.exists():
+            return keys
+
+        for file_path in self._iter_json_files(base_dir):
+            relative = file_path.relative_to(base_dir).as_posix()
+            key_without_suffix = relative[:-5] if relative.endswith(".json") else relative
+            if trimmed_prefix and not key_without_suffix.startswith(trimmed_prefix):
+                continue
+            keys.append(f"{key_prefix}{key_without_suffix}" if key_prefix else key_without_suffix)
+
+        keys.sort()
+        return keys
+
+    def _iter_json_files(self, base_dir: Path) -> Iterable[Path]:
+        for path in base_dir.rglob("*.json"):
+            if path.is_file():
+                yield path
+
+    def _serialize_value(self, value: Any) -> Any:
+        """将值转换为可序列化对象"""
+        if value is None or isinstance(value, (str, int, float, bool)):
+            return value
+        if dataclasses.is_dataclass(value):
+            return dataclasses.asdict(value)
+        if hasattr(value, "model_dump"):
+            return value.model_dump(mode="json")
+        if hasattr(value, "dict"):
+            return value.dict()
+        if isinstance(value, (list, tuple)):
+            return [self._serialize_value(item) for item in value]
+        if isinstance(value, dict):
+            return {k: self._serialize_value(v) for k, v in value.items()}
+        if hasattr(value, "__dict__"):
+            return self._serialize_value(value.__dict__)
+        raise TypeError(f"无法序列化的类型: {type(value).__name__}")
 
     def _verify_data_integrity(self, data: dict[str, Any], record_info: dict[str, Any]) -> bool:
         """验证数据完整性"""

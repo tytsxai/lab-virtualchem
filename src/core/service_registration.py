@@ -4,11 +4,23 @@
 """
 
 import logging
+import os
 import threading
 from pathlib import Path
 from typing import Any
 
-from src.core.auth import AuthService, IAuthService, create_jwt_manager_from_config
+from src.contracts.experiment_service import ExperimentServiceConfig
+from src.core.auth import (
+    AuthService,
+    IAuthService,
+    JWTManager,
+    PasswordHasher,
+    RBACManager,
+    Role,
+    SimpleUserRepository,
+    User,
+    create_jwt_manager_from_config,
+)
 
 # 旧配置系统已弃用，使用新配置系统
 # from src.core.config import CompositeConfig, JsonConfig
@@ -225,7 +237,23 @@ class ServiceRegistry:
             from src.services.experiment_service_impl import ExperimentServiceImpl
 
             # 注册实验服务实现
-            container.register_transient(ExperimentService, ExperimentServiceImpl)
+            def create_experiment_service() -> ExperimentServiceImpl:
+                template_engine = container.resolve(TemplateEngine)
+                storage = container.resolve(IStorage[Any])
+                record_store = container.resolve(JSONStore)
+
+                def engine_factory() -> IExperimentEngine:
+                    return container.resolve(IExperimentEngine)
+
+                return ExperimentServiceImpl(
+                    engine_factory=engine_factory,
+                    storage=storage,
+                    config=ExperimentServiceConfig(),
+                    template_engine=template_engine,
+                    record_store=record_store,
+                )
+
+            container.register_transient(ExperimentService, factory=create_experiment_service)
 
             logger.info("实验服务注册成功")
         except ImportError as e:
@@ -248,8 +276,37 @@ class ServiceRegistry:
 
         container.register_singleton(DeveloperAuth, factory=create_dev_auth)
 
+        # RBAC管理器
+        container.register_singleton(RBACManager, RBACManager)
+
+        # 用户仓储
+        def create_user_repository() -> SimpleUserRepository:
+            repo = SimpleUserRepository()
+            ServiceRegistry._seed_default_users(repo)
+            return repo
+
+        container.register_singleton(SimpleUserRepository, factory=create_user_repository)
+
+        # JWT管理器
+        def create_jwt_manager() -> JWTManager:
+            try:
+                return create_jwt_manager_from_config(config)
+            except Exception as exc:  # pragma: no cover - 配置错误时回退
+                logger.error(f"JWT管理器初始化失败: {exc}")
+                # 生成一个临时密钥，防止服务因配置缺失而崩溃
+                os.environ.setdefault("JWT_SECRET_KEY", "temporary-development-secret-token-please-change")
+                return create_jwt_manager_from_config(config)
+
+        container.register_singleton(JWTManager, factory=create_jwt_manager)
+
         # 认证服务
-        container.register_singleton(IAuthService, AuthService)
+        def create_auth_service() -> AuthService:
+            jwt_manager = container.resolve(JWTManager)
+            rbac_manager = container.resolve(RBACManager)
+            user_repo = container.resolve(SimpleUserRepository)
+            return AuthService(jwt_manager, rbac_manager, user_repo)
+
+        container.register_singleton(IAuthService, factory=create_auth_service)
 
     @staticmethod
     def register_ui_services(container: DIContainer, config: Any) -> None:
@@ -272,6 +329,35 @@ class ServiceRegistry:
             logger.info("事件通信设置完成")
         except Exception as e:
             logger.warning(f"事件通信设置失败: {e}")
+
+    @staticmethod
+    def _seed_default_users(repo: SimpleUserRepository) -> None:
+        """初始化默认管理员账户（通过环境变量配置）"""
+        admin_password = os.getenv("VCL_ADMIN_PASSWORD")
+        if not admin_password:
+            logger.info("未设置 VCL_ADMIN_PASSWORD，跳过默认管理员初始化")
+            return
+
+        username = os.getenv("VCL_ADMIN_USERNAME", "admin")
+        email = os.getenv("VCL_ADMIN_EMAIL", f"{username}@example.com")
+        password_hash, salt = PasswordHasher.hash_password(admin_password)
+        stored_hash = f"{password_hash}${salt}"
+
+        existing_user = repo.find_by_username(username)
+        if existing_user:
+            logger.info("默认管理员已存在，跳过初始化: %s", username)
+            return
+
+        repo.add(
+            User(
+                id=f"{username}_admin",
+                username=username,
+                email=email,
+                password_hash=stored_hash,
+                roles=[Role.ADMIN],
+            )
+        )
+        logger.info("默认管理员用户已初始化: %s", username)
 
 
 def configure_container(container: DIContainer | None = None, config: Any = None) -> DIContainer:

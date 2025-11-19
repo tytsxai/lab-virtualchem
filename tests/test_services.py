@@ -19,6 +19,7 @@ from src.contracts.storage_service import (
     SaveRequest,
     StorageServiceConfig,
 )
+from src.models.experiment import ExperimentTemplate, Step
 from src.services import (
     ExperimentServiceImpl,
     PluginServiceImpl,
@@ -34,14 +35,26 @@ class TestExperimentServiceImpl(unittest.TestCase):
         """设置测试环境"""
         self.mock_engine = Mock()
         self.mock_storage = Mock()
+        self.sample_template = ExperimentTemplate(
+            id="template1",
+            title="测试模板",
+            description="示例模板",
+            category="general",
+            steps=[
+                Step(id="step1", text="第一步"),
+                Step(id="step2", text="第二步"),
+            ],
+        )
         self.service = ExperimentServiceImpl(
-            self.mock_engine, self.mock_storage, ExperimentServiceConfig()
+            engine_factory=lambda: self.mock_engine,
+            storage=self.mock_storage,
+            config=ExperimentServiceConfig(),
         )
 
     def test_create_experiment_success(self):
         """测试创建实验 - 成功"""
         # 准备
-        self.mock_storage.load.return_value = {"id": "template1", "title": "测试模板"}
+        self.mock_storage.load.side_effect = lambda key: self.sample_template if key.startswith("templates/") else None
         request = ExperimentRequest(user_id="user123", template_id="template1")
 
         # 执行
@@ -69,13 +82,17 @@ class TestExperimentServiceImpl(unittest.TestCase):
     def test_submit_step_success(self):
         """测试提交步骤 - 成功"""
         # 准备
+        self.mock_storage.load.side_effect = lambda key: self.sample_template if key.startswith("templates/") else None
         self.mock_engine.submit_step.return_value = (True, "正确", None)
         self.mock_engine.next_step.return_value = True
         mock_step = Mock(id="step2")
         self.mock_engine.get_current_step.return_value = mock_step
 
+        create_response = self.service.create_experiment(
+            ExperimentRequest(user_id="user123", template_id="template1")
+        )
         request = StepSubmissionRequest(
-            experiment_id="exp123", step_id="step1", user_input={"answer": "42"}
+            experiment_id=create_response.experiment_id, step_id="step1", user_input={"answer": "42"}
         )
 
         # 执行

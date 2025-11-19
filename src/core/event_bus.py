@@ -250,20 +250,21 @@ class EventBus:
             event = Event(name="data.processed", data={"items": 100})
             results = await bus.publish_async(event)
         """
-        # 应用中间件
-        for middleware in self._middleware:
-            event = middleware(event)
-            if event is None:
-                return []
+        with self._lock:
+            current_event = event
 
-        # 添加到历史
-        self._add_to_history(event)
+            for middleware in self._middleware:
+                current_event = middleware(current_event)
+                if current_event is None:
+                    return []
 
-        # 通知订阅者（并发执行）
+            self._add_to_history(current_event)
+            subscribers_snapshot = list(self._subscribers)
+
         tasks = []
-        for subscriber in self._subscribers:
-            if subscriber.matches(event):
-                tasks.append(subscriber.invoke(event))
+        for subscriber in subscribers_snapshot:
+            if subscriber.matches(current_event):
+                tasks.append(subscriber.invoke(current_event))
 
         if tasks:
             results = await asyncio.gather(*tasks, return_exceptions=True)

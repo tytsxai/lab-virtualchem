@@ -3,6 +3,8 @@
 import sys
 from pathlib import Path
 
+import pytest
+
 # 添加项目根目录到路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -19,8 +21,7 @@ def test_compile_from_yaml():
     yaml_file = project_root / "examples" / "new_experiment_example.yaml"
 
     if not yaml_file.exists():
-        print(f"[警告] 测试文件不存在: {yaml_file}")
-        return
+        pytest.skip(f"缺少示例文件: {yaml_file}")
 
     result = compile_experiment(yaml_file, format_type="file")
 
@@ -50,7 +51,7 @@ def test_compile_from_yaml():
         for suggestion in result.suggestions[:3]:
             print(f"  - {suggestion}")
 
-    return result.success
+    assert result.success, "YAML 编译失败"
 
 
 def test_compile_simple_dict():
@@ -105,7 +106,7 @@ def test_compile_simple_dict():
         for warning in result.warnings:
             print(f"  - {warning}")
 
-    return result.success
+    assert result.success, "字典编译失败"
 
 
 def test_validate_and_fix():
@@ -145,9 +146,9 @@ def test_validate_and_fix():
             for suggestion in validation_result.suggestions:
                 print(f"  - {suggestion}")
 
-        return validation_result.success
-
-    return False
+        assert validation_result.success, "模板验证未通过"
+    else:
+        pytest.fail("编译失败，无法验证模板")
 
 
 def test_error_handling():
@@ -161,6 +162,7 @@ def test_error_handling():
 
     compiler = ExperimentCompiler()
     result = compiler.compile_from_dict(invalid_exp)
+    assert not result.success, "缺少步骤应当失败"
 
     print(f"\n编译结果: {'成功' if result.success else '失败 (预期)'}")
 
@@ -181,7 +183,7 @@ def test_error_handling():
         for error in result.errors:
             print(f"  - {error}")
 
-    return True
+    assert not result.success, "无效 YAML 应当失败"
 
 
 def test_compatibility():
@@ -208,24 +210,17 @@ def test_compatibility():
 
     print(f"\n编译结果: {'成功' if result.success else '失败'}")
 
-    if result.success and result.template:
-        print("\n字段转换:")
-        print(f"  difficulty → level: {result.template.level}")
-        print(f"  duration_minutes → duration_min: {result.template.duration_min}")
-        print(f"  步骤文本: {result.template.steps[0].text}")
+    assert result.success and result.template, "兼容性编译失败"
+    template = result.template
+    print("\n字段转换:")
+    print(f"  difficulty → level: {template.level}")
+    print(f"  duration_minutes → duration_min: {template.duration_min}")
+    print(f"  步骤文本: {template.steps[0].text}")
 
-        # 验证兼容性字段
-        # duration_minutes被正确处理,即使在初始化时会使用默认值45
-        # 这里我们检查字段是否存在和可访问
-        if hasattr(result.template, "level") and result.template.level == "basic":
-            print("\n[通过] 难度字段转换成功")
-
-        if hasattr(result.template, "duration_min"):
-            print(f"[通过] 时长字段存在: {result.template.duration_min}")
-
-        print("\n[通过] 兼容性检查完成")
-
-    return result.success
+    assert template.level == "basic"
+    assert hasattr(template, "duration_min")
+    print(f"[通过] 时长字段存在: {template.duration_min}")
+    print("\n[通过] 兼容性检查完成")
 
 
 def main():
@@ -247,8 +242,8 @@ def main():
 
     for test_name, test_func in tests:
         try:
-            success = test_func()
-            results.append((test_name, success))
+            test_func()
+            results.append((test_name, True))
         except Exception as e:
             print(f"\n[失败] 测试失败: {e}")
             import traceback

@@ -14,11 +14,12 @@ if not hasattr(Path, "__file__"):
 
 try:
     # Pydantic v2
-    from pydantic import BaseModel, Field, field_validator, model_validator
+    from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
     PYDANTIC_V2 = True
 except ImportError:
     # Pydantic v1
     from pydantic import BaseModel, Field, root_validator, validator
+    ConfigDict = None  # type: ignore[assignment]
     PYDANTIC_V2 = False
 
 
@@ -155,7 +156,7 @@ class AppConfig(BaseModel):
             return os.getenv('ENVIRONMENT', v or 'development')
 
 
-class Config(BaseModel):
+class AppConfiguration(BaseModel):
     """主配置类"""
     app: AppConfig = Field(default_factory=AppConfig)
     paths: PathConfig = Field(default_factory=PathConfig)
@@ -164,13 +165,19 @@ class Config(BaseModel):
     performance: PerformanceConfig = Field(default_factory=PerformanceConfig)
     monitoring: MonitoringConfig = Field(default_factory=MonitoringConfig)
 
-    class Config:
-        """Pydantic配置"""
-        arbitrary_types_allowed = True
-        validate_assignment = True
+    if PYDANTIC_V2:
+        model_config = ConfigDict(
+            arbitrary_types_allowed=True,
+            validate_assignment=True,
+        )
+    else:
+        class Config:
+            """Pydantic配置"""
+            arbitrary_types_allowed = True
+            validate_assignment = True
 
     @classmethod
-    def load(cls, env: str | None = None) -> "Config":
+    def load(cls, env: str | None = None) -> "AppConfiguration":
         """
         加载配置
 
@@ -250,6 +257,10 @@ class Config(BaseModel):
             path = root / value
             path.mkdir(parents=True, exist_ok=True)
             print(f"✅ 创建目录: {path}")
+
+
+# 兼容旧代码的别名
+Config = AppConfiguration
 
 
 # 全局配置实例
