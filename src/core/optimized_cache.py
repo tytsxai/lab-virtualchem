@@ -57,7 +57,8 @@ class OptimizedLRUCache:
 
     def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
         """设置缓存值 - O(1)"""
-        ttl = ttl or self.default_ttl
+        if ttl is None:
+            ttl = self.default_ttl
         expires_at = datetime.now() + timedelta(seconds=ttl) if ttl > 0 else None
 
         entry = CacheEntry(
@@ -157,7 +158,8 @@ class OptimizedLFUCache:
 
     def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
         """设置缓存值"""
-        ttl = ttl or self.default_ttl
+        if ttl is None:
+            ttl = self.default_ttl
         expires_at = datetime.now() + timedelta(seconds=ttl) if ttl > 0 else None
 
         entry = CacheEntry(

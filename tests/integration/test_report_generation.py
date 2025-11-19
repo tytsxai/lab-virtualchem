@@ -20,6 +20,17 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 
+from src.models.experiment import ExperimentTemplate, Step
+
+
+def _create_base_experiment(**overrides):
+    """创建带最小步骤的实验模板，确保满足模型校验"""
+    steps = overrides.pop("steps", None)
+    if not steps:
+        steps = [Step(id="prepare", text="准备实验器材")]
+    return ExperimentTemplate(steps=steps, **overrides)
+
+
 class TestBasicReportGeneration:
     """基础报告生成测试"""
 
@@ -27,9 +38,7 @@ class TestBasicReportGeneration:
     def completed_experiment(self):
         """完成的实验fixture"""
 
-        from src.models.experiment import ExperimentTemplate
-
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
         experiment.prepare()
         experiment.start()
 
@@ -94,9 +103,7 @@ class TestReportFormatting:
     def experiment_with_data(self):
         """带数据的实验"""
 
-        from src.models.experiment import ExperimentTemplate
-
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
         experiment.prepare()
         experiment.start()
 
@@ -154,9 +161,7 @@ class TestDataVisualization:
     def test_chart_data_preparation(self):
         """测试图表数据准备"""
 
-        from src.models.experiment import ExperimentTemplate
-
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
         experiment.prepare()
         experiment.start()
 
@@ -176,9 +181,7 @@ class TestDataVisualization:
     def test_curve_data_export(self):
         """测试曲线数据导出"""
 
-        from src.models.experiment import ExperimentTemplate
-
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
         experiment.prepare()
         experiment.start()
 
@@ -203,9 +206,7 @@ class TestReportCustomization:
     def test_template_selection(self):
         """测试模板选择"""
 
-        from src.models.experiment import ExperimentTemplate
-
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
         experiment.prepare()
         experiment.start()
         experiment.complete()
@@ -221,9 +222,7 @@ class TestReportCustomization:
     def test_field_selection(self):
         """测试字段选择"""
 
-        from src.models.experiment import ExperimentTemplate
-
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
         experiment.prepare()
         experiment.start()
         experiment.record_data("field1", "value1")
@@ -239,9 +238,7 @@ class TestReportCustomization:
     def test_section_ordering(self):
         """测试章节排序"""
 
-        from src.models.experiment import ExperimentTemplate
-
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
         experiment.prepare()
         experiment.start()
         experiment.complete()
@@ -268,9 +265,7 @@ class TestReportStorage:
     def test_save_report_to_file(self, temp_storage):
         """测试保存报告到文件"""
 
-        from src.models.experiment import ExperimentTemplate
-
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
         experiment.prepare()
         experiment.start()
         experiment.complete()
@@ -312,9 +307,7 @@ class TestReportStorage:
     def test_report_versioning(self, temp_storage):
         """测试报告版本控制"""
 
-        from src.models.experiment import ExperimentTemplate
-
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
         experiment.prepare()
         experiment.start()
         experiment.complete()
@@ -343,9 +336,7 @@ class TestReportValidation:
     def test_required_fields_validation(self):
         """测试必需字段验证"""
 
-        from src.models.experiment import ExperimentTemplate
-
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
         experiment.prepare()
         experiment.start()
         # 不记录任何数据
@@ -363,9 +354,7 @@ class TestReportValidation:
     def test_data_type_validation(self):
         """测试数据类型验证"""
 
-        from src.models.experiment import ExperimentTemplate
-
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
         experiment.prepare()
         experiment.start()
 
@@ -381,9 +370,7 @@ class TestReportValidation:
     def test_calculation_accuracy_check(self):
         """测试计算准确性检查"""
 
-        from src.models.experiment import ExperimentTemplate
-
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
         experiment.prepare()
         experiment.start()
 
@@ -408,9 +395,7 @@ class TestReportSharing:
     def test_anonymous_report(self):
         """测试匿名报告"""
 
-        from src.models.experiment import ExperimentTemplate
-
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
         experiment.prepare()
         experiment.start()
         experiment.record_data("student_id", "123456")
@@ -427,9 +412,7 @@ class TestReportSharing:
     def test_watermark_addition(self):
         """测试水印添加"""
 
-        from src.models.experiment import ExperimentTemplate
-
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
         experiment.prepare()
         experiment.start()
         experiment.complete()

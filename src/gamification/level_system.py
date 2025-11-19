@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 
 from ..utils.logger import get_logger
 
@@ -34,9 +34,9 @@ class UserLevel(BaseModel):
     title: str = Field(default="化学新手", description="称号")
     updated_at: datetime = Field(default_factory=datetime.now, description="更新时间")
 
-    class Config:
-        json_encoders = {datetime: lambda v: v.isoformat()}
-
+    @field_serializer("updated_at")
+    def serialize_updated_at(self, value: datetime) -> str:
+        return value.isoformat()
 
 class LevelSystem:
     """等级系统"""

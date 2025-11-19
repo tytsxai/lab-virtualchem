@@ -223,9 +223,9 @@ DATABASE_PATH=data/
             if "=" in line and not line.strip().startswith("#"):
                 key, value = line.split("=", 1)
                 if any(x in key.upper() for x in ["SECRET", "KEY", "PASSWORD", "TOKEN"]):
-                    # 只显示前4和后4个字符
+                    # 统一以固定格式掩码，只暴露前4后4个字符
                     if len(value) > 8:
-                        masked = value[:4] + "*" * (len(value) - 8) + value[-4:]
+                        masked = f"{value[:4]}****{value[-4:]}"
                     else:
                         masked = "*" * len(value)
                     print(f"  {key}: {masked}")

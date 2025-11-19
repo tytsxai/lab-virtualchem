@@ -27,6 +27,8 @@ class ErrorCategory(Enum):
     VALIDATION = "validation"
     NETWORK = "network"
     STORAGE = "storage"
+    FILE_SYSTEM = "file_system"
+    DATABASE = "database"
     UI = "ui"
     PERFORMANCE = "performance"
     SECURITY = "security"

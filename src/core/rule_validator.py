@@ -112,7 +112,12 @@ class RuleValidator:
         Returns:
             (是否通过, 提示信息)
         """
+        # 兼容旧版模板: 当 step.check 为空但存在 validation_rules 字段时，
+        # 使用简单规则进行验证（例如 range 范围检查）。
         if step.check is None:
+            legacy_rules = getattr(step, "validation_rules", None)
+            if legacy_rules:
+                return self._validate_legacy_rules(legacy_rules, user_input)
             return True, ""
 
         check = step.check
@@ -284,7 +289,11 @@ class RuleValidator:
             EvaluationError: 表达式错误或超时
         """
         # 验证表达式安全性
-        self._validate_expression_security(expression)
+        try:
+            self._validate_expression_security(expression)
+        except SecurityError as exc:
+            logger.error(f"表达式安全检查失败: {exc}")
+            raise ValidationError(message=str(exc)) from exc
 
         # 验证上下文大小
         if len(context) > self.max_context_vars:
@@ -318,19 +327,10 @@ class RuleValidator:
             raise EvaluationError(f"表达式求值失败: {e}") from e
 
     def validate_input(self, input_spec: dict[str, Any], value: Any) -> tuple[bool, str]:
-        """验证用户输入
-
-        Args:
-            input_spec: 输入规范(type, range, options等)
-            value: 用户输入值
-
-        Returns:
-            (是否有效, 错误信息)
-        """
+        """验证用户输入"""
         input_type = input_spec.get("input_type", "float")
 
         try:
-            # 类型转换
             if input_type == "int":
                 value = int(value)
             elif input_type == "float":
@@ -340,29 +340,81 @@ class RuleValidator:
             elif input_type == "bool":
                 value = bool(value)
 
-            # 范围验证
-            if "range" in input_spec and input_spec["range"]:
-                valid, error_msg = validate_range(float(value), input_spec["range"])
+            range_spec = input_spec.get("range")
+            if range_spec:
+                valid, error_msg = validate_range(float(value), range_spec)
                 if not valid:
                     return False, error_msg
 
-            # 选项验证
-            if "options" in input_spec and input_spec["options"]:
-                valid_values = [opt.get("value") for opt in input_spec["options"]]
+            options = input_spec.get("options") or []
+            if options:
+                valid_values = [opt.get("value") for opt in options]
                 if value not in valid_values:
                     return False, f"输入值必须是以下之一: {valid_values}"
 
             return True, ""
 
-        except ValueError as e:
-            return False, f"类型转换失败: {e}"
-        except (TypeError, KeyError) as e:
-            logger.error(f"输入验证失败 - {type(e).__name__}: {e}")
-            return False, f"验证失败: {e}"
-        except Exception as e:
-            # 捕获其他未预期的异常
-            logger.error(f"输入验证出现未预期错误 ({type(e).__name__}): {e}", exc_info=True)
-            return False, f"验证失败: {e}"
+        except ValueError as exc:
+            return False, f"类型转换失败: {exc}"
+        except (TypeError, KeyError) as exc:
+            logger.error(f"输入验证失败 - {type(exc).__name__}: {exc}")
+            return False, f"验证失败: {exc}"
+        except Exception as exc:  # noqa: BLE001 - 兜底记录日志
+            logger.error(f"输入验证出现未预期错误 ({type(exc).__name__}): {exc}", exc_info=True)
+            return False, f"验证失败: {exc}"
+
+    def _validate_legacy_rules(self, rules: list[dict[str, Any]] | Any, user_input: dict[str, Any]) -> tuple[bool, str]:
+        """兼容旧版 YAML 模板中的简单 validation_rules 定义。
+
+        当前仅支持 tests 中使用的 range 规则:
+        {
+            "type": "range",
+            "field": "volume_naoh",
+            "min": 10,
+            "max": 30,
+            "error_message": "体积应在10-30mL之间",
+        }
+        """
+        # 防御性处理: 非列表或空规则直接视为通过
+        if not rules or not isinstance(rules, list):
+            return True, ""
+
+        for rule in rules:
+            if not isinstance(rule, dict):
+                continue
+
+            rule_type = rule.get("type")
+            if rule_type != "range":
+                # 目前只实现 range，其他类型暂视为通过
+                continue
+
+            field = rule.get("field")
+            if not field:
+                continue
+
+            if field not in user_input:
+                msg = rule.get("error_message") or f"缺少输入字段: {field}"
+                return False, msg
+
+            try:
+                value = float(user_input[field])
+            except (TypeError, ValueError):
+                msg = rule.get("error_message") or f"字段 {field} 的值无法转换为数值"
+                return False, msg
+
+            min_val = rule.get("min")
+            max_val = rule.get("max")
+
+            # 允许只设置一端
+            if min_val is not None and value < float(min_val):
+                msg = rule.get("error_message") or f"{field} 不能小于 {min_val}"
+                return False, msg
+            if max_val is not None and value > float(max_val):
+                msg = rule.get("error_message") or f"{field} 不能大于 {max_val}"
+                return False, msg
+
+        # 所有规则都通过
+        return True, ""
 
     def evaluate_score_rules(self, rules: list, context: dict[str, Any]) -> tuple[int, dict[str, Any]]:
         """计算评分

@@ -3,6 +3,7 @@
 实现O(1)操作的LRU/LFU缓存，支持批量操作、缓存预热和自动清理
 """
 
+import atexit
 import threading
 import time
 from collections import OrderedDict
@@ -110,6 +111,7 @@ class HighPerformanceLRUCache:
         self._cleanup_thread = None
         if auto_cleanup:
             self._start_cleanup_thread()
+            atexit.register(self.stop)
 
         logger.info(f"高性能LRU缓存初始化完成 (max_size={max_size}, max_memory={max_memory_mb}MB)")
 

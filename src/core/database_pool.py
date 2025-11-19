@@ -32,6 +32,18 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+INTEGRITY_ERRORS: tuple[type[Exception], ...] = (sqlite3.IntegrityError,)
+
+if POSTGRESQL_AVAILABLE:
+    from psycopg2 import IntegrityError as PostgresIntegrityError
+
+    INTEGRITY_ERRORS = INTEGRITY_ERRORS + (PostgresIntegrityError,)  # type: ignore[assignment]
+
+if MYSQL_AVAILABLE:
+    from pymysql.err import IntegrityError as MySQLIntegrityError
+
+    INTEGRITY_ERRORS = INTEGRITY_ERRORS + (MySQLIntegrityError,)  # type: ignore[assignment]
+
 
 @dataclass
 class ConnectionInfo:
@@ -376,9 +388,15 @@ class DatabasePool:
         connection_id = self.get_connection()
         if not connection_id:
             raise RuntimeError("无法获取数据库连接")
+        connection = self.all_connections.get(connection_id)
 
         try:
             yield connection_id
+        except INTEGRITY_ERRORS as exc:
+            logger.warning("数据库操作违反完整性约束: %s", exc)
+            if connection:
+                with suppress(Exception):
+                    connection.rollback()
         finally:
             self.return_connection(connection_id)
 

@@ -16,7 +16,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, TypeVar
+from typing import Any, ClassVar, Dict, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +77,7 @@ class EventSubscriber:
     priority: EventPriority = EventPriority.NORMAL
     filter_func: Callable[[Event], bool] | None = None
     is_async: bool = False
+    _pattern_cache: ClassVar[Dict[str, Any]] = {}
 
     def matches(self, event: Event) -> bool:
         """检查事件是否匹配"""

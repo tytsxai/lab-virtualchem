@@ -27,6 +27,7 @@ class StepRecord(BaseModel):
     user_input: dict[str, Any] = Field(default_factory=dict, description="用户输入")
     mistakes: list[Mistake] = Field(default_factory=list, description="错误列表")
     attempts: int = Field(default=1, description="尝试次数")
+    score: int = Field(default=0, description="步骤得分")
 
     @property
     def duration_seconds(self) -> float | None:
@@ -107,3 +108,30 @@ class UserRecord(BaseModel):
         """标记实验完成"""
         self.status = "completed"
         self.completed_at = datetime.now()
+
+    @property
+    def start_time(self) -> datetime:
+        """兼容旧字段名称"""
+        return self.started_at
+
+    @start_time.setter
+    def start_time(self, value: datetime) -> None:
+        self.started_at = value
+
+    @property
+    def end_time(self) -> datetime | None:
+        """兼容旧字段名称"""
+        return self.completed_at
+
+    @end_time.setter
+    def end_time(self, value: datetime | None) -> None:
+        self.completed_at = value
+
+    @property
+    def final_score(self) -> int:
+        """最终得分(与score.total保持一致)"""
+        return int(self.score.total)
+
+    @final_score.setter
+    def final_score(self, value: int) -> None:
+        self.score.total = int(value)

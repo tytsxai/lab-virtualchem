@@ -7,7 +7,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
 from ..utils.logger import get_logger
 
@@ -28,6 +28,8 @@ class AchievementType(str, Enum):
 class Achievement(BaseModel):
     """成就定义"""
 
+    model_config = ConfigDict(use_enum_values=True)
+
     id: str = Field(..., description="成就ID")
     name: str = Field(..., description="成就名称")
     description: str = Field(..., description="成就描述")
@@ -41,10 +43,6 @@ class Achievement(BaseModel):
     condition_key: str = Field(..., description="条件键名")
     condition_value: Any = Field(..., description="条件目标值")
 
-    class Config:
-        use_enum_values = True
-
-
 class UserAchievement(BaseModel):
     """用户成就记录"""
 
@@ -54,8 +52,9 @@ class UserAchievement(BaseModel):
     progress: float = Field(default=0.0, ge=0, le=100, description="完成进度")
     completed: bool = Field(default=False, description="是否完成")
 
-    class Config:
-        json_encoders = {datetime: lambda v: v.isoformat()}
+    @field_serializer("unlocked_at")
+    def serialize_unlocked_at(self, value: datetime) -> str:
+        return value.isoformat()
 
 
 class AchievementManager:

@@ -3,7 +3,9 @@
 """
 
 import sys
+import time
 from pathlib import Path
+from typing import Any, Callable
 
 import pytest
 
@@ -11,7 +13,101 @@ import pytest
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+from PySide6.QtCore import QEventLoop, QTimer  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
+
+
+class _SignalBlocker:
+    """上下文管理器，用于等待信号"""
+
+    def __init__(self, signal, timeout: int):
+        self._signal = signal
+        self._timeout = timeout
+        self.args: list[Any] | None = None
+        self._loop: QEventLoop | None = None
+        self._timer: QTimer | None = None
+
+    def __enter__(self):
+        self._loop = QEventLoop()
+        self._timer = QTimer()
+        self._timer.setSingleShot(True)
+        self._timer.timeout.connect(self._loop.quit)
+        self._signal.connect(self._on_signal)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            self._cleanup()
+            return False
+
+        if self.args is not None:
+            self._cleanup()
+            return False
+
+        assert self._loop is not None
+        assert self._timer is not None
+        self._timer.start(self._timeout)
+        self._loop.exec()
+        self._cleanup()
+
+        if self.args is None:
+            raise AssertionError("Signal was not emitted before timeout")
+
+        return False
+
+    def _on_signal(self, *args):
+        self.args = list(args)
+        if self._loop is not None:
+            self._loop.quit()
+
+    def _cleanup(self):
+        try:
+            self._signal.disconnect(self._on_signal)
+        except (TypeError, RuntimeError):
+            pass
+        loop_quit = self._loop.quit if self._loop else None
+        if self._timer:
+            try:
+                if loop_quit:
+                    self._timer.timeout.disconnect(loop_quit)  # type: ignore[arg-type]
+            except (TypeError, RuntimeError):
+                pass
+            self._timer.stop()
+        self._loop = None
+        self._timer = None
+
+
+class SimpleQtBot:
+    """简化版qtbot，提供常用辅助方法"""
+
+    def __init__(self, app: QApplication):
+        self._app = app
+        self._widgets: list[Any] = []
+
+    def addWidget(self, widget) -> None:
+        self._widgets.append(widget)
+
+    def wait(self, ms: int) -> None:
+        end_time = time.monotonic() + ms / 1000
+        while time.monotonic() < end_time:
+            self._app.processEvents()
+            time.sleep(0.001)
+
+    def waitExposed(self, widget, timeout: int = 200) -> None:
+        widget.repaint()
+        self.wait(timeout)
+
+    def waitSignal(self, signal, timeout: int = 1000) -> _SignalBlocker:
+        return _SignalBlocker(signal, timeout)
+
+    def waitUntil(self, condition: Callable[[], bool], timeout: int = 1000, interval: int = 10) -> None:
+        end_time = time.monotonic() + timeout / 1000
+        while time.monotonic() < end_time:
+            self._app.processEvents()
+            if condition():
+                return
+            time.sleep(interval / 1000)
+        raise AssertionError("Condition not met before timeout")
 
 
 @pytest.fixture(scope="session")
@@ -22,6 +118,12 @@ def qapp():
         app = QApplication([])
     yield app
     # 测试结束后不关闭应用程序，避免影响其他测试
+
+
+@pytest.fixture
+def qtbot(qapp):
+    """提供轻量级qtbot替代实现"""
+    return SimpleQtBot(qapp)
 
 
 @pytest.fixture

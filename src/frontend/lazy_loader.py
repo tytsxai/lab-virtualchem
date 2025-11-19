@@ -8,7 +8,7 @@ from collections.abc import Callable
 from functools import wraps
 from typing import Any
 
-from PySide6.QtCore import QObject, QThread, QTimer, Signal
+from PySide6.QtCore import QObject, QThread, QTimer, Signal, Qt
 from PySide6.QtWidgets import QWidget
 
 logger = logging.getLogger(__name__)
@@ -190,8 +190,8 @@ class ImageLazyLoader(QObject):
                 pixmap = pixmap.scaled(
                     size[0],
                     size[1],
-                    aspectRatioMode=1,  # KeepAspectRatio
-                    transformMode=1,  # SmoothTransformation
+                    aspectMode=Qt.KeepAspectRatio,
+                    mode=Qt.SmoothTransformation,
                 )
 
             self._cache[cache_key] = pixmap

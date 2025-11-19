@@ -1,4 +1,4 @@
-#!/Users/jiesen23378/Library/CloudStorage/GoogleDrive-jiesen23378@gmail.com/我的云端硬盘/项目/VirtualChemLab开发/venv311/bin/python3.11
+#!/Users/jiesen23378/Library/CloudStorage/GoogleDrive-jiesen23378@gmail.com/我的云端硬盘/项目/VirtualChemLab开发/venv311/bin/python
 import sys
 from qtawesome.icon_browser import run
 if __name__ == '__main__':

@@ -7,11 +7,12 @@ import statistics
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 from uuid import uuid4
 from enum import Enum
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from pydantic_core import InitErrorDetails, PydanticCustomError
 
 
 class CheckType(str, Enum):
@@ -160,6 +161,7 @@ class ExperimentTemplate(BaseModel):
     """实验模板"""
 
     model_config = ConfigDict(validate_assignment=True, extra="allow")
+    allow_empty_steps: ClassVar[bool] = False
 
     id: str = Field(default_factory=lambda: f"exp_{uuid4().hex[:8]}", description="实验唯一标识符")
     title: str = Field(default="实验", description="实验名称")
@@ -206,8 +208,6 @@ class ExperimentTemplate(BaseModel):
             data["id"] = f"exp_{uuid4().hex[:8]}"
         if "title" not in data:
             data["title"] = "实验"
-        if "steps" not in data:
-            data["steps"] = []
         if "experiment_type" not in data and "category" in data:
             data["experiment_type"] = data.get("category", "general")
 
@@ -224,6 +224,18 @@ class ExperimentTemplate(BaseModel):
             data["duration_minutes"] = data["duration_min"]
 
         super().__init__(**data)
+
+        if (
+            not getattr(self.__class__, "allow_empty_steps", False)
+            and "steps" in self.model_fields_set
+            and len(self.steps) == 0
+        ):
+            error = InitErrorDetails(
+                type=PydanticCustomError("value_error", "steps 至少需要一个步骤"),
+                loc=("steps",),
+                input=self.steps,
+            )
+            raise ValidationError.from_exception_data(self.__class__.__name__, [error])
 
     @field_validator("level")
     @classmethod
@@ -714,6 +726,8 @@ class ExperimentTemplate(BaseModel):
 
 class Experiment(ExperimentTemplate):
     """简化的实验类，提供默认参数方便快速创建"""
+
+    allow_empty_steps: ClassVar[bool] = True
 
     def __init__(self, **data: Any):
         data.setdefault("title", data.get("id", "实验"))

@@ -281,13 +281,16 @@ class ExperimentCache:
     def __init__(self, cache_size: int = 200):
         self.cache = SmartCache(cache_size, default_ttl=900)  # 15分钟
 
-    def get_experiment_list(self) -> list | None:
-        """获取实验列表"""
-        return self.cache.get("experiment_list")
+    def _build_key(self, base: str, namespace: str | None = None) -> str:
+        return f"{base}:{namespace}" if namespace else base
 
-    def set_experiment_list(self, experiments: list) -> None:
+    def get_experiment_list(self, namespace: str | None = None) -> list | None:
+        """获取实验列表"""
+        return self.cache.get(self._build_key("experiment_list", namespace))
+
+    def set_experiment_list(self, experiments: list, namespace: str | None = None) -> None:
         """设置实验列表"""
-        self.cache.set("experiment_list", experiments)
+        self.cache.set(self._build_key("experiment_list", namespace), experiments)
 
     def get_experiment(self, experiment_id: str) -> Any | None:
         """获取单个实验"""
@@ -300,8 +303,10 @@ class ExperimentCache:
     def invalidate_experiment(self, experiment_id: str) -> None:
         """使实验缓存失效"""
         self.cache.delete(f"experiment:{experiment_id}")
-        # 同时使列表缓存失效
-        self.cache.delete("experiment_list")
+        # 同时使所有实验列表缓存失效（不同模板目录隔离）
+        for key in list(self.cache._cache.keys()):
+            if key.startswith("experiment_list"):
+                self.cache.delete(key)
 
     def clear(self) -> None:
         """清空实验缓存"""

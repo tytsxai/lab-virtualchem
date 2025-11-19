@@ -13,6 +13,9 @@ from ..utils.logger import get_logger
 logger = get_logger(__name__)
 
 
+_MISSING = object()
+
+
 class ConfigAccessLayer:
     """配置访问抽象层"""
 
@@ -26,13 +29,16 @@ class ConfigAccessLayer:
         with self._lock:
             # 检查缓存
             if key in self._cache:
-                return self._cache[key]
+                cached_value = self._cache[key]
+                if cached_value is _MISSING:
+                    return default
+                return cached_value
 
             # 解析配置路径
             value = self._get_nested_value(self._config, key)
 
             # 缓存结果
-            self._cache[key] = value
+            self._cache[key] = value if value is not None else _MISSING
 
             return value if value is not None else default
 
@@ -204,8 +210,11 @@ def reload_config_access() -> None:
     """重新加载全局配置访问层"""
     global _config_access_layer
     with _config_access_lock:
-        if _config_access_layer is not None:
-            _config_access_layer.reload()
+        instance = _config_access_layer() if callable(_config_access_layer) else _config_access_layer
+        if instance is not None:
+            instance.reload()
+        else:
+            _config_access_layer = ConfigAccessLayer()
 
 
 # 便捷函数
@@ -269,5 +278,12 @@ def config_get_with_validation(key: str, validator: callable, default: Any = Non
     return get_config_access().get_with_validation(key, validator, default)
 
 
+class _ConfigProxy:
+    """延迟访问全局配置访问层的代理"""
+
+    def __getattr__(self, item: str) -> Any:
+        return getattr(get_config_access(), item)
+
+
 # 向后兼容的别名
-config = get_config_access()
+config = _ConfigProxy()

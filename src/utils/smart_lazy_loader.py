@@ -48,8 +48,8 @@ class SmartLazyLoader:
         # 已加载的模块缓存
         self._loaded_modules: Dict[str, Any] = {}
 
-        # 加载锁
-        self._lock = threading.Lock()
+        # 加载锁（可重入，避免依赖加载死锁）
+        self._lock = threading.RLock()
 
         # 后台加载线程
         self._background_thread: Optional[threading.Thread] = None

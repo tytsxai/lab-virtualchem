@@ -22,10 +22,3 @@ def qapp():
     # app.quit()
 
 
-@pytest.fixture
-def qtbot(qapp, qtbot):
-    """提供qtbot fixture
-
-    结合qapp和pytest-qt的qtbot
-    """
-    return qtbot

@@ -41,7 +41,7 @@ from ..utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-class PhysicsState(Enum):
+class PhysicsState(str, Enum):
     """物理状态"""
 
     STATIC = "static"
@@ -51,7 +51,7 @@ class PhysicsState(Enum):
     ROTATING = "rotating"
 
 
-class InteractionType(Enum):
+class InteractionType(str, Enum):
     """交互类型"""
 
     DRAG = "drag"
@@ -62,14 +62,33 @@ class InteractionType(Enum):
     TILT = "tilt"
 
 
+class _ItemSignal:
+    """最简信号实现,用于在非QObject对象上转发事件"""
+
+    def __init__(self) -> None:
+        self._subscribers: list[Any] = []
+
+    def connect(self, callback: Any) -> None:
+        """注册回调"""
+        if callback not in self._subscribers:
+            self._subscribers.append(callback)
+
+    def disconnect(self, callback: Any) -> None:
+        """注销回调"""
+        if callback in self._subscribers:
+            self._subscribers.remove(callback)
+
+    def emit(self, *args: Any, **kwargs: Any) -> None:
+        """触发事件"""
+        for callback in list(self._subscribers):
+            try:
+                callback(*args, **kwargs)
+            except Exception as exc:  # pragma: no cover - 记录但不影响主流程
+                logger.warning("信号回调执行失败: %s", exc, exc_info=True)
+
+
 class GamePhysicsItem(QGraphicsPixmapItem):
     """具有物理属性的游戏物品"""
-
-    # 信号
-    physics_state_changed = Signal(str, PhysicsState)
-    collision_detected = Signal(str, str)  # item_id, other_item_id
-    interaction_started = Signal(str, InteractionType)
-    interaction_completed = Signal(str, InteractionType, dict)
 
     def __init__(
         self,
@@ -82,6 +101,10 @@ class GamePhysicsItem(QGraphicsPixmapItem):
 
         self.item_id = item_id
         self.item_type = item_type
+        self.physics_state_changed: _ItemSignal = _ItemSignal()
+        self.collision_detected: _ItemSignal = _ItemSignal()
+        self.interaction_started: _ItemSignal = _ItemSignal()
+        self.interaction_completed: _ItemSignal = _ItemSignal()
 
         # 物理属性
         self.mass = 1.0
@@ -359,6 +382,7 @@ class GamePhysicsScene(QGraphicsScene):
         # 物理设置
         self.gravity_enabled = True
         self.collision_enabled = True
+        self.physics_speed = 1.0
         self.physics_timer = QTimer()
         self.physics_timer.timeout.connect(self.update_physics)
         self.physics_timer.start(16)  # 60 FPS
@@ -378,15 +402,16 @@ class GamePhysicsScene(QGraphicsScene):
         self,
         item_id: str,
         item_type: str,
-        position: tuple[float, float],
         pixmap: QPixmap | None = None,
+        position: tuple[float, float] | None = None,
         physics_props: dict[str, Any] | None = None,
     ) -> GamePhysicsItem:
         """添加物理物品"""
         physics_props = physics_props or {}
+        position = position or (0.0, 0.0)
 
         item = GamePhysicsItem(item_id, item_type, pixmap)
-        item.setPos(position[0], position[1])
+        item.setPos(float(position[0]), float(position[1]))
 
         # 设置物理属性
         if "mass" in physics_props:
@@ -514,15 +539,22 @@ class GamePhysicsScene(QGraphicsScene):
 
     def set_physics_speed(self, speed: float):
         """设置物理更新速度"""
-        if speed > 0:
-            interval = int(1000 / speed)  # 转换为毫秒
-            self.physics_timer.setInterval(interval)
-        else:
-            self.physics_timer.stop()
+        if speed <= 0:
+            logger.warning("物理速度必须大于0")
+            return
+
+        self.physics_speed = speed
+        base_interval = 16  # 约60FPS
+        interval = max(1, int(base_interval / speed))
+        self.physics_timer.setInterval(interval)
 
 
 class GamePhysicsView(QGraphicsView):
     """游戏化物理视图"""
+
+    RenderHint = QPainter.RenderHint
+    ViewportUpdateMode = QGraphicsView.ViewportUpdateMode
+    FullViewportUpdate = QGraphicsView.ViewportUpdateMode.FullViewportUpdate
 
     def __init__(self, scene: GamePhysicsScene | None = None, parent: QWidget | None = None):
         super().__init__(parent)

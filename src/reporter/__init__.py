@@ -5,5 +5,6 @@
 
 __all__ = [
     "HTMLGenerator",
+    "HTMLReportGenerator",
     "PDFExporter",
 ]

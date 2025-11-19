@@ -8,7 +8,7 @@ import logging
 import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field as dc_field
 from enum import Enum
 from typing import Any, Generic, TypeVar
 
@@ -36,14 +36,21 @@ class ValidationSeverity(Enum):
 
 
 @dataclass
-class ValidationError:
+class ValidationError(Exception):
     """验证错误"""
 
-    field: str
-    message: str
+    message: str = ""
+    field: str | None = None
     severity: ValidationSeverity = ValidationSeverity.ERROR
     code: str | None = None
-    metadata: dict[str, Any] = field(default_factory=dict)
+    value: Any | None = None
+    metadata: dict[str, Any] = dc_field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        # Exception.__init__ 不会被 dataclass 自动调用
+        super().__init__(self.message)
+        if self.value is not None and "value" not in self.metadata:
+            self.metadata["value"] = self.value
 
 
 @dataclass
@@ -51,8 +58,8 @@ class ValidationResult:
     """验证结果"""
 
     is_valid: bool
-    errors: list[ValidationError] = field(default_factory=list)
-    warnings: list[ValidationError] = field(default_factory=list)
+    errors: list[ValidationError] = dc_field(default_factory=list)
+    warnings: list[ValidationError] = dc_field(default_factory=list)
 
     def add_error(self, field: str, message: str, code: str | None = None) -> None:
         """添加错误"""

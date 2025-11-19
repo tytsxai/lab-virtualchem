@@ -6,7 +6,7 @@
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
 from ..utils.logger import get_logger
 
@@ -26,16 +26,14 @@ class RewardType(str, Enum):
 class Reward(BaseModel):
     """奖励定义"""
 
+    model_config = ConfigDict(use_enum_values=True)
+
     id: str = Field(..., description="奖励ID")
     name: str = Field(..., description="奖励名称")
     description: str = Field(..., description="奖励描述")
     type: RewardType = Field(..., description="奖励类型")
     icon: str = Field(default="🎁", description="图标")
     rarity: str = Field(default="common", description="稀有度")
-
-    class Config:
-        use_enum_values = True
-
 
 class UserReward(BaseModel):
     """用户奖励记录"""
@@ -45,9 +43,9 @@ class UserReward(BaseModel):
     obtained_at: datetime = Field(default_factory=datetime.now, description="获得时间")
     equipped: bool = Field(default=False, description="是否装备")
 
-    class Config:
-        json_encoders = {datetime: lambda v: v.isoformat()}
-
+    @field_serializer("obtained_at")
+    def serialize_obtained_at(self, value: datetime) -> str:
+        return value.isoformat()
 
 class RewardManager:
     """奖励管理器"""

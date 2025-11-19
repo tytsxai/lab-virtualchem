@@ -120,7 +120,7 @@ class CommonErrorHandlers:
         operation: str,
         file_path: str,
         error_class: Type[VirtualChemLabError] = VirtualChemLabError,
-        category: ErrorCategory = ErrorCategory.STORAGE,
+        category: ErrorCategory = ErrorCategory.FILE_SYSTEM,
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
     ):
         """文件操作错误处理装饰器"""
@@ -164,7 +164,7 @@ class CommonErrorHandlers:
     def handle_database_operation(
         operation: str,
         error_class: Type[VirtualChemLabError] = VirtualChemLabError,
-        category: ErrorCategory = ErrorCategory.STORAGE,
+        category: ErrorCategory = ErrorCategory.DATABASE,
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
     ):
         """数据库操作错误处理装饰器"""

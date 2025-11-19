@@ -51,6 +51,11 @@ class TemplateEngine:
         self._cache_lock = Lock()  # 线程安全的缓存访问
         self._max_cache_size = 50  # 最大缓存数量
         self._load_errors: dict[str, str] = {}  # 记录加载错误的文件
+        self._directory_available = True
+        try:
+            self._cache_namespace = str(self.templates_dir.resolve())
+        except Exception:
+            self._cache_namespace = str(self.templates_dir)
 
         if not self.templates_dir.exists():
             logger.warning(f"模板目录不存在: {self.templates_dir}")
@@ -59,7 +64,7 @@ class TemplateEngine:
                 logger.info(f"已创建模板目录: {self.templates_dir}")
             except Exception as e:
                 logger.error(f"创建模板目录失败: {e}")
-                raise TemplateLoadError(f"无法创建模板目录: {e}", self.templates_dir) from e
+                self._directory_available = False
 
     @safe_execute(context="加载实验模板", raise_error=True)
     def load_experiment(self, template_path: Path) -> ExperimentTemplate:
@@ -127,6 +132,70 @@ class TemplateEngine:
                     template_path,
                     {"missing_fields": missing_fields},
                 )
+
+            # 兼容旧版/简化版模板格式，将简单的 inputs + validation_rules
+            # 转换为 ExperimentTemplate/Step 所需的 check 结构
+            steps = experiment_data.get("steps")
+            if isinstance(steps, list):
+                normalized_steps: list[dict[str, Any]] = []
+                for raw_step in steps:
+                    # 仅处理字典类型的步骤定义
+                    if not isinstance(raw_step, dict):
+                        normalized_steps.append(raw_step)
+                        continue
+
+                    step_data = dict(raw_step)
+
+                    # 已经有 check 的按照新格式处理，不再转换
+                    if "check" not in step_data:
+                        validation_rules = step_data.get("validation_rules") or []
+                        inputs = step_data.get("inputs") or []
+
+                        # 仅处理最常见的简单场景：单个数值输入 + 单个 range 规则
+                        if isinstance(validation_rules, list) and validation_rules and isinstance(inputs, list) and inputs:
+                            first_rule = validation_rules[0]
+                            first_input = inputs[0]
+
+                            try:
+                                rule_type = first_rule.get("type")
+                                if rule_type == "range":
+                                    # 从输入定义中推断 key/label/unit
+                                    key = (
+                                        first_input.get("id")
+                                        or first_input.get("key")
+                                        or first_rule.get("field")
+                                    )
+                                    if key:
+                                        label = first_input.get("label", key)
+                                        unit = first_input.get("unit")
+
+                                        min_val = first_rule.get("min")
+                                        max_val = first_rule.get("max")
+                                        range_spec: list[float] | None = None
+                                        if min_val is not None and max_val is not None:
+                                            range_spec = [float(min_val), float(max_val)]
+
+                                        input_spec: dict[str, Any] = {
+                                            "key": key,
+                                            "label": label,
+                                            "input_type": "float",
+                                            "range": range_spec,
+                                            "unit": unit,
+                                        }
+
+                                        step_data["check"] = {
+                                            "type": "input",
+                                            "input": input_spec,
+                                            "correct_value": step_data.get("correct_value"),
+                                            "fail_hint": first_rule.get("error_message", "输入值超出允许范围"),
+                                        }
+                            except Exception as e:  # noqa: BLE001
+                                # 不影响其它模板加载，只记录日志
+                                logger.debug(f"旧版步骤格式转换失败，保持原样: {e}")
+
+                    normalized_steps.append(step_data)
+
+                experiment_data["steps"] = normalized_steps
 
             template = ExperimentTemplate(**experiment_data)
 
@@ -248,8 +317,11 @@ class TemplateEngine:
         Returns:
             实验列表 [{"id": "...", "title": "...", "level": "..."}, ...]
         """
+        if not self._directory_available:
+            return []
+
         # 先尝试从智能缓存获取
-        cached_experiments = experiment_cache.get_experiment_list()
+        cached_experiments = experiment_cache.get_experiment_list(namespace=self._cache_namespace)
         if cached_experiments is not None:
             logger.debug("从智能缓存加载实验列表")
             return cached_experiments
@@ -279,7 +351,7 @@ class TemplateEngine:
         sorted_experiments = sorted(experiments, key=lambda x: x["level"])
 
         # 缓存实验结果
-        experiment_cache.set_experiment_list(sorted_experiments)
+        experiment_cache.set_experiment_list(sorted_experiments, namespace=self._cache_namespace)
 
         return sorted_experiments
 
@@ -299,7 +371,7 @@ class TemplateEngine:
 
             # 额外的业务逻辑验证
             if not template.steps:
-                errors.append("实验必须至少包含一个步骤")
+                errors.append("模板验证失败: 实验必须至少包含一个步骤")
 
             if not template.goals:
                 errors.append("建议设置实验目标")

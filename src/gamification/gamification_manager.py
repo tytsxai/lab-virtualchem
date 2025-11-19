@@ -6,7 +6,7 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 
 from ..storage.json_store import JSONStore
 from ..utils.logger import get_logger
@@ -51,8 +51,9 @@ class UserStats(BaseModel):
 
     updated_at: datetime = Field(default_factory=datetime.now, description="更新时间")
 
-    class Config:
-        json_encoders = {datetime: lambda v: v.isoformat()}
+    @field_serializer("updated_at")
+    def serialize_updated_at(self, value: datetime) -> str:
+        return value.isoformat()
 
 
 class GamificationData(BaseModel):
@@ -64,10 +65,6 @@ class GamificationData(BaseModel):
     achievements: list[UserAchievement] = Field(default_factory=list, description="成就列表")
     quests: list[UserQuest] = Field(default_factory=list, description="任务列表")
     rewards: list[UserReward] = Field(default_factory=list, description="奖励列表")
-
-    class Config:
-        json_encoders = {datetime: lambda v: v.isoformat()}
-
 
 class GamificationManager:
     """游戏化管理器"""

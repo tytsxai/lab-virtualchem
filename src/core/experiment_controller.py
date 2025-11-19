@@ -24,11 +24,7 @@ from src.core.rule_validator import RuleValidator
 from src.models.experiment import ExperimentTemplate
 from src.models.user_record import Mistake, StepRecord, UserRecord
 from src.core.validation import ValidationError
-from src.utils.error_handler import (
-    safe_execute,
-    validate_not_none,
-    validate_type,
-)
+from src.utils.error_handler import safe_execute, validate_not_none, validate_type, validate_not_empty
 
 # 导入监控模块
 try:
@@ -88,6 +84,11 @@ class StepResult:
         yield self.message
         yield self.mistake
 
+    def __getitem__(self, index: int) -> Any:
+        """支持基于索引的访问以兼容旧式测试代码"""
+        data = (self.is_valid, self.message, self.mistake)
+        return data[index]
+
 
 class ExperimentController:
     """实验流程控制器"""
@@ -127,9 +128,8 @@ class ExperimentController:
         validate_not_none(user_id, "用户ID")
         validate_type(template, ExperimentTemplate, "实验模板")
         validate_type(user_id, str, "用户ID")
-
-        if not user_id.strip():
-            raise ValueError("用户ID不能为空字符串")
+        # 空字符串校验，保持与全局验证错误类型一致
+        validate_not_empty(user_id, "用户ID")
 
         if not template.steps:
             raise ValueError(f"实验模板 {template.id} 没有定义步骤")
@@ -224,6 +224,7 @@ class ExperimentController:
         self.start_time = datetime.now()
         self.record.status = "in_progress"
         self.record.started_at = self.start_time
+        self.record.completed_at = None
 
         # 自动保存实验状态
         if self.enable_auto_save:
@@ -393,6 +394,8 @@ class ExperimentController:
         # 成功时自动前进到下一步（符合集成测试对流程控制的期望）
         if passed:
             self.next_step()
+            if self.is_completed():
+                self._mark_experiment_completed(step_record.completed_at)
 
         return StepResult(passed, message, mistake, errors=errors, warnings=warnings)
 
@@ -445,7 +448,7 @@ class ExperimentController:
         Returns:
             完成的用户记录
         """
-        self.record.complete_experiment()
+        self._mark_experiment_completed()
 
         # 计算评分
         self._calculate_score()
@@ -540,6 +543,11 @@ class ExperimentController:
                 total_score, details = self.validator.evaluate_score_rules(
                     [rule.model_dump() for rule in self.template.score_rules], score_context
                 )
+                if not self.template.score_rules:
+                    auto_score = int(score_context["completion_rate"])
+                    if auto_score > total_score:
+                        total_score = auto_score
+                        details["auto_completion_score"] = auto_score
             except Exception as e:
                 logger.error(f"评分规则评估失败: {e}", exc_info=True)
                 # 使用基础评分方案
@@ -631,6 +639,11 @@ class ExperimentController:
     def current_step_index(self) -> int:
         """当前步骤索引（兼容旧接口）"""
         return self.record.current_step_index
+
+    @property
+    def end_time(self) -> datetime | None:
+        """实验结束时间（兼容集成测试期望的属性）"""
+        return self.record.completed_at
 
     def is_started(self) -> bool:
         """实验是否已开始"""
@@ -849,6 +862,25 @@ class ExperimentController:
 
         return results
 
+    def _mark_experiment_completed(self, completed_at: datetime | None = None) -> None:
+        """统一设置实验完成状态并触发自动保存"""
+        already_completed = self.record.status == "completed" and self.record.completed_at is not None
+
+        if already_completed:
+            if completed_at and self.record.completed_at != completed_at:
+                self.record.completed_at = completed_at
+        else:
+            if completed_at:
+                self.record.completed_at = completed_at
+                self.record.status = "completed"
+            else:
+                self.record.complete_experiment()
+
+        self.state = ExperimentState.COMPLETED
+
+        if self.enable_auto_save:
+            self._auto_save_state()
+
     def _auto_save_state(self) -> None:
         """自动保存实验状态"""
         try:
@@ -885,6 +917,8 @@ class ExperimentController:
             # 恢复时间信息
             if state_data.get("start_time"):
                 self.start_time = datetime.fromisoformat(state_data["start_time"])
+            if state_data.get("end_time"):
+                self.record.completed_at = datetime.fromisoformat(state_data["end_time"])
             if state_data.get("pause_time"):
                 self.pause_time = datetime.fromisoformat(state_data["pause_time"])
 
@@ -906,6 +940,7 @@ class ExperimentController:
             "state": self.state.value,
             "mode": self.mode.value,
             "start_time": self.start_time.isoformat() if self.start_time else None,
+            "end_time": self.record.completed_at.isoformat() if self.record.completed_at else None,
             "pause_time": self.pause_time.isoformat() if self.pause_time else None,
             "total_pause_duration": self.total_pause_duration,
             "retry_count": self.retry_count,

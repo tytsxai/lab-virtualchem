@@ -8,6 +8,10 @@ import os
 from pathlib import Path
 from typing import Any, Literal
 
+# 允许测试覆盖 Path.__file__，用于模拟不同的配置根目录
+if not hasattr(Path, "__file__"):
+    Path.__file__ = __file__
+
 try:
     # Pydantic v2
     from pydantic import BaseModel, Field, field_validator, model_validator

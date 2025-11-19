@@ -24,6 +24,7 @@ class PathsConfig(BaseModel):
     i18n: str = Field(default="assets/i18n")
     user_data: str = Field(default="user_data")
     reports: str = Field(default="reports")
+    logs: str = Field(default="logs")
 
     @field_validator("*", mode="before")
     @classmethod
@@ -116,6 +117,7 @@ class AppConfig(BaseModel):
     version: str = "2.0.0"
     environment: Literal["development", "staging", "production"] = "development"
     debug: bool = False
+    port: int = 8000
 
     @model_validator(mode="after")
     def set_debug(self) -> "AppConfig":
@@ -129,14 +131,14 @@ class AppConfig(BaseModel):
 class Config(BaseModel):
     """主配置类"""
 
-    app: AppConfig
-    paths: PathsConfig
-    database: DatabaseConfig
-    redis: RedisConfig
-    cache: CacheConfig
-    security: SecurityConfig
-    monitoring: MonitoringConfig
-    log: LogConfig
+    app: AppConfig = Field(default_factory=AppConfig)
+    paths: PathsConfig = Field(default_factory=PathsConfig)
+    database: DatabaseConfig = Field(default_factory=DatabaseConfig)
+    redis: RedisConfig = Field(default_factory=RedisConfig)
+    cache: CacheConfig = Field(default_factory=CacheConfig)
+    security: SecurityConfig = Field(default_factory=lambda: SecurityConfig(jwt_secret_key=secrets.token_urlsafe(48)))
+    monitoring: MonitoringConfig = Field(default_factory=MonitoringConfig)
+    log: LogConfig = Field(default_factory=LogConfig)
 
     model_config = ConfigDict(
         validate_assignment=True,
@@ -155,8 +157,7 @@ class Config(BaseModel):
             Config: 配置对象
         """
         # 1. 确定环境
-        environment_raw = env if env is not None else os.getenv("ENVIRONMENT", "development")
-        environment: str = environment_raw if environment_raw is not None else "development"
+        environment = env if env is not None else os.getenv("ENVIRONMENT", "development") or "development"
 
         # 2. 加载环境变量 (优先级最高)
         load_env_file()
@@ -165,7 +166,7 @@ class Config(BaseModel):
         config_data = cls._load_config_file(environment)
 
         # 4. 合并环境变量
-        config_data = cls._merge_env_vars(config_data)
+        config_data = cls._merge_env_vars(config_data, environment_override=environment)
 
         # 5. 验证并返回
         return cls(**config_data)
@@ -198,15 +199,25 @@ class Config(BaseModel):
         return cls._get_default_config()
 
     @classmethod
-    def _merge_env_vars(cls, config_data: dict[str, Any]) -> dict[str, Any]:
+    def _merge_env_vars(cls, config_data: dict[str, Any], environment_override: str | None = None) -> dict[str, Any]:
         """合并环境变量 (优先级高于配置文件)"""
         # 应用配置
         if not config_data.get("app"):
             config_data["app"] = {}
-        config_data["app"]["environment"] = os.getenv(
-            "ENVIRONMENT", config_data["app"].get("environment", "development")
-        )
-        config_data["app"]["debug"] = os.getenv("DEBUG", str(config_data["app"].get("debug", False))).lower() == "true"
+        if environment_override is not None:
+            config_data["app"]["environment"] = environment_override
+        elif "environment" not in config_data["app"]:
+            env_override = os.getenv("ENVIRONMENT")
+            if env_override:
+                config_data["app"]["environment"] = env_override
+            else:
+                config_data["app"]["environment"] = "development"
+
+        debug_override = os.getenv("DEBUG")
+        if debug_override is not None:
+            config_data["app"]["debug"] = debug_override.lower() in ("true", "1", "yes", "on")
+        else:
+            config_data["app"].setdefault("debug", False)
 
         # 安全配置
         security_cfg = config_data.setdefault("security", {})

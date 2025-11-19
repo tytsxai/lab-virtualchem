@@ -6,7 +6,7 @@
 from datetime import datetime, timedelta
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
 from ..utils.logger import get_logger
 
@@ -34,6 +34,8 @@ class QuestStatus(str, Enum):
 class Quest(BaseModel):
     """任务定义"""
 
+    model_config = ConfigDict(use_enum_values=True)
+
     id: str = Field(..., description="任务ID")
     name: str = Field(..., description="任务名称")
     description: str = Field(..., description="任务描述")
@@ -50,13 +52,14 @@ class Quest(BaseModel):
     # 时间限制
     expires_at: datetime | None = Field(default=None, description="过期时间")
 
-    class Config:
-        use_enum_values = True
-        json_encoders = {datetime: lambda v: v.isoformat() if v else None}
-
+    @field_serializer("expires_at")
+    def serialize_expires_at(self, value: datetime | None) -> str | None:
+        return value.isoformat() if value else None
 
 class UserQuest(BaseModel):
     """用户任务记录"""
+
+    model_config = ConfigDict(use_enum_values=True)
 
     quest_id: str = Field(..., description="任务ID")
     user_id: str = Field(..., description="用户ID")
@@ -67,9 +70,9 @@ class UserQuest(BaseModel):
     completed_at: datetime | None = Field(default=None, description="完成时间")
     claimed_at: datetime | None = Field(default=None, description="领取时间")
 
-    class Config:
-        use_enum_values = True
-        json_encoders = {datetime: lambda v: v.isoformat() if v else None}
+    @field_serializer("started_at", "completed_at", "claimed_at")
+    def serialize_datetimes(self, value: datetime | None) -> str | None:
+        return value.isoformat() if value else None
 
     @property
     def is_completed(self) -> bool:
