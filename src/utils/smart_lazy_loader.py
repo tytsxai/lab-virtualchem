@@ -5,10 +5,11 @@
 
 import importlib
 import logging
+import sys
 import threading
 import time
-from typing import Any, Dict, List, Optional, Callable, Set
 from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -57,21 +58,16 @@ class SmartLazyLoader:
 
         # 统计信息
         self._stats = {
-            'total_registered': 0,
-            'total_loaded': 0,
-            'background_loaded': 0,
-            'load_errors': 0,
-            'total_load_time': 0.0
+            "total_registered": 0,
+            "total_loaded": 0,
+            "background_loaded": 0,
+            "load_errors": 0,
+            "total_load_time": 0.0,
         }
 
         logger.info("智能懒加载器初始化完成")
 
-    def register(
-        self,
-        module_name: str,
-        priority: int = 0,
-        dependencies: Optional[List[str]] = None
-    ):
+    def register(self, module_name: str, priority: int = 0, dependencies: Optional[List[str]] = None):
         """注册模块
 
         Args:
@@ -85,7 +81,7 @@ class SmartLazyLoader:
                 priority=priority,
                 dependencies=dependencies or []
             )
-            self._stats['total_registered'] += 1
+            self._stats["total_registered"] += 1
             logger.debug(f"注册模块: {module_name} (优先级: {priority})")
 
     def load(self, module_name: str, force: bool = False) -> Any:
@@ -102,6 +98,9 @@ class SmartLazyLoader:
             # 检查缓存
             if not force and module_name in self._loaded_modules:
                 return self._loaded_modules[module_name]
+
+            if force:
+                self.invalidate(module_name)
 
             # 加载依赖
             if module_name in self._modules:
@@ -127,8 +126,8 @@ class SmartLazyLoader:
                     module_info.load_time = load_time
 
                 # 更新统计
-                self._stats['total_loaded'] += 1
-                self._stats['total_load_time'] += load_time
+                self._stats["total_loaded"] += 1
+                self._stats["total_load_time"] += load_time
 
                 logger.debug(f"加载模块: {module_name} ({load_time*1000:.2f}ms)")
                 return module
@@ -140,7 +139,7 @@ class SmartLazyLoader:
                 if module_name in self._modules:
                     self._modules[module_name].error = str(e)
 
-                self._stats['load_errors'] += 1
+                self._stats["load_errors"] += 1
                 raise
 
     def load_many(self, module_names: List[str]) -> Dict[str, Any]:
@@ -205,7 +204,7 @@ class SmartLazyLoader:
             try:
                 # 后台加载
                 self.load(module_info.name)
-                self._stats['background_loaded'] += 1
+                self._stats["background_loaded"] += 1
 
                 # 小延迟，避免影响主线程
                 time.sleep(0.01)
@@ -213,6 +212,7 @@ class SmartLazyLoader:
             except Exception as e:
                 logger.error(f"后台加载失败 {module_info.name}: {e}")
 
+        self._background_loading = False
         logger.info("后台预加载完成")
 
     def get_stats(self) -> Dict[str, Any]:
@@ -220,11 +220,13 @@ class SmartLazyLoader:
         with self._lock:
             return {
                 **self._stats,
-                'avg_load_time_ms': (
-                    self._stats['total_load_time'] / self._stats['total_loaded'] * 1000
-                    if self._stats['total_loaded'] > 0 else 0
+                "avg_load_time_ms": (
+                    self._stats["total_load_time"] / self._stats["total_loaded"] * 1000
+                    if self._stats["total_loaded"] > 0
+                    else 0
                 ),
-                'cache_size': len(self._loaded_modules)
+                "cache_size": len(self._loaded_modules),
+                "background_running": self._background_loading,
             }
 
     def get_loaded_modules(self) -> List[str]:
@@ -235,10 +237,7 @@ class SmartLazyLoader:
     def get_unloaded_modules(self) -> List[str]:
         """获取未加载的模块列表"""
         with self._lock:
-            return [
-                name for name, info in self._modules.items()
-                if not info.loaded and name not in self._loaded_modules
-            ]
+            return [name for name, info in self._modules.items() if not info.loaded and name not in self._loaded_modules]
 
     def clear_cache(self):
         """清空缓存"""
@@ -247,6 +246,19 @@ class SmartLazyLoader:
             for module_info in self._modules.values():
                 module_info.loaded = False
         logger.info("模块缓存已清空")
+
+    def invalidate(self, module_name: Optional[str] = None):
+        """使模块缓存失效，支持单个或全部"""
+        with self._lock:
+            targets = [module_name] if module_name else list(self._loaded_modules.keys())
+            for name in targets:
+                if name is None:
+                    continue
+                self._loaded_modules.pop(name, None)
+                if name in self._modules:
+                    self._modules[name].loaded = False
+                if name in sys.modules:
+                    sys.modules.pop(name, None)
 
 
 # 全局懒加载器实例

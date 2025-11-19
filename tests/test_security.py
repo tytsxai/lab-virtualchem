@@ -244,6 +244,11 @@ class TestPasswordManager(unittest.TestCase):
         self.assertTrue(any(c.isdigit() for c in password))
         self.assertTrue(any(c in "!@#$%^&*" for c in password))
 
+    def test_generate_secure_password_min_length(self):
+        """密码长度不足时应抛异常"""
+        with self.assertRaises(ValueError):
+            PasswordManager.generate_secure_password(6)
+
 
 class TestSecureToken(unittest.TestCase):
     """安全令牌测试"""

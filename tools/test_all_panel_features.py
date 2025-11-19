@@ -8,6 +8,12 @@ import io
 import subprocess
 import sys
 from pathlib import Path
+from typing import Tuple, TYPE_CHECKING
+
+try:  # 允许该脚本在非pytest环境运行
+    import pytest  # type: ignore
+except ImportError:  # pragma: no cover - CLI模式不需要pytest
+    pytest = None
 
 # 设置UTF-8编码
 if sys.platform == "win32":
@@ -15,6 +21,10 @@ if sys.platform == "win32":
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
 
 project_root = Path(__file__).parent.parent.absolute()
+QUICK_TESTS: list[Tuple[str, str]] = [
+    ("license_generator.py", "许可证生成器"),
+    ("system_health_check.py", "系统健康检查"),
+]
 
 
 class PanelFeatureTester:
@@ -233,7 +243,7 @@ class PanelFeatureTester:
         return self.print_summary()
 
 
-def test_tool_quick_run(tool_name, description):
+def _tool_quick_run(tool_name, description):
     """快速测试工具是否能运行（带--help参数）"""
     print(f"\n🔍 测试 {description}...")
 
@@ -268,6 +278,16 @@ def test_tool_quick_run(tool_name, description):
         return False
 
 
+if pytest or TYPE_CHECKING:
+    @pytest.mark.parametrize(("tool_name", "description"), QUICK_TESTS)  # type: ignore[misc]
+    def test_tool_quick_run(tool_name: str, description: str):
+        """Pytest参数化测试工具运行情况"""
+        assert _tool_quick_run(tool_name, description)
+else:
+    def test_tool_quick_run() -> None:  # pragma: no cover - 仅为pytest占位
+        raise RuntimeError("运行该测试需要pytest依赖")
+
+
 def main():
     """主函数"""
     tester = PanelFeatureTester()
@@ -278,13 +298,8 @@ def main():
     print("🚀 快速运行测试（部分工具）")
     print("=" * 60)
 
-    quick_tests = [
-        ("license_generator.py", "许可证生成器"),
-        ("system_health_check.py", "系统健康检查"),
-    ]
-
-    for tool, desc in quick_tests:
-        test_tool_quick_run(tool, desc)
+    for tool, desc in QUICK_TESTS:
+        _tool_quick_run(tool, desc)
 
     print("\n" + "=" * 60)
     print("✅ 测试完成")
