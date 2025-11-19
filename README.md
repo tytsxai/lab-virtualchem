@@ -2,6 +2,22 @@
 
 一个具有游戏化交互体验的虚拟化学实验室应用程序。
 
+> 📘 想要最短路径？使用 `QUICK_START.md`（English）或 `README_快速开始.md`（中文），并在完成后按照 `QUICK_START_COMPLETION.md` 检查剩余事项。需要更完整的引导可参考 `QUICK_START_GUIDE.md`。
+
+## 快速导航
+
+- [功能特性](#功能特性)
+- [最新功能](#最新功能)
+- [安装说明](#安装说明)
+- [使用指南](#使用指南)
+- [项目结构](#项目结构)
+- [技术栈](#技术栈)
+- [开发文档](#开发文档)
+- [贡献指南](#贡献指南)
+- [许可证](#许可证)
+- [联系方式](#联系方式)
+- [更新日志](#更新日志)
+
 ## 功能特性
 
 ### 🧪 实验功能
@@ -33,7 +49,7 @@
 - **实时更新**: 配置更改即时生效
 - **错误处理**: 完善的异常管理
 
-## 🆕 最新功能
+## 最新功能
 
 ### 🚀 开发者启动面板 (v2.0.0 新增)
 
@@ -97,7 +113,7 @@
 
 ### 系统要求
 
-- Python 3.8+
+- Python 3.11（兼容 3.8+，推荐 3.11）
 - Windows 10/11, macOS 10.15+, 或 Linux
 - 4GB RAM (推荐 8GB)
 - 1GB 可用磁盘空间
@@ -106,35 +122,53 @@
 
 1. **克隆仓库**
 
-```bash
-git clone https://github.com/virtualchemlab/virtualchemlab.git
-cd virtualchemlab
-```
+   ```bash
+   git clone https://github.com/tytsxai/VirtualChemLab.git
+   cd VirtualChemLab
+   ```
 
-2. **创建虚拟环境**
+2. **创建并激活 Python 3.11 虚拟环境**
 
-```bash
-python -m venv venv
-source venv/bin/activate  # Linux/macOS
-# 或
-venv\\Scripts\\activate  # Windows
-```
+   ```bash
+   python3.11 -m venv venv311
+   source venv311/bin/activate          # Linux/macOS
+   # 或
+   venv311\\Scripts\\activate           # Windows
+   ```
 
-3. **安装依赖（推荐使用锁定文件确保一致性）**
+3. **安装依赖（锁定文件优先）**
 
-```bash
-# 推荐：锁定版本，避免环境差异
-pip install -r requirements.lock
+   ```bash
+   pip install -r requirements.lock
+   # 如需刷新依赖，可编辑 requirements.txt 并重新生成锁定文件
+   # pip install -r requirements.txt
+   ```
 
-# 如需更新依赖，可在确认后使用 requirements.txt 重新生成锁定文件
-# pip install -r requirements.txt
-```
+4. **初始化环境变量和配置**
 
-4. **运行应用**
+   ```bash
+   cp env.example .env
+   python config/schemas/app_config.py
+   ```
 
-```bash
-python main.py
-```
+   上述脚本会验证路径并在缺失时自动创建必要目录。
+
+5. **运行应用与测试**
+
+   ```bash
+   python main.py --env development
+   pytest -q
+   ```
+
+6. **可选：开发者启动面板**
+
+   ```bash
+   python tools/developer_panel.py
+   ```
+
+   用于集中启动核心工具、测试和诊断程序。
+
+> 💡 更多细节和扩展安装指引，请查看 `README_快速开始.md`、`QUICK_START_GUIDE.md`、`INSTALL.md`。
 
 ### 开发环境设置
 
@@ -284,7 +318,7 @@ VirtualChemLab/
 - **测试框架**: pytest + pytest-qt
 - **代码质量**: ruff + black + isort + mypy
 
-## 📚 开发文档
+## 开发文档
 
 ### 核心文档
 
@@ -327,8 +361,8 @@ VirtualChemLab/
 
 ## 联系方式
 
-- 项目主页: [https://github.com/virtualchemlab/virtualchemlab](https://github.com/virtualchemlab/virtualchemlab)
-- 问题反馈: [Issues](https://github.com/virtualchemlab/virtualchemlab/issues)
+- 项目主页: [https://github.com/tytsxai/VirtualChemLab](https://github.com/tytsxai/VirtualChemLab)
+- 问题反馈: [Issues](https://github.com/tytsxai/VirtualChemLab/issues)
 - 邮箱: <team@virtualchemlab.com>
 
 ## 更新日志

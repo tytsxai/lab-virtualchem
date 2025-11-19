@@ -335,7 +335,7 @@ make format
 
 ### 项目资源
 
-- **GitHub Issues**: https://github.com/virtualchemlab/virtualchemlab/issues
+- **GitHub Issues**: https://github.com/tytsxai/VirtualChemLab/issues
 - **文档**: `docs/` 目录
 - **示例**: `examples/` 目录
 
@@ -348,7 +348,7 @@ make format
 ### 联系方式
 
 - **邮箱**: team@virtualchemlab.com
-- **项目主页**: https://github.com/virtualchemlab/virtualchemlab
+- **项目主页**: https://github.com/tytsxai/VirtualChemLab
 
 ---
 
@@ -367,4 +367,3 @@ make format
 **最后更新**: 2025-11-10  
 **文档版本**: v1.0  
 **负责人**: VirtualChemLab Team
-

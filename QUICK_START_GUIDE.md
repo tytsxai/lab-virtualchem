@@ -26,23 +26,36 @@
 
 ## 📦 安装
 
+> 建议先阅读 `QUICK_START.md`/`README_快速开始.md` 获取 TL;DR，再回到本指南了解详细说明。
+
 ### 1. 克隆或下载项目
 
 ```bash
-git clone <repository-url>
-cd VirtualChemLab开发
+git clone https://github.com/tytsxai/VirtualChemLab.git
+cd VirtualChemLab
 ```
 
-### 2. 安装依赖
+### 2. 准备环境并安装依赖
 
 ```bash
-pip install -r requirements.txt
+python3.11 -m venv venv311
+source venv311/bin/activate      # Windows: venv311\Scripts\activate
+pip install -r requirements.lock # 或使用 requirements.txt 重新生成锁定文件
 ```
 
-### 3. 首次启动
+### 3. 初始化配置
 
 ```bash
-python main.py
+cp env.example .env
+python config/schemas/app_config.py
+```
+
+脚本会验证关键目录并自动创建缺失项。
+
+### 4. 首次启动
+
+```bash
+python main.py --env development
 ```
 
 ## 🎓 首次使用
@@ -168,13 +181,13 @@ pip install -r requirements.txt
 #### 问题：Python版本过低
 
 ```
-需要 Python 3.8+，当前为 3.7
+需要 Python 3.11+，当前为 3.7
 ```
 
 **解决方案**：
 
-- 升级Python到3.8或更高版本
-- 使用虚拟环境管理不同版本
+- 升级 Python 到 3.11（至少 3.11，兼容 3.8+）
+- 使用独立虚拟环境管理不同版本
 
 ### 运行时错误
 

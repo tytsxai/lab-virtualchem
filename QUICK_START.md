@@ -1,14 +1,27 @@
 # Quick Start
 
-This short checklist points to the canonical docs shipped with the project.
+This short guide mirrors the canonical documentation and keeps the minimal, repeatable steps in one place.
 
-1. Install the Python 3.11 virtual environment and project dependencies:
+## Prerequisites
+
+- Python 3.11 (virtual environment strongly recommended)
+- Access to `requirements.lock` (or `requirements.txt` when regenerating the lock file)
+- Git and a shell with `python3.11` on the `PATH`
+
+## Setup Steps
+
+1. Create and activate the virtual environment, then install dependencies:
    ```bash
    python3.11 -m venv venv311
-   venv311/bin/python -m pip install -r requirements.txt
+   venv311/bin/python -m pip install -r requirements.lock
+   # Need to refresh dependencies? use requirements.txt instead.
    ```
-2. Review `QUICK_START_GUIDE.md` for the detailed walkthrough and
-   `QUICK_START_COMPLETION.md` for the follow-up checklist.
+2. Copy the sample environment file, then run the configuration validator
+   to ensure key directories exist:
+   ```bash
+   cp env.example .env
+   venv311/bin/python config/schemas/app_config.py
+   ```
 3. Launch the application in development mode:
    ```bash
    venv311/bin/python main.py --env development
@@ -18,4 +31,8 @@ This short checklist points to the canonical docs shipped with the project.
    venv311/bin/python -m pytest -q
    ```
 
-These steps mirror the more complete instructions but keep the bare minimum in one place.
+## Next Steps
+
+- `QUICK_START_GUIDE.md`: Detailed onboarding with screenshots and feature highlights.
+- `README.md`: Full project overview plus extended usage instructions.
+- `QUICK_START_COMPLETION.md`: Post-setup checklist to confirm production readiness.

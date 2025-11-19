@@ -4,18 +4,20 @@
 
 ## 目录
 
-- [快速开始](#快速开始)
-- [用户指南](#用户指南)
-- [开发者文档](#开发者文档)
-- [API文档](#api文档)
-- [部署指南](#部署指南)
-- [故障排除](#故障排除)
+- [快速开始](#快速开始) — 最小可行的环境搭建步骤与快捷链接
+- [用户指南](#用户指南) — 实验、模板和权限等常见操作
+- [开发者文档](#开发者文档) — 模块结构、编码规范和测试方式
+- [API文档](#api文档) — REST API 概览与示例
+- [部署指南](#部署指南) — Docker/K8s/传统部署与配置要点
+- [故障排除](#故障排除) — 常见问题、日志分析与支持渠道
 
 ## 快速开始
 
+> ✅ TL;DR：阅读根目录下的 `QUICK_START.md`（English）或 `README_快速开始.md`（中文），并使用 `QUICK_START_GUIDE.md` + `QUICK_START_COMPLETION.md` 获得全流程指引与检查清单。
+
 ### 系统要求
 
-- Python 3.8+
+- Python 3.11（兼容 3.8+）
 - Windows 10/11, macOS 10.14+, 或 Linux
 - 至少 4GB RAM
 - 1GB 可用磁盘空间
@@ -24,31 +26,47 @@
 
 1. 克隆项目
 
-```bash
-git clone https://github.com/virtualchemlab/virtualchemlab.git
-cd virtualchemlab
-```
+   ```bash
+   git clone https://github.com/tytsxai/VirtualChemLab.git
+   cd VirtualChemLab
+   ```
 
-1. 创建虚拟环境
+2. 创建虚拟环境
 
-```bash
-python -m venv venv
-source venv/bin/activate  # Linux/macOS
-# 或
-venv\Scripts\activate  # Windows
-```
+   ```bash
+   python3.11 -m venv venv311
+   source venv311/bin/activate     # Linux/macOS
+   # 或
+   venv311\Scripts\activate        # Windows
+   ```
 
-1. 安装依赖
+3. 安装依赖
 
-```bash
-pip install -r requirements.txt
-```
+   ```bash
+   pip install -r requirements.lock
+   # 若需刷新依赖，可切换为 requirements.txt
+   ```
 
-1. 运行应用
+4. 初始化配置并检查目录
 
-```bash
-python main.py
-```
+   ```bash
+   cp env.example .env
+   python config/schemas/app_config.py
+   ```
+
+5. 运行应用
+
+   ```bash
+   python main.py --env development
+   ```
+
+6. 运行测试
+
+   ```bash
+   pytest -q
+   ```
+
+如需更详细的按需安装策略，请参阅根目录下的 `INSTALL.md`。
 
 ### 首次使用
 
@@ -193,18 +211,18 @@ src/
 
 #### 测试
 
-运行测试：
+运行全部测试：
 
 ```bash
-python tests/run_tests.py
+pytest -q
 ```
 
-运行特定测试：
+运行特定测试套件：
 
 ```bash
-python tests/run_tests.py --test security
-python tests/run_tests.py --test performance
-python tests/run_tests.py --test integration
+pytest tests/security -q
+pytest tests/performance -q
+pytest tests/integration -q
 ```
 
 ## API文档
@@ -321,10 +339,10 @@ kubectl get services
 
 #### 传统部署
 
-1. 安装Python 3.8+
-2. 安装依赖
-3. 配置数据库
-4. 启动服务
+1. 安装 Python 3.11 并创建虚拟环境
+2. 安装依赖（推荐使用 `requirements.lock`）
+3. 配置数据库与 `.env`
+4. 运行 `python main.py --env production`
 
 ### 环境配置
 
@@ -353,7 +371,7 @@ kubectl get services
 
 **解决方案**:
 
-1. 检查Python版本是否为3.8+
+1. 检查Python版本是否为3.11（至少 3.8+）
 2. 确认所有依赖已安装
 3. 查看错误日志
 4. 检查端口是否被占用
@@ -417,7 +435,7 @@ kubectl get services
 如果您遇到问题，可以通过以下方式获取帮助：
 
 1. 查看[FAQ](FAQ.md)
-2. 提交[Issue](https://github.com/virtualchemlab/virtualchemlab/issues)
+2. 提交[Issue](https://github.com/tytsxai/VirtualChemLab/issues)
 3. 联系技术支持: <support@virtualchemlab.com>
 
 ## 更新日志

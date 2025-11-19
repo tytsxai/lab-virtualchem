@@ -363,7 +363,7 @@ source venv/bin/activate
 
 ### 联系支持
 
-- **GitHub Issues**: https://github.com/virtualchemlab/virtualchemlab/issues
+- **GitHub Issues**: https://github.com/tytsxai/VirtualChemLab/issues
 - **邮箱**: team@virtualchemlab.com
 
 ---

@@ -393,8 +393,8 @@
 
 ## 📞 联系与支持
 
-- **项目主页**: https://github.com/virtualchemlab/virtualchemlab
-- **问题反馈**: https://github.com/virtualchemlab/virtualchemlab/issues
+- **项目主页**: https://github.com/tytsxai/VirtualChemLab
+- **问题反馈**: https://github.com/tytsxai/VirtualChemLab/issues
 - **邮箱**: team@virtualchemlab.com
 
 ---
@@ -402,4 +402,3 @@
 **最后更新**: 2025-11-10  
 **文档版本**: v1.0  
 **负责人**: VirtualChemLab Team
-

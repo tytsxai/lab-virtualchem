@@ -198,7 +198,7 @@ microservices_manager.register_service(service)
 
 ```bash
 # 克隆项目
-git clone https://github.com/virtualchemlab/virtualchemlab.git
+git clone https://github.com/tytsxai/VirtualChemLab.git
 cd virtualchemlab
 
 # 创建虚拟环境
@@ -365,15 +365,15 @@ class TestExample(unittest.TestCase):
 
 ```bash
 # 运行所有测试
-python tests/run_tests.py
+pytest -q
 
 # 运行特定测试
-python tests/run_tests.py --test security
-python tests/run_tests.py --test performance
-python tests/run_tests.py --test integration
+pytest tests/security -q
+pytest tests/performance -q
+pytest tests/integration -q
 
 # 详细输出
-python tests/run_tests.py --verbose
+pytest -vv
 ```
 
 ### 性能优化
