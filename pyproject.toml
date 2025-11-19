@@ -72,10 +72,10 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/virtualchemlab/virtualchemlab"
+Homepage = "https://github.com/tytsxai/VirtualChemLab"
 Documentation = "https://virtualchemlab.readthedocs.io"
-Repository = "https://github.com/virtualchemlab/virtualchemlab.git"
-Issues = "https://github.com/virtualchemlab/virtualchemlab/issues"
+Repository = "https://github.com/tytsxai/VirtualChemLab.git"
+Issues = "https://github.com/tytsxai/VirtualChemLab/issues"
 
 [project.scripts]
 virtualchemlab = "src.main:main"

@@ -15,7 +15,7 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/your-repo/VirtualChemLab.git
+git clone https://github.com/tytsxai/VirtualChemLab.git
 cd VirtualChemLab
 
 # 安装核心依赖（推荐使用锁定文件）
