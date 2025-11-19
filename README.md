@@ -120,10 +120,14 @@ source venv/bin/activate  # Linux/macOS
 venv\\Scripts\\activate  # Windows
 ```
 
-3. **安装依赖**
+3. **安装依赖（推荐使用锁定文件确保一致性）**
 
 ```bash
-pip install -r requirements.txt
+# 推荐：锁定版本，避免环境差异
+pip install -r requirements.lock
+
+# 如需更新依赖，可在确认后使用 requirements.txt 重新生成锁定文件
+# pip install -r requirements.txt
 ```
 
 4. **运行应用**
@@ -164,6 +168,22 @@ ruff check src tests --fix
 
 - 运行 `python scripts/readiness_check.py`，快速验证依赖、配置、安全与监控是否达标。
 - 更多上线、监控、回滚与性能调优细节见 `docs/OPERATIONS_READINESS.md`。
+
+### 环境变量与安全配置
+
+- `VCL_JWT_SECRET`：JWT 密钥，至少 32 个字符，生产环境必须外部提供。
+- `VCL_ADMIN_SECRET_KEY`：管理后台/Flask 的 SECRET_KEY，建议与 JWT 密钥不同。
+- `ENVIRONMENT`：`development` / `staging` / `production`，控制默认安全策略。
+
+写入 `.env` 或系统环境，例如：
+
+```bash
+export VCL_JWT_SECRET="please_change_me_to_a_secure_value"
+export VCL_ADMIN_SECRET_KEY="admin_panel_secret"
+export ENVIRONMENT="production"
+```
+
+生产环境缺少上述密钥会导致程序拒绝启动。
 
 ## 使用指南
 

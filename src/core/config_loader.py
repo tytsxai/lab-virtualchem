@@ -77,6 +77,7 @@ class SecurityConfig(BaseModel):
     jwt_algorithm: str = "HS256"
     jwt_expiration: int = 3600
     developer_key_hash: str | None = None
+    jwt_secret_env: str = "JWT_SECRET_KEY"
 
     @field_validator("jwt_secret_key")
     @classmethod
@@ -208,24 +209,34 @@ class Config(BaseModel):
         config_data["app"]["debug"] = os.getenv("DEBUG", str(config_data["app"].get("debug", False))).lower() == "true"
 
         # 安全配置
-        if not config_data.get("security"):
-            config_data["security"] = {}
+        security_cfg = config_data.setdefault("security", {})
+        env_override = os.getenv("JWT_SECRET_ENV")
+        secret_env_name = env_override or security_cfg.get("jwt_secret_env") or "JWT_SECRET_KEY"
+        security_cfg["jwt_secret_env"] = secret_env_name
 
-        jwt_secret = os.getenv("JWT_SECRET_KEY") or config_data["security"].get("jwt_secret_key")
+        jwt_secret = os.getenv(secret_env_name) or os.getenv("JWT_SECRET_KEY") or security_cfg.get("jwt_secret_key")
         if jwt_secret:
-            config_data["security"]["jwt_secret_key"] = jwt_secret
+            security_cfg["jwt_secret_key"] = jwt_secret
         else:
             env = config_data["app"]["environment"]
             if env == "production":
-                raise ValueError("生产环境必须设置 JWT_SECRET_KEY 环境变量")
+                raise ValueError(f"生产环境必须设置 JWT 密钥环境变量 ({secret_env_name})")
             generated_secret = secrets.token_urlsafe(48)
-            config_data["security"]["jwt_secret_key"] = generated_secret
+            security_cfg["jwt_secret_key"] = generated_secret
             logger.warning("未配置JWT密钥，已为%s环境生成临时密钥，仅用于本次运行", env)
 
         # 开发者密钥
         dev_key = os.getenv("DEVELOPER_KEY_HASH")
         if dev_key:
-            config_data["security"]["developer_key_hash"] = dev_key
+            security_cfg["developer_key_hash"] = dev_key
+
+        # 管理后台密钥环境变量校验
+        developer_cfg = config_data.setdefault("developer", {})
+        admin_env_override = os.getenv("ADMIN_SECRET_ENV")
+        admin_secret_env = developer_cfg.get("admin_secret_env") or admin_env_override or "VCL_ADMIN_SECRET_KEY"
+        developer_cfg["admin_secret_env"] = admin_secret_env
+        if config_data["app"]["environment"] == "production" and not os.getenv(admin_secret_env):
+            raise ValueError(f"生产环境必须设置管理后台密钥环境变量 ({admin_secret_env})")
 
         # 数据库配置
         if not config_data.get("database"):

@@ -4,6 +4,8 @@
 
 import argparse
 import json
+import os
+import secrets
 import sys
 from pathlib import Path
 from typing import Any
@@ -45,6 +47,7 @@ def main() -> None:
         default=None,
         help="许可证文件路径（默认: data/license.json）",
     )
+    parser.add_argument("--admin-secret", type=str, default=None, help="管理后台密钥（默认从环境变量读取）")
 
     args = parser.parse_args()
 
@@ -55,6 +58,19 @@ def main() -> None:
     host = args.host or config.get("admin_api", {}).get("host", "127.0.0.1")
     port = args.port or config.get("admin_api", {}).get("port", 5000)
     secret_key = config.get("license", {}).get("secret_key", "default_secret_key")
+
+    admin_secret_env = config.get("developer", {}).get("admin_secret_env", "VCL_ADMIN_SECRET_KEY")
+    admin_secret = (
+        args.admin_secret
+        or os.getenv(admin_secret_env)
+        or os.getenv("VCL_ADMIN_SECRET_KEY")
+    )
+    environment = os.getenv("ENVIRONMENT", "development")
+    if not admin_secret:
+        if environment == "production":
+            raise ValueError(f"生产环境必须设置管理后台密钥 ({admin_secret_env})")
+        admin_secret = secrets.token_urlsafe(48)
+        logger.warning("未提供管理后台密钥，在%s环境生成临时密钥（仅当前会话有效）", environment)
 
     license_file = Path(args.license_file) if args.license_file else PROJECT_ROOT / "data" / "license.json"
 
@@ -69,7 +85,13 @@ def main() -> None:
     logger.info("=" * 60)
 
     try:
-        api = create_admin_api(license_file=license_file, secret_key=secret_key, host=host, port=port)
+        api = create_admin_api(
+            license_file=license_file,
+            secret_key=secret_key,
+            host=host,
+            port=port,
+            admin_secret=admin_secret,
+        )
 
         logger.info("\n✅ 服务器已启动！")
         logger.info(f"📊 管理面板: http://{host}:{port}/dashboard")

@@ -1,8 +1,11 @@
-"""插件相关接口定义"""
+"""插件相关接口定义与轻量实现"""
 
+from __future__ import annotations
+
+import importlib
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any
+from typing import Any, Callable
 
 
 class PluginType(str, Enum):
@@ -228,3 +231,132 @@ class IPluginRegistry(ABC):
             插件列表
         """
         pass
+
+
+# --------- 轻量级默认实现，供开发/测试环境使用 ---------
+
+
+class PluginLoadError(Exception):
+    """插件加载失败"""
+
+
+class SimplePlugin(IPlugin):
+    """基础插件实现，可作为快速占位"""
+
+    def __init__(
+        self,
+        name: str,
+        plugin_type: PluginType = PluginType.INTEGRATION,
+        version: str = "1.0.0",
+        priority: PluginPriority = PluginPriority.NORMAL,
+        capabilities: list[str] | None = None,
+        executor: Callable[[str, dict[str, Any] | None], Any] | None = None,
+    ):
+        self._name = name
+        self._type = plugin_type
+        self._version = version
+        self._priority = priority
+        self._capabilities = capabilities or []
+        self._executor = executor or (lambda action, params=None: {"action": action, "params": params})
+        self._available = True
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def version(self) -> str:
+        return self._version
+
+    @property
+    def plugin_type(self) -> PluginType:
+        return self._type
+
+    @property
+    def priority(self) -> PluginPriority:
+        return self._priority
+
+    def initialize(self, config: dict[str, Any] | None = None) -> bool:
+        self._available = True
+        return True
+
+    def shutdown(self) -> None:
+        self._available = False
+
+    def is_available(self) -> bool:
+        return self._available
+
+    def get_capabilities(self) -> list[str]:
+        return list(self._capabilities)
+
+    def execute(self, action: str, params: dict[str, Any] | None = None) -> Any:
+        return self._executor(action, params or {})
+
+
+class InMemoryPluginRegistry(IPluginRegistry):
+    """简单的内存注册表"""
+
+    def __init__(self):
+        self._plugins: dict[str, IPlugin] = {}
+
+    def register(self, plugin: IPlugin) -> bool:
+        self._plugins[plugin.name] = plugin
+        return True
+
+    def unregister(self, plugin_name: str) -> bool:
+        return self._plugins.pop(plugin_name, None) is not None
+
+    def get(self, plugin_name: str) -> IPlugin | None:
+        return self._plugins.get(plugin_name)
+
+    def find_by_type(self, plugin_type: PluginType) -> list[IPlugin]:
+        return [p for p in self._plugins.values() if p.plugin_type == plugin_type]
+
+    def find_by_capability(self, capability: str) -> list[IPlugin]:
+        return [p for p in self._plugins.values() if capability in p.get_capabilities()]
+
+
+class InMemoryPluginLoader(IPluginLoader):
+    """基于 importlib 的轻量加载器"""
+
+    def __init__(self, registry: IPluginRegistry | None = None) -> None:
+        self.registry = registry or InMemoryPluginRegistry()
+
+    def load_plugin(self, plugin_path: str) -> IPlugin | None:
+        """支持 'module:attr' 或 'module.Class'"""
+        try:
+            if ":" in plugin_path:
+                module_name, attr = plugin_path.split(":", 1)
+            elif "." in plugin_path:
+                module_name, attr = plugin_path.rsplit(".", 1)
+            else:
+                raise PluginLoadError("插件路径格式错误")
+            module = importlib.import_module(module_name)
+            plugin_cls = getattr(module, attr, None)
+            if plugin_cls is None:
+                raise PluginLoadError(f"无法在模块中找到 {attr}")
+            plugin: IPlugin = plugin_cls() if callable(plugin_cls) else plugin_cls
+            if not isinstance(plugin, IPlugin):
+                raise PluginLoadError("加载的对象不是 IPlugin 实例")
+            self.registry.register(plugin)
+            return plugin
+        except Exception as exc:  # pragma: no cover - 防御性提示
+            raise PluginLoadError(str(exc)) from exc
+
+    def unload_plugin(self, plugin_name: str) -> bool:
+        return self.registry.unregister(plugin_name)
+
+    def get_plugin(self, plugin_name: str) -> IPlugin | None:
+        return self.registry.get(plugin_name)
+
+    def list_plugins(self, plugin_type: PluginType | None = None) -> list[IPlugin]:
+        if plugin_type is None:
+            return list(self.registry._plugins.values())  # noqa: SLF001 - 受控访问
+        return self.registry.find_by_type(plugin_type)
+
+    def reload_plugin(self, plugin_name: str) -> bool:
+        # 简化：仅注销后再无法自动重载，返回 False 以提示外部自行处理
+        if self.registry.get(plugin_name):
+            self.registry.unregister(plugin_name)
+            return False
+        return False

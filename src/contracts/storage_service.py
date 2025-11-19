@@ -1,9 +1,12 @@
 """存储服务契约"""
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Generic, TypeVar
+from typing import Any, Callable, Generic, TypeVar
+from uuid import uuid4
 
 T = TypeVar("T")
 
@@ -219,3 +222,107 @@ class StorageService(ABC):
             是否存在
         """
         pass
+
+
+# --------- 轻量级内存实现，便于无外部依赖时使用 ---------
+
+
+class InMemoryStorageService(StorageService):
+    """基于内存字典的存储实现，满足测试/开发场景"""
+
+    def __init__(self) -> None:
+        self._store: dict[str, dict[str, Any]] = {}
+
+    def _resolve_id(self, entity: Any) -> str:
+        """获取或生成实体ID"""
+        if hasattr(entity, "id"):
+            return str(getattr(entity, "id"))
+        if hasattr(entity, "record_id"):
+            return str(getattr(entity, "record_id"))
+        return uuid4().hex
+
+    def _match(self, value: Any, operator: QueryOperator, expected: Any) -> bool:
+        """简单过滤匹配"""
+        if operator == QueryOperator.EQ:
+            return value == expected
+        if operator == QueryOperator.NE:
+            return value != expected
+        if operator == QueryOperator.GT:
+            return value > expected
+        if operator == QueryOperator.GTE:
+            return value >= expected
+        if operator == QueryOperator.LT:
+            return value < expected
+        if operator == QueryOperator.LTE:
+            return value <= expected
+        if operator == QueryOperator.IN:
+            return value in expected if isinstance(expected, (list, tuple, set)) else False
+        if operator == QueryOperator.LIKE:
+            return str(expected).lower() in str(value).lower()
+        if operator == QueryOperator.BETWEEN:
+            if isinstance(expected, (list, tuple)) and len(expected) == 2:
+                return expected[0] <= value <= expected[1]
+        return False
+
+    def save(self, request: SaveRequest) -> SaveResponse:
+        entity_id = getattr(request.entity, "id", None) or self._resolve_id(request.entity)
+        bucket = self._store.setdefault(request.entity_type, {})
+        if not request.overwrite and entity_id in bucket:
+            return SaveResponse(success=False, entity_id=entity_id, message="实体已存在且不允许覆盖")
+        bucket[entity_id] = request.entity
+        return SaveResponse(success=True, entity_id=entity_id, message="保存成功")
+
+    def query(self, request: QueryRequest) -> QueryResponse:
+        bucket = self._store.get(request.entity_type, {})
+        data = list(bucket.values())
+
+        def _apply_filters(item: Any) -> bool:
+            for f in request.filters:
+                value = getattr(item, f.field, None) if not isinstance(item, dict) else item.get(f.field)
+                if not self._match(value, f.operator, f.value):
+                    return False
+            return True
+
+        if request.filters:
+            data = [item for item in data if _apply_filters(item)]
+
+        total = len(data)
+        if request.sort_by:
+            key_fn: Callable[[Any], Any] = (
+                (lambda x: getattr(x, request.sort_by, None))
+                if not isinstance(data[0], dict)
+                else (lambda x: x.get(request.sort_by))
+            )
+            reverse = request.sort_order == "desc"
+            data.sort(key=key_fn, reverse=reverse)
+
+        if request.offset or request.limit is not None:
+            data = data[request.offset : request.offset + request.limit if request.limit else None]
+
+        return QueryResponse(success=True, data=data, total_count=total, has_more=len(data) < total)
+
+    def get_by_id(self, entity_type: str, entity_id: str) -> Any | None:
+        return self._store.get(entity_type, {}).get(entity_id)
+
+    def delete(self, request: DeleteRequest) -> DeleteResponse:
+        bucket = self._store.get(request.entity_type, {})
+        if request.entity_id in bucket:
+            del bucket[request.entity_id]
+            return DeleteResponse(success=True, deleted_count=1, message="删除成功")
+        return DeleteResponse(success=False, deleted_count=0, message="实体不存在")
+
+    def batch_save(self, requests: list[SaveRequest]) -> list[SaveResponse]:
+        return [self.save(r) for r in requests]
+
+    def batch_delete(self, requests: list[DeleteRequest]) -> list[DeleteResponse]:
+        return [self.delete(r) for r in requests]
+
+    def count(self, entity_type: str, filters: list[QueryFilter] | None = None) -> int:
+        bucket = self._store.get(entity_type, {})
+        if not filters:
+            return len(bucket)
+        qr = QueryRequest(entity_type=entity_type, filters=filters)
+        return len(self.query(qr).data)
+
+    def exists(self, entity_type: str, entity_id: str) -> bool:
+        return entity_id in self._store.get(entity_type, {})

@@ -5,6 +5,7 @@
 """
 
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -30,7 +31,7 @@ class AdminAPI:
         self,
         license_manager: LicenseManager,
         device_auth_manager: DeviceAuthManager,
-        secret_key: str = "change_this_secret_key_in_production",
+        admin_secret: str | None = None,
         host: str = "127.0.0.1",
         port: int = 5000,
     ):
@@ -39,7 +40,7 @@ class AdminAPI:
         Args:
             license_manager: 许可证管理器
             device_auth_manager: 设备授权管理器
-            secret_key: Flask密钥
+            admin_secret: 管理后台密钥
             host: 主机地址
             port: 端口
         """
@@ -51,9 +52,14 @@ class AdminAPI:
         self.validator = EnhancedLicenseValidator(license_manager, device_auth_manager)
         self.monitor = LicenseMonitor(license_manager, device_auth_manager)
 
+        # 安全：优先使用环境变量提供的密钥，避免硬编码
+        resolved_secret = admin_secret or os.getenv("VCL_ADMIN_SECRET_KEY")
+        if not resolved_secret:
+            raise ValueError("必须提供管理后台 SECRET_KEY，可通过参数或环境变量 VCL_ADMIN_SECRET_KEY 设置")
+
         # 创建Flask应用
         self.app = Flask(__name__)
-        self.app.config["SECRET_KEY"] = secret_key
+        self.app.config["SECRET_KEY"] = resolved_secret
         self.app.config["JSON_AS_ASCII"] = False
 
         # 启用CORS
@@ -366,12 +372,14 @@ def create_admin_api(
     secret_key: str,
     host: str = "127.0.0.1",
     port: int = 5000,
+    admin_secret: str | None = None,
 ) -> AdminAPI:
     """创建管理后台API实例
 
     Args:
         license_file: 许可证文件路径
         secret_key: 许可证密钥
+        admin_secret: 管理后台密钥（Flask SECRET_KEY）
         host: 主机地址
         port: 端口
 
@@ -384,7 +392,7 @@ def create_admin_api(
     return AdminAPI(
         license_manager=license_manager,
         device_auth_manager=device_auth_manager,
-        secret_key=secret_key,
+        admin_secret=admin_secret,
         host=host,
         port=port,
     )

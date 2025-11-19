@@ -68,7 +68,8 @@
         "jwt_expiration": 3600,
         "expression_timeout": 1.0,
         "max_file_size_mb": 10,
-        "api_auth_enabled": true
+        "api_auth_enabled": true,
+        "jwt_secret_env": "VCL_JWT_SECRET"
     },
     "plugins": {
         "enabled": [
@@ -122,6 +123,7 @@
             "CONSOLE"
         ],
         "max_login_attempts": 5,
-        "lockout_duration_minutes": 15
+        "lockout_duration_minutes": 15,
+        "admin_secret_env": "VCL_ADMIN_SECRET_KEY"
     }
 }

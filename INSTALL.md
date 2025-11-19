@@ -18,8 +18,10 @@
 git clone https://github.com/your-repo/VirtualChemLab.git
 cd VirtualChemLab
 
-# 安装核心依赖
-pip install -r requirements.txt
+# 安装核心依赖（推荐使用锁定文件）
+pip install -r requirements.lock
+# 若需自定义版本，可使用 requirements.txt 并重新生成锁定文件
+# pip install -r requirements.txt
 
 # 运行程序
 python main.py
@@ -40,8 +42,8 @@ python main.py
 安装核心功能 + 常用插件：
 
 ```bash
-# 安装核心依赖
-pip install -r requirements.txt
+# 安装核心依赖（或使用 requirements.lock 保持一致）
+pip install -r requirements.lock
 
 # 安装推荐插件
 pip install rdkit reportlab
@@ -64,8 +66,8 @@ python -m src.plugins.manager install --recommended
 安装所有可选功能：
 
 ```bash
-# 安装核心依赖
-pip install -r requirements.txt
+# 安装核心依赖（或使用 requirements.lock 保持一致）
+pip install -r requirements.lock
 
 # 安装所有 pip 可装的插件
 pip install -r requirements-optional.txt
@@ -239,6 +241,24 @@ python main.py
 ```bash
 python examples/plugin_demo.py
 ```
+
+---
+
+## 环境变量配置
+
+- `VCL_JWT_SECRET`：JWT 密钥，至少 32 个字符。生产环境必须外部提供。
+- `VCL_ADMIN_SECRET_KEY`：管理后台/Flask SECRET_KEY，建议独立于 JWT 密钥。
+- `ENVIRONMENT`：`development` / `staging` / `production`，用于切换默认安全策略。
+
+可通过 `.env` 或系统环境变量设置，例如：
+
+```bash
+export VCL_JWT_SECRET="please_change_me_to_a_secure_value"
+export VCL_ADMIN_SECRET_KEY="admin_panel_secret"
+export ENVIRONMENT="production"
+```
+
+生产环境缺少必需密钥将导致程序拒绝启动。
 
 ---
 
