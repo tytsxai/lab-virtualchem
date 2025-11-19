@@ -4,6 +4,8 @@
 
 import unittest
 from datetime import datetime
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import Mock
 
 from src.contracts.experiment_service import (
@@ -19,6 +21,7 @@ from src.contracts.storage_service import (
     SaveRequest,
     StorageServiceConfig,
 )
+from src.contracts.report_service import ReportType
 from src.models.experiment import ExperimentTemplate, Step
 from src.services import (
     ExperimentServiceImpl,
@@ -230,6 +233,32 @@ class TestReportServiceImpl(unittest.TestCase):
 
         # 断言
         self.assertEqual(content, "<html>Cached</html>")
+
+    def test_get_available_templates_filters_by_type(self):
+        """模板过滤应根据类型关键字工作"""
+        self.mock_generator.list_templates.return_value = [
+            "experiment_default",
+            "summary_overview",
+            "analysis_detail",
+        ]
+
+        templates = self.service.get_available_templates(ReportType.SUMMARY)
+
+        self.assertIn("summary_overview", templates)
+        self.assertNotIn("experiment_default", templates)
+
+    def test_load_report_from_storage_reads_file(self):
+        """当缓存未命中时应从磁盘加载"""
+        with TemporaryDirectory() as tmp:
+            tmp_dir = Path(tmp)
+            report_path = tmp_dir / "report_test.html"
+            report_path.write_text("<html>Disk</html>", encoding="utf-8")
+
+            self.service.config.output_dir = str(tmp_dir)
+
+            content = self.service._load_report_from_storage("report_test")
+
+            self.assertEqual(content, "<html>Disk</html>")
 
 
 class TestPluginServiceImpl(unittest.TestCase):

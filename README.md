@@ -190,6 +190,8 @@ pre-commit install
 pytest
 ```
 
+> 💡 提示：`tests/ui/test_refactored_main_window.py` 依赖真实的 Qt 图形界面环境。在无显示服务器（例如 CI 或纯终端）中，它会自动跳过。若要完整验证 UI 行为，请在本地具备 GUI 的环境执行 `pytest tests/ui/test_refactored_main_window.py`。
+
 4. **代码格式化**
 
 ```bash

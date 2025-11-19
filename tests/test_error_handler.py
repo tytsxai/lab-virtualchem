@@ -2,7 +2,10 @@
 错误处理器测试
 """
 
+import json
+import os
 import time
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
@@ -10,10 +13,10 @@ import pytest
 from src.core.error_handler import (
     ErrorCategory,
     ErrorContext,
+    ErrorContextManager,
     ErrorHandler,
     ErrorRecord,
     ErrorSeverity,
-    ErrorContextManager,
     get_error_handler,
     handle_error_func,
     safe_execute,
@@ -208,6 +211,49 @@ class TestErrorHandler:
         assert "ValueError" in stats["type_counts"]
         assert stats["type_counts"]["ValueError"] == 2
         assert stats["type_counts"]["TypeError"] == 1
+
+    def test_emergency_save_state_creates_snapshot(self, tmp_path, monkeypatch):
+        """紧急保存状态应生成快照文件"""
+        handler = ErrorHandler()
+        handler.handle_error(ValueError("Boom"), ErrorContext(component="core"))
+
+        monkeypatch.setenv("VCL_EMERGENCY_STATE_DIR", str(tmp_path))
+
+        handler._emergency_save_state()
+
+        files = list(Path(tmp_path).glob("state_*.json"))
+        assert files, "应生成紧急状态文件"
+
+        data = json.loads(files[0].read_text(encoding="utf-8"))
+        assert data["recent_errors"]
+        assert data["recent_errors"][0]["message"] == "Boom"
+
+    def test_restart_critical_components_invokes_dependencies(self, monkeypatch):
+        """重启关键组件应调用各依赖"""
+        handler = ErrorHandler()
+        calls: list[str] = []
+
+        monkeypatch.setattr("src.core.error_handler.close_event_bus", lambda: calls.append("close_bus"))
+        monkeypatch.setattr("src.core.error_handler.get_event_bus", lambda: calls.append("get_bus"))
+        monkeypatch.setattr("src.core.error_handler.reset_container", lambda: calls.append("reset_container"))
+        monkeypatch.setattr(
+            "src.core.error_handler.get_configured_container", lambda: calls.append("configure_container")
+        )
+
+        handler._restart_critical_components()
+
+        assert calls == ["close_bus", "get_bus", "reset_container", "configure_container"]
+
+    def test_restart_critical_components_handles_missing(self, monkeypatch):
+        """缺少依赖时仍安全执行"""
+        handler = ErrorHandler()
+
+        monkeypatch.setattr("src.core.error_handler.close_event_bus", None)
+        monkeypatch.setattr("src.core.error_handler.get_event_bus", None)
+        monkeypatch.setattr("src.core.error_handler.reset_container", None)
+        monkeypatch.setattr("src.core.error_handler.get_configured_container", None)
+
+        handler._restart_critical_components()  # 不应抛出异常
 
 
 class TestErrorContextManager:

@@ -9,11 +9,15 @@
 
 from __future__ import annotations
 
+import json
 import logging
+import os
 import traceback
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 from .common_error_handlers import safe_execute_with_default as _common_safe_execute_with_default
@@ -22,8 +26,12 @@ from .common_exceptions import (
     ErrorSeverity as CoreErrorSeverity,
     VirtualChemLabError,
 )
+from .event_bus import close_event_bus, get_event_bus
+from .service_registration import get_configured_container, reset_container
 
 logger = logging.getLogger(__name__)
+
+EMERGENCY_STATE_DIR_ENV = "VCL_EMERGENCY_STATE_DIR"
 
 
 class ErrorSeverity(str, Enum):
@@ -182,18 +190,54 @@ class ErrorHandler:
     def _emergency_save_state(self) -> None:
         """紧急保存状态"""
         try:
-            # 这里可以添加紧急状态保存逻辑
-            logger.info("Emergency state save completed")
-        except Exception as e:
+            base_dir = Path(os.getenv(EMERGENCY_STATE_DIR_ENV, "logs/emergency"))
+            base_dir.mkdir(parents=True, exist_ok=True)
+
+            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            snapshot_path = base_dir / f"state_{timestamp}.json"
+
+            recent_records = [self._serialize_error_record(r) for r in self.error_records[-20:]]
+            payload = {
+                "timestamp": datetime.utcnow().isoformat(),
+                "error_stats": self._error_stats.copy(),
+                "recent_errors": recent_records,
+            }
+
+            snapshot_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            logger.info("Emergency state save completed: %s", snapshot_path)
+        except Exception as e:  # pragma: no cover - 防御性日志
             logger.error(f"Emergency save failed: {e}")
 
     def _restart_critical_components(self) -> None:
         """重启关键组件"""
-        try:
-            # 这里可以添加组件重启逻辑
-            logger.info("Critical components restart completed")
-        except Exception as e:
-            logger.error(f"Component restart failed: {e}")
+        restarted: list[str] = []
+        errors: list[str] = []
+
+        if callable(close_event_bus) and callable(get_event_bus):
+            try:
+                close_event_bus()
+                get_event_bus()
+                restarted.append("event_bus")
+            except Exception as exc:  # pragma: no cover - 防御性日志
+                errors.append(f"event_bus restart failed: {exc}")
+        else:
+            logger.debug("Event bus restart skipped (not available)")
+
+        if callable(reset_container) and callable(get_configured_container):
+            try:
+                reset_container()
+                get_configured_container()
+                restarted.append("di_container")
+            except Exception as exc:  # pragma: no cover - 防御性日志
+                errors.append(f"DI container restart failed: {exc}")
+        else:
+            logger.debug("DI container restart skipped (not available)")
+
+        if restarted:
+            logger.info("Critical components restart completed: %s", ", ".join(restarted))
+        if errors:
+            for message in errors:
+                logger.error(message)
 
     def _fallback_operation(self, error: VirtualChemLabError) -> Any:
         """降级操作"""
@@ -268,6 +312,29 @@ class ErrorHandler:
         if len(self.error_records) > self.max_error_records:
             # 仅保留最新的 max_error_records 条（测试有断言）
             self.error_records = self.error_records[-self.max_error_records :]
+
+    def _serialize_error_record(self, record: ErrorRecord) -> Dict[str, Any]:
+        """将错误记录转换为可持久化的字典"""
+        return {
+            "id": record.id,
+            "timestamp": record.timestamp,
+            "exception_type": type(record.exception).__name__,
+            "message": record.message,
+            "handled": record.handled,
+            "severity": record.severity.value,
+            "category": record.category.value,
+            "recoverable": record.recoverable,
+            "recovery_attempts": record.recovery_attempts,
+            "metadata": record.metadata,
+            "traceback": record.traceback,
+            "context": {
+                "user_id": record.context.user_id,
+                "session_id": record.context.session_id,
+                "component": record.context.component,
+                "operation": record.context.operation,
+                "metadata": record.context.metadata,
+            },
+        }
 
     def _handle_legacy_error(self, error: Exception, context: ErrorContext) -> bool:
         """测试/旧版路径：按异常类型调用处理器并记录"""
