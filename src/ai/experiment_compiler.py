@@ -560,6 +560,13 @@ def compile_experiment(
     """
     compiler = ExperimentCompiler(ai_assistant=ai_assistant)
 
+    def _read_text_if_path(value: str | Path) -> str:
+        """如果输入是现有文件路径，则读取其内容"""
+        path_candidate = Path(value)
+        if path_candidate.exists() and path_candidate.is_file():
+            return path_candidate.read_text(encoding="utf-8")
+        return str(value)
+
     # 自动检测格式
     if format_type == "auto":
         if isinstance(source, dict):
@@ -569,10 +576,10 @@ def compile_experiment(
             if path.exists() and path.is_file():
                 format_type = "file"
             elif isinstance(source, str):
-                source = source.strip()
-                if source.startswith("{"):
+                stripped = source.strip()
+                if stripped.startswith("{"):
                     format_type = "json"
-                elif source.startswith("experiment:") or ":\n" in source[:50]:
+                elif stripped.startswith("experiment:") or ":\n" in stripped[:50]:
                     format_type = "yaml"
                 else:
                     format_type = "text"
@@ -581,11 +588,11 @@ def compile_experiment(
     if format_type == "dict" and isinstance(source, dict):
         return compiler.compile_from_dict(source)
     elif format_type == "yaml" and isinstance(source, (str, Path)):
-        return compiler.compile_from_yaml(str(source))
+        return compiler.compile_from_yaml(_read_text_if_path(source))
     elif format_type == "json" and isinstance(source, (str, Path)):
-        return compiler.compile_from_json(str(source))
+        return compiler.compile_from_json(_read_text_if_path(source))
     elif format_type == "text" and isinstance(source, (str, Path)):
-        return compiler.compile_from_text(str(source))
+        return compiler.compile_from_text(_read_text_if_path(source))
     elif format_type == "file" and isinstance(source, (str, Path)):
         return compiler.compile_from_file(source)
 
