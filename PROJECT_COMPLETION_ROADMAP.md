@@ -66,10 +66,11 @@
 
 **目标**: 修复所有 TODO，提升代码质量到 90+ 分
 
-- [ ] **完成 refactored_main_window.py 中的 TODO** (8h)
-  - 实现新建、打开、保存实验功能
-  - 实现运行、停止实验逻辑
-  - 实现设置对话框和帮助系统
+- [x] **完成 refactored_main_window.py 中的 TODO** (8h ✅ 2025-XX-XX)
+  - 实现新建、打开、保存实验功能（`RefactoredMainWindow._new/open/save_experiment`）
+  - 实现运行、停止实验逻辑（发出 `experiment_started/stopped` 信号并更新状态栏）
+  - 实现设置对话框和帮助系统（复用现有 Settings/Help/About 对话框，动态版本号）
+  - ➕ 新增 `ExperimentView` 接入与状态持久化挂钩；添加 PySide6 UI 测试确保基础流程稳定
   
 - [ ] **完成 report_service_impl.py 中的 TODO** (4h)
   - 实现根据 report_type 筛选模板
