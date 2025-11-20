@@ -7,16 +7,38 @@
 
 ## [未发布]
 
+### Next 🔜
+
+- 在统一的可重复环境下重新运行 `venv311/bin/python -m pytest`、`venv311/bin/ruff check`、`venv311/bin/mypy src`，并将输出分别归档到 `logs/pytest-*.log`、`logs/ruff-*.log`、`logs/mypy-*.log` 以作为回归基线。
+- 新增 `reports/perf_baseline.md`，同步 `tools/performance_benchmark.py` 在当前沙箱因 `sysctl` 权限受限导致的失败信息，以及 CPU / 内存 / 引导耗时的手工测量。
+
 ### 修复 🛠️
 
 - 统一 `pyproject.toml`、启动脚本、打包配置与 `version_info.txt` 的版本号，消除 1.0.0 / 2.0.0 / 3.0.0 混用导致的版本漂移及构建混乱。
 - 移除 `config.json` 中默认的 JWT 密钥，生产环境仅允许通过环境变量注入；同时默认关闭开发者模式以避免调试功能意外暴露。
 - 更新 `VirtualChemLab.spec` 入口脚本为 `main.py` 并将 `config/` 目录打包，修复 PyInstaller 构建失败的问题。
 
+### 改进 ♻️
+
+- 将 `src/` 下所有缓存键/校验和生成逻辑统一切换为 `hashlib.sha256`，避免 `hashlib.md5` 被 Bandit 判定为高危用法，并确保新旧缓存键长度兼容（必要时截断）。
+- 将安全扫描纳入发布清单：`venv311/bin/bandit -r src/` 与 `venv311/bin/pip-audit -r requirements.txt` 已在本地跑通，完整输出分别保存在 `logs/bandit-report.txt` 与 `logs/pip-audit-report.txt`，方便审计追踪。
+- `report_service_impl.py` 现已支持按 `ReportType` 过滤模板、从文件系统加载自定义模板并透传 `template_name`，减少报表“找不到模板”类回归。
+- `src/core/config_loader._merge_env_vars` 允许通过 `I18N_DIR` 覆盖路径，并在 `env.example` 中补齐 `SESSION_SECRET_KEY`、`DEVELOPER_SECRET_KEY`、`VCL_ADMIN_*` 等安全变量，避免隐形配置漂移。
+- `src/core/config_manager.py`、`src/services/report_service_impl.py`、`src/ui/ui_config.py` 补全类型注解并通过独立 `mypy --follow-imports=skip --ignore-missing-imports`，消除返回值/属性推断成 `Any` 的隐患。
+
+### 测试 ✅
+
+- 在具备真实显示器的环境中执行 `venv311/bin/python -m pytest`，确保 CI 中被跳过的 `tests/ui/test_refactored_main_window.py` 也运行；该次完整 GUI+非 GUI 测试的日志已归档至 `logs/pytest-full.log`。
+- `tests/unit/test_service_registration.py` 新增多条用例，验证事件总线单例解析、实验控制器瞬态生命周期、管理员账号自动播种以及发布/订阅回路，进一步巩固近期的错误处理与依赖注入改动。
+- 在发布说明中补充了 GUI 测试执行指引，CI 新管线可引用该命令与日志位置，确保本地/CI 行为一致。
+- 新增 `tests/unit/core/test_config_manager.py`、`tests/unit/core/test_error_handler.py`、`tests/unit/core/test_event_bus.py`，覆盖配置管理、错误处理、事件总线。
+- 新增 `tests/unit/services/test_report_service_impl.py`，mock 文件系统与报表注册表，验证模板过滤与自定义模板缓存逻辑。
+
 ### 新增 🆕
 
 - 新增 `scripts/readiness_check.py`，一键检查依赖、配置、安全、监控与关键资源目录，便于上线前快速把关。
 - 新增 `docs/OPERATIONS_READINESS.md`，覆盖测试矩阵、性能/安全配置、监控告警与发布/回滚流程，帮助运维与 SRE 团队对齐标准操作。
+- 新增 `reports/perf_baseline.md`，用于记录当前硬件的 CPU/内存配额、启动导入耗时以及性能基准脚本的沙箱限制。
 
 ### 新增 🆕
 

@@ -64,7 +64,7 @@ class StartupOptimizer:
         }
 
         env_str = json.dumps(env_info, sort_keys=True)
-        return hashlib.md5(env_str.encode()).hexdigest()
+        return hashlib.sha256(env_str.encode()).hexdigest()
 
     def load_cached_results(self) -> CachedCheckResult | None:
         """加载缓存的检查结果"""

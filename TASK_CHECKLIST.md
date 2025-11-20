@@ -19,14 +19,15 @@
   - [x] 实现帮助系统（HelpManager）
   - [x] 实现关于对话框（动态版本号）
 
-- [ ] 完成 `report_service_impl.py` 中的 TODO (4h)
-  - [ ] 实现根据 report_type 筛选模板
-  - [ ] 实现从文件系统加载功能
+- [x] 完成 `report_service_impl.py` 中的 TODO (4h)
+  - [x] 实现根据 report_type 筛选模板
+  - [x] 实现从文件系统加载功能，并以 `tests/unit/services/test_report_service_impl.py` 验证文件模板与过滤
 
 - [ ] 添加类型注解 (12h)
   - [ ] 为所有公共函数添加返回值类型
   - [ ] 为所有参数添加类型注解
   - [ ] 运行 mypy 验证
+  - ✅ 2025-11-20: `core/config_manager.py`、`services/report_service_impl.py`、`ui/ui_config.py` 已通过独立 mypy 运行
 
 - [ ] 代码风格检查与修复 (8h)
   - [ ] 运行 `ruff check src/ --fix`
@@ -48,12 +49,13 @@
 ### 2️⃣ 测试覆盖率提升 (60h)
 
 - [ ] 核心模块单元测试 (20h)
-  - [ ] `test_config_manager.py` - 配置管理测试
-  - [ ] `test_error_handler.py` - 错误处理测试
+  - [x] `test_config_manager.py` - 配置管理测试
+  - [x] `test_error_handler.py` - 错误处理测试
   - [ ] `test_experiment_controller.py` - 实验控制器测试
-  - [ ] `test_event_bus.py` - 事件总线测试
+  - [x] `test_event_bus.py` - 事件总线测试
   - [ ] `test_cache_manager.py` - 缓存管理测试
   - [ ] `test_database_manager.py` - 数据库管理测试
+  - 🔄 服务延伸：`tests/unit/services/test_report_service_impl.py`
 
 - [ ] UI 组件测试 (15h)
   - [ ] `test_main_window.py` - 主窗口测试
@@ -71,6 +73,7 @@
   - [ ] `test_startup_performance.py` - 启动时间测试
   - [ ] `test_memory_usage.py` - 内存占用测试
   - [ ] `test_response_time.py` - 响应速度测试
+  - ✅ 2025-11-20: 记录 `reports/perf_baseline.md`（含 `tools/performance_benchmark.py` 沙箱权限失败信息、CPU/内存/引导时间）
 
 - [ ] 端到端测试 (5h)
   - [ ] `test_user_workflow.py` - 用户完整操作流程

@@ -9,14 +9,18 @@
 - 事件历史记录
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
+import re
 import threading
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, ClassVar, Dict, TypeVar
+from typing import Any, Awaitable, Callable, ClassVar, Dict, Iterable, List, Sequence, TypeVar, cast
+
+from re import Pattern
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +46,7 @@ class Event:
     priority: EventPriority = EventPriority.NORMAL
     source: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if isinstance(self.timestamp, str):
             self.timestamp = datetime.fromisoformat(self.timestamp)
 
@@ -68,16 +72,23 @@ class Event:
         )
 
 
+SyncEventHandler = Callable[[Event], Any]
+AsyncEventHandler = Callable[[Event], Awaitable[Any]]
+EventHandler = SyncEventHandler | AsyncEventHandler
+EventFilter = Callable[[Event], bool]
+Middleware = Callable[[Event], Event | None]
+
+
 @dataclass
 class EventSubscriber:
     """事件订阅者"""
 
-    handler: Callable
+    handler: EventHandler
     event_name: str
     priority: EventPriority = EventPriority.NORMAL
-    filter_func: Callable[[Event], bool] | None = None
+    filter_func: EventFilter | None = None
     is_async: bool = False
-    _pattern_cache: ClassVar[Dict[str, Any]] = {}
+    _pattern_cache: ClassVar[dict[str, Pattern[str]]] = {}
 
     def matches(self, event: Event) -> bool:
         """检查事件是否匹配"""
@@ -98,8 +109,6 @@ class EventSubscriber:
 
         # 通配符匹配 - 使用缓存的正则表达式
         if "*" in pattern:
-            import re
-
             # 检查缓存
             if pattern not in self._pattern_cache:
                 regex = pattern.replace(".", r"\.").replace("*", ".*")
@@ -113,30 +122,31 @@ class EventSubscriber:
     async def invoke(self, event: Event) -> Any:
         """调用处理器"""
         if self.is_async:
-            return await self.handler(event)
-        else:
-            return self.handler(event)
+            async_handler = cast(AsyncEventHandler, self.handler)
+            return await async_handler(event)
+        sync_handler = cast(SyncEventHandler, self.handler)
+        return sync_handler(event)
 
 
 class EventBus:
     """事件总线"""
 
-    def __init__(self, max_history: int = 500):  # 减少默认大小，防止内存泄漏
+    def __init__(self, max_history: int = 500) -> None:  # 减少默认大小，防止内存泄漏
         self._subscribers: list[EventSubscriber] = []
         self._history: list[Event] = []
         self._max_history = max_history
-        self._middleware: list[Callable] = []
+        self._middleware: list[Middleware] = []
 
         # 性能优化：缓存编译的正则表达式
-        self._pattern_cache: dict[str, Any] = {}
+        self._pattern_cache: dict[str, Pattern[str]] = {}
         self._lock = threading.RLock()
 
     def subscribe(
         self,
         event_name: str,
-        handler: Callable,
+        handler: EventHandler,
         priority: EventPriority = EventPriority.NORMAL,
-        filter_func: Callable[[Event], bool] | None = None,
+        filter_func: EventFilter | None = None,
     ) -> "EventBus":
         """
         订阅事件
@@ -182,7 +192,7 @@ class EventBus:
 
         return self
 
-    def unsubscribe(self, handler: Callable) -> bool:
+    def unsubscribe(self, handler: EventHandler) -> bool:
         """
         取消订阅
 
@@ -214,15 +224,16 @@ class EventBus:
         with self._lock:
             # 应用中间件
             for middleware in self._middleware:
-                event = middleware(event)
-                if event is None:
+                mutated = middleware(event)
+                if mutated is None:
                     return []
+                event = mutated
 
             # 添加到历史
             self._add_to_history(event)
 
             # 通知订阅者
-            results = []
+            results: list[Any] = []
             for subscriber in self._subscribers:
                 if subscriber.matches(event):
                     if subscriber.is_async:
@@ -231,7 +242,8 @@ class EventBus:
                         continue
                     else:
                         # 直接调用同步处理器
-                        result = subscriber.handler(event)
+                        sync_handler = cast(SyncEventHandler, subscriber.handler)
+                        result = sync_handler(event)
                         results.append(result)
 
         return results
@@ -254,14 +266,15 @@ class EventBus:
             current_event = event
 
             for middleware in self._middleware:
-                current_event = middleware(current_event)
-                if current_event is None:
+                mutated = middleware(current_event)
+                if mutated is None:
                     return []
+                current_event = mutated
 
             self._add_to_history(current_event)
             subscribers_snapshot = list(self._subscribers)
 
-        tasks = []
+        tasks: list[Awaitable[Any]] = []
         for subscriber in subscribers_snapshot:
             if subscriber.matches(current_event):
                 tasks.append(subscriber.invoke(current_event))
@@ -271,7 +284,7 @@ class EventBus:
             return results
         return []
 
-    def use_middleware(self, middleware: Callable[[Event], Event]) -> "EventBus":
+    def use_middleware(self, middleware: Middleware) -> "EventBus":
         """
         添加中间件
 
@@ -312,11 +325,11 @@ class EventBus:
 
         return history
 
-    def clear_history(self):
+    def clear_history(self) -> None:
         """清空历史记录"""
         self._history.clear()
 
-    def _add_to_history(self, event: Event):
+    def _add_to_history(self, event: Event) -> None:
         """添加到历史记录"""
         self._history.append(event)
 
@@ -330,7 +343,7 @@ class EventBus:
             return len(self._subscribers)
         return sum(1 for s in self._subscribers if s.event_name == event_name)
 
-    def clear(self):
+    def clear(self) -> None:
         """清空所有订阅（主要用于测试）"""
         with self._lock:
             self._subscribers.clear()
@@ -338,7 +351,7 @@ class EventBus:
             self._middleware.clear()
             self._pattern_cache.clear()
 
-    def close(self):
+    def close(self) -> None:
         """关闭事件总线，清理资源"""
         self.clear()
         logger.info("事件总线已关闭")
@@ -359,7 +372,7 @@ def get_event_bus() -> EventBus:
     return _global_event_bus
 
 
-def close_event_bus():
+def close_event_bus() -> None:
     """关闭全局事件总线"""
     global _global_event_bus
     if _global_event_bus is not None:
@@ -369,11 +382,14 @@ def close_event_bus():
                 _global_event_bus = None
 
 
+_HandlerT = TypeVar("_HandlerT", bound=EventHandler)
+
+
 def on_event(
     event_name: str,
     priority: EventPriority = EventPriority.NORMAL,
-    filter_func: Callable[[Event], bool] | None = None,
-):
+    filter_func: EventFilter | None = None,
+) -> Callable[[_HandlerT], _HandlerT]:
     """
     事件处理装饰器
 
@@ -387,7 +403,7 @@ def on_event(
             await process_order(event.data)
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: _HandlerT) -> _HandlerT:
         bus = get_event_bus()
         bus.subscribe(event_name, func, priority, filter_func)
         return func
@@ -401,13 +417,13 @@ if __name__ == "__main__":
     bus = EventBus()
 
     # 订阅事件
-    def on_user_login(event: Event):
+    def on_user_login(event: Event) -> None:
         logger.info(f"User {event.data['user_id']} logged in at {event.timestamp}")
 
-    def on_user_logout(event: Event):
+    def on_user_logout(event: Event) -> None:
         logger.info(f"User {event.data['user_id']} logged out")
 
-    def on_any_user_event(event: Event):
+    def on_any_user_event(event: Event) -> None:
         logger.info(f"User event: {event.name}")
 
     bus.subscribe("user.login", on_user_login, priority=EventPriority.HIGH)
@@ -421,13 +437,13 @@ if __name__ == "__main__":
 
     # 使用装饰器
     @on_event("order.created", priority=EventPriority.HIGH)
-    def on_order_created(event: Event):
+    def on_order_created(event: Event) -> None:
         logger.info(f"Order {event.data['order_id']} created")
 
     # 异步事件示例
-    async def test_async():
+    async def test_async() -> None:
         @on_event("data.processed")
-        async def on_data_processed(event: Event):
+        async def on_data_processed(event: Event) -> None:
             await asyncio.sleep(0.1)
             logger.info(f"Processed {event.data['count']} items")
 

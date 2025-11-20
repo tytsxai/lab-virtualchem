@@ -359,7 +359,7 @@ class RobustnessEnhancer:
 
         # 生成哈希
         content = f"{func_id}:{args_str}:{kwargs_str}"
-        return hashlib.md5(content.encode()).hexdigest()
+        return hashlib.sha256(content.encode()).hexdigest()
 
     def _log_operation_completion(self, metrics: OperationMetrics) -> None:
         """记录操作完成日志"""

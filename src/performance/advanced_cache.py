@@ -391,7 +391,7 @@ class L2Cache:
         import os
 
         # 使用哈希避免文件名冲突
-        hash_key = hashlib.md5(key.encode()).hexdigest()
+        hash_key = hashlib.sha256(key.encode()).hexdigest()
         return os.path.join(self.cache_dir, f"{hash_key}.cache")
 
     def get_stats(self) -> dict[str, Any]:

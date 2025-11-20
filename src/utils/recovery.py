@@ -69,14 +69,14 @@ class RecoveryManager:
             filepath: 文件路径
 
         Returns:
-            MD5校验和
+            SHA-256 校验和
         """
-        hash_md5 = hashlib.md5()
+        hash_sha256 = hashlib.sha256()
         try:
             with open(filepath, "rb") as f:
                 for chunk in iter(lambda: f.read(4096), b""):
-                    hash_md5.update(chunk)
-            return hash_md5.hexdigest()
+                    hash_sha256.update(chunk)
+            return hash_sha256.hexdigest()
         except Exception as e:
             logger.error(f"计算校验和失败: {e}")
             return ""

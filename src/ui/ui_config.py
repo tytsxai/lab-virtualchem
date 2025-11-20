@@ -3,10 +3,12 @@ UI配置管理
 自适应配置系统，支持不同平台和设备
 """
 
+from __future__ import annotations
+
 import json
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 from .responsive import ResponsiveHelper, ScreenSize
 from .themes import ThemeType
@@ -88,17 +90,18 @@ class UIConfig:
         self.load()
         self.apply_auto_config()
 
-    def load(self):
+    def load(self) -> None:
         """加载配置"""
         try:
             if self.config_file.exists():
                 with open(self.config_file, encoding="utf-8") as f:
                     user_config = json.load(f)
-                    self._merge_config(user_config)
+                    if isinstance(user_config, dict):
+                        self._merge_config(user_config)
         except Exception as e:
             logger.info(f"加载UI配置失败: {e}")
 
-    def save(self):
+    def save(self) -> None:
         """保存配置"""
         try:
             self.config_file.parent.mkdir(parents=True, exist_ok=True)
@@ -107,7 +110,7 @@ class UIConfig:
         except Exception as e:
             logger.info(f"保存UI配置失败: {e}")
 
-    def _merge_config(self, user_config: dict):
+    def _merge_config(self, user_config: Dict[str, Any]) -> None:
         """合并用户配置"""
         for key, value in user_config.items():
             if key in self.config and isinstance(value, dict):
@@ -115,9 +118,9 @@ class UIConfig:
             else:
                 self.config[key] = value
 
-    def apply_auto_config(self):
+    def apply_auto_config(self) -> None:
         """应用自动配置"""
-        screen_info = ResponsiveHelper.get_screen_info()
+        screen_info: dict[str, Any] = ResponsiveHelper.get_screen_info()
 
         # 移动设备自动配置
         if screen_info["size_type"] == ScreenSize.MOBILE:
@@ -154,7 +157,7 @@ class UIConfig:
 
         return value
 
-    def set(self, path: str, value: Any):
+    def set(self, path: str, value: Any) -> None:
         """
         设置配置项
 
@@ -191,28 +194,31 @@ class UIConfig:
 
     def is_mobile_layout(self) -> bool:
         """是否使用移动布局"""
-        return ResponsiveHelper.is_mobile() or not self.get("layout.show_sidebar", True)
+        sidebar_visible = bool(self.get("layout.show_sidebar", True))
+        return bool(ResponsiveHelper.is_mobile()) or not sidebar_visible
 
     def is_touch_enabled(self) -> bool:
         """是否启用触摸"""
-        touch_setting = self.get("touch.enabled", "auto")
+        touch_setting = str(self.get("touch.enabled", "auto"))
 
         if touch_setting == "auto":
             from .responsive import TouchHelper
 
-            return TouchHelper.is_touch_enabled()
+            return bool(TouchHelper.is_touch_enabled())
 
         return touch_setting == "enabled"
 
     def get_animation_duration(self) -> int:
         """获取动画时长"""
-        if not self.get("animation.enabled", True):
+        animation_enabled = bool(self.get("animation.enabled", True))
+        if not animation_enabled:
             return 0
 
-        if self.get("accessibility.reduce_motion", False):
-            return self.get("animation.duration", 300) // 2
+        duration = int(self.get("animation.duration", 300))
+        if bool(self.get("accessibility.reduce_motion", False)):
+            return duration // 2
 
-        return self.get("animation.duration", 300)
+        return duration
 
     def export_stylesheet_vars(self) -> dict[str, str]:
         """导出样式表变量"""
@@ -265,7 +271,7 @@ class PlatformDetector:
         """是否为触摸设备"""
         from .responsive import TouchHelper
 
-        return TouchHelper.is_touch_enabled()
+        return bool(TouchHelper.is_touch_enabled())
 
     @staticmethod
     def get_platform_info() -> dict[str, Any]:
@@ -291,7 +297,7 @@ class PlatformDetector:
 
 
 # 全局UI配置实例
-_ui_config_instance = None
+_ui_config_instance: UIConfig | None = None
 
 
 def get_ui_config() -> UIConfig:

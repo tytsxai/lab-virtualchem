@@ -176,6 +176,7 @@ class TestReportServiceImpl(unittest.TestCase):
         self.mock_generator = Mock()
         self.mock_exporter = Mock()
         self.mock_repository = Mock()
+        self.mock_generator.list_templates.return_value = []
         self.service = ReportServiceImpl(
             self.mock_generator, self.mock_exporter, self.mock_repository
         )
@@ -246,6 +247,37 @@ class TestReportServiceImpl(unittest.TestCase):
 
         self.assertIn("summary_overview", templates)
         self.assertNotIn("experiment_default", templates)
+
+    def test_get_available_templates_includes_filesystem_templates(self):
+        """应从文件系统加载模板并进行筛选"""
+        with TemporaryDirectory() as tmp:
+            tmp_dir = Path(tmp)
+            template_path = tmp_dir / "custom_summary.yaml"
+            template_path.write_text(
+                "title: custom\nreport_type: summary\ncontent: sample", encoding="utf-8"
+            )
+
+            self.service.config.template_dir = str(tmp_dir)
+
+            templates = self.service.get_available_templates(ReportType.SUMMARY)
+
+            self.assertIn("custom_summary", templates)
+            self.mock_generator.set_template.assert_called_once()
+
+    def test_get_available_templates_uses_metadata_when_name_missing_keywords(self):
+        """report_type 元数据应优先于名称匹配"""
+        self.mock_generator.list_templates.return_value = []
+        with TemporaryDirectory() as tmp:
+            tmp_dir = Path(tmp)
+            template_path = tmp_dir / "alpha.yaml"
+            template_path.write_text(
+                "metadata:\n  report_type: progress\nsections:\n  - {}\n", encoding="utf-8"
+            )
+            self.service.config.template_dir = str(tmp_dir)
+
+            templates = self.service.get_available_templates(ReportType.PROGRESS)
+
+            self.assertEqual(templates, ["alpha"])
 
     def test_load_report_from_storage_reads_file(self):
         """当缓存未命中时应从磁盘加载"""

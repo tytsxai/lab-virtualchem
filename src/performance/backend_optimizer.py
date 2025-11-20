@@ -102,7 +102,7 @@ class QueryOptimizer:
         import hashlib
 
         key = f"{query}:{params}"
-        return hashlib.md5(key.encode()).hexdigest()
+        return hashlib.sha256(key.encode()).hexdigest()
 
     def get_slow_queries(self, threshold: float | None = None) -> list[QueryMetrics]:
         """获取慢查询"""

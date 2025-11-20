@@ -428,7 +428,7 @@ class EnhancedValidator:
 
         # 生成哈希
         content = f"{validator_name}:{data_str}"
-        return hashlib.md5(content.encode()).hexdigest()
+        return hashlib.sha256(content.encode()).hexdigest()
 
     def _update_stats(self, validator_name: str, result: ValidationResult) -> None:
         """更新统计信息"""

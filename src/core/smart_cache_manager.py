@@ -217,7 +217,7 @@ class DiskCacheBackend(CacheBackend):
     def _get_cache_path(self, key: str) -> Path:
         """获取缓存文件路径"""
         # 使用哈希避免文件名过长
-        key_hash = hashlib.md5(key.encode()).hexdigest()
+        key_hash = hashlib.sha256(key.encode()).hexdigest()
         return self._cache_dir / f"{key_hash}.cache"
 
     def get(self, key: str) -> Optional[Any]:

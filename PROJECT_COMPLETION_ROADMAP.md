@@ -60,6 +60,19 @@
 
 ---
 
+## 🆕 最新进展 (2025-11-20)
+
+- ✅ 本地以真实显示环境运行 `venv311/bin/python -m pytest`，覆盖 GUI/非 GUI 测试（含 `tests/ui/test_refactored_main_window.py`）；完整输出归档于 `logs/pytest-full.log`，可供 CI 对齐。
+- ✅ `tests/unit/test_service_registration.py` 扩展 DI & 事件总线用例，验证服务注册单例/瞬态行为与管理员播种流程，覆盖 roadmap 中“核心模块单元测试”项的 ServiceRegistry 缺口。
+- ✅ 修复 Bandit 高危 `hashlib.md5` 诊断，统一改用 `hashlib.sha256`，并记录最新的 `logs/bandit-report.txt` 与 `logs/pip-audit-report.txt` 以支持安全审计。
+- ✅ 运行 `venv311/bin/python -m pytest / ruff check / mypy src` 并将完整输出归档到 `logs/pytest-*.log`、`logs/ruff-*.log`、`logs/mypy-*.log`，为后续回归提供统一失败基线。
+- ✅ `report_service_impl.py` 补全集成：支持 `ReportType` 过滤、自定义模板加载和模板名透传，并新增 `tests/unit/services/test_report_service_impl.py` 覆盖文件系统模板与过滤逻辑。
+- ✅ 核心/服务/UI 第一批关键模块（`core/config_manager.py`、`services/report_service_impl.py`、`ui/ui_config.py`）补充严格类型注解并通过独立 `mypy --follow-imports=skip` 校验，消除返回值 `Any`。
+- ✅ 核心模块单测补齐：新增 `tests/unit/core/test_config_manager.py`、`test_error_handler.py`、`test_event_bus.py`，覆盖配置管理、错误处理、事件总线三大低依赖模块。
+- ✅ 新建 `reports/perf_baseline.md`，记录当前硬件的 CPU / 内存 / 引导耗时，并同步 `tools/performance_benchmark.py` 在沙箱下的 `sysctl` 权限报错供排障参考。
+
+---
+
 ## 🔥 优先级任务 (P0 - 必须完成)
 
 ### 1️⃣ 代码质量与完整性 (40h)
@@ -72,15 +85,16 @@
   - 实现设置对话框和帮助系统（复用现有 Settings/Help/About 对话框，动态版本号）
   - ➕ 新增 `ExperimentView` 接入与状态持久化挂钩；添加 PySide6 UI 测试确保基础流程稳定
   
-- [ ] **完成 report_service_impl.py 中的 TODO** (4h)
-  - 实现根据 report_type 筛选模板
-  - 实现从文件系统加载功能
-  
+- [x] **完成 report_service_impl.py 中的 TODO** (4h)
+  - [x] 实现根据 report_type 筛选模板
+  - [x] 实现从文件系统加载功能，并在 `tests/unit/services/test_report_service_impl.py` 中覆盖文件系统模板注册/过滤
+
 - [ ] **添加类型注解** (12h)
   - 为所有公共函数添加类型提示
   - 为所有参数添加类型注解
   - 运行 mypy 验证类型正确性
-  
+  - ✅ 2025-11-20: `src/core/config_manager.py`、`src/services/report_service_impl.py`、`src/ui/ui_config.py` 已通过独立 mypy 校验
+
 - [ ] **代码风格检查与修复** (8h)
   - 运行 ruff 检查并修复所有问题
   - 运行 black 格式化代码
@@ -103,12 +117,14 @@
 **目标**: 从 20% 提升到 80%+ 测试覆盖率
 
 - [ ] **核心模块单元测试** (20h)
-  - `src/core/config_manager.py` 测试
-  - `src/core/error_handler.py` 测试
+  - ✅ `src/core/config_manager.py` 测试（`tests/unit/core/test_config_manager.py`）
+  - ✅ `src/core/error_handler.py` 测试（`tests/unit/core/test_error_handler.py`）
   - `src/core/experiment_controller.py` 测试
-  - `src/core/event_bus.py` 测试
+  - ✅ `src/core/event_bus.py` 测试（`tests/unit/core/test_event_bus.py`）
+  - ✅ 2025-11-19: `src/core/service_registration.py` (DI/事件总线/管理员播种) 已由 `tests/unit/test_service_registration.py` 覆盖
   - 其他核心模块测试
-  
+  - 🔄 服务层延伸：`tests/unit/services/test_report_service_impl.py` 覆盖报告服务模板注册/过滤
+
 - [ ] **UI 组件测试** (15h)
   - `src/ui/main_window.py` 测试
   - `src/ui/experiment_view.py` 测试
@@ -124,6 +140,7 @@
   - 启动时间基准测试
   - 内存占用基准测试
   - 响应速度基准测试
+  - ✅ 2025-11-20: 记录 `reports/perf_baseline.md` 手工基线（含 `tools/performance_benchmark.py` 权限失败日志、CPU/内存/引导耗时）
   
 - [ ] **端到端测试** (5h)
   - 用户完整操作流程测试
@@ -188,6 +205,7 @@
   - 运行 bandit 安全扫描
   - 运行 safety 依赖检查
   - 识别潜在安全问题
+  - ✅ 2025-11-19: 已运行 `venv311/bin/bandit -r src/` 与 `venv311/bin/pip-audit -r requirements.txt`，并修复全部高危 `hashlib.md5` 诊断；输出日志：`logs/bandit-report.txt`、`logs/pip-audit-report.txt`
   
 - [ ] **输入验证加固** (8h)
   - 加强所有用户输入验证

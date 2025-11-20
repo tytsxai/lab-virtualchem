@@ -155,7 +155,7 @@ class APIRequestHandler(BaseHTTPRequestHandler):
     def _get_cache_key(self, path: str, method: str, params: dict[str, Any]) -> str:
         """生成缓存键"""
         cache_data = f"{method}:{path}:{json.dumps(params, sort_keys=True)}"
-        return hashlib.md5(cache_data.encode()).hexdigest()
+        return hashlib.sha256(cache_data.encode()).hexdigest()
 
     def _get_cached_response(self, cache_key: str) -> dict[str, Any] | None:
         """获取缓存的响应"""

@@ -2,9 +2,21 @@
 报告服务实现
 """
 
+from __future__ import annotations
+
+import json
+import re
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING, Protocol, cast
+
+try:
+    import yaml as _yaml  # type: ignore[import-untyped]
+except ImportError:  # pragma: no cover - optional dependency
+    _yaml = None
+
+yaml = cast("Any | None", _yaml)
 
 from src.contracts.report_service import (
     ExportFormat,
@@ -21,8 +33,60 @@ from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+_SUPPORTED_TEMPLATE_SUFFIXES = {".json", ".yaml", ".yml", ".md", ".markdown", ".html", ".htm", ".jinja", ".j2", ".tpl"}
+_REPORT_TYPE_ALIASES: dict[ReportType, list[str]] = {
+    ReportType.EXPERIMENT: ["experiment", "exp", "lab", "实验"],
+    ReportType.SUMMARY: ["summary", "sum", "overview", "汇总"],
+    ReportType.ANALYSIS: ["analysis", "ana", "detail", "分析"],
+    ReportType.COMPARISON: ["comparison", "compare", "cmp", "对比"],
+    ReportType.PROGRESS: ["progress", "prog", "timeline", "进度"],
+}
 
-class ReportServiceImpl(ReportService):
+
+@dataclass
+class TemplateInfo:
+    """描述报告模板的元数据"""
+
+    name: str
+    path: Path | None = None
+    report_types: set[ReportType] = field(default_factory=set)
+
+
+if TYPE_CHECKING:
+    from typing import Protocol
+
+    class _ReportServiceBase(Protocol):
+        def generate_report(self, request: ReportRequest) -> ReportResponse: ...
+
+        def generate_experiment_report(
+            self,
+            record: UserRecord,
+            format: ExportFormat = ...,
+            options: dict[str, Any] | None = ...,
+            template_name: str | None = ...,
+        ) -> ReportResponse: ...
+
+        def generate_summary_report(
+            self,
+            user_id: str,
+            start_date: str | None = ...,
+            end_date: str | None = ...,
+            format: ExportFormat = ...,
+        ) -> ReportResponse: ...
+
+        def generate_comparison_report(self, record_ids: list[str], format: ExportFormat = ...) -> ReportResponse: ...
+
+        def export_report(self, report_id: str, output_path: Path, format: ExportFormat) -> bool: ...
+
+        def get_available_templates(self, report_type: ReportType | None = None) -> list[str]: ...
+
+        def preview_report(self, request: ReportRequest) -> str: ...
+
+else:  # pragma: no cover - runtime inherits真实基类
+    _ReportServiceBase = ReportService
+
+
+class ReportServiceImpl(_ReportServiceBase):
     """报告服务具体实现"""
 
     def __init__(
@@ -37,6 +101,7 @@ class ReportServiceImpl(ReportService):
         self.record_repository = record_repository
         self.config = config or ReportServiceConfig()
         self._report_cache: dict[str, str] = {}  # 报告缓存
+        self._template_cache: dict[str, TemplateInfo] = {}
 
     def _convert_format(self, export_format: ExportFormat) -> ReportFormat:
         """将ExportFormat转换为ReportFormat"""
@@ -57,7 +122,7 @@ class ReportServiceImpl(ReportService):
                 if not record:
                     logger.warning(f"记录不存在: {request.record_id}")
                     return ReportResponse(success=False, message="记录不存在")
-                return self.generate_experiment_report(record, request.format, request.options)
+                return self.generate_experiment_report(record, request.format, request.options, request.template_name)
 
             elif request.report_type == ReportType.COMPARISON and request.record_ids:
                 # 生成对比报告
@@ -82,13 +147,14 @@ class ReportServiceImpl(ReportService):
         record: UserRecord,
         format: ExportFormat = ExportFormat.PDF,
         options: dict[str, Any] | None = None,
+        template_name: str | None = None,
     ) -> ReportResponse:
         """生成实验报告"""
         try:
             logger.info(f"生成实验报告: record_id={record.record_id}, format={format.value}")
 
             # 生成报告内容
-            content = self.generator.generate(record, options=options)
+            content = self.generator.generate(record, template=template_name, options=options)
 
             # 缓存报告内容
             self._cache_report(record.record_id, content)
@@ -255,8 +321,10 @@ class ReportServiceImpl(ReportService):
 
             # 2. 导出到指定路径
             report_format = self._convert_format(format)
-            success = self.exporter.export(
+            success = bool(
+                self.exporter.export(
                 report_content, output_path, report_format, metadata={"report_id": report_id}
+                )
             )
 
             return success
@@ -265,42 +333,181 @@ class ReportServiceImpl(ReportService):
             return False
 
     def get_available_templates(self, report_type: ReportType | None = None) -> list[str]:
-        """获取可用模板"""
-        templates = self.generator.list_templates()
+        """获取可用模板（结合生成器与文件系统）"""
+        builtin_templates = self.generator.list_templates()
+        builtin_infos = [
+            TemplateInfo(name=name, report_types=self._infer_report_types_from_name(name))
+            for name in builtin_templates
+        ]
+        fs_infos = self._load_templates_from_directory()
+        combined = builtin_infos + fs_infos
 
-        # 如果未指定类型，直接返回全部模板
-        if report_type is None:
-            return templates
-
-        # 根据报告类型进行名称级别的筛选
-        type_value = str(report_type.value).lower()
-
-        def _match(name: str) -> bool:
-            """根据名称判断模板是否匹配指定报告类型"""
-            lowered = name.lower()
-
-            # 直接包含类型关键字
-            if type_value in lowered:
+        def _matches(info: TemplateInfo) -> bool:
+            if report_type is None:
                 return True
+            if info.report_types:
+                return report_type in info.report_types
+            return self._name_matches_report_type(info.name, report_type)
 
-            # 常见缩写/别名的简单映射
-            aliases: dict[ReportType, list[str]] = {
-                ReportType.EXPERIMENT: ["experiment", "exp", "lab"],
-                ReportType.SUMMARY: ["summary", "sum", "overview"],
-                ReportType.ANALYSIS: ["analysis", "ana", "detail"],
-                ReportType.COMPARISON: ["comparison", "compare", "cmp"],
-                ReportType.PROGRESS: ["progress", "prog", "timeline"],
-            }
-            for alias in aliases.get(report_type, []):
-                if alias in lowered:
-                    return True
+        filtered: list[str] = []
+        seen: set[str] = set()
+        for info in combined:
+            if info.name in seen:
+                continue
+            if _matches(info):
+                filtered.append(info.name)
+                seen.add(info.name)
 
-            return False
+        if filtered:
+            return filtered
 
-        filtered = [name for name in templates if _match(name)]
+        # 没有匹配项时回退至全部模板
+        for info in combined:
+            if info.name not in seen:
+                filtered.append(info.name)
+                seen.add(info.name)
+        return filtered
 
-        # 如果没有匹配结果，则回退到全部模板，避免返回空列表影响使用体验
-        return filtered or templates
+    def _load_templates_from_directory(self) -> list[TemplateInfo]:
+        """从文件系统加载模板元数据"""
+        template_dir = Path(self.config.template_dir)
+        if not template_dir.exists() or not template_dir.is_dir():
+            return []
+
+        infos: list[TemplateInfo] = []
+        for entry in template_dir.rglob("*"):
+            if not entry.is_file():
+                continue
+            if entry.suffix.lower() not in _SUPPORTED_TEMPLATE_SUFFIXES:
+                continue
+            content: str | None = None
+            try:
+                content = entry.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                logger.warning("无法读取报告模板文件: %s", entry)
+                continue
+
+            info = TemplateInfo(name=entry.stem, path=entry)
+            info.report_types = self._infer_report_types_from_file(entry, content)
+            infos.append(info)
+            self._template_cache[info.name] = info
+
+            # 将模板内容注册到生成器，便于后续直接引用
+            try:
+                self.generator.set_template(info.name, content)
+            except Exception:  # pragma: no cover - 生成器可能不支持注册功能
+                logger.debug("模板 %s 注册到生成器失败，忽略", info.name, exc_info=True)
+
+        return infos
+
+    def _infer_report_types_from_file(self, path: Path, content: str) -> set[ReportType]:
+        """结合文件内容/名称推断适用的报告类型"""
+        inferred = self._infer_report_types_from_name(path.stem)
+        suffix = path.suffix.lower()
+        data: Any | None = None
+
+        if suffix == ".json":
+            try:
+                data = json.loads(content)
+            except json.JSONDecodeError:
+                data = None
+        elif suffix in {".yaml", ".yml"} and yaml is not None:
+            try:
+                data = yaml.safe_load(content)
+            except yaml.YAMLError:
+                data = None
+
+        if isinstance(data, dict):
+            inferred.update(self._collect_report_type_values(data))
+        else:
+            inferred.update(self._extract_inline_report_types(content))
+
+        return inferred
+
+    def _collect_report_type_values(self, payload: dict[str, Any]) -> set[ReportType]:
+        """从结构化数据里解析 report_type 字段"""
+        report_types: set[ReportType] = set()
+        keys = ("report_type", "type", "category")
+        for key in keys:
+            if key in payload:
+                report_types.update(self._convert_to_report_types(payload[key]))
+
+        if "report_types" in payload:
+            report_types.update(self._convert_to_report_types(payload["report_types"]))
+
+        metadata = payload.get("metadata")
+        if isinstance(metadata, dict):
+            report_types.update(self._collect_report_type_values(metadata))
+
+        return report_types
+
+    def _convert_to_report_types(self, value: Any) -> set[ReportType]:
+        """将多种输入形式转换为 ReportType 集合"""
+        result: set[ReportType] = set()
+        if value is None:
+            return result
+        if isinstance(value, ReportType):
+            result.add(value)
+            return result
+        if isinstance(value, str):
+            candidate = self._coerce_report_type(value)
+            if candidate:
+                result.add(candidate)
+            return result
+        if isinstance(value, (list, tuple, set)):
+            for item in value:
+                result.update(self._convert_to_report_types(item))
+        elif isinstance(value, dict):
+            result.update(self._collect_report_type_values(value))
+        return result
+
+    def _coerce_report_type(self, raw: Any) -> ReportType | None:
+        """尝试将字符串/枚举值转为 ReportType"""
+        if raw is None:
+            return None
+        if isinstance(raw, ReportType):
+            return raw
+        if isinstance(raw, str):
+            normalized = raw.strip().lower()
+            for report_type in ReportType:
+                if normalized in {report_type.value.lower(), report_type.name.lower()}:
+                    return report_type
+        return None
+
+    def _extract_inline_report_types(self, content: str) -> set[ReportType]:
+        """从文本中提取 report_type 标记"""
+        result: set[ReportType] = set()
+        pattern = re.compile(r"report_types?\s*[:=]\s*([A-Za-z_,\s-]+)", re.IGNORECASE)
+        for match in pattern.finditer(content[:512]):  # 仅扫描文件前部
+            raw_value = match.group(1)
+            candidates = re.split(r"[\s,]+", raw_value.strip())
+            for candidate in candidates:
+                report_type = self._coerce_report_type(candidate)
+                if report_type:
+                    result.add(report_type)
+        return result
+
+    def _name_matches_report_type(self, name: str, report_type: ReportType) -> bool:
+        """根据名称推断模板是否匹配指定类型"""
+        lowered = name.lower()
+        if report_type.value.lower() in lowered:
+            return True
+        for alias in _REPORT_TYPE_ALIASES.get(report_type, []):
+            if alias in lowered:
+                return True
+        return False
+
+    def _infer_report_types_from_name(self, name: str) -> set[ReportType]:
+        """基于模板名称的启发式推断"""
+        inferred: set[ReportType] = set()
+        lowered = name.lower()
+        for report_type, aliases in _REPORT_TYPE_ALIASES.items():
+            if report_type.value.lower() in lowered:
+                inferred.add(report_type)
+                continue
+            if any(alias in lowered for alias in aliases):
+                inferred.add(report_type)
+        return inferred
 
     def preview_report(self, request: ReportRequest) -> str:
         """预览报告(HTML)"""
@@ -308,7 +515,8 @@ class ReportServiceImpl(ReportService):
             if request.record_id:
                 record = self._load_record(request.record_id)
                 if record:
-                    return self.generator.generate(record, options={"format": "html"})
+                    content = self.generator.generate(record, options={"format": "html"})
+                    return str(content)
 
             return "<html><body><p>无法预览报告</p></body></html>"
 
@@ -333,9 +541,12 @@ class ReportServiceImpl(ReportService):
 
         try:
             if hasattr(self.record_repository, "find"):
-                all_records = self.record_repository.find(user_id)
+                raw_records = self.record_repository.find(user_id)
+                all_records = cast(list[UserRecord], raw_records or [])
             elif hasattr(self.record_repository, "find_by"):
-                all_records = self.record_repository.find_by(lambda r: r.user_id == user_id)
+                all_records = cast(
+                    list[UserRecord], self.record_repository.find_by(lambda r: r.user_id == user_id)
+                )
             elif hasattr(self.record_repository, "find_all"):
                 all_records = [
                     r

@@ -3,12 +3,15 @@
 提供应用程序配置的加载、保存和管理功能，支持验证和模式
 """
 
+from __future__ import annotations
+
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
 
 import jsonschema
+from jsonschema import Draft7Validator
 
 from ..utils.logger import get_logger
 
@@ -47,7 +50,7 @@ class ConfigSchema:
 
     def __init__(self, schema: dict[str, Any]):
         self.schema = schema
-        self._compiled_schema = None
+        self._compiled_schema: Draft7Validator | None = None
 
     def validate(self, config: dict[str, Any]) -> ConfigValidationResult:
         """验证配置"""
@@ -56,7 +59,7 @@ class ConfigSchema:
         try:
             # 编译模式（如果尚未编译）
             if self._compiled_schema is None:
-                self._compiled_schema = jsonschema.Draft7Validator(self.schema)
+                self._compiled_schema = Draft7Validator(self.schema)
 
             # 验证配置
             errors = list(self._compiled_schema.iter_errors(config))
@@ -121,14 +124,15 @@ class ConfigManager:
     """配置管理器 - 增强版单例模式"""
 
     _instance: Optional["ConfigManager"] = None
+    _initialized: bool = False
 
-    def __new__(cls):
+    def __new__(cls) -> "ConfigManager":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._initialized = False
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         if not self._initialized:
             self.config_dir = Path.home() / ".virtualchemlab"
             self.config_file = self.config_dir / "config.json"
@@ -234,6 +238,9 @@ class ConfigManager:
 
     def save_schema(self) -> None:
         """保存配置模式"""
+        if not self._schema:
+            logger.warning("无法保存配置模式：尚未创建配置模式")
+            return
         try:
             with self.schema_file.open("w", encoding="utf-8") as f:
                 json.dump(self._schema.schema, f, indent=2, ensure_ascii=False)
@@ -438,48 +445,57 @@ class ConfigManager:
         config[keys[-1]] = value
         logger.debug(f"配置更新: {key} = {value}")
 
+    def _get_section_dict(self, section: str) -> dict[str, Any]:
+        """获取或初始化配置节"""
+        current = self._config.get(section)
+        if isinstance(current, dict):
+            return current
+        new_section: dict[str, Any] = {}
+        self._config[section] = new_section
+        return new_section
+
     def get_app_config(self) -> dict[str, Any]:
         """获取应用配置"""
-        return self._config.get("app", {})
+        return self._get_section_dict("app")
 
     def get_ui_config(self) -> dict[str, Any]:
         """获取UI配置"""
-        return self._config.get("ui", {})
+        return self._get_section_dict("ui")
 
     def get_game_config(self) -> dict[str, Any]:
         """获取游戏配置"""
-        return self._config.get("game", {})
+        return self._get_section_dict("game")
 
     def get_experiment_config(self) -> dict[str, Any]:
         """获取实验配置"""
-        return self._config.get("experiment", {})
+        return self._get_section_dict("experiment")
 
     def get_paths_config(self) -> dict[str, Any]:
         """获取路径配置"""
-        return self._config.get("paths", {})
+        return self._get_section_dict("paths")
 
     def get_logging_config(self) -> dict[str, Any]:
         """获取日志配置"""
-        return self._config.get("logging", {})
+        return self._get_section_dict("logging")
 
     def update_app_config(self, config: dict[str, Any]) -> None:
         """更新应用配置"""
-        self._config["app"].update(config)
+        self._get_section_dict("app").update(config)
         self.save_config()
 
     def update_ui_config(self, config: dict[str, Any]) -> None:
         """更新UI配置"""
-        self._config["ui"].update(config)
+        self._get_section_dict("ui").update(config)
         self.save_config()
 
     def update_game_config(self, config: dict[str, Any]) -> None:
         """更新游戏配置"""
-        self._config["game"].update(config)
+        self._get_section_dict("game").update(config)
         self.save_config()
 
     def update_experiment_config(self, config: dict[str, Any]) -> None:
         """更新实验配置"""
-        self._config["experiment"].update(config)
+        self._get_section_dict("experiment").update(config)
         self.save_config()
 
     def reset_to_default(self) -> None:

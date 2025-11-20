@@ -155,9 +155,9 @@ class CacheManager:
         if isinstance(key, str):
             return key
         elif isinstance(key, (tuple, list)):
-            return hashlib.md5(str(key).encode()).hexdigest()
+            return hashlib.sha256(str(key).encode()).hexdigest()
         elif isinstance(key, dict):
-            return hashlib.md5(json.dumps(key, sort_keys=True).encode()).hexdigest()
+            return hashlib.sha256(json.dumps(key, sort_keys=True).encode()).hexdigest()
         else:
             return str(key)
 
@@ -619,7 +619,7 @@ class CacheMiddleware:
         Returns:
             缓存的结果或None
         """
-        cache_key = f"request:{hashlib.md5(str(request_data).encode()).hexdigest()}"
+        cache_key = f"request:{hashlib.sha256(str(request_data).encode()).hexdigest()}"
         return self.cache_manager.get(cache_key)
 
     def process_response(self, request_data: dict[str, Any], response_data: Any, ttl: int = 300) -> None:
@@ -630,7 +630,7 @@ class CacheMiddleware:
             response_data: 响应数据
             ttl: 缓存时间
         """
-        cache_key = f"request:{hashlib.md5(str(request_data).encode()).hexdigest()}"
+        cache_key = f"request:{hashlib.sha256(str(request_data).encode()).hexdigest()}"
         self.cache_manager.set(cache_key, response_data, ttl)
 
 

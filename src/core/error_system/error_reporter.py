@@ -147,7 +147,7 @@ class ErrorReporter:
         import hashlib
 
         timestamp = datetime.now().isoformat()
-        return hashlib.md5(timestamp.encode()).hexdigest()[:16]
+        return hashlib.sha256(timestamp.encode()).hexdigest()[:16]
 
     def _save_report(self, report: ErrorReport) -> None:
         """保存报告到文件"""

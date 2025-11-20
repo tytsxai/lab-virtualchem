@@ -5,8 +5,10 @@
 
 import pytest
 
+from src.core.auth import IAuthService, Role, SimpleUserRepository
 from src.core.di_container import DIContainer
-from src.core.event_bus import EventBus
+from src.core.event_bus import Event, EventBus, get_event_bus
+from src.core.experiment_controller import ExperimentController
 from src.core.service_registration import (
     ServiceRegistry,
     configure_container,
@@ -191,6 +193,75 @@ class TestIntegration:
         # 验证服务可以正常工作
         assert storage is not None
         assert engine is not None
+
+
+class TestAdvancedServiceResolution:
+    """高级服务注册行为测试"""
+
+    def test_event_bus_singleton_is_used(self):
+        """容器应重用全局事件总线"""
+        container = configure_container(DIContainer())
+        bus_from_container = container.resolve(EventBus)
+        assert bus_from_container is get_event_bus()
+
+    def test_experiment_controller_is_transient(self):
+        """实验控制器应按请求创建新实例"""
+        container = configure_container(DIContainer())
+        controller_a = container.resolve(ExperimentController)
+        controller_b = container.resolve(ExperimentController)
+
+        assert controller_a is not controller_b
+        assert controller_a.template.id == "default_template"
+        assert controller_b.template.id == "default_template"
+
+
+class TestAuthServiceRegistration:
+    """认证服务注册测试"""
+
+    def test_default_admin_seeded_from_env(self, monkeypatch):
+        """设置管理员环境变量时应自动初始化管理员账号"""
+        monkeypatch.setenv("VCL_ADMIN_PASSWORD", "roadmap-password-super-secure-value-123456")
+        monkeypatch.setenv("VCL_ADMIN_USERNAME", "roadmap_admin")
+        monkeypatch.setenv("VCL_ADMIN_EMAIL", "roadmap_admin@example.com")
+
+        container = configure_container(DIContainer())
+
+        repo = container.resolve(SimpleUserRepository)
+        seeded_user = repo.find_by_username("roadmap_admin")
+        assert seeded_user is not None
+        assert Role.ADMIN in seeded_user.roles
+
+        auth_service = container.resolve(IAuthService)
+        assert hasattr(auth_service, "authenticate")
+        assert hasattr(auth_service, "authorize")
+
+
+class TestEventBusPublishFromContainer:
+    """容器解析的事件总线发布/订阅测试"""
+
+    def test_publish_subscribe_flow(self):
+        """验证解析出的事件总线支持完整的发布/订阅流程"""
+        container = configure_container(DIContainer())
+        bus = container.resolve(EventBus)
+        bus.clear()  # 清理可能存在的全局订阅
+
+        received: list[int] = []
+
+        def handler(event: Event):
+            value = event.data["value"]
+            received.append(value)
+            return value
+
+        bus.subscribe("roadmap.event", handler)
+
+        try:
+            event = Event(name="roadmap.event", data={"value": 42})
+            results = bus.publish(event)
+
+            assert results == [42]
+            assert received == [42]
+        finally:
+            bus.clear()
 
 
 if __name__ == "__main__":

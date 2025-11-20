@@ -554,7 +554,7 @@ class QueryCache:
         import hashlib
 
         key_str = f"{query}:{str(params)}"
-        return hashlib.md5(key_str.encode()).hexdigest()
+        return hashlib.sha256(key_str.encode()).hexdigest()
 
 
 class DatabaseOptimizer:

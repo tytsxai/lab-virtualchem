@@ -114,6 +114,7 @@ class ReportService(ABC):
         record: UserRecord,
         format: ExportFormat = ExportFormat.PDF,
         options: dict[str, Any] | None = None,
+        template_name: str | None = None,
     ) -> ReportResponse:
         """生成实验报告
 
@@ -121,6 +122,7 @@ class ReportService(ABC):
             record: 用户记录
             format: 导出格式
             options: 额外选项
+            template_name: 指定模板
 
         Returns:
             报告响应

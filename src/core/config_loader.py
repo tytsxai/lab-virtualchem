@@ -300,7 +300,7 @@ class Config(BaseModel):
         # 路径配置
         if not config_data.get("paths"):
             config_data["paths"] = {}
-        for path_key in ["templates", "knowledge", "user_data", "reports"]:
+        for path_key in ["templates", "knowledge", "user_data", "reports", "i18n"]:
             env_key = f"{path_key.upper()}_DIR"
             env_value = os.getenv(env_key)
             if env_value:

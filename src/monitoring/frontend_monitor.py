@@ -223,7 +223,7 @@ class FrontendMonitor:
         """生成错误ID"""
         # 使用异常类型和消息生成唯一ID
         content = f"{type(exception).__name__}:{str(exception)}"
-        return hashlib.md5(content.encode()).hexdigest()[:12]
+        return hashlib.sha256(content.encode()).hexdigest()[:12]
 
     def _write_error_log(self, error: ErrorReport) -> None:
         """写入错误日志"""
@@ -382,7 +382,7 @@ class UserBehaviorTracker:
 
     def _generate_event_id(self) -> str:
         """生成事件ID"""
-        return hashlib.md5(f"{time.time()}".encode()).hexdigest()[:16]
+        return hashlib.sha256(f"{time.time()}".encode()).hexdigest()[:16]
 
     def _write_event_log(self, event: UserEvent) -> None:
         """写入事件日志"""
