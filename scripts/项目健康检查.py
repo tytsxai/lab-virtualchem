@@ -46,11 +46,11 @@ class HealthChecker:
         version_info = sys.version_info
         version_str = f"{version_info.major}.{version_info.minor}.{version_info.micro}"
 
-        if version_info >= (3, 8):
+        if version_info >= (3, 10):
             self.add_result(
                 "Python版本",
                 "✅",
-                f"Python {version_str} (要求 ≥ 3.8)",
+                f"Python {version_str} (要求 ≥ 3.10)",
                 10, 10
             )
             return True
@@ -58,7 +58,7 @@ class HealthChecker:
             self.add_result(
                 "Python版本",
                 "❌",
-                f"Python {version_str} (要求 ≥ 3.8)",
+                f"Python {version_str} (要求 ≥ 3.10)",
                 0, 10
             )
             return False

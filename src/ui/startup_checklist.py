@@ -112,7 +112,7 @@ class StartupChecker:
 
 def check_python_version() -> CheckResult:
     """检查Python版本"""
-    required_version = (3, 8)
+    required_version = (3, 10)
     current_version = sys.version_info[:2]
 
     if current_version >= required_version:
@@ -126,7 +126,7 @@ def check_python_version() -> CheckResult:
             name="Python版本",
             status=CheckStatus.FAILED,
             message=f"需要 Python {required_version[0]}.{required_version[1]}+，当前为 {current_version[0]}.{current_version[1]}",
-            suggestions=["请升级到 Python 3.8 或更高版本"],
+            suggestions=[f"请升级到 Python {required_version[0]}.{required_version[1]} 或更高版本"],
             critical=True,
         )
 

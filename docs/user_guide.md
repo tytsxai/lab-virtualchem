@@ -7,7 +7,7 @@
 #### 系统要求
 
 - **操作系统**: Windows 10+, macOS 10.15+, Ubuntu 18.04+
-- **Python版本**: Python 3.8 或更高版本
+- **Python版本**: Python 3.10 或更高版本
 - **内存**: 至少 4GB RAM
 - **存储空间**: 至少 2GB 可用空间
 

@@ -188,7 +188,7 @@ microservices_manager.register_service(service)
 
 #### 1. 开发环境要求
 
-- Python 3.8+
+- Python 3.10+（推荐 3.11）
 - Git
 - IDE (推荐 PyCharm 或 VS Code)
 - 数据库 (SQLite/PostgreSQL)

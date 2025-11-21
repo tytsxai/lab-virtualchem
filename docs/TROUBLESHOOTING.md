@@ -101,7 +101,7 @@ ERROR: Could not find a version that satisfies the requirement...
 **解决方案**:
 
 ```bash
-# 1. 检查Python版本（需要3.8+）
+# 1. 检查Python版本（需要3.10+）
 python --version
 
 # 2. 升级pip
@@ -985,5 +985,4 @@ data/users/                    # 用户数据
 ---
 
 💡 **提示**: 遇到问题先查看日志，90%的问题都能从日志中找到线索。
-
 

@@ -45,9 +45,9 @@ class CheckResult:
 def check_python_version() -> CheckResult:
     """Ensure interpreter meets minimum requirements."""
     version_info = sys.version_info
-    if version_info >= (3, 8):
+    if version_info >= (3, 10):
         return CheckResult("Python 版本", True, f"当前版本 {sys.version}")
-    return CheckResult("Python 版本", False, f"需要 >= 3.8，当前: {sys.version}")
+    return CheckResult("Python 版本", False, f"需要 >= 3.10，当前: {sys.version}")
 
 
 def check_dependencies() -> CheckResult:

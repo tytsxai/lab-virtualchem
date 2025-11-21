@@ -58,7 +58,7 @@ print_header "VirtualChemLab macOS 打包工具 v${VERSION}"
 print_step "1/9" "检查Python环境..."
 
 if ! command -v python3 &> /dev/null; then
-    print_error "未找到Python 3！请先安装Python 3.8+"
+    print_error "未找到Python 3！请先安装Python 3.10+"
     exit 1
 fi
 

@@ -774,14 +774,14 @@ include = '\.pyi?$'
 
 [tool.isort]
 profile = "black"
-line_length = 100
+line_length = 88
 
 [tool.ruff]
-line-length = 100
-target-version = "py38"
+line-length = 88
+target-version = "py310"
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.10"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
@@ -805,5 +805,4 @@ warn_unused_configs = true
 
 **更新历史**:
 - 2025-10-07: 初始版本
-
 

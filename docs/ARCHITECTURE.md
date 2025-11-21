@@ -285,7 +285,7 @@ performance/
 
 ### 2. 后端技术
 
-- **Python 3.8+**: 主要编程语言
+- **Python 3.10+**: 主要编程语言
 - **SQLite/PostgreSQL**: 数据库
 - **Redis**: 缓存系统
 - **Celery**: 异步任务队列
