@@ -80,6 +80,11 @@ class MainWindow(QMainWindow):
     theme_changed = Signal(str)  # 主题变更信号
     language_changed = Signal(str)  # 语言变更信号
     performance_warning = Signal(str)  # 性能警告信号
+    new_action_triggered = Signal()  # 新建入口信号
+    open_action_triggered = Signal()  # 打开入口信号
+    save_action_triggered = Signal()  # 保存入口信号
+    run_action_triggered = Signal()  # 运行入口信号
+    stop_action_triggered = Signal()  # 停止入口信号
 
     def __init__(self, container: DIContainer | None = None, workflow_manager: Any | None = None):
         super().__init__()
@@ -208,6 +213,22 @@ class MainWindow(QMainWindow):
         logger.info(f"主题已变更为: {theme_name}")
         # 这里可以添加刷新UI的代码
         self.update()
+
+    def emit_core_action_signal(self, action: str) -> None:
+        """Emit standardized action signals for smoke testing and hooks."""
+        action_map = {
+            "new": self.new_action_triggered,
+            "open": self.open_action_triggered,
+            "save": self.save_action_triggered,
+            "run": self.run_action_triggered,
+            "stop": self.stop_action_triggered,
+        }
+        signal = action_map.get(action)
+        if signal:
+            signal.emit()
+            logger.debug("Core action emitted: %s", action)
+        else:
+            logger.debug("Unknown action signal requested: %s", action)
 
     def _register_lazy_components(self):
         """注册懒加载组件，优化启动速度"""
@@ -380,7 +401,7 @@ class MainWindow(QMainWindow):
         welcome_label.setObjectName("welcomeTitle")
         layout.addWidget(welcome_label)
 
-        version_label = QLabel(f"v{self.i18n.t('app.version')}")
+        version_label = QLabel(f"v{APP_VERSION}")
         version_label.setObjectName("versionLabel")
         layout.addWidget(version_label)
 
@@ -991,6 +1012,7 @@ class MainWindow(QMainWindow):
 
     def on_new_experiment(self) -> None:
         """开始新实验"""
+        self.emit_core_action_signal("new")
         if self.current_experiment_view:
             reply = QMessageBox.question(
                 self,
@@ -1646,6 +1668,7 @@ class MainWindow(QMainWindow):
 
     def on_save_progress(self) -> None:
         """保存实验进度"""
+        self.emit_core_action_signal("save")
         if not self.current_experiment_view:
             QMessageBox.warning(self, "提示", "当前没有进行中的实验")
             return
@@ -1660,6 +1683,18 @@ class MainWindow(QMainWindow):
         except Exception as e:
             logger.error(f"保存进度失败: {e}")
             QMessageBox.critical(self, "错误", f"保存进度失败: {e}")
+
+    def on_open_experiment_stub(self) -> None:
+        """Stub: emit open action signal without heavy UI flows."""
+        self.emit_core_action_signal("open")
+
+    def on_run_experiment_stub(self) -> None:
+        """Stub: emit run action signal for smoke checks."""
+        self.emit_core_action_signal("run")
+
+    def on_stop_experiment_stub(self) -> None:
+        """Stub: emit stop action signal for smoke checks."""
+        self.emit_core_action_signal("stop")
 
     def on_import_data(self) -> None:
         """导入数据"""

@@ -105,6 +105,9 @@ class ExperimentController:
         session_id: str | None = None,
         enable_auto_save: bool = True,
         max_retries: int = 3,
+        monitor_factory: Any | None = None,
+        trace_manager: Any | None = None,
+        metrics_collector: Any | None = None,
     ) -> None:
         """初始化实验控制器
 
@@ -119,6 +122,9 @@ class ExperimentController:
             session_id: 会话ID(可选，用于恢复实验)
             enable_auto_save: 是否启用自动保存(默认True)
             max_retries: 最大重试次数(默认3)
+            monitor_factory: 自定义监控实例创建器(用于测试替换)
+            trace_manager: 自定义追踪管理器(用于测试替换)
+            metrics_collector: 自定义指标收集器(用于测试替换)
 
         Raises:
             ValidationError: 参数验证失败
@@ -156,17 +162,31 @@ class ExperimentController:
         self.learning_suggestions: list[str] = []
 
         # 初始化监控
-        self._monitoring_enabled = enable_monitoring and MONITORING_AVAILABLE
+        self._monitor: Any | None = None
+        self._trace_manager: Any | None = None
+        self._metrics_collector: Any | None = None
+        self._trace_context: TracingContext | None = None
+
+        self._monitoring_enabled = enable_monitoring and (
+            MONITORING_AVAILABLE
+            or monitor_factory is not None
+            or trace_manager is not None
+            or metrics_collector is not None
+        )
         if self._monitoring_enabled:
             try:
-                self._monitor = BackendMonitor()
-                self._trace_manager = get_trace_manager()
-                self._metrics_collector = get_experiment_metrics_collector()
-                self._trace_context: TracingContext | None = None
+                monitor_creator = monitor_factory or BackendMonitor
+                self._monitor = monitor_creator()
+                self._trace_manager = trace_manager or get_trace_manager()
+                self._metrics_collector = metrics_collector or get_experiment_metrics_collector()
                 logger.info("实验监控已启用")
             except Exception as e:
                 logger.warning(f"监控初始化失败,将禁用监控: {e}")
                 self._monitoring_enabled = False
+                self._monitor = None
+                self._trace_manager = None
+                self._metrics_collector = None
+                self._trace_context = None
 
         # 创建用户记录
         try:

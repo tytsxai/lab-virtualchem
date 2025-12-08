@@ -94,6 +94,20 @@ class DatabaseManager:
                 session.commit()
                 logger.info("数据库版本已初始化: %s", APP_VERSION)
 
+    def _normalize_pagination(self, limit: int, offset: int) -> tuple[int, int]:
+        """标准化分页参数，避免原始字符串混入SQL语句"""
+        try:
+            normalized_limit = int(limit)
+        except (TypeError, ValueError):
+            normalized_limit = 100
+
+        try:
+            normalized_offset = int(offset)
+        except (TypeError, ValueError):
+            normalized_offset = 0
+
+        return max(normalized_limit, 0), max(normalized_offset, 0)
+
     @contextmanager
     def get_session(self) -> Session:
         """获取数据库会话（上下文管理器）
@@ -255,7 +269,8 @@ class DatabaseManager:
             if is_active is not None:
                 query = query.filter(User.is_active == is_active)
 
-            users = query.limit(limit).offset(offset).all()
+            safe_limit, safe_offset = self._normalize_pagination(limit, offset)
+            users = query.limit(safe_limit).offset(safe_offset).all()
 
             # 转换为字典列表
             return [{
@@ -381,9 +396,10 @@ class DatabaseManager:
             if status:
                 query = query.filter(ExperimentRecord.status == status)
 
+            safe_limit, safe_offset = self._normalize_pagination(limit, offset)
             records = query.order_by(
                 ExperimentRecord.started_at.desc()
-            ).limit(limit).offset(offset).all()
+            ).limit(safe_limit).offset(safe_offset).all()
 
             # 转换为字典列表
             return [r.to_dict() for r in records]
@@ -506,7 +522,8 @@ class DatabaseManager:
             if difficulty:
                 query = query.filter(Template.difficulty == difficulty)
 
-            templates = query.order_by(Template.usage_count.desc()).limit(limit).all()
+            safe_limit, _ = self._normalize_pagination(limit, 0)
+            templates = query.order_by(Template.usage_count.desc()).limit(safe_limit).all()
 
             return [{
                 'template_id': t.template_id,

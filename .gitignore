@@ -121,3 +121,10 @@ user_data/
 
 # 上线前修复脚本添加
 secrets.txt
+
+# Security scan reports
+!logs/
+logs/*
+!logs/bandit-report.txt
+!logs/safety-report.txt
+!logs/pip-audit-report.txt

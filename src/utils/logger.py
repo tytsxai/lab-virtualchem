@@ -1,9 +1,10 @@
 """日志配置 - 增强版本"""
 
-import contextlib
 import json
 import logging
 import logging.handlers
+import os
+import re
 import sys
 import threading
 import time
@@ -11,6 +12,32 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Any
+
+MASK_TEXT = "[REDACTED]"
+SENSITIVE_FIELD_NAMES = {
+    "token",
+    "access_token",
+    "refresh_token",
+    "id_token",
+    "secret",
+    "password",
+    "passwd",
+    "pwd",
+    "api_key",
+    "apikey",
+    "authorization",
+    "auth",
+    "email",
+    "phone",
+    "mobile",
+    "license_key",
+}
+EMAIL_PATTERN = re.compile(r"(?P<local>[A-Za-z0-9._%+-]+)@(?P<domain>[A-Za-z0-9.-]+\.[A-Za-z]{2,})")
+PHONE_PATTERN = re.compile(r"\b(\+?\d{1,3}[-.\s]?)?(\d{3})[-.\s]?(\d{4})[-.\s]?(\d{3,4})\b")
+SECRET_PATTERN = re.compile(
+    r"(?i)(?P<key>bearer|token|secret|password|passwd|pwd|api[_-]?key|access[_-]?token|refresh[_-]?token|authorization)"
+    r"(?:\s*[:=]\s*|\s+)(?P<value>[-A-Za-z0-9._~+/]{4,})"
+)
 
 
 class LogLevel(Enum):
@@ -38,6 +65,102 @@ class LogEntry:
     exception_info: str | None = None
 
 
+def _mask_secret(value: str) -> str:
+    """掩码密钥类字符串"""
+    if not value:
+        return MASK_TEXT
+    if len(value) <= 4:
+        return MASK_TEXT
+    return f"{value[:2]}***{value[-2:]}"
+
+
+def _sanitize_text(text: str) -> str:
+    """对字符串进行敏感信息脱敏"""
+    if not text:
+        return text
+
+    def _mask_email(match: re.Match[str]) -> str:
+        return f"***@{match.group('domain')}"
+
+    def _mask_phone(match: re.Match[str]) -> str:
+        country = match.group(1) or ""
+        tail = match.group(4)
+        return f"{country}***{tail}"
+
+    def _mask_secret_value(match: re.Match[str]) -> str:
+        masked = _mask_secret(match.group("value"))
+        return match.group(0).replace(match.group("value"), masked)
+
+    text = SECRET_PATTERN.sub(_mask_secret_value, text)
+    text = EMAIL_PATTERN.sub(_mask_email, text)
+    text = PHONE_PATTERN.sub(_mask_phone, text)
+    return text
+
+
+def _is_sensitive_key(key: str) -> bool:
+    normalized = str(key).lower().replace("-", "_")
+    return any(token in normalized for token in SENSITIVE_FIELD_NAMES)
+
+
+def sanitize_log_value(value: Any) -> Any:
+    """递归脱敏日志值"""
+    if isinstance(value, str):
+        return _sanitize_text(value)
+    if isinstance(value, dict):
+        return {k: (MASK_TEXT if _is_sensitive_key(k) else sanitize_log_value(v)) for k, v in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        container_type = type(value)
+        sanitized_items = [sanitize_log_value(v) for v in value]
+        return container_type(sanitized_items)  # type: ignore[call-arg]
+    return value
+
+
+class SensitiveDataFilter(logging.Filter):
+    """敏感信息过滤器"""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        raw_message = record.getMessage()
+        sanitized_message = sanitize_log_value(raw_message)
+        record.msg = sanitized_message
+        record.args = ()
+
+        if hasattr(record, "extra_data"):
+            record.extra_data = sanitize_log_value(getattr(record, "extra_data"))
+
+        for key, value in list(record.__dict__.items()):
+            if key in {
+                "msg", "args", "name", "levelno", "levelname", "pathname", "filename", "module",
+                "exc_info", "exc_text", "stack_info", "lineno", "funcName", "created", "msecs",
+                "relativeCreated", "thread", "threadName", "processName", "process",
+            }:
+                continue
+
+            if _is_sensitive_key(key):
+                record.__dict__[key] = MASK_TEXT
+            elif isinstance(value, (str, dict, list, tuple, set)):
+                record.__dict__[key] = sanitize_log_value(value)
+
+        return True
+
+
+def _ensure_sensitive_filter(target: logging.Logger | logging.Handler) -> None:
+    """确保目标挂载敏感信息过滤器"""
+    if not any(isinstance(f, SensitiveDataFilter) for f in getattr(target, "filters", [])):
+        target.addFilter(SensitiveDataFilter())
+
+
+def _resolve_log_level(level: int | str) -> int:
+    """解析并校正日志级别，生产环境不低于INFO"""
+    resolved = level
+    if isinstance(level, str):
+        resolved = getattr(logging, level.upper(), logging.INFO)
+
+    environment = os.getenv("ENVIRONMENT", "").lower() or os.getenv("APP_ENV", "").lower()
+    if environment == "production" and resolved < logging.INFO:
+        return logging.INFO
+    return int(resolved)
+
+
 class StructuredFormatter(logging.Formatter):
     """结构化日志格式化器"""
 
@@ -52,7 +175,7 @@ class StructuredFormatter(logging.Formatter):
             timestamp=record.created,
             level=record.levelname,
             logger_name=record.name,
-            message=record.getMessage(),
+            message=sanitize_log_value(record.getMessage()),
             module=record.module or "",
             function=record.funcName or "",
             line_number=record.lineno,
@@ -66,7 +189,7 @@ class StructuredFormatter(logging.Formatter):
 
         # 额外数据
         if hasattr(record, 'extra_data'):
-            log_entry.extra_data = record.extra_data
+            log_entry.extra_data = sanitize_log_value(record.extra_data)
 
         # 转换为JSON格式
         return json.dumps({
@@ -95,6 +218,8 @@ class LogBuffer:
     def add_entry(self, entry: LogEntry) -> None:
         """添加日志条目"""
         with self._lock:
+            entry.message = sanitize_log_value(entry.message)
+            entry.extra_data = sanitize_log_value(entry.extra_data)
             self.buffer.append(entry)
             if len(self.buffer) > self.max_size:
                 self.buffer = self.buffer[-self.max_size:]
@@ -148,17 +273,24 @@ class EnhancedLogger:
             # 添加结构化处理器
             handler = logging.StreamHandler(sys.stdout)
             handler.setFormatter(StructuredFormatter())
+            _ensure_sensitive_filter(handler)
             self.logger.addHandler(handler)
+        else:
+            for handler in self.logger.handlers:
+                _ensure_sensitive_filter(handler)
+        _ensure_sensitive_filter(self.logger)
 
     def log_with_context(self, level: int, message: str, **extra_data: Any) -> None:
         """带上下文的日志记录"""
+        sanitized_message = sanitize_log_value(message)
+        sanitized_extra = sanitize_log_value(extra_data)
         # 创建日志记录
         record = self.logger.makeRecord(
-            self.logger.name, level, "", 0, message, (), None
+            self.logger.name, level, "", 0, sanitized_message, (), None
         )
 
         # 添加额外数据
-        record.extra_data = extra_data
+        record.extra_data = sanitized_extra
 
         # 记录到缓冲区
         if self.buffer:
@@ -166,8 +298,8 @@ class EnhancedLogger:
                 timestamp=time.time(),
                 level=logging.getLevelName(level),
                 logger_name=self.name,
-                message=message,
-                extra_data=extra_data,
+                message=sanitized_message,
+                extra_data=sanitized_extra,
             )
             self.buffer.add_entry(log_entry)
 
@@ -197,7 +329,7 @@ class EnhancedLogger:
 
 def setup_logger(
     name: str = "virtualchemlab",
-    level: int = logging.INFO,
+    level: int | str = logging.INFO,
     log_file: Path | None = None,
     max_bytes: int = 10 * 1024 * 1024,  # 10MB
     backup_count: int = 5,
@@ -217,12 +349,9 @@ def setup_logger(
         配置好的日志器
     """
     logger = logging.getLogger(name)
-
-    # 避免重复配置
-    if logger.handlers:
-        return logger
-
-    logger.setLevel(level)
+    resolved_level = _resolve_log_level(level)
+    logger.setLevel(resolved_level)
+    log_file_path = Path(log_file).expanduser().resolve() if log_file else None
 
     # 格式化器
     formatter = logging.Formatter(
@@ -231,10 +360,12 @@ def setup_logger(
     )
 
     # 控制台处理器 - 设置UTF-8编码以正确显示中文
-    if enable_console:
+    has_stdout_handler = any(isinstance(h, logging.StreamHandler) and getattr(h, "stream", None) == sys.stdout for h in logger.handlers)
+    if enable_console and not has_stdout_handler:
         console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(level)
+        console_handler.setLevel(resolved_level)
         console_handler.setFormatter(formatter)
+        _ensure_sensitive_filter(console_handler)
         # Windows系统强制使用UTF-8编码
         if hasattr(console_handler.stream, "reconfigure"):
             # 在Windows上设置UTF-8编码
@@ -246,19 +377,34 @@ def setup_logger(
         logger.addHandler(console_handler)
 
     # 文件处理器(如果提供) - 使用轮转
-    if log_file:
-        log_file.parent.mkdir(parents=True, exist_ok=True)
+    has_same_file_handler = False
+    if log_file_path:
+        for handler in logger.handlers:
+            if isinstance(handler, logging.handlers.RotatingFileHandler):
+                existing = Path(getattr(handler, "baseFilename", ""))
+                if existing == log_file_path:
+                    has_same_file_handler = True
+                    break
+
+    if log_file_path and not has_same_file_handler:
+        log_file_path.parent.mkdir(parents=True, exist_ok=True)
         # 使用RotatingFileHandler自动轮转
         file_handler = logging.handlers.RotatingFileHandler(
-            log_file,
+            log_file_path,
             maxBytes=max_bytes,
             backupCount=backup_count,
             encoding="utf-8"
         )
-        file_handler.setLevel(level)
+        file_handler.setLevel(resolved_level)
         file_handler.setFormatter(formatter)
+        _ensure_sensitive_filter(file_handler)
         logger.addHandler(file_handler)
 
+    for handler in logger.handlers:
+        handler.setLevel(resolved_level)
+        _ensure_sensitive_filter(handler)
+
+    _ensure_sensitive_filter(logger)
     return logger
 
 
@@ -293,17 +439,20 @@ def export_logs(file_path: str, level: str | None = None, limit: int | None = No
 
         with open(file_path, 'w', encoding='utf-8') as f:
             for entry in entries:
+                # 确保导出时再次脱敏
+                safe_message = sanitize_log_value(entry.message)
+                safe_extra = sanitize_log_value(entry.extra_data)
                 log_data = {
                     "timestamp": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(entry.timestamp)),
                     "level": entry.level,
                     "logger": entry.logger_name,
-                    "message": entry.message,
+                    "message": safe_message,
                     "module": entry.module,
                     "function": entry.function,
                     "line": entry.line_number,
                     "thread": entry.thread_id,
                     "process": entry.process_id,
-                    "extra": entry.extra_data,
+                    "extra": safe_extra,
                     "exception": entry.exception_info,
                 }
                 f.write(json.dumps(log_data, ensure_ascii=False) + '\n')
