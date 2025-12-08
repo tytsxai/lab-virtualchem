@@ -25,6 +25,18 @@ def _base_config(environment: str = "development") -> dict[str, dict]:
     }
 
 
+def test_merge_env_requires_jwt_secret_in_production_with_admin_set(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Production environment must error without JWT secret even when admin secret is set."""
+    config_data = _base_config(environment="production")
+
+    monkeypatch.delenv("JWT_SECRET_KEY", raising=False)
+    monkeypatch.delenv("JWT_SECRET_ENV", raising=False)
+    monkeypatch.setenv("VCL_ADMIN_SECRET_KEY", "placeholder-admin-secret")
+
+    with pytest.raises(ValueError, match="JWT 密钥环境变量"):
+        Config._merge_env_vars(config_data)
+
+
 def test_merge_env_respects_custom_jwt_secret_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """When security.jwt_secret_env is provided, loader should honor it."""
     config_data = _base_config()
@@ -41,12 +53,68 @@ def test_merge_env_respects_custom_jwt_secret_env(monkeypatch: pytest.MonkeyPatc
     assert merged["security"]["jwt_secret_key"] == "A" * 40
 
 
+def test_merge_env_requires_jwt_secret_in_production(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Production must fail fast when JWT secret env is missing."""
+    config_data = _base_config(environment="production")
+
+    monkeypatch.delenv("JWT_SECRET_KEY", raising=False)
+    monkeypatch.delenv("JWT_SECRET_ENV", raising=False)
+
+    with pytest.raises(ValueError, match="JWT 密钥环境变量"):
+        Config._merge_env_vars(config_data)
+
+
+def test_merge_env_requires_session_secret_in_production(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Production must fail fast when session secret env is missing."""
+    config_data = _base_config(environment="production")
+
+    monkeypatch.setenv("JWT_SECRET_KEY", "B" * 40)
+    monkeypatch.setenv("VCL_ADMIN_SECRET_KEY", "C" * 40)
+    monkeypatch.delenv("SESSION_SECRET_KEY", raising=False)
+    monkeypatch.delenv("SESSION_SECRET_ENV", raising=False)
+
+    with pytest.raises(ValueError, match="会话密钥环境变量"):
+        Config._merge_env_vars(config_data)
+
+
+def test_merge_env_requires_developer_secret_when_enabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Enabling developer mode in production requires a secret."""
+    config_data = _base_config(environment="production")
+    config_data["developer"]["enabled"] = True
+
+    monkeypatch.setenv("JWT_SECRET_KEY", "B" * 40)
+    monkeypatch.setenv("SESSION_SECRET_KEY", "S" * 40)
+    monkeypatch.setenv("VCL_ADMIN_SECRET_KEY", "C" * 40)
+    monkeypatch.setenv("DEVELOPER_MODE_ENABLED", "true")
+    monkeypatch.delenv("DEVELOPER_SECRET_KEY", raising=False)
+
+    with pytest.raises(ValueError, match="开发者密钥环境变量"):
+        Config._merge_env_vars(config_data)
+
+
+def test_developer_mode_defaults_off_without_env_toggle(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Production should keep developer mode disabled unless env explicitly enables it."""
+    config_data = _base_config(environment="production")
+    config_data["developer"]["enabled"] = True
+
+    monkeypatch.setenv("JWT_SECRET_KEY", "B" * 40)
+    monkeypatch.setenv("VCL_ADMIN_SECRET_KEY", "C" * 40)
+    monkeypatch.setenv("SESSION_SECRET_KEY", "S" * 40)
+    monkeypatch.delenv("DEVELOPER_MODE_ENABLED", raising=False)
+    monkeypatch.delenv("DEVELOPER_MODE", raising=False)
+
+    merged = Config._merge_env_vars(config_data)
+
+    assert merged["developer"]["enabled"] is False
+
+
 def test_merge_env_requires_admin_secret_in_production(monkeypatch: pytest.MonkeyPatch) -> None:
     """Production environment should fail fast without admin secret."""
     config_data = _base_config(environment="production")
 
     # Provide JWT secret so the failure is specific to admin secret.
     monkeypatch.setenv("JWT_SECRET_KEY", "B" * 40)
+    monkeypatch.setenv("SESSION_SECRET_KEY", "S" * 40)
     monkeypatch.delenv("VCL_ADMIN_SECRET_KEY", raising=False)
     monkeypatch.delenv("ADMIN_SECRET_ENV", raising=False)
 

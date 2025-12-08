@@ -18,6 +18,7 @@ from src.core.config_loader import (
     SecurityConfig,
     get_config,
 )
+from config.schemas.app_config import AppConfiguration as SchemaAppConfiguration
 
 
 class TestAppConfig:
@@ -89,6 +90,16 @@ class TestSecurityConfig:
         # Test that short JWT key is rejected
         with pytest.raises(ValueError, match="JWT密钥长度必须至少32个字符"):
             SecurityConfig(jwt_secret_key="short")
+
+    def test_production_requires_env_secrets(self, monkeypatch):
+        """Schema-based production config must fail when secrets are missing."""
+        monkeypatch.setenv("ENVIRONMENT", "production")
+        monkeypatch.delenv("JWT_SECRET_KEY", raising=False)
+        monkeypatch.delenv("SESSION_SECRET_KEY", raising=False)
+        monkeypatch.delenv("DEVELOPER_SECRET_KEY", raising=False)
+
+        with pytest.raises(ValueError, match="缺少必需的密钥"):
+            SchemaAppConfiguration.load(env="production")
 
 
 class TestConfig:

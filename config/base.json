@@ -26,7 +26,10 @@
     },
     "security": {
         "password_min_length": 8,
-        "session_timeout": 3600
+        "session_timeout": 3600,
+        "jwt_secret_env": "JWT_SECRET_KEY",
+        "session_secret_env": "SESSION_SECRET_KEY",
+        "developer_secret_env": "DEVELOPER_SECRET_KEY"
     },
     "cache": {
         "enabled": true,
@@ -46,5 +49,8 @@
         "metrics_enabled": true,
         "health_check_interval": 60,
         "log_level": "INFO"
+    },
+    "developer": {
+        "enabled": false
     }
 }

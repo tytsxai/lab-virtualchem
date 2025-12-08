@@ -69,7 +69,9 @@
         "expression_timeout": 1.0,
         "max_file_size_mb": 10,
         "api_auth_enabled": true,
-        "jwt_secret_env": "VCL_JWT_SECRET"
+        "jwt_secret_env": "JWT_SECRET_KEY",
+        "session_secret_env": "SESSION_SECRET_KEY",
+        "developer_secret_env": "DEVELOPER_SECRET_KEY"
     },
     "plugins": {
         "enabled": [

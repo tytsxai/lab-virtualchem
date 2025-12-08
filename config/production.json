@@ -13,9 +13,14 @@
     },
     "security": {
         "password_min_length": 12,
-        "session_timeout": 1800
+        "session_timeout": 1800,
+        "jwt_secret_env": "JWT_SECRET_KEY",
+        "session_secret_env": "SESSION_SECRET_KEY",
+        "developer_secret_env": "DEVELOPER_SECRET_KEY"
     },
     "developer": {
-        "enabled": false
+        "enabled": false,
+        "debug_mode": false,
+        "console_enabled": false
     }
 }

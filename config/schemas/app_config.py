@@ -23,6 +23,32 @@ except ImportError:
     PYDANTIC_V2 = False
 
 
+def _env_flag(name: str, default: bool = False) -> bool:
+    """读取环境变量布尔值，支持常见真值字符串"""
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _read_secret_env(names: list[str]) -> str | None:
+    """按优先级读取环境变量中的密钥"""
+    for env_name in names:
+        if not env_name:
+            continue
+        value = os.getenv(env_name)
+        if value:
+            return value
+    return None
+
+
+DEFAULT_SECRET_ENV_NAMES = {
+    "jwt_secret_key": "JWT_SECRET_KEY",
+    "developer_secret_key": "DEVELOPER_SECRET_KEY",
+    "session_secret_key": "SESSION_SECRET_KEY",
+}
+
+
 class PathConfig(BaseModel):
     """路径配置"""
     templates_dir: str = Field(default="assets/templates", description="实验模板目录")
@@ -72,6 +98,9 @@ class DatabaseConfig(BaseModel):
 
 class SecurityConfig(BaseModel):
     """安全配置"""
+    jwt_secret_env: str = Field(default="JWT_SECRET_KEY", description="JWT密钥环境变量名")
+    developer_secret_env: str = Field(default="DEVELOPER_SECRET_KEY", description="开发者模式密钥环境变量名")
+    session_secret_env: str = Field(default="SESSION_SECRET_KEY", description="会话密钥环境变量名")
     jwt_secret_key: str | None = Field(default=None, description="JWT密钥")
     developer_secret_key: str | None = Field(default=None, description="开发者模式密钥")
     session_secret_key: str | None = Field(default=None, description="会话密钥")
@@ -81,35 +110,70 @@ class SecurityConfig(BaseModel):
     if PYDANTIC_V2:
         @model_validator(mode='after')
         def validate_secrets(self):
-            """验证密钥配置"""
-            # 从环境变量加载
-            if not self.jwt_secret_key:
-                self.jwt_secret_key = os.getenv('JWT_SECRET_KEY')
-            if not self.developer_secret_key:
-                self.developer_secret_key = os.getenv('DEVELOPER_SECRET_KEY')
-            if not self.session_secret_key:
-                self.session_secret_key = os.getenv('SESSION_SECRET_KEY')
-
-            # 生产环境必须配置密钥
-            env = os.getenv('ENVIRONMENT', 'development')
-            if env == 'production' and not self.jwt_secret_key:
-                raise ValueError("生产环境必须配置JWT_SECRET_KEY")
-
+            """从环境变量加载密钥"""
+            self.jwt_secret_key = self.jwt_secret_key or _read_secret_env(
+                [self.jwt_secret_env, DEFAULT_SECRET_ENV_NAMES["jwt_secret_key"]]
+            )
+            self.developer_secret_key = (
+                self.developer_secret_key
+                or _read_secret_env([self.developer_secret_env, DEFAULT_SECRET_ENV_NAMES["developer_secret_key"]])
+            )
+            self.session_secret_key = self.session_secret_key or _read_secret_env(
+                [self.session_secret_env, DEFAULT_SECRET_ENV_NAMES["session_secret_key"]]
+            )
             return self
     else:
         @root_validator
         def validate_secrets(cls, values):
-            """验证密钥配置"""
-            # 从环境变量加载
-            values['jwt_secret_key'] = values.get('jwt_secret_key') or os.getenv('JWT_SECRET_KEY')
-            values['developer_secret_key'] = values.get('developer_secret_key') or os.getenv('DEVELOPER_SECRET_KEY')
-            values['session_secret_key'] = values.get('session_secret_key') or os.getenv('SESSION_SECRET_KEY')
+            """从环境变量加载密钥"""
+            values["jwt_secret_env"] = values.get("jwt_secret_env") or "JWT_SECRET_KEY"
+            values["developer_secret_env"] = values.get("developer_secret_env") or "DEVELOPER_SECRET_KEY"
+            values["session_secret_env"] = values.get("session_secret_env") or "SESSION_SECRET_KEY"
 
-            # 生产环境必须配置密钥
-            env = os.getenv('ENVIRONMENT', 'development')
-            if env == 'production' and not values.get('jwt_secret_key'):
-                raise ValueError("生产环境必须配置JWT_SECRET_KEY")
+            values["jwt_secret_key"] = values.get("jwt_secret_key") or _read_secret_env(
+                [values["jwt_secret_env"], DEFAULT_SECRET_ENV_NAMES["jwt_secret_key"]]
+            )
+            values["developer_secret_key"] = values.get("developer_secret_key") or _read_secret_env(
+                [values["developer_secret_env"], DEFAULT_SECRET_ENV_NAMES["developer_secret_key"]]
+            )
+            values["session_secret_key"] = values.get("session_secret_key") or _read_secret_env(
+                [values["session_secret_env"], DEFAULT_SECRET_ENV_NAMES["session_secret_key"]]
+            )
+            return values
 
+
+class DeveloperConfig(BaseModel):
+    """开发者模式配置"""
+    enabled: bool = Field(default=False, description="是否启用开发者模式")
+    enabled_env: str = Field(default="DEVELOPER_MODE_ENABLED", description="开发者模式开关环境变量")
+    debug_mode: bool = Field(default=False, description="开发者调试开关")
+    debug_env: str = Field(default="DEVELOPER_DEBUG", description="开发者调试开关环境变量")
+    console_enabled: bool = Field(default=False, description="开发者控制台开关")
+    console_env: str = Field(default="DEVELOPER_CONSOLE_ENABLED", description="开发者控制台环境变量")
+
+    if PYDANTIC_V2:
+        @model_validator(mode="after")
+        def apply_env_overrides(self):
+            """应用环境变量开关"""
+            self.enabled = _env_flag(self.enabled_env, self.enabled)
+            self.debug_mode = _env_flag(self.debug_env, self.debug_mode)
+            self.console_enabled = _env_flag(self.console_env, self.console_enabled)
+            return self
+    else:
+        @root_validator
+        def apply_env_overrides(cls, values):
+            """应用环境变量开关"""
+            enabled_env = values.get("enabled_env") or "DEVELOPER_MODE_ENABLED"
+            debug_env = values.get("debug_env") or "DEVELOPER_DEBUG"
+            console_env = values.get("console_env") or "DEVELOPER_CONSOLE_ENABLED"
+
+            values["enabled_env"] = enabled_env
+            values["debug_env"] = debug_env
+            values["console_env"] = console_env
+
+            values["enabled"] = _env_flag(enabled_env, values.get("enabled", False))
+            values["debug_mode"] = _env_flag(debug_env, values.get("debug_mode", False))
+            values["console_enabled"] = _env_flag(console_env, values.get("console_enabled", False))
             return values
 
 
@@ -162,6 +226,7 @@ class AppConfiguration(BaseModel):
     paths: PathConfig = Field(default_factory=PathConfig)
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
     security: SecurityConfig = Field(default_factory=SecurityConfig)
+    developer: DeveloperConfig = Field(default_factory=DeveloperConfig)
     performance: PerformanceConfig = Field(default_factory=PerformanceConfig)
     monitoring: MonitoringConfig = Field(default_factory=MonitoringConfig)
 
@@ -175,6 +240,91 @@ class AppConfiguration(BaseModel):
             """Pydantic配置"""
             arbitrary_types_allowed = True
             validate_assignment = True
+
+    if PYDANTIC_V2:
+        @model_validator(mode="after")
+        def validate_environment_requirements(self):
+            """生产环境安全校验与开关控制"""
+            env = self.app.environment
+
+            if env == "production":
+                # 生产环境强制关闭调试与开发者模式，除非显式开关
+                self.developer.enabled = _env_flag(self.developer.enabled_env, False)
+                self.developer.debug_mode = _env_flag(self.developer.debug_env, False)
+                self.developer.console_enabled = _env_flag(
+                    self.developer.console_env, self.developer.console_enabled
+                )
+                self.app.debug = False
+            else:
+                self.developer.enabled = _env_flag(self.developer.enabled_env, self.developer.enabled)
+                self.developer.debug_mode = _env_flag(self.developer.debug_env, self.developer.debug_mode)
+                self.developer.console_enabled = _env_flag(
+                    self.developer.console_env, self.developer.console_enabled
+                )
+
+            if env == "production":
+                missing_secrets: list[str] = []
+                if not self.security.jwt_secret_key:
+                    missing_secrets.append(self.security.jwt_secret_env or DEFAULT_SECRET_ENV_NAMES["jwt_secret_key"])
+                if not self.security.session_secret_key:
+                    missing_secrets.append(
+                        self.security.session_secret_env or DEFAULT_SECRET_ENV_NAMES["session_secret_key"]
+                    )
+                if self.developer.enabled and not self.security.developer_secret_key:
+                    missing_secrets.append(
+                        self.security.developer_secret_env or DEFAULT_SECRET_ENV_NAMES["developer_secret_key"]
+                    )
+
+                if missing_secrets:
+                    missing_list = ", ".join(sorted(set(missing_secrets)))
+                    raise ValueError(f"生产环境缺少必需的密钥: {missing_list}")
+
+            return self
+    else:
+        @root_validator
+        def validate_environment_requirements(cls, values):
+            """生产环境安全校验与开关控制"""
+            app_cfg: AppConfig = values.get("app", AppConfig())
+            env = getattr(app_cfg, "environment", os.getenv("ENVIRONMENT", "development"))
+            developer_cfg: DeveloperConfig = values.get("developer", DeveloperConfig())
+
+            if env == "production":
+                developer_cfg.enabled = _env_flag(developer_cfg.enabled_env, False)
+                developer_cfg.debug_mode = _env_flag(developer_cfg.debug_env, False)
+                developer_cfg.console_enabled = _env_flag(developer_cfg.console_env, developer_cfg.console_enabled)
+                app_cfg.debug = False
+            else:
+                developer_cfg.enabled = _env_flag(developer_cfg.enabled_env, developer_cfg.enabled)
+                developer_cfg.debug_mode = _env_flag(developer_cfg.debug_env, developer_cfg.debug_mode)
+                developer_cfg.console_enabled = _env_flag(
+                    developer_cfg.console_env, developer_cfg.console_enabled
+                )
+
+            values["developer"] = developer_cfg
+            values["app"] = app_cfg
+
+            if env == "production":
+                security_cfg: SecurityConfig = values.get("security", SecurityConfig())
+                missing_secrets: list[str] = []
+                if not security_cfg.jwt_secret_key:
+                    missing_secrets.append(
+                        getattr(security_cfg, "jwt_secret_env", None) or DEFAULT_SECRET_ENV_NAMES["jwt_secret_key"]
+                    )
+                if not security_cfg.session_secret_key:
+                    missing_secrets.append(
+                        getattr(security_cfg, "session_secret_env", None) or DEFAULT_SECRET_ENV_NAMES["session_secret_key"]
+                    )
+                if developer_cfg.enabled and not security_cfg.developer_secret_key:
+                    missing_secrets.append(
+                        getattr(security_cfg, "developer_secret_env", None)
+                        or DEFAULT_SECRET_ENV_NAMES["developer_secret_key"]
+                    )
+
+                if missing_secrets:
+                    missing_list = ", ".join(sorted(set(missing_secrets)))
+                    raise ValueError(f"生产环境缺少必需的密钥: {missing_list}")
+
+            return values
 
     @classmethod
     def load(cls, env: str | None = None) -> "AppConfiguration":

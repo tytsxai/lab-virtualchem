@@ -97,6 +97,13 @@ security:
     strict: true
     allow_external_load: false
 
+  # 密钥环境变量（生产环境必须提供）
+  secrets:
+    jwt_env: "JWT_SECRET_KEY"
+    session_env: "SESSION_SECRET_KEY"
+    developer_env: "DEVELOPER_SECRET_KEY"
+    admin_env: "VCL_ADMIN_SECRET_KEY"
+
 # UI配置
 ui:
   # 主题
@@ -239,6 +246,7 @@ plugins:
 
 # 开发者工具
 developer:
+  enabled: false  # 生产环境默认关闭，需显式开关启用
   console_enabled: false # 生产环境关闭
   debug_mode: false
   profiling: false

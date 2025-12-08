@@ -210,6 +210,14 @@ class Config(BaseModel):
     @classmethod
     def _merge_env_vars(cls, config_data: dict[str, Any], environment_override: str | None = None) -> dict[str, Any]:
         """合并环境变量 (优先级高于配置文件)"""
+        def _parse_bool(value: str | bool | None) -> bool:
+            """将环境变量值解析为布尔值"""
+            if isinstance(value, bool):
+                return value
+            if value is None:
+                return False
+            return str(value).lower() in ("true", "1", "yes", "on")
+
         # 应用配置
         if not config_data.get("app"):
             config_data["app"] = {}
@@ -228,34 +236,64 @@ class Config(BaseModel):
         else:
             config_data["app"].setdefault("debug", False)
 
+        env_name = config_data["app"]["environment"]
+
         # 安全配置
         security_cfg = config_data.setdefault("security", {})
         env_override = os.getenv("JWT_SECRET_ENV")
         secret_env_name = env_override or security_cfg.get("jwt_secret_env") or "JWT_SECRET_KEY"
         security_cfg["jwt_secret_env"] = secret_env_name
 
-        jwt_secret = os.getenv(secret_env_name) or os.getenv("JWT_SECRET_KEY") or security_cfg.get("jwt_secret_key")
+        jwt_secret = os.getenv(secret_env_name) or os.getenv("JWT_SECRET_KEY")
+        config_secret = security_cfg.get("jwt_secret_key")
         if jwt_secret:
             security_cfg["jwt_secret_key"] = jwt_secret
+        elif config_secret:
+            security_cfg["jwt_secret_key"] = config_secret
+            logger.warning("检测到JWT密钥来自配置文件，建议改用环境变量 %s", secret_env_name)
         else:
-            env = config_data["app"]["environment"]
-            if env == "production":
+            if env_name == "production":
                 raise ValueError(f"生产环境必须设置 JWT 密钥环境变量 ({secret_env_name})")
             generated_secret = secrets.token_urlsafe(48)
             security_cfg["jwt_secret_key"] = generated_secret
-            logger.warning("未配置JWT密钥，已为%s环境生成临时密钥，仅用于本次运行", env)
+            logger.warning("未配置JWT密钥，已为%s环境生成临时密钥，仅用于本次运行", env_name)
 
         # 开发者密钥
         dev_key = os.getenv("DEVELOPER_KEY_HASH")
         if dev_key:
             security_cfg["developer_key_hash"] = dev_key
 
-        # 管理后台密钥环境变量校验
         developer_cfg = config_data.setdefault("developer", {})
         admin_env_override = os.getenv("ADMIN_SECRET_ENV")
         admin_secret_env = developer_cfg.get("admin_secret_env") or admin_env_override or "VCL_ADMIN_SECRET_KEY"
         developer_cfg["admin_secret_env"] = admin_secret_env
-        if config_data["app"]["environment"] == "production" and not os.getenv(admin_secret_env):
+        dev_mode_flag = os.getenv("DEVELOPER_MODE_ENABLED") or os.getenv("DEVELOPER_MODE")
+        if dev_mode_flag is not None:
+            developer_cfg["enabled"] = _parse_bool(dev_mode_flag)
+        else:
+            developer_cfg["enabled"] = _parse_bool(developer_cfg.get("enabled"))
+            if env_name == "production" and developer_cfg["enabled"]:
+                logger.warning("生产环境默认禁用开发者模式。如需启用，请设置环境变量 DEVELOPER_MODE_ENABLED=true。")
+                developer_cfg["enabled"] = False
+
+        session_secret_env = os.getenv("SESSION_SECRET_ENV") or security_cfg.get("session_secret_env") or "SESSION_SECRET_KEY"
+        security_cfg["session_secret_env"] = session_secret_env
+        session_secret = os.getenv(session_secret_env) or security_cfg.get("session_secret_key")
+        if session_secret:
+            security_cfg["session_secret_key"] = session_secret
+        elif env_name == "production":
+            raise ValueError(f"生产环境必须设置会话密钥环境变量 ({session_secret_env})")
+
+        developer_secret_env = os.getenv("DEVELOPER_SECRET_ENV") or security_cfg.get("developer_secret_env") or "DEVELOPER_SECRET_KEY"
+        security_cfg["developer_secret_env"] = developer_secret_env
+        developer_secret = os.getenv(developer_secret_env) or security_cfg.get("developer_secret_key")
+        if developer_secret:
+            security_cfg["developer_secret_key"] = developer_secret
+        elif env_name == "production" and developer_cfg["enabled"]:
+            raise ValueError(f"生产环境启用开发者模式时必须设置开发者密钥环境变量 ({developer_secret_env})")
+
+        # 管理后台密钥环境变量校验
+        if env_name == "production" and not os.getenv(admin_secret_env):
             raise ValueError(f"生产环境必须设置管理后台密钥环境变量 ({admin_secret_env})")
 
         # 数据库配置
