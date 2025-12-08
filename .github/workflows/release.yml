@@ -1,35 +1,80 @@
 name: Release
-'on':
+
+on:
   push:
     tags:
-    - v*
+      - v*
+
 jobs:
   release:
     runs-on: windows-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-    - name: Install dependencies
-      run: 'python -m pip install --upgrade pip
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-        pip install -r requirements.txt
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-        pip install pyinstaller'
-    - name: Build executable
-      run: pyinstaller VirtualChemLab.spec
-    - name: Create ZIP package
-      run: Compress-Archive -Path dist/VirtualChemLab/* -DestinationPath VirtualChemLab-${{
-        github.ref_name }}.zip
-      shell: pwsh
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: VirtualChemLab-${{ github.ref_name }}.zip
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Read project version
+        shell: pwsh
+        run: |
+          $version = python -c "import sys; from pathlib import Path; root = Path.cwd(); sys.path[:0] = [str(root), str(root / 'src')]; from src import __version__; print(__version__)"
+          $version = $version.Trim()
+          echo "APP_VERSION=$version" >> $env:GITHUB_ENV
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --require-hashes -r requirements.lock
+          python -m pip install "pyinstaller==6.3.0"
+
+      - name: Build executable
+        shell: pwsh
+        run: |
+          $args = @(
+            "--name=VirtualChemLab"
+            "--windowed"
+            "--onedir"
+            "--clean"
+            "--noconfirm"
+            "--paths=."
+            "--paths=src"
+            "--add-data=assets;assets"
+            "--add-data=config;config"
+            "--add-data=config.json;."
+            "--hidden-import=PySide6.QtCore"
+            "--hidden-import=PySide6.QtGui"
+            "--hidden-import=PySide6.QtWidgets"
+            "--hidden-import=pymunk"
+            "--hidden-import=numba"
+            "--hidden-import=sqlalchemy"
+            "--exclude-module=matplotlib"
+            "--exclude-module=pandas"
+            "--exclude-module=pytest"
+            "main.py"
+          )
+
+          if (Test-Path "assets\icons\app.ico") {
+            $args += "--icon=assets\icons\app.ico"
+          }
+
+          pyinstaller @args
+
+      - name: Create ZIP package
+        shell: pwsh
+        run: |
+          $zipName = "VirtualChemLab-$env:APP_VERSION-windows.zip"
+          Compress-Archive -Path "dist/VirtualChemLab/*" -DestinationPath $zipName -Force
+          echo "RELEASE_ASSET=$zipName" >> $env:GITHUB_ENV
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ env.RELEASE_ASSET }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

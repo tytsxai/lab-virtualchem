@@ -1,10 +1,12 @@
 #!/bin/bash
 # ============================================================================
 # VirtualChemLab macOS 自动化打包脚本
-# 版本: 2.0.0
+# 版本: 自动读取 src/__init__.py
 # ============================================================================
 
 set -e  # 遇到错误立即退出
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # 颜色定义
 RED='\033[0;31m'
@@ -14,9 +16,11 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # 版本配置
-VERSION="2.0.0"
+VERSION="unknown"
 APP_NAME="VirtualChemLab"
 BUNDLE_ID="com.virtualchemlab.app"
+ENTRY_SCRIPT="main.py"
+PYINSTALLER_VERSION="6.3.0"
 
 # ============================================================================
 # 辅助函数
@@ -47,12 +51,6 @@ print_error() {
 }
 
 # ============================================================================
-# 主流程
-# ============================================================================
-
-print_header "VirtualChemLab macOS 打包工具 v${VERSION}"
-
-# ============================================================================
 # 步骤 1/9: 环境检查
 # ============================================================================
 print_step "1/9" "检查Python环境..."
@@ -65,28 +63,39 @@ fi
 PYTHON_VERSION=$(python3 --version)
 print_success "Python环境: ${PYTHON_VERSION}"
 
+cd "$SCRIPT_DIR"
+
+VERSION=$(SCRIPT_DIR="$SCRIPT_DIR" python3 - <<'PY'
+import os
+import sys
+from pathlib import Path
+
+root = Path(os.environ["SCRIPT_DIR"])
+sys.path.insert(0, str(root))
+sys.path.insert(0, str(root / "src"))
+
+from src import __version__  # noqa: E402
+
+print(__version__)
+PY
+)
+print_success "应用版本: ${VERSION}"
+print_header "VirtualChemLab macOS 打包工具 v${VERSION}"
+
 # ============================================================================
-# 步骤 2/9: 依赖检查
+# 步骤 2/9: 依赖安装（锁定版本）
 # ============================================================================
-print_step "2/9" "检查必要依赖..."
+print_step "2/9" "安装项目依赖..."
 
-check_and_install() {
-    local package=$1
-    local version=$2
+if [ ! -f "${SCRIPT_DIR}/requirements.lock" ]; then
+    print_error "未找到 requirements.lock，无法按锁文件安装依赖"
+    exit 1
+fi
 
-    if ! python3 -c "import ${package}" 2>/dev/null; then
-        print_warning "缺少 ${package}，正在安装..."
-        pip3 install "${package}==${version}"
-    else
-        print_success "${package} 已安装"
-    fi
-}
-
-check_and_install "PySide6" "6.6.1"
-check_and_install "pymunk" "6.6.0"
-check_and_install "numba" "0.58.1"
-check_and_install "sqlalchemy" "2.0.23"
-check_and_install "PyInstaller" "6.3.0"
+python3 -m pip install --upgrade pip
+python3 -m pip install --require-hashes -r "${SCRIPT_DIR}/requirements.lock"
+python3 -m pip install "pyinstaller==${PYINSTALLER_VERSION}"
+print_success "依赖安装完成（基于锁文件）"
 
 # ============================================================================
 # 步骤 3/9: 清理旧构建
@@ -122,12 +131,14 @@ if [ ! -d "${ICON_DIR}" ]; then
     mkdir -p "${ICON_DIR}"
 fi
 
-if [ ! -f "${ICON_FILE}" ]; then
+ICON_FLAG=()
+if [ -f "${ICON_FILE}" ]; then
+    ICON_FLAG=(--icon="${ICON_FILE}")
+    print_success "找到应用图标: ${ICON_FILE}"
+else
     print_warning "未找到 app.icns，将使用默认图标"
     print_warning "提示：可以使用以下命令创建图标："
     print_warning "  iconutil -c icns icon.iconset"
-else
-    print_success "找到应用图标: ${ICON_FILE}"
 fi
 
 # ============================================================================
@@ -163,37 +174,43 @@ print_success "权限配置文件已创建"
 # ============================================================================
 print_step "6/9" "开始打包应用（这可能需要几分钟）..."
 
-if [ -f "VirtualChemLab-optimized.spec" ]; then
-    print_success "使用优化的spec配置文件..."
-    pyinstaller VirtualChemLab-optimized.spec --clean --noconfirm
-else
-    print_warning "使用默认配置打包..."
-    pyinstaller \
-        --name="${APP_NAME}" \
-        --windowed \
-        --onedir \
-        --clean \
-        --noconfirm \
-        --icon="${ICON_FILE}" \
-        --add-data "assets:assets" \
-        --add-data "config:config" \
-        --add-data "data/templates:data/templates" \
-        --hidden-import=PySide6.QtCore \
-        --hidden-import=PySide6.QtGui \
-        --hidden-import=PySide6.QtWidgets \
-        --hidden-import=pymunk \
-        --hidden-import=numba \
-        --hidden-import=sqlalchemy \
-        --exclude-module=matplotlib \
-        --exclude-module=pandas \
-        --exclude-module=pytest \
-        --osx-bundle-identifier="${BUNDLE_ID}" \
-        --osx-entitlements-file=entitlements.plist \
-        main.py
-fi
+PYINSTALLER_CMD=(
+    pyinstaller
+    --name="${APP_NAME}"
+    --windowed
+    --onedir
+    --clean
+    --noconfirm
+    --paths="${SCRIPT_DIR}"
+    --paths="${SCRIPT_DIR}/src"
+    "${ICON_FLAG[@]}"
+    --add-data "${SCRIPT_DIR}/assets:assets"
+    --add-data "${SCRIPT_DIR}/config:config"
+    --add-data "${SCRIPT_DIR}/config.json:."
+    --hidden-import=PySide6.QtCore
+    --hidden-import=PySide6.QtGui
+    --hidden-import=PySide6.QtWidgets
+    --hidden-import=pymunk
+    --hidden-import=numba
+    --hidden-import=sqlalchemy
+    --exclude-module=matplotlib
+    --exclude-module=pandas
+    --exclude-module=pytest
+    --osx-bundle-identifier="${BUNDLE_ID}"
+    --osx-entitlements-file=entitlements.plist
+    "${ENTRY_SCRIPT}"
+)
+
+print_warning "使用默认配置打包..."
+"${PYINSTALLER_CMD[@]}"
 
 if [ $? -ne 0 ]; then
     print_error "打包失败！请检查错误信息"
+    exit 1
+fi
+
+if [ ! -d "dist/${APP_NAME}.app" ]; then
+    print_error "未找到打包输出 dist/${APP_NAME}.app"
     exit 1
 fi
 

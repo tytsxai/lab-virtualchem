@@ -16,13 +16,14 @@
 
 1. **安装依赖**
    ```bash
-   pip install -r requirements.txt
+   pip install --require-hashes -r requirements.lock
    ```
 
    **国内用户推荐使用镜像**:
    ```bash
-   pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+   pip install --require-hashes -r requirements.lock -i https://pypi.tuna.tsinghua.edu.cn/simple
    ```
+   > 若暂时无法使用哈希锁文件，可退回 `pip install -r requirements.txt`，但发布/打包请使用锁文件。
 
 2. **启动GUI应用**
    ```bash
@@ -38,11 +39,44 @@
 
 ## 📦 打包为可执行文件
 
+### 打包环境要求
+- Python 3.10–3.12（锁文件由 3.12 生成，推荐 3.12）
+- pip 23+（支持 `--require-hashes`）
+- Windows：可选 Inno Setup 6 用于生成安装包
+- macOS：Xcode Command Line Tools，若需签名/公证需设置 `APPLE_DEVELOPER_ID`/`APPLE_ID` 等环境变量
+- Linux：Qt 运行时依赖（如 `libxcb` 系列），详见常见问题
+
+### 推荐：官方一键脚本（PyInstaller）
+依赖会基于 `requirements.lock` 安装，入口统一为 `main.py`。
+
+- **Windows**
+  ```cmd
+  build_windows.bat
+  ```
+  输出 `dist\VirtualChemLab\VirtualChemLab.exe`，若安装了 Inno Setup 会额外生成 `dist\VirtualChemLab-Setup-<version>.exe`。
+
+- **macOS**
+  ```bash
+  chmod +x build_macos.sh
+  ./build_macos.sh
+  ```
+  输出 `dist/VirtualChemLab.app` 与 `dist/VirtualChemLab-<version>.dmg`（若已安装 hdiutil）。
+
+- **Linux**
+  ```bash
+  chmod +x build.sh
+  ./build.sh
+  ```
+  输出 `dist/VirtualChemLab/VirtualChemLab` 以及压缩包 `VirtualChemLab_Release_v<version>.tar.gz`。
+
+> 图标可选：Windows/Linux 使用 `assets/icons/app.ico`，macOS 使用 `assets/icons/app.icns`，缺失时脚本会回退为默认图标。
+
 ### 方案1: PyInstaller (推荐)
 
 #### 1.1 安装打包工具
 ```bash
-pip install pyinstaller
+pip install --require-hashes -r requirements.lock
+pip install "pyinstaller==6.3.0"
 ```
 
 #### 1.2 打包为单文件
@@ -50,10 +84,14 @@ pip install pyinstaller
 pyinstaller --onefile --windowed \
   --name VirtualChemLab \
   --add-data "assets;assets" \
+  --add-data "config;config" \
   --add-data "config.json;." \
   --hidden-import PySide6.QtCore \
   --hidden-import PySide6.QtGui \
   --hidden-import PySide6.QtWidgets \
+  --hidden-import pymunk \
+  --hidden-import numba \
+  --hidden-import sqlalchemy \
   main.py
 ```
 
@@ -62,10 +100,14 @@ pyinstaller --onefile --windowed \
 pyinstaller --onefile --windowed ^
   --name VirtualChemLab ^
   --add-data "assets;assets" ^
+  --add-data "config;config" ^
   --add-data "config.json;." ^
   --hidden-import PySide6.QtCore ^
   --hidden-import PySide6.QtGui ^
   --hidden-import PySide6.QtWidgets ^
+  --hidden-import pymunk ^
+  --hidden-import numba ^
+  --hidden-import sqlalchemy ^
   main.py
 ```
 
@@ -74,7 +116,14 @@ pyinstaller --onefile --windowed ^
 pyinstaller --windowed \
   --name VirtualChemLab \
   --add-data "assets;assets" \
+  --add-data "config;config" \
   --add-data "config.json;." \
+  --hidden-import PySide6.QtCore \
+  --hidden-import PySide6.QtGui \
+  --hidden-import PySide6.QtWidgets \
+  --hidden-import pymunk \
+  --hidden-import numba \
+  --hidden-import sqlalchemy \
   main.py
 ```
 
@@ -277,9 +326,20 @@ CMD ["python", "main.py"]
 
 ## 🐛 常见问题
 
+### Q0: `pip install --require-hashes -r requirements.lock` 报 HashMismatch 或不支持的 wheel?
+
+**A**:
+- 确保使用 Python 3.12（锁文件生成版本）且 pip >= 23
+- 清理缓存后重试: `pip cache purge`
+- 若仍失败，可临时退回 `pip install -r requirements.txt`，但发布前务必恢复锁文件安装
+
+### Q0.5: PyInstaller 提示找不到 `run_gui.py` 或 `VirtualChemLab.spec`?
+
+**A**: 项目入口统一为 `main.py`，请使用仓库提供的构建脚本或上文的 PyInstaller 参数，无需旧的 spec。
+
 ### Q1: PyInstaller打包后运行报错 "Failed to execute script"?
 
-**A**: 可能缺少数据文件,检查 `--add-data` 是否正确:
+**A**: 可能缺少数据文件,检查 `--add-data` 是否正确（特别是 `assets`、`config`、`config.json`）:
 ```bash
 # 查看打包日志
 pyinstaller --onefile --windowed --log-level=DEBUG main.py
@@ -326,40 +386,43 @@ sudo yum install xcb-util-wm xcb-util-renderutil
 ### 1. 准备发布
 
 ```bash
-# 更新版本号
-vim src/__init__.py  # VERSION = "1.0.0"
-vim pyproject.toml   # version = "1.0.0"
+# 更新版本号（以 2.0.0 为例）
+vim src/__init__.py    # __version__ = "2.0.0"
+vim pyproject.toml     # version = "2.0.0"
 
 # 更新CHANGELOG
 vim CHANGELOG.md
 
 # 提交
 git add .
-git commit -m "Release v1.0.0"
-git tag v1.0.0
+git commit -m "Release v2.0.0"
+git tag v2.0.0
 ```
 
 ### 2. 打包
 
 ```bash
-# Windows
-pyinstaller VirtualChemLab.spec
+# Windows（含 Inno Setup 安装包）
+build_windows.bat
+# macOS（生成 .app 与 .dmg）
+./build_macos.sh
+# Linux（生成 onedir 与 tar.gz）
+./build.sh
 
-# 测试
-dist\VirtualChemLab\VirtualChemLab.exe
-
-# 压缩
-7z a VirtualChemLab_v1.0.0_Windows_x64.7z dist\VirtualChemLab\
+# 测试入口
+dist/VirtualChemLab/VirtualChemLab.exe
+dist/VirtualChemLab.app
 ```
 
 ### 3. 发布
 
 ```bash
 # 推送标签
-git push origin v1.0.0
+git push origin v2.0.0
 
-# 创建GitHub Release
-# 上传压缩包
+# GitHub Actions 会自动使用 PyInstaller（入口 main.py、requirements.lock）生成:
+#   VirtualChemLab-<version>-windows.zip
+# 如需额外资产，手动在 Release 中上传 dist 目录产物
 ```
 
 ---
@@ -408,7 +471,3 @@ git push origin v1.0.0
 ---
 
 *Happy Deploying!* 🚀
-
-
-
-

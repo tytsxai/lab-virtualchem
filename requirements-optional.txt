@@ -1,43 +1,40 @@
-# 可选依赖 - 不强制安装，用于扩展功能
-# 安装方式: pip install -r requirements-optional.txt
+# Optional/experimental dependencies that are intentionally left out of requirements.lock.
+# Install selectively: pip install -r requirements-optional.txt
 
-# ============================================
-# ✅ 安全集成（MIT/BSD许可，可直接使用）
-# ============================================
+# AI assistants and retrieval
+langchain>=0.1.6
+langchain-community>=0.0.20
+langchain-openai>=0.0.5
+openai>=1.0.0
+chromadb>=0.4.22
+sentence-transformers>=2.3.1
 
-# 化学结构渲染与分析
-rdkit>=2023.3.1  # BSD-3-Clause
-# pillow>=10.0.0   # PIL License (类BSD) - 已在 requirements.txt
+# Knowledge/document pipelines
+sphinx-autodoc-typehints>=1.25.0
+pubchempy>=1.0.0
 
-# 高级交互式图表
-pyqtgraph>=0.13.0  # MIT
+# Visualization and 3D
+py3Dmol==2.1.0
+plotly==5.18.0
+dash==2.14.2
+kaleido==0.2.1
+seaborn==0.13.0
 
-# PDF报告导出
-reportlab>=4.0.0   # BSD
-weasyprint>=60.0   # BSD
+# Voice / offline assistant
+vosk==0.3.45
+pyttsx3==2.90
+sounddevice==0.4.6
 
-# 注意: PyYAML和Pydantic已在 requirements.txt 中定义，无需重复安装
+# Mobile UI
+kivy==2.2.1
 
-# ============================================
-# 🔌 高级功能（需要手动启用）
-# ============================================
+# Advanced chemistry / simulation
+rdkit>=2023.9.1  # Prefer conda-forge build
+# cantera>=3.0.0
+# openmm>=8.0.0
 
-# 热力学与动力学计算
-# cantera>=3.0.0  # BSD-3-Clause（取消注释以安装）
-
-# 分子动力学模拟
-# openmm>=8.0.0   # MIT（取消注释以安装）
-
-# ============================================
-# ⚠️ 不包含在此文件中（需单独安装）
-# ============================================
-
-# Reaktoro - LGPL-3，必须作为独立插件
-# 安装: pip install reaktoro
-# 使用: 通过插件系统动态加载
-
-# LAMMPS Python接口 - GPL混合许可
-# 仅在极特殊需求时外部调用，不集成
+# Alternative PDF renderer (requires system cairo/pango)
+weasyprint>=60.0
 
 # ============================================
 # 安装建议

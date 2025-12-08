@@ -4,16 +4,25 @@
 ; 下载地址: https://jrsoftware.org/isdl.php
 ; ============================================================================
 
+#ifndef MyAppName
 #define MyAppName "VirtualChemLab"
+#endif
+
+; 版本号由 tools/bump_version.py 同步自 src/__init__.py
+#ifndef MyAppVersion
 #define MyAppVersion "2.0.0"
+#endif
+
 #define MyAppPublisher "VirtualChemLab Team"
 #define MyAppURL "https://virtualchemlab.com"
+#ifndef MyAppExeName
 #define MyAppExeName "VirtualChemLab.exe"
+#endif
 #define MyAppDescription "虚拟化学实验室 - 高性能桌面版"
 
 [Setup]
 ; 基本信息
-AppId={{8F9D2E6C-4B5A-4D3E-9F1C-7A8B6C5D4E3F}
+AppId={{8F9D2E6C-4B5A-4D3E-9F1C-7A8B6C5D4E3F}}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppVerName={#MyAppName} {#MyAppVersion}
@@ -31,7 +40,9 @@ DisableProgramGroupPage=yes
 ; 输出配置
 OutputDir=dist
 OutputBaseFilename={#MyAppName}-Setup-{#MyAppVersion}
+#ifexist "assets\icons\app.ico"
 SetupIconFile=assets\icons\app.ico
+#endif
 
 ; 压缩配置（最高压缩率）
 Compression=lzma2/ultra64

@@ -20,8 +20,8 @@ cd VirtualChemLab
 
 # 安装核心依赖（推荐使用锁定文件）
 pip install -r requirements.lock
-# 若需自定义版本，可使用 requirements.txt 并重新生成锁定文件
-# pip install -r requirements.txt
+# 如需自定义版本，请更新 pyproject.toml 并重新生成锁定文件
+# pip-compile --extra=dev --extra=docs --extra=redis --extra=performance --extra=admin --extra=ops --extra=plugins --generate-hashes --output-file=requirements.lock pyproject.toml
 
 # 运行程序
 python main.py
@@ -215,7 +215,7 @@ conda activate chemlab
 conda install -c conda-forge openmm
 
 # 安装其他依赖
-pip install -r requirements.txt
+pip install -r requirements.lock
 ```
 
 ### Q: 导入错误
@@ -267,11 +267,11 @@ export ENVIRONMENT="production"
 如果要参与开发：
 
 ```bash
-# 安装开发依赖
-pip install -r requirements.txt
-pip install pytest pytest-cov black mypy
+# 安装开发/测试所需的全部依赖（包含 dev/docs/admin/performance 等 extras）
+pip install -r requirements.lock
+pip install --no-deps -e .
 
-# 安装所有插件（用于测试）
+# 安装所有可选插件（用于实验性或可选功能）
 pip install -r requirements-optional.txt
 
 # 运行测试
@@ -290,7 +290,7 @@ mypy src/
 
 ```bash
 # 卸载核心依赖
-pip uninstall -r requirements.txt -y
+pip uninstall -r requirements.lock -y
 
 # 卸载可选插件
 pip uninstall -r requirements-optional.txt -y
@@ -308,7 +308,7 @@ rm -rf VirtualChemLab
 git pull
 
 # 更新依赖
-pip install --upgrade -r requirements.txt
+pip install --upgrade -r requirements.lock
 
 # 更新插件
 pip install --upgrade -r requirements-optional.txt

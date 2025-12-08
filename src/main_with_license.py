@@ -201,7 +201,8 @@ def main() -> int:
             try:
                 import ctypes
 
-                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("VirtualChemLab.Licensed.2.0")
+                app_user_model_id = f"VirtualChemLab.Licensed.{APP_VERSION}"
+                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_user_model_id)
             except Exception:
                 pass
 

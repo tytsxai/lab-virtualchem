@@ -3,6 +3,8 @@
 # VirtualChemLab Windows 版本信息文件
 # 用于PyInstaller打包时嵌入到exe文件中
 #
+# 版本号由 tools/bump_version.py 同步（来源 src/__init__.py）
+
 
 VSVersionInfo(
   ffi=FixedFileInfo(

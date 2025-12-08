@@ -4,7 +4,6 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "virtualchemlab"
-version = "2.0.0"
 description = "A virtual chemistry laboratory with gamified interactions"
 authors = [
     {name = "VirtualChemLab Team", email = "team@virtualchemlab.com"}
@@ -12,6 +11,7 @@ authors = [
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
+dynamic = ["version"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Education",
@@ -35,9 +35,12 @@ dependencies = [
     "jsonschema>=4.17.0",
     "pydantic>=2.5.0,<3.0.0",
     "psutil>=5.9.0",
+    "pymunk>=6.6.0",
     "PyJWT>=2.8.0",
     "cryptography>=41.0.0",
     "python-dateutil>=2.8.0,<3.0.0",
+    "pyqtgraph>=0.13.0",
+    "sqlalchemy>=2.0.0",
     "watchdog>=3.0.0",
     "simpleeval>=0.9.13,<1.0.0",
     "qtawesome>=1.2.0",
@@ -68,12 +71,28 @@ docs = [
     "sphinx>=6.0.0",
     "sphinx-rtd-theme>=1.2.0",
 ]
+admin = [
+    "flask>=3.0.0",
+    "flask-cors>=4.0.0",
+    "aiohttp>=3.9.0",
+]
+ops = [
+    "python-dotenv>=1.0.0",
+    "structlog>=24.0.0",
+]
+plugins = [
+    "pint>=0.23",
+    "reportlab>=4.0.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/tytsxai/VirtualChemLab"
 Documentation = "https://virtualchemlab.readthedocs.io"
 Repository = "https://github.com/tytsxai/VirtualChemLab.git"
 Issues = "https://github.com/tytsxai/VirtualChemLab/issues"
+
+[tool.setuptools.dynamic]
+version = {attr = "src.__version__"}
 
 [project.scripts]
 virtualchemlab = "src.main:main"

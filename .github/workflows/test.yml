@@ -37,39 +37,33 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
         cache-dependency-path: |
-          requirements.txt
+          requirements.lock
           requirements-dev.txt
           pyproject.toml
 
     - name: 安装依赖
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install --require-hashes -r requirements.lock
         pip install -r requirements-dev.txt
 
-    - name: 代码质量检查 (Ruff)
+    - name: 运行测试（含覆盖率）
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
       run: |
-        ruff check src/ tests/ --output-format=github
+        pytest -m "not ui" --maxfail=1 --ignore=tests/ui
 
-    - name: 类型检查 (MyPy)
+    - name: 运行测试（跨平台验证，无覆盖率）
+      if: matrix.os != 'ubuntu-latest' || matrix.python-version != '3.11'
       run: |
-        mypy src/ --no-error-summary
-      continue-on-error: true
-
-    - name: 运行单元测试
-      run: |
-        pytest tests/unit -v --cov=src --cov-report=xml --cov-report=term
-
-    - name: 运行集成测试
-      run: |
-        pytest tests/integration -v --cov=src --cov-append --cov-report=xml
+        pytest -m "not ui" --maxfail=1 --no-cov --ignore=tests/ui
 
     - name: 运行性能测试
       run: |
-        pytest tests/performance -v
+        pytest tests/performance -v --no-cov
       continue-on-error: true
 
     - name: 上传覆盖率报告到 Codecov
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
       uses: codecov/codecov-action@v3
       with:
         file: ./coverage.xml
@@ -84,7 +78,7 @@ jobs:
         coverage-badge -o coverage.svg -f
 
     - name: 上传测试报告
-      if: always()
+      if: always() && matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
       uses: actions/upload-artifact@v4
       with:
         name: test-results-${{ matrix.os }}-py${{ matrix.python-version }}
@@ -92,6 +86,7 @@ jobs:
           htmlcov/
           coverage.xml
           .coverage
+        if-no-files-found: warn
 
   lint:
     name: 代码质量检查
@@ -107,13 +102,15 @@ jobs:
         python-version: '3.11'
         cache: 'pip'
         cache-dependency-path: |
+          requirements.lock
           requirements-dev.txt
           pyproject.toml
 
     - name: 安装依赖
       run: |
         python -m pip install --upgrade pip
-        pip install ruff black isort mypy
+        pip install --require-hashes -r requirements.lock
+        pip install -r requirements-dev.txt
 
     - name: Ruff 检查
       run: ruff check src/ tests/ --output-format=github
@@ -142,31 +139,33 @@ jobs:
         python-version: '3.11'
         cache: 'pip'
         cache-dependency-path: |
-          requirements.txt
+          requirements.lock
           requirements-dev.txt
           pyproject.toml
 
-    - name: 安装 safety
-      run: pip install safety
+    - name: 安装依赖与安全工具
+      run: |
+        python -m pip install --upgrade pip
+        pip install --require-hashes -r requirements.lock
+        pip install safety bandit
 
     - name: 检查依赖安全性
       run: |
-        pip install -r requirements.txt
-        safety check --json
+        safety check --file=requirements.lock --json > safety-report.json
       continue-on-error: true
 
     - name: 运行 Bandit 安全扫描
       run: |
-        pip install bandit
         bandit -r src/ -f json -o bandit-report.json
       continue-on-error: true
 
     - name: 上传安全报告
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: security-reports
         path: |
+          safety-report.json
           bandit-report.json
 
   build:
@@ -184,13 +183,13 @@ jobs:
         python-version: '3.11'
         cache: 'pip'
         cache-dependency-path: |
-          requirements.txt
+          requirements.lock
           pyproject.toml
 
     - name: 安装依赖
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install --require-hashes -r requirements.lock
         pip install pyinstaller
 
     - name: 构建应用程序

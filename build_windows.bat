@@ -1,22 +1,26 @@
 @echo off
 REM ============================================================================
 REM VirtualChemLab Windows 自动化打包脚本
-REM 版本: 2.0.0
+REM 版本: 自动读取 src\__init__.py
 REM ============================================================================
 
 chcp 65001 > nul
 setlocal enabledelayedexpansion
 
+set "SCRIPT_DIR=%~dp0"
+if "%SCRIPT_DIR:~-1%"=="\\" set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
+set "PYTHONPATH=%SCRIPT_DIR%;%SCRIPT_DIR%\src;%PYTHONPATH%"
+
 echo.
 echo ========================================
 echo   VirtualChemLab Windows 打包工具
-echo   Version 2.0.0
 echo ========================================
 echo.
 
-REM 设置版本号
-set VERSION=2.0.0
+REM 初始化应用名称
 set APP_NAME=VirtualChemLab
+set ENTRY_SCRIPT=main.py
+set PYINSTALLER_VERSION=6.3.0
 
 REM ============================================================================
 REM 步骤 1/8: 环境检查
@@ -32,45 +36,53 @@ if errorlevel 1 (
 
 python --version
 
-REM ============================================================================
-REM 步骤 2/8: 依赖检查
-REM ============================================================================
-echo.
-echo [2/8] 检查必要依赖...
+for /f "delims=" %%i in ('python -c "from src import __version__; print(__version__)"') do set "VERSION=%%i"
 
-python -c "import PySide6" 2>nul
-if errorlevel 1 (
-    echo [错误] 缺少PySide6！
-    echo 请运行: pip install -r requirements.txt
+if not defined VERSION (
+    echo [错误] 无法读取版本号，请检查 src\__init__.py
     pause
     exit /b 1
 )
 
-python -c "import pymunk" 2>nul
-if errorlevel 1 (
-    echo [警告] 缺少pymunk，安装中...
-    pip install pymunk==6.6.0
+echo 当前版本: %VERSION%
+
+pushd "%SCRIPT_DIR%"
+
+REM ============================================================================
+REM 步骤 2/8: 依赖安装（锁文件）
+REM ============================================================================
+echo.
+echo [2/8] 安装依赖（requirements.lock）...
+
+if not exist "%SCRIPT_DIR%\requirements.lock" (
+    echo [错误] 未找到 requirements.lock，无法安装依赖
+    pause
+    exit /b 1
 )
 
-python -c "import numba" 2>nul
+python -m pip install --upgrade pip
+python -m pip install --require-hashes -r "%SCRIPT_DIR%\requirements.lock"
 if errorlevel 1 (
-    echo [警告] 缺少numba，安装中...
-    pip install numba==0.58.1
+    echo [错误] 锁文件安装失败
+    pause
+    exit /b 1
 )
 
-python -c "import sqlalchemy" 2>nul
+python -m pip install "pyinstaller==%PYINSTALLER_VERSION%"
 if errorlevel 1 (
-    echo [警告] 缺少sqlalchemy，安装中...
-    pip install sqlalchemy==2.0.23
+    echo [错误] 安装 PyInstaller 失败
+    pause
+    exit /b 1
 )
 
-python -c "import PyInstaller" 2>nul
+python -c "import PySide6, pymunk, numba, sqlalchemy" >nul 2>&1
 if errorlevel 1 (
-    echo [警告] 缺少PyInstaller，安装中...
-    pip install pyinstaller==6.3.0
+    echo [错误] 依赖校验失败，请检查 requirements.lock
+    pause
+    exit /b 1
 )
 
-echo [✓] 依赖检查完成
+echo [✓] 依赖安装完成
 
 REM ============================================================================
 REM 步骤 3/8: 清理旧构建
@@ -101,11 +113,16 @@ REM ============================================================================
 echo.
 echo [4/8] 检查应用图标...
 
+set "ICON_FLAG="
+
 if not exist "assets\icons" (
     mkdir assets\icons
 )
 
-if not exist "assets\icons\app.ico" (
+if exist "assets\icons\app.ico" (
+    set "ICON_FLAG=--icon=%SCRIPT_DIR%\assets\icons\app.ico"
+    echo [✓] 找到应用图标: assets\icons\app.ico
+) else (
     echo [警告] 未找到app.ico，将使用默认图标
 )
 
@@ -116,36 +133,39 @@ echo.
 echo [5/8] 开始打包应用（这可能需要几分钟）...
 echo.
 
-if exist "VirtualChemLab-optimized.spec" (
-    echo 使用优化的spec配置文件...
-    pyinstaller VirtualChemLab-optimized.spec --clean --noconfirm
-) else (
-    echo 使用默认配置打包...
-    pyinstaller ^
-        --name=%APP_NAME% ^
-        --windowed ^
-        --onedir ^
-        --clean ^
-        --noconfirm ^
-        --icon=assets\icons\app.ico ^
-        --add-data "assets;assets" ^
-        --add-data "config;config" ^
-        --add-data "data\templates;data\templates" ^
-        --hidden-import=PySide6.QtCore ^
-        --hidden-import=PySide6.QtGui ^
-        --hidden-import=PySide6.QtWidgets ^
-        --hidden-import=pymunk ^
-        --hidden-import=numba ^
-        --hidden-import=sqlalchemy ^
-        --exclude-module=matplotlib ^
-        --exclude-module=pandas ^
-        --exclude-module=pytest ^
-        main.py
-)
+echo 使用默认配置打包...
+pyinstaller ^
+    --name=%APP_NAME% ^
+    --windowed ^
+    --onedir ^
+    --clean ^
+    --noconfirm ^
+    --paths="%SCRIPT_DIR%" ^
+    --paths="%SCRIPT_DIR%\src" ^
+    %ICON_FLAG% ^
+    --add-data "%SCRIPT_DIR%\assets;assets" ^
+    --add-data "%SCRIPT_DIR%\config;config" ^
+    --add-data "%SCRIPT_DIR%\config.json;." ^
+    --hidden-import=PySide6.QtCore ^
+    --hidden-import=PySide6.QtGui ^
+    --hidden-import=PySide6.QtWidgets ^
+    --hidden-import=pymunk ^
+    --hidden-import=numba ^
+    --hidden-import=sqlalchemy ^
+    --exclude-module=matplotlib ^
+    --exclude-module=pandas ^
+    --exclude-module=pytest ^
+    %ENTRY_SCRIPT%
 
 if errorlevel 1 (
     echo [错误] 打包失败！
     echo 请检查错误信息并重试
+    pause
+    exit /b 1
+)
+
+if not exist "dist\%APP_NAME%\%APP_NAME%.exe" (
+    echo [错误] 未找到生成的可执行文件: dist\%APP_NAME%\%APP_NAME%.exe
     pause
     exit /b 1
 )
@@ -184,12 +204,13 @@ REM ============================================================================
 echo.
 echo [7/8] 创建Windows安装程序...
 
-set INNO_SETUP="C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+set "INNO_SETUP=%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe"
+if not exist "%INNO_SETUP%" set "INNO_SETUP=%ProgramFiles%\Inno Setup 6\ISCC.exe"
 
-if exist %INNO_SETUP% (
+if exist "%INNO_SETUP%" (
     if exist "installer_windows.iss" (
         echo 运行Inno Setup编译安装程序...
-        %INNO_SETUP% installer_windows.iss
+        "%INNO_SETUP%" /DMyAppVersion=%VERSION% installer_windows.iss
 
         if errorlevel 1 (
             echo [警告] 安装程序创建失败
@@ -206,7 +227,7 @@ if exist %INNO_SETUP% (
 )
 
 REM ============================================================================
-REM 步骤 8/8: 生成报告
+REM 步骤 8/8: 生成构建报告
 REM ============================================================================
 echo.
 echo [8/8] 生成构建报告...
@@ -269,4 +290,5 @@ echo.
 echo 按任意键退出...
 pause > nul
 
+popd
 endlocal

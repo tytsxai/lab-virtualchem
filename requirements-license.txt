@@ -1,27 +1,2 @@
-# 许可证系统依赖
-
-# JWT和加密
-PyJWT>=2.8.0
-cryptography>=41.0.0
-
-# HTTP请求 (用于区块链API)
-requests>=2.31.0
-
-# 异步支持
-aiohttp>=3.9.0
-
-# 管理后台Web服务
-flask>=3.0.0
-flask-cors>=4.0.0
-
-# 可选: 邮件通知
-# smtplib (标准库)
-# email (标准库)
-
-# 可选: Telegram通知
-# python-telegram-bot>=20.0
-
-# 可选: 数据库支持 (用于存储订单)
-# sqlalchemy>=2.0.0
-# sqlite3 (标准库)
-
+# License service dependencies are covered by requirements.lock (admin + ops extras).
+-r requirements.lock

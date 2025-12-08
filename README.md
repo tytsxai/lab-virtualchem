@@ -13,6 +13,7 @@
 - [项目结构](#项目结构)
 - [技术栈](#技术栈)
 - [开发文档](#开发文档)
+- [版本号同步](#版本号同步)
 - [贡献指南](#贡献指南)
 - [许可证](#许可证)
 - [联系方式](#联系方式)
@@ -140,9 +141,10 @@
 
    ```bash
    pip install -r requirements.lock
-   # 如需刷新依赖，可编辑 requirements.txt 并重新生成锁定文件
-   # pip install -r requirements.txt
+   # 如需刷新依赖，请更新 pyproject.toml 并重新生成锁定文件:
+   # pip-compile --extra=dev --extra=docs --extra=redis --extra=performance --extra=admin --extra=ops --extra=plugins --generate-hashes --output-file=requirements.lock pyproject.toml
    ```
+   CI/发布流程同样使用 `requirements.lock` 安装，确保依赖可重复。
 
 4. **初始化环境变量和配置**
 
@@ -175,7 +177,9 @@
 1. **安装开发依赖**
 
 ```bash
-pip install -r requirements-dev.txt
+pip install -r requirements.lock
+pip install --no-deps -e .
+# requirements-dev.txt 仅作为兼容入口，内部同样引用锁定文件
 ```
 
 2. **安装预提交钩子**
@@ -190,6 +194,7 @@ pre-commit install
 pytest
 ```
 
+> Note: CI 与默认测试命令会生成覆盖率报告并执行 30% 覆盖率门禁（产出 `coverage.xml` 与 `htmlcov/`）。如需快速运行跳过覆盖率，可执行 `pytest --no-cov` 或 `make test-fast`。
 > 💡 提示：`tests/ui/test_refactored_main_window.py` 依赖真实的 Qt 图形界面环境。在无显示服务器（例如 CI 或纯终端）中，它会自动跳过。若要完整验证 UI 行为，请在本地具备 GUI 的环境执行 `pytest tests/ui/test_refactored_main_window.py`。
 
 4. **代码格式化**
@@ -336,6 +341,13 @@ VirtualChemLab/
 - [API参考](docs/API_REFERENCE.md) - 完整API文档
 - [性能优化](docs/PERFORMANCE_OPTIMIZATION.md) - 性能优化指南
 - [部署指南](DEPLOY.md) - 生产环境部署
+
+## 版本号同步
+
+- 单一来源：`src/__init__.py` 中的 `__version__`
+- 同步脚本：`python tools/bump_version.py 2.0.0`，省略版本号则按当前值同步 `pyproject.toml`、`config.json`、`version_info.txt`、`installer_windows.iss`
+- 便捷命令：`make bump-version VERSION=2.0.1`
+- 打包脚本：`build.sh` / `build_macos.sh` / `build_windows.bat` 读取同一版本号
 
 ## 贡献指南
 

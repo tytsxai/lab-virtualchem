@@ -1,17 +1,2 @@
-# VirtualChemLab 架构依赖
-# 安装命令: pip install -r requirements-architecture.txt
-
-# 核心依赖
-PyJWT>=2.8.0  # JWT认证（auth模块）
-psutil>=5.9.0  # 系统监控（health模块）
-
-# 推荐依赖 - 增强功能
-pydantic>=2.0.0  # 数据验证（validation模块）
-python-dotenv>=1.0.0  # 环境变量加载
-redis>=5.0.0  # 分布式缓存（可选）
-structlog>=24.0.0  # 结构化日志（可选）
-
-# 注意：
-# - Python 3.10+ 内置asyncio，无需额外安装
-# - Redis仅在使用分布式缓存时需要
-# - Structlog仅在需要更高级的日志功能时使用
+# Architecture/ops dependencies are pinned via requirements.lock (includes redis + ops extras).
+-r requirements.lock

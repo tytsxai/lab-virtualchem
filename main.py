@@ -3,7 +3,7 @@
 VirtualChemLab - 虚拟化学实验室
 统一启动入口
 
-版本: v2.0.0
+版本: 由 src.__version__ 提供
 作者: VirtualChemLab Team
 """
 
