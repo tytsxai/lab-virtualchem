@@ -27,6 +27,8 @@ venv*/
 ENV/
 env/
 .venv
+.venv*/
+.code/
 
 # IDEs
 .vscode/
@@ -86,6 +88,7 @@ keys/*.pem
 # Coverage reports
 coverage_reports/
 coverage.json
+coverage.xml
 .coverage.*
 htmlcov/
 

@@ -15,7 +15,7 @@ import os
 import traceback
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Type, Union
@@ -199,12 +199,12 @@ class ErrorHandler:
             base_dir = Path(os.getenv(EMERGENCY_STATE_DIR_ENV, "logs/emergency"))
             base_dir.mkdir(parents=True, exist_ok=True)
 
-            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             snapshot_path = base_dir / f"state_{timestamp}.json"
 
             recent_records = [self._serialize_error_record(r) for r in self.error_records[-20:]]
             payload = {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "error_stats": self._error_stats.copy(),
                 "recent_errors": recent_records,
             }
