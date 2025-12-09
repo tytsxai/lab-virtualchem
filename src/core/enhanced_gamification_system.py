@@ -4,16 +4,13 @@
 提供成就系统、积分系统、排行榜、个性化奖励等功能
 """
 
-import json
 import logging
-import random
-import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set
 
-from .robustness_integration import enhance_robustness, validate_input, log_operation
+from .robustness_integration import enhance_robustness, log_operation, validate_input
 
 logger = logging.getLogger(__name__)
 

@@ -1,13 +1,14 @@
 """内存优化器"""
 
 import gc
-import psutil
+import logging
 import threading
 import time
-from typing import Dict, List, Any, Optional, Callable
 from dataclasses import dataclass
 from enum import Enum
-import logging
+from typing import Any, Callable, Dict, List, Optional
+
+import psutil
 
 logger = logging.getLogger(__name__)
 

@@ -7,8 +7,7 @@ from __future__ import annotations
 
 import importlib
 import logging
-import sys
-from typing import Any, Callable, Dict, Optional, Type, Union
+from typing import Any, Callable, Dict, Optional, Type
 
 from .common_exceptions import SystemError
 from .error_handler import get_error_handler, safe_execute

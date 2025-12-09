@@ -10,12 +10,11 @@ import threading
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
-from .common_exceptions import PerformanceError
+from .enhanced_event_bus import EventPriority, publish_event
 from .error_handler import get_error_handler
-from .enhanced_event_bus import Event, EventPriority, publish_event
-from .unified_performance_monitor import PerformanceMetric, MetricType
+from .unified_performance_monitor import MetricType, PerformanceMetric
 
 logger = logging.getLogger(__name__)
 

@@ -10,7 +10,11 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from .device_fingerprint import DeviceAuthManager, DeviceFingerprint, get_device_auth_manager
+from .device_fingerprint import (
+    DeviceAuthManager,
+    DeviceFingerprint,
+    get_device_auth_manager,
+)
 from .license_manager import License, LicenseManager, LicenseStatus, get_machine_id
 
 logger = logging.getLogger(__name__)

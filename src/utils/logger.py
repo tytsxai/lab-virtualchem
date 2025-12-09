@@ -306,24 +306,49 @@ class EnhancedLogger:
         # 处理日志
         self.logger.handle(record)
 
-    def debug(self, message: str, **extra_data: Any) -> None:
-        """调试日志"""
+    def debug(self, message: str, *args: Any, **extra_data: Any) -> None:
+        """调试日志 (兼容标准logging接口)"""
+        if args:
+            try:
+                message = message % args
+            except Exception:
+                message = f"{message} | args={args}"
         self.log_with_context(logging.DEBUG, message, **extra_data)
 
-    def info(self, message: str, **extra_data: Any) -> None:
+    def info(self, message: str, *args: Any, **extra_data: Any) -> None:
         """信息日志"""
+        if args:
+            try:
+                message = message % args
+            except Exception:
+                message = f"{message} | args={args}"
         self.log_with_context(logging.INFO, message, **extra_data)
 
-    def warning(self, message: str, **extra_data: Any) -> None:
+    def warning(self, message: str, *args: Any, **extra_data: Any) -> None:
         """警告日志"""
+        if args:
+            try:
+                message = message % args
+            except Exception:
+                message = f"{message} | args={args}"
         self.log_with_context(logging.WARNING, message, **extra_data)
 
-    def error(self, message: str, **extra_data: Any) -> None:
+    def error(self, message: str, *args: Any, **extra_data: Any) -> None:
         """错误日志"""
+        if args:
+            try:
+                message = message % args
+            except Exception:
+                message = f"{message} | args={args}"
         self.log_with_context(logging.ERROR, message, **extra_data)
 
-    def critical(self, message: str, **extra_data: Any) -> None:
+    def critical(self, message: str, *args: Any, **extra_data: Any) -> None:
         """严重错误日志"""
+        if args:
+            try:
+                message = message % args
+            except Exception:
+                message = f"{message} | args={args}"
         self.log_with_context(logging.CRITICAL, message, **extra_data)
 
 

@@ -5,22 +5,19 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import threading
 import time
-import traceback
 import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
-from .common_exceptions import SystemError
+from .enhanced_event_bus import EventPriority, publish_event
 from .error_handler import get_error_handler
-from .enhanced_event_bus import Event, EventPriority, publish_event
 
 logger = logging.getLogger(__name__)
 

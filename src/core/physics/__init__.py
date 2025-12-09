@@ -6,11 +6,11 @@
 """
 
 from .pymunk_adapter import (
-    PyMunkPhysicsEngine,
+    BodyType,
     PhysicsBody,
     PhysicsShape,
-    BodyType,
-    ShapeType
+    PyMunkPhysicsEngine,
+    ShapeType,
 )
 
 __all__ = [

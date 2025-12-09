@@ -4,15 +4,14 @@
 提供智能实验助手、学习分析、个性化推荐等功能
 """
 
-import json
 import logging
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
-from .robustness_integration import enhance_robustness, validate_input, log_operation
+from .robustness_integration import enhance_robustness, log_operation, validate_input
 
 logger = logging.getLogger(__name__)
 
@@ -501,13 +500,13 @@ class EnhancedAISystem:
         prompt = f"问题: {question}\n\n"
 
         if profile:
-            prompt += f"用户信息:\n"
+            prompt += "用户信息:\n"
             prompt += f"- 学习风格: {profile.learning_style.value}\n"
             prompt += f"- 难度偏好: {profile.difficulty_preference.value}\n"
             prompt += f"- 兴趣领域: {', '.join(profile.interests)}\n\n"
 
         if context:
-            prompt += f"上下文信息:\n"
+            prompt += "上下文信息:\n"
             for key, value in context.items():
                 prompt += f"- {key}: {value}\n"
             prompt += "\n"
@@ -587,7 +586,7 @@ class EnhancedAISystem:
         related_topics = []
 
         # 基于关键词匹配
-        for difficulty, topics in self.knowledge_base["chemistry_concepts"].items():
+        for _difficulty, topics in self.knowledge_base["chemistry_concepts"].items():
             for topic in topics:
                 if topic in question:
                     related_topics.extend(topics)

@@ -7,14 +7,12 @@ from __future__ import annotations
 
 import logging
 import sys
-from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
 from .. import __version__ as APP_VERSION
-
 from .common_exceptions import SystemError
 from .error_handler import get_error_handler, initialize_default_handlers
 from .import_manager import get_import_manager, register_lazy_module

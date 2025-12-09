@@ -16,12 +16,12 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from .common_exceptions import SecurityError
-from .error_handler import get_error_handler
 from .enhanced_event_bus import Event, EventPriority, publish_event, subscribe_event
-from .enhanced_observability import get_observability, LogLevel, trace_span, TraceType
+from .enhanced_observability import LogLevel, get_observability
+from .error_handler import get_error_handler
 
 logger = logging.getLogger(__name__)
 
@@ -181,7 +181,7 @@ class SimpleEncryptionProvider(EncryptionProvider):
             return decrypted
         except Exception as e:
             logger.error(f"Decryption failed: {e}")
-            raise SecurityError("Decryption failed")
+            raise SecurityError("Decryption failed") from e
 
     def hash(self, data: str, salt: str) -> str:
         """哈希数据"""
@@ -241,7 +241,7 @@ class SecurityManager:
     def _initialize_default_users(self) -> None:
         """初始化默认用户"""
         # 创建默认管理员用户
-        admin_user = self.create_user(
+        self.create_user(
             username="admin",
             email="admin@example.com",
             password="admin123",
@@ -250,7 +250,7 @@ class SecurityManager:
         )
 
         # 创建默认普通用户
-        user = self.create_user(
+        self.create_user(
             username="user",
             email="user@example.com",
             password="user123",
@@ -475,7 +475,7 @@ class SecurityManager:
             return self._encryption_provider.encrypt(data, key)
         except Exception as e:
             logger.error(f"Encryption failed: {e}")
-            raise SecurityError("Encryption failed")
+            raise SecurityError("Encryption failed") from e
 
     def decrypt_data(self, encrypted_data: str, key: str) -> str:
         """解密数据"""
@@ -483,7 +483,7 @@ class SecurityManager:
             return self._encryption_provider.decrypt(encrypted_data, key)
         except Exception as e:
             logger.error(f"Decryption failed: {e}")
-            raise SecurityError("Decryption failed")
+            raise SecurityError("Decryption failed") from e
 
     def detect_threat(self, threat_type: ThreatType, description: str, **metadata) -> None:
         """检测威胁"""

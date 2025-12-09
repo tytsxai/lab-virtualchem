@@ -4,11 +4,11 @@
 提供全面的性能监控、优化建议、资源管理等功能
 """
 
-import asyncio
 import functools
 import gc
 import logging
 import os
+
 try:
     import psutil
 except ImportError:
@@ -19,7 +19,7 @@ import tracemalloc
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -595,7 +595,7 @@ def performance_monitor(operation_name: Optional[str] = None):
                 result = func(*args, **kwargs)
                 performance_manager.end_operation_timer(name, start_time, success=True)
                 return result
-            except Exception as e:
+            except Exception:
                 performance_manager.end_operation_timer(name, start_time, success=False)
                 raise
 
@@ -610,7 +610,7 @@ def performance_context(operation_name: str):
     try:
         yield
         performance_manager.end_operation_timer(operation_name, start_time, success=True)
-    except Exception as e:
+    except Exception:
         performance_manager.end_operation_timer(operation_name, start_time, success=False)
         raise
 

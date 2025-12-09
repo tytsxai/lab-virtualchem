@@ -10,13 +10,13 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
-from .robustness_enhancer import RobustnessEnhancer, RobustnessLevel, RobustnessConfig
-from .enhanced_error_recovery import EnhancedErrorRecovery, RecoveryConfig
-from .enhanced_validation import EnhancedValidator, ValidationLevel
+from .enhanced_error_recovery import EnhancedErrorRecovery
 from .enhanced_logging import EnhancedLogger
 from .enhanced_performance import EnhancedPerformanceManager
 from .enhanced_security import EnhancedSecurityManager
 from .enhanced_testing import EnhancedTestingFramework
+from .enhanced_validation import EnhancedValidator
+from .robustness_enhancer import RobustnessEnhancer
 
 logger = logging.getLogger(__name__)
 
@@ -164,7 +164,7 @@ class RobustnessIntegrationManager:
                 result = func(*args, **kwargs)
                 self.performance_manager.end_operation_timer(operation_name, start_time, success=True)
                 return result
-            except Exception as e:
+            except Exception:
                 self.performance_manager.end_operation_timer(operation_name, start_time, success=False)
                 raise
         return wrapper
@@ -178,7 +178,7 @@ class RobustnessIntegrationManager:
                     if not self.security_manager.validate_input(arg):
                         raise ValueError(f"输入包含威胁: {arg[:50]}...")
 
-            for key, value in kwargs.items():
+            for _key, value in kwargs.items():
                 if isinstance(value, str):
                     if not self.security_manager.validate_input(value):
                         raise ValueError(f"输入包含威胁: {value[:50]}...")
@@ -358,9 +358,9 @@ def validate_input(validation_rules: Optional[Dict[str, Any]] = None):
                 if not robustness_integration.validate_data(arg, validation_rules):
                     raise ValueError(f"参数验证失败: {arg}")
 
-            for key, value in kwargs.items():
+            for _key, value in kwargs.items():
                 if not robustness_integration.validate_data(value, validation_rules):
-                    raise ValueError(f"参数验证失败: {key}={value}")
+                    raise ValueError(f"参数验证失败: {_key}={value}")
 
             return func(*args, **kwargs)
         return wrapper
@@ -377,10 +377,10 @@ def secure_operation(security_level: str = "medium"):
                     if not robustness_integration.check_security(arg):
                         raise ValueError(f"安全检查失败: {arg[:50]}...")
 
-            for key, value in kwargs.items():
+            for _key, value in kwargs.items():
                 if isinstance(value, str):
                     if not robustness_integration.check_security(value):
-                        raise ValueError(f"安全检查失败: {key}={value[:50]}...")
+                        raise ValueError(f"安全检查失败: {_key}={value[:50]}...")
 
             return func(*args, **kwargs)
         return wrapper

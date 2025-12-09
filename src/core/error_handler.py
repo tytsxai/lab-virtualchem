@@ -20,10 +20,16 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Type, Union
 
-from .common_error_handlers import safe_execute_with_default as _common_safe_execute_with_default
+from .common_error_handlers import (
+    safe_execute_with_default as _common_safe_execute_with_default,
+)
 from .common_exceptions import (
     ErrorCategory as CoreErrorCategory,
+)
+from .common_exceptions import (
     ErrorSeverity as CoreErrorSeverity,
+)
+from .common_exceptions import (
     VirtualChemLabError,
 )
 from .event_bus import close_event_bus, get_event_bus
@@ -404,7 +410,7 @@ def error_context(
             category=category,
             severity=severity,
             cause=e,
-        )
+        ) from e
 
 
 def safe_execute(
@@ -446,7 +452,7 @@ def safe_execute(
         if default_return is not None:
             return default_return
 
-        raise error
+        raise error from e
 
 
 def log_and_continue(

@@ -6,15 +6,15 @@
 
 import gc
 import logging
-import time
 import threading
-from collections import defaultdict, deque
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+import time
+from collections import deque
+from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional
 
-from .robustness_integration import enhance_robustness, validate_input, log_operation
+from .robustness_integration import enhance_robustness, log_operation
 
 logger = logging.getLogger(__name__)
 

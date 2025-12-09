@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Generic, TypeVar
+from typing import Any, Callable as TypingCallable, Generic, TypeVar
 
 T = TypeVar("T")
 
@@ -116,7 +116,7 @@ class InMemoryRepository(IRepository[T]):
     def exists(self, id: str) -> bool:
         return id in self._data
 
-    def clear(self):
+    def clear(self) -> None:
         """清空仓储"""
         self._data.clear()
 
@@ -124,13 +124,13 @@ class InMemoryRepository(IRepository[T]):
 class FileRepository(IRepository[T]):
     """文件仓储实现"""
 
-    def __init__(self, file_path: str, serializer: Callable = None):
+    def __init__(self, file_path: str, serializer: TypingCallable | None = None):
         self.file_path = file_path
-        self.serializer = serializer or json
+        self.serializer: TypingCallable = serializer or json
         self._data: dict[str, T] = {}
         self._load()
 
-    def _load(self):
+    def _load(self) -> None:
         """从文件加载数据"""
         try:
             with open(self.file_path, encoding="utf-8") as f:
@@ -139,7 +139,7 @@ class FileRepository(IRepository[T]):
         except FileNotFoundError:
             self._data = {}
 
-    def _save(self):
+    def _save(self) -> None:
         """保存数据到文件"""
         with open(self.file_path, "w", encoding="utf-8") as f:
             self.serializer.dump(self._data, f, indent=2, ensure_ascii=False)
@@ -184,11 +184,11 @@ class RepositoryFactory:
     """仓储工厂"""
 
     @staticmethod
-    def create_memory_repository() -> IRepository:
+    def create_memory_repository() -> IRepository[Any]:
         """创建内存仓储"""
         return InMemoryRepository()
 
     @staticmethod
-    def create_file_repository(file_path: str) -> IRepository:
+    def create_file_repository(file_path: str) -> IRepository[Any]:
         """创建文件仓储"""
         return FileRepository(file_path)

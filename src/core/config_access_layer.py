@@ -4,11 +4,11 @@
 """
 
 import threading
-from typing import Any, Dict, Optional, Union
 from pathlib import Path
+from typing import Any, Dict, Optional
 
-from .config_loader import get_config, Config
 from ..utils.logger import get_logger
+from .config_loader import Config, get_config
 
 logger = get_logger(__name__)
 

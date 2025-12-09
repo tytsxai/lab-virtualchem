@@ -6,13 +6,12 @@
 
 import json
 import logging
-import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
-from .robustness_integration import enhance_robustness, validate_input, log_operation
+from .robustness_integration import enhance_robustness, log_operation, validate_input
 
 logger = logging.getLogger(__name__)
 
@@ -635,7 +634,7 @@ class EnhancedUISystem:
         for key, value in self.current_theme.custom_properties.items():
             css_variables.append(f"  --{key}: {value};")
 
-        css = f":root {{\n" + "\n".join(css_variables) + "\n}"
+        css = ":root {\n" + "\n".join(css_variables) + "\n}"
 
         return css
 

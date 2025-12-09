@@ -5,8 +5,9 @@ PyMunk物理引擎适配器
 为VirtualChemLab提供统一的物理引擎接口，底层使用PyMunk实现
 """
 
-from typing import Optional, Tuple, List, Callable, Any
 from enum import Enum
+from typing import List, Optional, Tuple
+
 import pymunk
 from pymunk import Vec2d
 

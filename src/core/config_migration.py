@@ -9,10 +9,10 @@ import json
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from .common_exceptions import ConfigurationError
-from .error_handler import get_error_handler, safe_execute
+from .error_handler import get_error_handler
 from .unified_config_manager import UnifiedConfigManager
 
 logger = logging.getLogger(__name__)
@@ -240,7 +240,7 @@ class ConfigMigrationManager:
             except Exception as e:
                 self._stats["migrations_failed"] += 1
                 logger.error(f"Migration step failed: {step.description} - {e}")
-                raise ConfigurationError(f"Migration failed: {e}")
+                raise ConfigurationError(f"Migration failed: {e}") from e
 
         # 更新版本信息
         if "app" in migrated_data:

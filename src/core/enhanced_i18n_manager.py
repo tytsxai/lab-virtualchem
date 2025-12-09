@@ -8,16 +8,14 @@ from __future__ import annotations
 import json
 import logging
 import threading
-import time
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
-from .common_exceptions import SystemError
-from .error_handler import get_error_handler
 from .enhanced_event_bus import Event, EventPriority, publish_event, subscribe_event
-from .enhanced_observability import get_observability, LogLevel, trace_span, TraceType
+from .enhanced_observability import LogLevel, get_observability
+from .error_handler import get_error_handler
 from .smart_cache_manager import get_cache_manager
 
 logger = logging.getLogger(__name__)
@@ -647,7 +645,7 @@ class EnhancedI18nManager:
         output_dir.mkdir(exist_ok=True)
 
         # 导出所有资源
-        for resource_key, resource in self._resources.items():
+        for _resource_key, resource in self._resources.items():
             filename = f"{resource.language.value}_{resource.namespace}.json"
             file_path = output_dir / filename
 

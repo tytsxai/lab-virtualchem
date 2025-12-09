@@ -4,13 +4,13 @@
 """
 
 import atexit
+import logging
 import threading
 import time
 from collections import OrderedDict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Optional, Callable, List, Dict, Tuple
-import logging
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 

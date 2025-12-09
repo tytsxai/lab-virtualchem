@@ -18,9 +18,15 @@ import threading
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Awaitable, Callable, ClassVar, Dict, Iterable, List, Sequence, TypeVar, cast
-
 from re import Pattern
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    ClassVar,
+    TypeVar,
+    cast,
+)
 
 logger = logging.getLogger(__name__)
 

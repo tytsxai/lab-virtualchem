@@ -9,13 +9,13 @@ import json
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 import jsonschema
 import yaml
 
 from .common_exceptions import ConfigurationError
-from .error_handler import get_error_handler, safe_execute
+from .error_handler import get_error_handler
 
 logger = logging.getLogger(__name__)
 

@@ -4,9 +4,7 @@
 """
 
 import hashlib
-import json
 import logging
-import os
 import platform
 import shutil
 import subprocess
@@ -14,8 +12,7 @@ import tempfile
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Dict, Any, Callable
-from urllib.parse import urljoin
+from typing import Callable, Optional
 
 from .. import __version__ as APP_VERSION
 
@@ -256,9 +253,13 @@ class AutoUpdater:
         """
         try:
             if self.platform == 'windows':
-                # Windows: 启动安装程序
+                # Windows: 启动安装程序（避免使用shell以减少注入风险）
                 logger.info("启动Windows安装程序...")
-                subprocess.Popen([str(update_file)], shell=True)
+                installer_path = update_file.resolve(strict=True)
+                if not installer_path.exists():
+                    logger.error(f"安装文件不存在: {installer_path}")
+                    return False
+                subprocess.run([str(installer_path)], check=True)
                 return True
 
             elif self.platform == 'macos':

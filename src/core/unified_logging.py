@@ -3,7 +3,6 @@
 减少重复的日志记录模式，提供统一的日志接口
 """
 
-import logging
 import threading
 from contextlib import contextmanager
 from dataclasses import dataclass

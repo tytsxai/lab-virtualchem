@@ -5,7 +5,6 @@ API网关
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import threading
@@ -14,13 +13,12 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
-from .common_exceptions import SystemError
-from .error_handler import get_error_handler
 from .enhanced_event_bus import Event, EventPriority, publish_event, subscribe_event
-from .enhanced_observability import get_observability, LogLevel, trace_span, TraceType
-from .security_manager import get_security_manager, Permission
+from .enhanced_observability import LogLevel, get_observability
+from .error_handler import get_error_handler
+from .security_manager import Permission, get_security_manager
 
 logger = logging.getLogger(__name__)
 

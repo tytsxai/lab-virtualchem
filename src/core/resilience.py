@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from functools import wraps
-from typing import TypeVar, Union, Any
+from typing import Any, TypeVar, Union
 
 logger = logging.getLogger(__name__)
 

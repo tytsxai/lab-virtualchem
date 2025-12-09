@@ -336,7 +336,7 @@ def handle_errors(
                     category=category,
                     severity=severity,
                     cause=e
-                )
+                ) from e
         return wrapper
     return decorator
 

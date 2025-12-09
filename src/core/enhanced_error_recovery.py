@@ -8,14 +8,13 @@ import asyncio
 import functools
 import logging
 import time
-import traceback
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Type
 
-from .error_system.exceptions import BaseAppException
 from .error_system.error_handler import GlobalErrorHandler
+from .error_system.exceptions import BaseAppException
 
 logger = logging.getLogger(__name__)
 
@@ -232,7 +231,7 @@ class EnhancedErrorRecovery:
             app_error = BaseAppException(
                 message=f"操作 {operation_name} 失败",
                 original_exception=error,
-                user_message=f"操作失败，请稍后重试"
+                user_message="操作失败，请稍后重试"
             )
         else:
             app_error = error

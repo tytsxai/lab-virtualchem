@@ -5,13 +5,12 @@
 """
 
 import hashlib
-import hmac
 import logging
 import secrets
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -667,7 +666,7 @@ def secure_input(func):
                 if not security_manager.validate_input(arg):
                     raise ValueError(f"输入包含威胁: {arg[:50]}...")
 
-        for key, value in kwargs.items():
+        for _key, value in kwargs.items():
             if isinstance(value, str):
                 if not security_manager.validate_input(value):
                     raise ValueError(f"输入包含威胁: {value[:50]}...")

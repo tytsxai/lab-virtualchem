@@ -1,15 +1,15 @@
 """增强日志系统"""
 
+import json
 import logging
 import logging.handlers
-import json
-import time
 import threading
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Union
-from dataclasses import dataclass, asdict
+import time
+from dataclasses import asdict, dataclass
 from enum import Enum
-import traceback
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
 
 class LogLevel(Enum):
     """日志级别"""
@@ -202,8 +202,14 @@ class EnhancedLogger:
         if name in self.handlers and format_type in self.formats:
             self.handlers[name].setFormatter(self.formats[format_type])
 
-    def debug(self, message: str, extra_data: Optional[Dict[str, Any]] = None, **kwargs):
-        """记录调试日志"""
+    def debug(self, message: str, *args, extra_data: Optional[Dict[str, Any]] = None, **kwargs):
+        """记录调试日志 (兼容标准logging接口)"""
+        # 支持 logger.debug("msg %s", arg) 调用风格
+        if args:
+            try:
+                message = message % args
+            except Exception:
+                message = f"{message} | args={args}"
         self._log(logging.DEBUG, message, extra_data, **kwargs)
 
     def info(self, message: str, extra_data: Optional[Dict[str, Any]] = None, **kwargs):

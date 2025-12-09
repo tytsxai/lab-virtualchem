@@ -23,8 +23,12 @@ from src.core.curve_generator import CurveGenerator
 from src.core.rule_validator import RuleValidator
 from src.models.experiment import ExperimentTemplate
 from src.models.user_record import Mistake, StepRecord, UserRecord
-from src.core.validation import ValidationError
-from src.utils.error_handler import safe_execute, validate_not_none, validate_type, validate_not_empty
+from src.utils.error_handler import (
+    safe_execute,
+    validate_not_empty,
+    validate_not_none,
+    validate_type,
+)
 
 # 导入监控模块
 try:
@@ -870,7 +874,7 @@ class ExperimentController:
         """获取每个步骤的结果摘要（用于报告/测试）"""
         results: list[dict[str, Any]] = []
 
-        for step, record in zip(self.template.steps, self.record.step_records):
+        for step, record in zip(self.template.steps, self.record.step_records, strict=False):
             results.append(
                 {
                     "step_id": record.step_id,

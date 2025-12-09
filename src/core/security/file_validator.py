@@ -1,10 +1,11 @@
 """文件验证和安全检查模块"""
 
 import hashlib
-import magic
 from pathlib import Path
-from typing import Dict, List, Optional, Set
-import mimetypes
+from typing import Any, Dict, List
+
+import magic
+
 
 class FileValidator:
     """文件验证器"""
@@ -152,7 +153,7 @@ class FileValidator:
         except Exception:
             return False
 
-    def scan_file_for_malware(self, file_path: str) -> Dict[str, any]:
+    def scan_file_for_malware(self, file_path: str) -> Dict[str, Any]:
         """扫描文件恶意软件"""
         result = {
             'safe': True,
@@ -255,7 +256,7 @@ class FileValidator:
             threats.append(f'内容检查错误: {str(e)}')
             return threats
 
-    def validate_upload(self, file_path: str, original_filename: str) -> Dict[str, any]:
+    def validate_upload(self, file_path: str, original_filename: str) -> Dict[str, Any]:
         """验证文件上传"""
         result = {
             'valid': False,
@@ -308,7 +309,7 @@ class FileValidator:
             result['errors'].append(f'验证错误: {str(e)}')
             return result
 
-    def get_file_info(self, file_path: str) -> Dict[str, any]:
+    def get_file_info(self, file_path: str) -> Dict[str, Any]:
         """获取文件信息"""
         try:
             path = Path(file_path)

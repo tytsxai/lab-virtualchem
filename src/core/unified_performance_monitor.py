@@ -14,12 +14,12 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import psutil
 
 from .common_exceptions import PerformanceError
-from .error_handler import get_error_handler, safe_execute
+from .error_handler import get_error_handler
 
 logger = logging.getLogger(__name__)
 

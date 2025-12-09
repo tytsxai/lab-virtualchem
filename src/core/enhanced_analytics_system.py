@@ -4,16 +4,15 @@
 提供学习分析、行为分析、预测分析等功能
 """
 
-import json
 import logging
 import statistics
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
-from .robustness_integration import enhance_robustness, validate_input, log_operation
+from .robustness_integration import enhance_robustness, log_operation
 
 logger = logging.getLogger(__name__)
 
@@ -418,9 +417,8 @@ class EnhancedAnalyticsSystem:
 
         # 分析用户的学习偏好
         if "learning_preference" in metrics:
-            preference_metric = metrics["learning_preference"]
-            # 根据偏好类型生成洞察
-            pass
+            # 根据偏好类型生成洞察（占位，未来扩展）
+            _preference_metric = metrics["learning_preference"]
 
         return insights
 

@@ -11,11 +11,11 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Type
 
 try:
-    from pydantic import BaseModel, ValidationError as PydanticValidationError
+    from pydantic import BaseModel
+    from pydantic import ValidationError as PydanticValidationError
     PYDANTIC_AVAILABLE = True
 except ImportError:
     PYDANTIC_AVAILABLE = False

@@ -11,7 +11,7 @@ import time
 import traceback
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +129,9 @@ class TestAssertion:
         except expected_exception.__class__:
             pass
         except Exception as e:
-            raise AssertionError(f"期望抛出 {expected_exception.__class__.__name__} 异常，实际抛出 {type(e).__name__}")
+            raise AssertionError(
+                f"期望抛出 {expected_exception.__class__.__name__} 异常，实际抛出 {type(e).__name__}"
+            ) from e
 
 
 class TestRunner:

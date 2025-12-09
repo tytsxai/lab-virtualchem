@@ -1,11 +1,11 @@
 """错误恢复系统"""
 
-import traceback
+import logging
 import time
-from typing import Dict, List, Any, Optional, Callable
+import traceback
 from dataclasses import dataclass
 from enum import Enum
-import logging
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -348,7 +348,7 @@ def retry(max_attempts: int = 3, delay: float = 1.0):
             for attempt in range(max_attempts):
                 try:
                     return func(*args, **kwargs)
-                except Exception as e:
+                except Exception:
                     if attempt == max_attempts - 1:
                         raise
                     time.sleep(delay)

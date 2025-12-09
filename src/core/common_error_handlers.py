@@ -4,8 +4,8 @@
 """
 
 import logging
-from typing import Any, Callable, Dict, Optional, Type
 from functools import wraps
+from typing import Any, Callable, Type
 
 from .common_exceptions import ErrorCategory, ErrorSeverity, VirtualChemLabError
 
@@ -73,7 +73,7 @@ class CommonErrorHandlers:
                                 cause=e
                             )
                             logger.error(f"Retry failed: {error}")
-                            raise error
+                            raise error from e
 
                         logger.warning(f"Attempt {attempt + 1} failed for {func.__name__}: {e}")
                         time.sleep(current_delay)
@@ -137,7 +137,7 @@ class CommonErrorHandlers:
                         cause=e
                     )
                     logger.error(f"File operation failed: {error}")
-                    raise error
+                    raise error from e
                 except PermissionError as e:
                     error = error_class(
                         message=f"Permission denied during {operation}: {file_path}",
@@ -146,7 +146,7 @@ class CommonErrorHandlers:
                         cause=e
                     )
                     logger.error(f"File operation failed: {error}")
-                    raise error
+                    raise error from e
                 except Exception as e:
                     error = error_class(
                         message=f"Unexpected error during {operation}: {file_path}",
@@ -155,7 +155,7 @@ class CommonErrorHandlers:
                         cause=e
                     )
                     logger.error(f"File operation failed: {error}")
-                    raise error
+                    raise error from e
 
             return wrapper
         return decorator
@@ -181,7 +181,7 @@ class CommonErrorHandlers:
                         cause=e
                     )
                     logger.error(f"Database operation failed: {error}")
-                    raise error
+                    raise error from e
 
             return wrapper
         return decorator
@@ -208,7 +208,7 @@ class CommonErrorHandlers:
                         cause=e
                     )
                     logger.error(f"Network operation failed: {error}")
-                    raise error
+                    raise error from e
 
             return wrapper
         return decorator
