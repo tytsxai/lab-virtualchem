@@ -172,7 +172,12 @@ def test_network_health_monitor_caches_checks(monkeypatch):
 
     monkeypatch.setattr(safe_network, "SafeNetworkClient", DummyClient)
     time_values = iter([100.0, 120.0, 200.0])
-    monkeypatch.setattr(safe_network.time, "time", lambda: next(time_values))
+
+    def safe_next_time():
+        # 防止 StopIteration 在 teardown 阶段触发 Qt 循环异常
+        return next(time_values, 200.0)
+
+    monkeypatch.setattr(safe_network.time, "time", safe_next_time)
 
     monitor = NetworkHealthMonitor(check_interval=60)
     monitor.last_check_time = 0

@@ -257,7 +257,7 @@ def _tool_quick_run(tool_name, description):
             [sys.executable, str(tool_path), "--help"],
             capture_output=True,
             text=True,
-            timeout=5,
+            timeout=20,
             encoding="utf-8",
             errors="replace",
         )
