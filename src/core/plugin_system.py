@@ -10,19 +10,17 @@ import importlib.util
 import inspect
 import json
 import logging
-import sys
 import threading
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Type
 
-from .common_exceptions import SystemError
+from .enhanced_event_bus import Event, subscribe_event
+from .enhanced_observability import LogLevel, get_observability
 from .error_handler import get_error_handler
-from .enhanced_event_bus import Event, EventPriority, publish_event, subscribe_event
-from .enhanced_observability import get_observability, LogLevel, trace_span, TraceType
 
 logger = logging.getLogger(__name__)
 
@@ -108,22 +106,22 @@ class PluginInterface(ABC):
     @abstractmethod
     def initialize(self, config: Dict[str, Any]) -> None:
         """初始化插件"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def start(self) -> None:
         """启动插件"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def stop(self) -> None:
         """停止插件"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def cleanup(self) -> None:
         """清理插件"""
-        pass
+        raise NotImplementedError
 
     def get_info(self) -> PluginInfo:
         """获取插件信息"""
@@ -132,7 +130,7 @@ class PluginInterface(ABC):
             version="1.0.0",
             description="",
             author="",
-            plugin_type=PluginType.UTILITY
+            plugin_type=PluginType.UTILITY,
         )
 
     def get_config_schema(self) -> Optional[Dict[str, Any]]:
@@ -141,12 +139,12 @@ class PluginInterface(ABC):
 
     def on_event(self, event: Event) -> None:
         """处理事件"""
-        pass
+        # 默认空实现，插件可按需覆盖
+        return
 
 
 class PluginManager:
     """插件管理器"""
-
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self._config = config or {}
         self._error_handler = get_error_handler()
@@ -276,7 +274,7 @@ class PluginManager:
 
     def _find_plugin_class(self, module: Any) -> Optional[Type[PluginInterface]]:
         """查找插件类"""
-        for name, obj in inspect.getmembers(module):
+        for _name, obj in inspect.getmembers(module):
             if (inspect.isclass(obj) and
                 issubclass(obj, PluginInterface) and
                 obj != PluginInterface):
