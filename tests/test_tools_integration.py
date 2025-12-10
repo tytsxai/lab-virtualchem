@@ -99,7 +99,8 @@ def _check_coverage_tracker() -> bool:
 
 
 def _check_config_management() -> bool:
-    return run_command([sys.executable, "config/schemas/app_config.py"], "配置管理 - 加载配置")
+    # Use module invocation so src imports resolve without manual PYTHONPATH hacks
+    return run_command([sys.executable, "-m", "config.schemas.app_config"], "配置管理 - 加载配置")
 
 
 def _check_imports() -> bool:

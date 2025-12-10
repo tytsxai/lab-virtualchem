@@ -10,7 +10,7 @@
 
 ; 版本号由 tools/bump_version.py 同步自 src/__init__.py
 #ifndef MyAppVersion
-#define MyAppVersion "2.0.0"
+#define MyAppVersion "3.0.0"
 #endif
 
 #define MyAppPublisher "VirtualChemLab Team"

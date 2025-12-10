@@ -294,14 +294,15 @@ curl -X GET "http://localhost:8000/api/experiments" \\
 ```
 
 ## 更新日志
-
-### v2.0.0 (2024-01-01)
-- 初始版本发布
-- 支持实验管理
-- 支持用户管理
-- 支持数据记录
-
 """
+
+        md_content += (
+            f"### v{APP_VERSION} (当前)\n"
+            "- 版本信息与应用保持同步\n"
+            "- 支持实验管理\n"
+            "- 支持用户管理\n"
+            "- 支持数据记录\n\n"
+        )
 
         return md_content
 
@@ -739,7 +740,7 @@ class APIDocBuilder:
                 example={
                     "status": "healthy",
                     "timestamp": "2024-01-01T00:00:00Z",
-                    "version": "2.0.0",
+                    "version": APP_VERSION,
                     "services": {"database": "healthy", "cache": "healthy", "queue": "healthy"},
                 },
             ),

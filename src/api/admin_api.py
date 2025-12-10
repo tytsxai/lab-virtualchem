@@ -4,6 +4,7 @@
 提供许可证管理、设备监控、异常处理等功能
 """
 
+import hmac
 import logging
 import os
 from datetime import datetime
@@ -56,6 +57,7 @@ class AdminAPI:
         resolved_secret = admin_secret or os.getenv("VCL_ADMIN_SECRET_KEY")
         if not resolved_secret:
             raise ValueError("必须提供管理后台 SECRET_KEY，可通过参数或环境变量 VCL_ADMIN_SECRET_KEY 设置")
+        self._admin_secret = resolved_secret
 
         # 创建Flask应用
         self.app = Flask(__name__)
@@ -74,6 +76,18 @@ class AdminAPI:
     def _register_routes(self):
         """注册路由"""
 
+        def _auth_guard():
+            """简单的共享密钥校验，保护敏感API"""
+            header = request.headers.get("X-Admin-Secret") or request.headers.get("Authorization", "")
+            token = header.removeprefix("Bearer ").strip() if header else ""
+            if not token:
+                logger.warning("管理后台请求缺少密钥头")
+                return jsonify({"error": "未提供管理后台密钥"}), 401
+            if not hmac.compare_digest(token, self._admin_secret):
+                logger.warning("管理后台密钥验证失败")
+                return jsonify({"error": "无效的管理后台密钥"}), 403
+            return None
+
         @self.app.route("/api/health", methods=["GET"])
         def health_check():
             """健康检查"""
@@ -82,6 +96,9 @@ class AdminAPI:
         @self.app.route("/api/licenses", methods=["GET"])
         def list_licenses():
             """获取所有许可证列表"""
+            unauthorized = _auth_guard()
+            if unauthorized:
+                return unauthorized
             try:
                 # 这里需要实现获取所有许可证的逻辑
                 # 暂时返回空列表
@@ -93,6 +110,9 @@ class AdminAPI:
         @self.app.route("/api/licenses/<license_key>", methods=["GET"])
         def get_license(license_key):
             """获取许可证详情"""
+            unauthorized = _auth_guard()
+            if unauthorized:
+                return unauthorized
             try:
                 license_obj = self.license_manager.load_license()
 
@@ -109,6 +129,9 @@ class AdminAPI:
         @self.app.route("/api/licenses/<license_key>/validate", methods=["POST"])
         def validate_license(license_key):
             """验证许可证"""
+            unauthorized = _auth_guard()
+            if unauthorized:
+                return unauthorized
             try:
                 license_obj = self.license_manager.load_license()
 
@@ -142,6 +165,9 @@ class AdminAPI:
         @self.app.route("/api/licenses/<license_key>/revoke", methods=["POST"])
         def revoke_license(license_key):
             """撤销许可证"""
+            unauthorized = _auth_guard()
+            if unauthorized:
+                return unauthorized
             try:
                 success = self.license_manager.revoke_license(license_key)
 
@@ -157,6 +183,9 @@ class AdminAPI:
         @self.app.route("/api/devices", methods=["GET"])
         def list_devices():
             """获取所有设备列表"""
+            unauthorized = _auth_guard()
+            if unauthorized:
+                return unauthorized
             try:
                 # 获取所有授权历史
                 history = self.device_auth_manager._load_auth_history()
@@ -196,6 +225,9 @@ class AdminAPI:
         @self.app.route("/api/devices/<device_id>", methods=["GET"])
         def get_device(device_id):
             """获取设备详情"""
+            unauthorized = _auth_guard()
+            if unauthorized:
+                return unauthorized
             try:
                 history = self.device_auth_manager._load_auth_history()
 
@@ -228,6 +260,9 @@ class AdminAPI:
         @self.app.route("/api/devices/<device_id>/block", methods=["POST"])
         def block_device(device_id):
             """封控设备"""
+            unauthorized = _auth_guard()
+            if unauthorized:
+                return unauthorized
             try:
                 data = request.get_json() or {}
                 reason = data.get("reason", "管理员手动封控")
@@ -252,6 +287,9 @@ class AdminAPI:
         @self.app.route("/api/devices/<device_id>/unblock", methods=["POST"])
         def unblock_device(device_id):
             """解除设备封控"""
+            unauthorized = _auth_guard()
+            if unauthorized:
+                return unauthorized
             try:
                 success = self.device_auth_manager.unblock_device(device_id)
 
@@ -267,6 +305,9 @@ class AdminAPI:
         @self.app.route("/api/licenses/<license_key>/usage", methods=["GET"])
         def get_license_usage(license_key):
             """获取许可证使用统计"""
+            unauthorized = _auth_guard()
+            if unauthorized:
+                return unauthorized
             try:
                 stats = self.device_auth_manager.get_device_usage_stats(license_key)
                 return jsonify({"usage": stats})
@@ -278,6 +319,9 @@ class AdminAPI:
         @self.app.route("/api/licenses/<license_key>/report", methods=["GET"])
         def get_usage_report(license_key):
             """获取许可证使用报告"""
+            unauthorized = _auth_guard()
+            if unauthorized:
+                return unauthorized
             try:
                 report = self.monitor.get_usage_report(license_key)
                 return jsonify({"report": report})
@@ -289,6 +333,9 @@ class AdminAPI:
         @self.app.route("/api/licenses/<license_key>/anomalies", methods=["GET"])
         def detect_anomalies(license_key):
             """检测异常行为"""
+            unauthorized = _auth_guard()
+            if unauthorized:
+                return unauthorized
             try:
                 anomalies = self.monitor.detect_anomalies(license_key)
                 return jsonify({"anomalies": anomalies, "total": len(anomalies)})
@@ -300,6 +347,9 @@ class AdminAPI:
         @self.app.route("/api/dashboard/stats", methods=["GET"])
         def get_dashboard_stats():
             """获取仪表板统计数据"""
+            unauthorized = _auth_guard()
+            if unauthorized:
+                return unauthorized
             try:
                 # 获取所有设备
                 history = self.device_auth_manager._load_auth_history()
@@ -335,6 +385,9 @@ class AdminAPI:
         @self.app.route("/api/activities", methods=["GET"])
         def get_activities():
             """获取最近活动"""
+            unauthorized = _auth_guard()
+            if unauthorized:
+                return unauthorized
             try:
                 limit = request.args.get("limit", 100, type=int)
                 license_key = request.args.get("license_key")

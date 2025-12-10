@@ -1,6 +1,6 @@
 # Production installs should use the pinned lockfile (includes performance/redis/admin/ops/plugins extras).
 -r requirements.lock
-psutil==5.9.6                   # 系统资源监控
+# Note: lockfile pins psutil==7.1.3; keep install aligned with lock to avoid resolver conflicts.
 
 # 许可证系统
 PyJWT==2.8.0                    # JWT令牌

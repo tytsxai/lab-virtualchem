@@ -8,6 +8,8 @@ import json
 import sys
 from pathlib import Path
 
+from src import __version__ as APP_VERSION
+
 # 各语言的翻译映射
 TRANSLATIONS = {
     "de_DE": {
@@ -135,7 +137,7 @@ TRANSLATIONS = {
         # Wizard section
         "wizard": {
             "welcome_title": "🧪 Willkommen bei VirtualChemLab",
-            "version": "Version v2.0.0",
+            "version": f"Version v{APP_VERSION}",
             "intro": "VirtualChemLab ist eine professionelle virtuelle Chemielaborsoftware,\\ndie es Ihnen ermöglicht, chemische Experimente in einer sicheren Umgebung durchzuführen,\\nohne sich um Reagenziengefahren oder Geräteschäden sorgen zu müssen.\\n\\nDieser Assistent hilft Ihnen, die grundlegenden Funktionen und die Verwendung der Software schnell zu verstehen.",
             "dont_show_again": "Diesen Assistenten beim Start nicht mehr anzeigen",
             "skip": "Überspringen",
@@ -268,4 +270,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

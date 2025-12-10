@@ -6,6 +6,7 @@
 
 import argparse
 import json
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -28,9 +29,19 @@ from src.core.license_manager import (  # noqa: E402
 )
 
 
+def _resolve_license_secret() -> str:
+    """从环境变量读取许可证密钥，避免硬编码"""
+    secret = os.getenv("LICENSE_SECRET_KEY", "").strip()
+    if not secret:
+        raise ValueError("未设置 LICENSE_SECRET_KEY，禁止使用默认/硬编码密钥")
+    if secret.startswith("YOUR_") or len(secret) < 32:
+        raise ValueError("LICENSE_SECRET_KEY 长度不足或仍为占位值，请提供>=32位的生产密钥")
+    return secret
+
+
 def create_license_manager() -> LicenseManager:
     """创建许可证管理器"""
-    secret_key = "YOUR_SECRET_KEY_CHANGE_THIS_IN_PRODUCTION"  # 生产环境需要修改
+    secret_key = _resolve_license_secret()
     license_file = PROJECT_ROOT / "data" / "license.json"
 
     return LicenseManager(secret_key, license_file)

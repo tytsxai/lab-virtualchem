@@ -6,6 +6,7 @@
 
 import pytest
 
+from src import __version__ as APP_VERSION
 from src.core.config_loader import (
     AppConfig,
     Config,
@@ -23,7 +24,7 @@ class TestAppConfig:
         """测试默认值"""
         config = AppConfig()
         assert config.name == "VirtualChemLab"
-        assert config.version == "2.0.0"
+        assert config.version == APP_VERSION
         assert config.environment == "development"
         assert config.debug is False
 

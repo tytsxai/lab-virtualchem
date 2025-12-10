@@ -329,6 +329,8 @@ class DeveloperConsole(QMainWindow):
 
     def __init__(self, dev_auth: DeveloperAuth, parent=None):
         super().__init__(parent)
+        if dev_auth is None or not dev_auth.is_authenticated():
+            raise PermissionError("Developer console requires an authenticated developer session")
         self.dev_auth = dev_auth
         self.init_ui()
 

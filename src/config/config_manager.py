@@ -10,6 +10,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from src import __version__ as APP_VERSION
+
 logger = logging.getLogger(__name__)
 
 
@@ -27,7 +29,7 @@ class ConfigManager:
         # 应用设置
         "app": {
             "name": "VirtualChemLab",
-            "version": "2.0.0",
+            "version": APP_VERSION,
             "language": "zh_CN",
             "theme": "auto",  # auto, light, dark
         },

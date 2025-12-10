@@ -29,6 +29,7 @@ from src.core.license_manager import LicenseManager  # noqa: E402
 from src.core.license_middleware import LicenseException, LicenseMiddleware  # noqa: E402
 from src.utils.config import Config  # noqa: E402
 from src.utils.logger import setup_logger  # noqa: E402
+from src.core.startup_preflight import ensure_secure_startup  # noqa: E402
 
 logger = setup_logger("virtualchemlab", logging.INFO)
 DISPLAY_VERSION = f"v{APP_VERSION}"
@@ -160,6 +161,9 @@ def main() -> int:
         # 加载配置
         config = Config()
         logger.info(f"配置加载完成, 语言: {config.get('app.language')}")
+
+        # 启动前安全校验（密钥长度/存在性）
+        ensure_secure_startup(config=config)
 
         # 检查依赖
         try:

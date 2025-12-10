@@ -15,12 +15,16 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any
 
+from cryptography.exceptions import InvalidTag
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
+GCM_HEADER = b"VCLG"  # 标识新格式，避免与旧CBC混淆
+GCM_NONCE_SIZE = 12
 
 
 class EncryptionAlgorithm(Enum):
@@ -196,7 +200,7 @@ class DataEncryption:
         return fernet.decrypt(encrypted_data)
 
     def _encrypt_with_aes(self, data: str | bytes, key: bytes) -> bytes:
-        """使用AES加密
+        """使用AES-GCM加密并添加数据完整性标签
 
         Args:
             data: 要加密的数据
@@ -208,25 +212,18 @@ class DataEncryption:
         if isinstance(data, str):
             data = data.encode("utf-8")
 
-        # 生成随机IV
-        iv = secrets.token_bytes(16)
+        if len(key) not in (16, 24, 32):
+            raise ValueError("AES密钥长度必须是128/192/256位")
 
-        # 创建加密器
-        cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
-        encryptor = cipher.encryptor()
+        nonce = secrets.token_bytes(GCM_NONCE_SIZE)
+        aesgcm = AESGCM(key)
+        ciphertext = aesgcm.encrypt(nonce, data, associated_data=None)
 
-        # 填充数据到16字节的倍数
-        padding_length = 16 - (len(data) % 16)
-        padded_data = data + bytes([padding_length] * padding_length)
-
-        # 加密
-        encrypted = encryptor.update(padded_data) + encryptor.finalize()
-
-        # 返回IV + 加密数据
-        return iv + encrypted
+        # 标记新格式: header + nonce + ciphertext_with_tag
+        return GCM_HEADER + nonce + ciphertext
 
     def _decrypt_with_aes(self, encrypted_data: bytes, key: bytes) -> bytes:
-        """使用AES解密
+        """使用AES解密（优先GCM，兼容旧CBC）
 
         Args:
             encrypted_data: 加密的数据
@@ -235,19 +232,39 @@ class DataEncryption:
         Returns:
             解密后的数据
         """
-        # 提取IV
+        if encrypted_data.startswith(GCM_HEADER):
+            payload = encrypted_data[len(GCM_HEADER) :]
+            if len(payload) < GCM_NONCE_SIZE + 16:
+                raise ValueError("AES-GCM 密文长度无效")
+
+            nonce = payload[:GCM_NONCE_SIZE]
+            ciphertext = payload[GCM_NONCE_SIZE:]
+            aesgcm = AESGCM(key)
+
+            try:
+                return aesgcm.decrypt(nonce, ciphertext, associated_data=None)
+            except InvalidTag as exc:
+                raise ValueError("AES-GCM 验证失败，数据可能被篡改") from exc
+
+        # 兼容历史CBC密文，优先提示迁移
+        logger.warning("检测到旧版AES-CBC密文，建议重新加密以启用认证保护")
+        return self._decrypt_legacy_cbc(encrypted_data, key)
+
+    def _decrypt_legacy_cbc(self, encrypted_data: bytes, key: bytes) -> bytes:
+        """兼容旧版 AES-CBC 解密（不具备完整性校验）"""
+        if len(encrypted_data) < 16:
+            raise ValueError("AES-CBC 密文长度无效")
+
         iv = encrypted_data[:16]
         encrypted = encrypted_data[16:]
 
-        # 创建解密器
         cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
         decryptor = cipher.decryptor()
-
-        # 解密
         decrypted = decryptor.update(encrypted) + decryptor.finalize()
 
-        # 移除填充
         padding_length = decrypted[-1]
+        if padding_length == 0 or padding_length > len(decrypted):
+            raise ValueError("AES-CBC 填充无效")
         return decrypted[:-padding_length]
 
     def generate_key(self, algorithm: EncryptionAlgorithm, key_id: str | None = None) -> str:

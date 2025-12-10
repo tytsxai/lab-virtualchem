@@ -15,6 +15,14 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
+def _is_safe_identifier(name: str) -> bool:
+    """Validate table/index names to prevent injection via PRAGMA strings."""
+    if not name:
+        return False
+    # Allow letters, digits, and underscores only
+    return name.replace("_", "").isalnum()
+
+
 @dataclass
 class QueryStats:
     """查询统计"""
@@ -142,10 +150,14 @@ class IndexAnalyzer:
             cursor = self.connection.cursor()
 
             # 获取表信息
+            if not _is_safe_identifier(table_name):
+                raise ValueError("Invalid table name")
             cursor.execute(f"PRAGMA table_info({table_name})")
             columns = cursor.fetchall()
 
             # 获取索引信息
+            if not _is_safe_identifier(table_name):
+                raise ValueError("Invalid table name")
             cursor.execute(f"PRAGMA index_list({table_name})")
             indexes = cursor.fetchall()
 
@@ -183,11 +195,15 @@ class IndexAnalyzer:
         # 获取当前表的索引
         try:
             cursor = self.connection.cursor()
+            if not _is_safe_identifier(table_name):
+                raise ValueError("Invalid table name")
             cursor.execute(f"PRAGMA index_list({table_name})")
             existing_indexes = cursor.fetchall()
             indexed_columns = set()
 
             for idx in existing_indexes:
+                if not _is_safe_identifier(idx[1]):
+                    raise ValueError("Invalid index name")
                 cursor.execute(f"PRAGMA index_info({idx[1]})")
                 index_info = cursor.fetchall()
                 for col in index_info:

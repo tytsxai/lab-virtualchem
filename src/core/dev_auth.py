@@ -16,6 +16,14 @@ from ..utils.logger import get_logger
 logger = get_logger(__name__)
 
 
+def _env_flag(name: str, default: bool = False) -> bool:
+    """读取布尔环境变量，支持常见真值字符串"""
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 @dataclass
 class DevSession:
     """开发者会话"""
@@ -50,12 +58,16 @@ class DeveloperAuth:
         self._lockout_duration = timedelta(minutes=15)
         self._lockout_until: datetime | None = None
         self._app_environment = os.getenv("ENVIRONMENT", "development")
+        self.dev_mode_enabled = False
+        self._secret_sequences: list[str] = []
+        self._allow_secret_sequences = False
 
         # 加载配置
         self._load_config()
 
     def _load_config(self):
         """加载配置"""
+        self.dev_config: dict[str, object] = {}
         try:
             with open(self.config_path, encoding="utf-8") as f:
                 config = json.load(f)
@@ -95,6 +107,24 @@ class DeveloperAuth:
             self.session_timeout = 24
             self.enabled_features = ["debug_console", "log_viewer"]
             self.dev_key_hash = ""
+            self._app_environment = os.getenv("ENVIRONMENT", "development")
+
+        self._update_dev_mode_flags()
+
+    def _update_dev_mode_flags(self) -> None:
+        """应用环境与配置开关，统一控制开发者模式可用性"""
+        env = (self._app_environment or "development").lower()
+        base_enabled = bool(self.dev_config.get("enabled", False))
+        # 生产环境必须显式通过环境变量开启
+        if env == "production":
+            self.dev_mode_enabled = _env_flag("DEVELOPER_MODE_ENABLED", False)
+        else:
+            self.dev_mode_enabled = _env_flag("DEVELOPER_MODE_ENABLED", base_enabled)
+
+        self._secret_sequences = [s.strip().upper() for s in self.dev_config.get("secret_sequences", []) if s]
+        self._allow_secret_sequences = (
+            self.dev_mode_enabled and env != "production" and bool(self._secret_sequences)
+        )
 
     def _resolve_dev_key_hash(self) -> str:
         """解析开发者密钥哈希（优先使用环境变量）"""
@@ -169,6 +199,10 @@ class DeveloperAuth:
         Returns:
             是否认证成功
         """
+        if not self._is_dev_mode_allowed():
+            logger.warning("当前环境未启用开发者模式，拒绝认证请求")
+            return False
+
         # 检查锁定状态
         if self.is_locked_out():
             remaining = int((self._lockout_until - datetime.now()).total_seconds() / 60)
@@ -212,12 +246,20 @@ class DeveloperAuth:
         Returns:
             是否认证成功
         """
-        # 预定义的秘密序列
-        valid_sequences = ["DEVMODE", "DEVELOPER", "DEBUG", "CONSOLE"]
+        if not self._is_dev_mode_allowed():
+            logger.warning("未启用开发者模式，忽略秘密序列")
+            return False
 
-        if sequence.upper() in valid_sequences:
-            self._create_session()
-            logger.info(f"通过秘密序列激活开发者模式: {sequence}")
+        if not self._allow_secret_sequences:
+            logger.warning("秘密序列在当前环境被禁用或未配置，拒绝激活")
+            return False
+
+        if not self.dev_key_hash:
+            logger.error("开发者密钥未配置，禁止通过秘密序列激活开发者模式")
+            return False
+
+        if sequence.upper() in self._secret_sequences:
+            logger.info("检测到秘密序列，需通过开发者密钥完成认证")
             return True
 
         return False
@@ -285,6 +327,14 @@ class DeveloperAuth:
             return False
 
         return self._current_session.has_feature(feature)
+
+    def _is_dev_mode_allowed(self) -> bool:
+        """检查当前环境是否允许启用开发者模式"""
+        if not self.dev_mode_enabled:
+            return False
+        if self._app_environment.lower() == "production" and not _env_flag("DEVELOPER_MODE_ENABLED", False):
+            return False
+        return True
 
     @staticmethod
     def generate_dev_key() -> str:

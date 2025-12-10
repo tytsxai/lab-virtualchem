@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 import pytest
 
+from src import __version__ as APP_VERSION
 from src.core.config_manager import (
     ConfigManager,
     ConfigSchema,
@@ -217,7 +218,7 @@ class TestConfigManager:
             "paths": {"data": "data"},  # 旧配置
         }
 
-        success = manager.migrate_config("1.0.0", "2.0.0")
+        success = manager.migrate_config("1.0.0", APP_VERSION)
         assert success is True
         assert "paths" not in manager._config
         assert "logging" in manager._config

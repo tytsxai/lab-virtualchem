@@ -221,7 +221,7 @@
     },
     "wizard": {
         "welcome_title": "🧪 欢迎使用 VirtualChemLab",
-        "version": "版本 v2.0.0",
+        "version": "版本 v3.0.0",
         "intro": "VirtualChemLab 是一款专业的虚拟化学实验室软件，\n让您在安全的环境中进行化学实验，\n无需担心试剂危险、设备损坏等问题。\n\n本向导将帮助您快速了解软件的基本功能和使用方法。",
         "dont_show_again": "下次启动时不再显示此向导",
         "skip": "跳过",

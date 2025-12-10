@@ -14,6 +14,7 @@ from src.core.security import (
     Role,
     SecureToken,
 )
+from src.security.data_protection import DataEncryption as ProtectedDataEncryption, EncryptionAlgorithm
 
 
 class TestInputValidator(unittest.TestCase):
@@ -315,6 +316,30 @@ class TestDataSanitizer(unittest.TestCase):
 
         self.assertNotIn("\x00", sanitized["text"])
         self.assertNotIn("\x01", sanitized["nested"]["value"])
+
+
+class TestProtectedDataEncryption(unittest.TestCase):
+    """数据保护模块 AES-GCM 测试"""
+
+    def setUp(self):
+        self.encryption = ProtectedDataEncryption()
+        self.key_id = self.encryption.generate_key(EncryptionAlgorithm.AES256, key_id="test_aes_key")
+
+    def test_aes_gcm_round_trip(self):
+        """密文应可还原"""
+        original = b"critical payload"
+        ciphertext = self.encryption.encrypt_data(original, self.key_id)
+        decrypted = self.encryption.decrypt_data(ciphertext, self.key_id)
+        self.assertEqual(decrypted, original)
+
+    def test_aes_gcm_detects_tampering(self):
+        """篡改密文应触发验证失败"""
+        ciphertext = self.encryption.encrypt_data(b"secure-data", self.key_id)
+        tampered = bytearray(ciphertext)
+        tampered[-1] ^= 0x01
+
+        with self.assertRaises(ValueError):
+            self.encryption.decrypt_data(bytes(tampered), self.key_id)
 
 
 if __name__ == "__main__":

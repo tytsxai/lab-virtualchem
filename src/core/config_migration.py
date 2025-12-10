@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from src import __version__ as APP_VERSION
 from .common_exceptions import ConfigurationError
 from .error_handler import get_error_handler
 from .unified_config_manager import UnifiedConfigManager
@@ -45,7 +46,7 @@ class ConfigMigrationManager:
     def __init__(self, config_manager: UnifiedConfigManager):
         self._config_manager = config_manager
         self._versions: Dict[str, ConfigVersion] = {}
-        self._current_version = "1.0.0"
+        self._current_version = APP_VERSION
         self._error_handler = get_error_handler()
 
         # 迁移统计
@@ -133,6 +134,22 @@ class ConfigMigrationManager:
             new_keys=["ui", "performance"]
         )
 
+        if APP_VERSION != "2.0.0":
+            migrate_to_current = MigrationStep(
+                from_version="2.0.0",
+                to_version=APP_VERSION,
+                description=f"同步配置版本到 {APP_VERSION}",
+                migration_function=self._migrate_2_0_to_current,
+                rollback_function=self._rollback_current_to_2_0,
+                required=False,
+            )
+            self._versions[APP_VERSION] = ConfigVersion(
+                version=APP_VERSION,
+                schema=v2_schema,
+                migration_steps=[migrate_to_current],
+                new_keys=["ui", "performance"],
+            )
+
     def _migrate_1_0_to_2_0(self, config_data: Dict[str, Any]) -> Dict[str, Any]:
         """迁移 1.0.0 -> 2.0.0"""
         logger.info("Migrating config from 1.0.0 to 2.0.0")
@@ -174,6 +191,20 @@ class ConfigMigrationManager:
             config_data["app"].pop("debug", None)
             config_data["app"].pop("log_level", None)
 
+        return config_data
+
+    def _migrate_2_0_to_current(self, config_data: Dict[str, Any]) -> Dict[str, Any]:
+        """迁移 2.0.0 -> 当前应用版本（占位迁移）"""
+        logger.info("Migrating config from 2.0.0 to %s", APP_VERSION)
+        config_data.setdefault("app", {})
+        config_data["app"]["version"] = APP_VERSION
+        return config_data
+
+    def _rollback_current_to_2_0(self, config_data: Dict[str, Any]) -> Dict[str, Any]:
+        """回滚 当前版本 -> 2.0.0（占位回滚）"""
+        logger.info("Rolling back config from %s to 2.0.0", APP_VERSION)
+        config_data.setdefault("app", {})
+        config_data["app"]["version"] = "2.0.0"
         return config_data
 
     def register_version(self, version: ConfigVersion) -> None:

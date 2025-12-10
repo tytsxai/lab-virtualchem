@@ -7,6 +7,7 @@ import asyncio
 import time
 from pathlib import Path
 
+from src import __version__ as APP_VERSION
 # 导入重构后的核心组件
 from src.core.common_exceptions import (
     VirtualChemLabError,
@@ -396,13 +397,13 @@ def example_config_migration():
     print(f"检测到配置版本: {version}")
 
     # 2. 迁移配置
-    migrated_config = migrate_config(v1_config, "2.0.0")
+    migrated_config = migrate_config(v1_config, APP_VERSION)
     print(f"迁移后的配置: {migrated_config}")
 
     # 3. 验证迁移结果
     assert "ui" in migrated_config
     assert "performance" in migrated_config
-    assert migrated_config["app"]["version"] == "2.0.0"
+    assert migrated_config["app"]["version"] == APP_VERSION
     assert migrated_config["app"]["debug"] is False
     assert migrated_config["app"]["log_level"] == "INFO"
 
@@ -413,7 +414,7 @@ def example_config_migration():
     print(f"支持的版本: {version_history}")
 
     # 5. 获取迁移信息
-    migration_info = migration.get_migration_info("1.0.0", "2.0.0")
+    migration_info = migration.get_migration_info("1.0.0", APP_VERSION)
     print(f"迁移信息: {migration_info}")
 
 
@@ -465,7 +466,7 @@ def example_integration():
     }
 
     # 迁移配置
-    new_config = migrate_config(old_config, "2.0.0")
+    new_config = migrate_config(old_config, APP_VERSION)
 
     # 使用新配置
     config_manager = get_config_manager()

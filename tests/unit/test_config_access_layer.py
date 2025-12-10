@@ -6,6 +6,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
+from src import __version__ as APP_VERSION
 from src.core.config_access_layer import (
     ConfigAccessLayer,
     get_config_access,
@@ -47,7 +48,7 @@ class MockAppConfig:
 
     def __init__(self):
         self.name = "VirtualChemLab"
-        self.version = "2.0.0"
+        self.version = APP_VERSION
         self.debug = True
 
     def dict(self):
@@ -97,7 +98,7 @@ class TestConfigAccessLayer:
     def test_get_basic_value(self):
         """测试获取基本值"""
         assert self.access_layer.get("app.name") == "VirtualChemLab"
-        assert self.access_layer.get("app.version") == "2.0.0"
+        assert self.access_layer.get("app.version") == APP_VERSION
         assert self.access_layer.get("app.debug") is True
 
     def test_get_nested_value(self):
@@ -125,7 +126,7 @@ class TestConfigAccessLayer:
         app_section = self.access_layer.get_section("app")
         assert isinstance(app_section, dict)
         assert app_section["name"] == "VirtualChemLab"
-        assert app_section["version"] == "2.0.0"
+        assert app_section["version"] == APP_VERSION
 
     def test_get_section_nonexistent(self):
         """测试获取不存在的配置节"""

@@ -7,6 +7,7 @@ import pytest
 import time
 from unittest.mock import Mock, patch
 
+from src import __version__ as APP_VERSION
 from src.core.common_exceptions import (
     VirtualChemLabError,
     ConfigurationError,
@@ -590,11 +591,11 @@ class TestConfigMigration:
         version = migration.detect_config_version(v1_config)
         assert version == "1.0.0"
 
-        # 测试v2.0.0配置
-        v2_config = {
+        # 测试当前版本配置
+        current_config = {
             "app": {
                 "name": "TestApp",
-                "version": "2.0.0",
+                "version": APP_VERSION,
                 "environment": "development"
             },
             "ui": {
@@ -602,8 +603,8 @@ class TestConfigMigration:
             }
         }
 
-        version = migration.detect_config_version(v2_config)
-        assert version == "2.0.0"
+        version = migration.detect_config_version(current_config)
+        assert version == APP_VERSION
 
     def test_config_migration(self):
         """测试配置迁移"""
@@ -618,12 +619,12 @@ class TestConfigMigration:
             }
         }
 
-        # 迁移到v2.0.0
-        migrated_config = migration.migrate_config(v1_config, "2.0.0")
+        # 迁移到当前版本
+        migrated_config = migration.migrate_config(v1_config, APP_VERSION)
 
         assert "ui" in migrated_config
         assert "performance" in migrated_config
-        assert migrated_config["app"]["version"] == "2.0.0"
+        assert migrated_config["app"]["version"] == APP_VERSION
         assert migrated_config["app"]["debug"] is False
         assert migrated_config["app"]["log_level"] == "INFO"
 

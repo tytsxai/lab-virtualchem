@@ -289,13 +289,8 @@ class ServiceRegistry:
 
         # JWT管理器
         def create_jwt_manager() -> JWTManager:
-            try:
-                return create_jwt_manager_from_config(config)
-            except Exception as exc:  # pragma: no cover - 配置错误时回退
-                logger.error(f"JWT管理器初始化失败: {exc}")
-                # 生成一个临时密钥，防止服务因配置缺失而崩溃
-                os.environ.setdefault("JWT_SECRET_KEY", "temporary-development-secret-token-please-change")
-                return create_jwt_manager_from_config(config)
+            # 在生产环境禁止使用回退密钥；缺失即失败
+            return create_jwt_manager_from_config(config)
 
         container.register_singleton(JWTManager, factory=create_jwt_manager)
 

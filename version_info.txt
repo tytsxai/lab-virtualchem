@@ -9,9 +9,9 @@
 VSVersionInfo(
   ffi=FixedFileInfo(
     # 文件版本号 (主版本, 次版本, 修订版, 构建号)
-    filevers=(2, 0, 0, 0),
+    filevers=(3, 0, 0, 0),
     # 产品版本号
-    prodvers=(2, 0, 0, 0),
+    prodvers=(3, 0, 0, 0),
     # 包含 VS_FF_DEBUG、VS_FF_PRERELEASE、VS_FF_PATCHED 等标志
     mask=0x3f,
     # 文件标志 (0x0 = 正式版本)
@@ -33,13 +33,13 @@ VSVersionInfo(
         [
           StringStruct(u'CompanyName', u'VirtualChemLab Team'),
           StringStruct(u'FileDescription', u'Virtual Chemistry Laboratory - 虚拟化学实验室'),
-          StringStruct(u'FileVersion', u'2.0.0.0'),
+          StringStruct(u'FileVersion', u'3.0.0.0'),
           StringStruct(u'InternalName', u'VirtualChemLab'),
           StringStruct(u'LegalCopyright', u'Copyright © 2025 VirtualChemLab Team. All rights reserved.'),
           StringStruct(u'LegalTrademarks', u'VirtualChemLab™'),
           StringStruct(u'OriginalFilename', u'VirtualChemLab.exe'),
           StringStruct(u'ProductName', u'VirtualChemLab'),
-          StringStruct(u'ProductVersion', u'2.0.0'),
+          StringStruct(u'ProductVersion', u'3.0.0'),
           StringStruct(u'Comments', u'高性能虚拟化学实验室桌面应用'),
           StringStruct(u'CompanyShortName', u'VCL'),
           StringStruct(u'PrivateBuild', u''),
@@ -51,13 +51,13 @@ VSVersionInfo(
         [
           StringStruct(u'CompanyName', u'VirtualChemLab团队'),
           StringStruct(u'FileDescription', u'虚拟化学实验室 - 高性能桌面版'),
-          StringStruct(u'FileVersion', u'2.0.0.0'),
+          StringStruct(u'FileVersion', u'3.0.0.0'),
           StringStruct(u'InternalName', u'VirtualChemLab'),
           StringStruct(u'LegalCopyright', u'版权所有 © 2025 VirtualChemLab团队。保留所有权利。'),
           StringStruct(u'LegalTrademarks', u'VirtualChemLab™'),
           StringStruct(u'OriginalFilename', u'VirtualChemLab.exe'),
           StringStruct(u'ProductName', u'虚拟化学实验室'),
-          StringStruct(u'ProductVersion', u'2.0.0'),
+          StringStruct(u'ProductVersion', u'3.0.0'),
           StringStruct(u'Comments', u'一个具有高性能和游戏化交互体验的虚拟化学实验室应用程序'),
         ]
       )

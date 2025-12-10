@@ -1595,7 +1595,7 @@ class MainWindow(QMainWindow):
                 # 检查是否匹配秘密序列
                 if self.dev_auth.authenticate_by_secret_sequence(self._key_sequence):
                     self._key_sequence = ""
-                    self._activate_dev_mode()
+                    self.on_dev_authenticate()
                     return True
 
                 # 限制序列长度
@@ -1653,7 +1653,12 @@ class MainWindow(QMainWindow):
             return
 
         # 创建并显示控制台
-        self.dev_console = DeveloperConsole(self.dev_auth, self)
+        try:
+            self.dev_console = DeveloperConsole(self.dev_auth, self)
+        except PermissionError as exc:
+            logger.warning("开发者控制台创建失败: %s", exc)
+            QMessageBox.warning(self, "权限不足", "开发者会话已失效，请重新认证。")
+            return
         self.dev_console.closed.connect(self._on_dev_console_closed)
         self.dev_console.show()
 

@@ -22,6 +22,7 @@ import logging  # noqa: E402
 from . import __version__ as APP_VERSION  # noqa: E402
 
 from src.core.config_loader import get_config  # noqa: E402
+from src.core.startup_preflight import ensure_secure_startup  # noqa: E402
 from src.core.service_registration import configure_container  # noqa: E402
 from src.utils.logger import get_logger, setup_logger  # noqa: E402
 
@@ -48,6 +49,9 @@ def main() -> int:
         logger.info("✅ 配置加载完成")
         logger.info(f"   环境: {config.app.environment}")
         logger.info(f"   调试模式: {config.app.debug}")
+
+        # 1.1 统一的启动前安全校验（密钥长度/存在性）
+        ensure_secure_startup(config=config)
 
         # 2. 检查依赖
         try:

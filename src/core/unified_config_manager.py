@@ -14,6 +14,7 @@ from typing import Any, Dict, Optional
 import jsonschema
 import yaml
 
+from src import __version__ as APP_VERSION
 from .common_exceptions import ConfigurationError
 from .error_handler import get_error_handler
 
@@ -101,7 +102,7 @@ class UnifiedConfigManager:
             name="app",
             data={
                 "name": "VirtualChemLab",
-                "version": "2.0.0",
+                "version": APP_VERSION,
                 "environment": "development",
                 "debug": True,
                 "log_level": "INFO"

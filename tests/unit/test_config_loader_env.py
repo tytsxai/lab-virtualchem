@@ -122,6 +122,18 @@ def test_merge_env_requires_admin_secret_in_production(monkeypatch: pytest.Monke
         Config._merge_env_vars(config_data)
 
 
+def test_merge_env_rejects_short_admin_secret_in_production(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Admin secret must meet length requirements in production."""
+    config_data = _base_config(environment="production")
+
+    monkeypatch.setenv("JWT_SECRET_KEY", "B" * 40)
+    monkeypatch.setenv("SESSION_SECRET_KEY", "S" * 40)
+    monkeypatch.setenv("VCL_ADMIN_SECRET_KEY", "too-short-secret")
+
+    with pytest.raises(ValueError, match="管理后台密钥长度必须>=32"):
+        Config._merge_env_vars(config_data)
+
+
 def test_load_enforces_version_alignment(monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
     """Config.load should align app.version with the runtime version."""
 

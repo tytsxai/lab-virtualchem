@@ -16,6 +16,7 @@ from enum import Enum
 from typing import Any
 
 from .. import __version__ as APP_VERSION
+from src.utils.logger import SensitiveDataFilter
 
 # 尝试导入额外的日志库
 try:
@@ -109,6 +110,12 @@ class ContextVar:
 
 # 全局上下文
 _log_context = ContextVar()
+
+
+def _ensure_filter(handler: logging.Handler) -> None:
+    """确保日志处理器附带敏感信息过滤器"""
+    if not any(isinstance(f, SensitiveDataFilter) for f in handler.filters):
+        handler.addFilter(SensitiveDataFilter())
 
 
 class StructuredFormatter(logging.Formatter):
@@ -263,12 +270,14 @@ class LoggerFactory:
                 console_handler.setFormatter(StructuredFormatter())
             else:
                 console_handler.setFormatter(ConsoleFormatter())
+            _ensure_filter(console_handler)
             root_logger.addHandler(console_handler)
 
         # 文件处理器
         if log_file:
             file_handler = logging.FileHandler(log_file, encoding="utf-8")
             file_handler.setFormatter(StructuredFormatter())
+            _ensure_filter(file_handler)
             root_logger.addHandler(file_handler)
 
         cls._configured = True

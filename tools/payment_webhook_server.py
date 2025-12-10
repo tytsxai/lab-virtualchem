@@ -6,6 +6,8 @@
 
 import json
 import logging
+import os
+import secrets
 import sys
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -22,6 +24,16 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def _resolve_license_secret() -> str:
+    """从环境变量读取许可证密钥，避免硬编码"""
+    secret = os.getenv("LICENSE_SECRET_KEY", "").strip()
+    if not secret:
+        raise ValueError("未设置 LICENSE_SECRET_KEY，禁止使用默认/硬编码密钥")
+    if secret.startswith("YOUR_") or len(secret) < 32:
+        raise ValueError("LICENSE_SECRET_KEY 长度不足或仍为占位值，请提供>=32位的生产密钥")
+    return secret
+
+
 class PaymentWebhookHandler(BaseHTTPRequestHandler):
     """支付Webhook处理器"""
 
@@ -30,6 +42,11 @@ class PaymentWebhookHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         """处理POST请求"""
+        if not self._validate_webhook_secret():
+            self.send_response(401)
+            self.end_headers()
+            return
+
         content_length = int(self.headers.get('Content-Length', 0))
         body = self.rfile.read(content_length)
 
@@ -73,6 +90,25 @@ class PaymentWebhookHandler(BaseHTTPRequestHandler):
         if confirmations >= self._get_min_confirmations(currency):
             self._generate_license_for_payment(tx_hash, data)
 
+    def _validate_webhook_secret(self) -> bool:
+        """校验 webhook 密钥，避免未授权的许可证生成"""
+        expected = os.getenv("WEBHOOK_SECRET", "").strip()
+        provided = (self.headers.get("X-Webhook-Secret") or self.headers.get("X-Webhook-Signature") or "").strip()
+
+        if not expected:
+            logger.error("WEBHOOK_SECRET 未设置，拒绝处理回调请求")
+            return False
+
+        if not provided:
+            logger.warning("缺少 webhook 密钥头，已拒绝请求")
+            return False
+
+        if not secrets.compare_digest(provided, expected):
+            logger.warning("webhook 密钥不匹配，已拒绝请求")
+            return False
+
+        return True
+
     def _generate_license_for_payment(self, tx_hash: str, payment_data: dict[str, Any]):
         """为支付生成许可证"""
         try:
@@ -94,7 +130,7 @@ class PaymentWebhookHandler(BaseHTTPRequestHandler):
             )
 
             # 生成许可证
-            secret_key = "YOUR_SECRET_KEY"
+            secret_key = _resolve_license_secret()
             license_file = PROJECT_ROOT / "data" / "licenses" / f"{order['user_id']}.json"
 
             license_manager = LicenseManager(secret_key, license_file)
@@ -193,4 +229,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     start_webhook_server(args.host, args.port)
-

@@ -45,6 +45,7 @@ from ..core.template_engine import TemplateEngine
 from ..reporter.html_generator import HTMLGenerator
 from ..storage.json_store import JSONStore
 from ..utils.config import Config
+from ..utils.logger import SensitiveDataFilter, setup_logger
 from .middleware import get_auth_middleware, get_rate_limiter
 
 logger = logging.getLogger(__name__)
@@ -911,19 +912,20 @@ class APIServer:
 
 
 if __name__ == "__main__":
-    # 配置日志
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    # 统一日志配置，带敏感信息过滤
+    setup_logger("virtualchemlab.api", logging.INFO)
 
-    # 配置访问日志
+    # 配置访问日志（同样挂载过滤器）
     access_handler = logging.FileHandler("logs/api_access.log")
+    access_handler.addFilter(SensitiveDataFilter())
     access_handler.setFormatter(logging.Formatter("%(asctime)s - %(message)s"))
     access_logger.addHandler(access_handler)
 
-    # 启动服务器 (开发模式: 禁用认证)
+    # 启动服务器 (默认启用认证，需显式配置才可禁用)
     server = APIServer(
         host="0.0.0.0",
         port=8080,
-        enable_auth=False,  # 开发模式禁用认证
+        enable_auth=True,
         enable_rate_limit=True,
     )
     server.start()

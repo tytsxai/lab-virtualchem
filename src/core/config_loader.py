@@ -17,6 +17,7 @@ from src import __version__ as APP_VERSION
 
 logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+CONFIG_DIR = PROJECT_ROOT / "config"
 
 
 class PathsConfig(BaseModel):
@@ -117,7 +118,7 @@ class AppConfig(BaseModel):
     """应用配置"""
 
     name: str = "VirtualChemLab"
-    version: str = "2.0.0"
+    version: str = APP_VERSION
     environment: Literal["development", "staging", "production"] = "development"
     debug: bool = False
     port: int = 8000
@@ -159,11 +160,12 @@ class Config(BaseModel):
         Returns:
             Config: 配置对象
         """
-        # 1. 确定环境
-        environment = env if env is not None else os.getenv("ENVIRONMENT", "development") or "development"
-
-        # 2. 加载环境变量 (优先级最高)
+        # 1. 加载环境变量 (优先级最高，允许 .env 中的 ENVIRONMENT 生效)
         load_env_file()
+
+        # 2. 确定环境
+        environment = env or os.getenv("ENVIRONMENT") or "development"
+        environment = str(environment).strip().lower() or "development"
 
         # 3. 加载配置文件
         config_data = cls._load_config_file(environment)
@@ -182,30 +184,36 @@ class Config(BaseModel):
 
     @classmethod
     def _load_config_file(cls, environment: str) -> dict[str, Any]:
-        """加载配置文件（简化版）"""
-        config_dir = Path("config")
+        """加载配置文件并深度合并（基础 -> 兼容配置 -> 环境覆盖）"""
+        config_dir = CONFIG_DIR
 
-        # 配置加载优先级列表
+        merged_config: dict[str, Any] = cls._get_default_config()
+        found_any = False
+
+        # 读取顺序：基础配置 -> 兼容旧版 config.json -> 环境特定配置
         config_files = [
-            config_dir / f"{environment}.json",  # 环境特定配置
-            config_dir / "base.json",            # 基础配置
-            Path("config.json"),                 # 旧配置文件
+            config_dir / "base.json",
+            PROJECT_ROOT / "config.json",
+            config_dir / f"{environment}.json",
         ]
 
         for config_file in config_files:
-            try:
-                if config_file.exists():
-                    with open(config_file, encoding="utf-8") as f:
-                        config_data = json.load(f)
-                        logger.info(f"加载配置文件: {config_file}")
-                        return config_data
-            except Exception as e:
-                logger.warning(f"加载配置文件失败 {config_file}: {e}")
+            if not config_file.exists():
                 continue
 
-        # 所有配置文件都失败，返回默认配置
-        logger.info("使用默认配置")
-        return cls._get_default_config()
+            try:
+                with open(config_file, encoding="utf-8") as f:
+                    config_data = json.load(f)
+                merged_config = cls._deep_merge(merged_config, config_data)
+                found_any = True
+                logger.info("加载配置文件: %s", config_file)
+            except Exception as e:  # pragma: no cover - 防御性容错
+                logger.warning("加载配置文件失败 %s: %s", config_file, e)
+
+        if not found_any:
+            logger.info("使用默认配置")
+
+        return merged_config
 
     @classmethod
     def _merge_env_vars(cls, config_data: dict[str, Any], environment_override: str | None = None) -> dict[str, Any]:
@@ -237,6 +245,7 @@ class Config(BaseModel):
             config_data["app"].setdefault("debug", False)
 
         env_name = config_data["app"]["environment"]
+        is_prod = env_name == "production"
 
         # 安全配置
         security_cfg = config_data.setdefault("security", {})
@@ -246,17 +255,34 @@ class Config(BaseModel):
 
         jwt_secret = os.getenv(secret_env_name) or os.getenv("JWT_SECRET_KEY")
         config_secret = security_cfg.get("jwt_secret_key")
+        jwt_secret_value: str | None = None
         if jwt_secret:
-            security_cfg["jwt_secret_key"] = jwt_secret
+            if len(jwt_secret) < 32:
+                if is_prod:
+                    raise ValueError("生产环境 JWT 密钥长度必须>=32")
+                logger.warning("检测到 JWT_SECRET_KEY 长度不足，已为%s环境生成临时密钥", env_name)
+                jwt_secret_value = secrets.token_urlsafe(48)
+            else:
+                jwt_secret_value = jwt_secret
         elif config_secret:
-            security_cfg["jwt_secret_key"] = config_secret
-            logger.warning("检测到JWT密钥来自配置文件，建议改用环境变量 %s", secret_env_name)
+            if len(config_secret) < 32:
+                if is_prod:
+                    raise ValueError("生产环境 JWT 密钥长度必须>=32")
+                logger.warning("配置文件中的JWT密钥长度不足，已为%s环境生成临时密钥", env_name)
+                jwt_secret_value = secrets.token_urlsafe(48)
+            else:
+                jwt_secret_value = config_secret
+                logger.warning("检测到JWT密钥来自配置文件，建议改用环境变量 %s", secret_env_name)
         else:
-            if env_name == "production":
-                raise ValueError(f"生产环境必须设置 JWT 密钥环境变量 ({secret_env_name})")
-            generated_secret = secrets.token_urlsafe(48)
-            security_cfg["jwt_secret_key"] = generated_secret
+            if is_prod:
+                raise ValueError(f"生产环境必须设置 JWT 密钥环境变量 ({secret_env_name}) 且长度>=32")
+            jwt_secret_value = secrets.token_urlsafe(48)
             logger.warning("未配置JWT密钥，已为%s环境生成临时密钥，仅用于本次运行", env_name)
+
+        if jwt_secret_value:
+            security_cfg["jwt_secret_key"] = jwt_secret_value
+            if not is_prod:
+                os.environ.setdefault(secret_env_name, jwt_secret_value)
 
         # 开发者密钥
         dev_key = os.getenv("DEVELOPER_KEY_HASH")
@@ -280,21 +306,65 @@ class Config(BaseModel):
         security_cfg["session_secret_env"] = session_secret_env
         session_secret = os.getenv(session_secret_env) or security_cfg.get("session_secret_key")
         if session_secret:
+            if len(session_secret) < 32:
+                if is_prod:
+                    raise ValueError(f"生产环境必须设置会话密钥环境变量 ({session_secret_env}) 且长度>=32")
+                logger.warning("会话密钥长度不足，已为%s环境生成临时密钥", env_name)
+                session_secret = secrets.token_urlsafe(48)
+            else:
+                security_cfg["session_secret_key"] = session_secret
+        elif is_prod:
+            raise ValueError(f"生产环境必须设置会话密钥环境变量 ({session_secret_env}) 且长度>=32")
+        else:
+            session_secret = secrets.token_urlsafe(48)
+            logger.warning("未配置会话密钥，已为%s环境生成临时密钥，仅用于本次运行", env_name)
+        if session_secret:
             security_cfg["session_secret_key"] = session_secret
-        elif env_name == "production":
-            raise ValueError(f"生产环境必须设置会话密钥环境变量 ({session_secret_env})")
+            if not is_prod:
+                os.environ.setdefault(session_secret_env, session_secret)
 
         developer_secret_env = os.getenv("DEVELOPER_SECRET_ENV") or security_cfg.get("developer_secret_env") or "DEVELOPER_SECRET_KEY"
         security_cfg["developer_secret_env"] = developer_secret_env
         developer_secret = os.getenv(developer_secret_env) or security_cfg.get("developer_secret_key")
-        if developer_secret:
-            security_cfg["developer_secret_key"] = developer_secret
-        elif env_name == "production" and developer_cfg["enabled"]:
-            raise ValueError(f"生产环境启用开发者模式时必须设置开发者密钥环境变量 ({developer_secret_env})")
+        if developer_cfg["enabled"]:
+            if developer_secret:
+                if len(developer_secret) < 32:
+                    if is_prod:
+                        raise ValueError(
+                            f"生产环境启用开发者模式时必须设置开发者密钥环境变量 ({developer_secret_env}) 且长度>=32"
+                        )
+                    logger.warning("开发者密钥长度不足，已为%s环境生成临时密钥", env_name)
+                    developer_secret = secrets.token_urlsafe(48)
+                else:
+                    security_cfg["developer_secret_key"] = developer_secret
+            elif is_prod:
+                raise ValueError(
+                    f"生产环境启用开发者模式时必须设置开发者密钥环境变量 ({developer_secret_env}) 且长度>=32"
+                )
+            else:
+                developer_secret = secrets.token_urlsafe(48)
+                logger.warning("未配置开发者密钥，已为%s环境生成临时密钥，仅用于本次运行", env_name)
+            if developer_secret:
+                security_cfg["developer_secret_key"] = developer_secret
+                if not is_prod:
+                    os.environ.setdefault(developer_secret_env, developer_secret)
 
         # 管理后台密钥环境变量校验
-        if env_name == "production" and not os.getenv(admin_secret_env):
-            raise ValueError(f"生产环境必须设置管理后台密钥环境变量 ({admin_secret_env})")
+        admin_secret = os.getenv(admin_secret_env)
+        if env_name == "production":
+            if not admin_secret:
+                raise ValueError(f"生产环境必须设置管理后台密钥环境变量 ({admin_secret_env})")
+            if len(admin_secret) < 32:
+                raise ValueError(f"生产环境管理后台密钥长度必须>=32: {admin_secret_env}")
+        else:
+            if not admin_secret:
+                admin_secret = secrets.token_urlsafe(48)
+                os.environ.setdefault(admin_secret_env, admin_secret)
+                logger.warning("未配置管理后台密钥，已为%s环境生成临时密钥，仅用于本次运行", env_name)
+            elif len(admin_secret) < 32:
+                admin_secret = secrets.token_urlsafe(48)
+                os.environ[admin_secret_env] = admin_secret
+                logger.warning("管理后台密钥长度不足，已为%s环境生成临时密钥，仅用于本次运行", env_name)
 
         # 数据库配置
         if not config_data.get("database"):
@@ -306,8 +376,9 @@ class Config(BaseModel):
         # Redis配置
         if not config_data.get("redis"):
             config_data["redis"] = {}
-        config_data["redis"]["enabled"] = (
-            os.getenv("REDIS_ENABLED", str(config_data["redis"].get("enabled", False))).lower() == "true"
+        redis_enabled = os.getenv("REDIS_ENABLED")
+        config_data["redis"]["enabled"] = _parse_bool(
+            redis_enabled if redis_enabled is not None else config_data["redis"].get("enabled", False)
         )
 
         redis_host = os.getenv("REDIS_HOST")
@@ -317,15 +388,17 @@ class Config(BaseModel):
         # 缓存配置
         if not config_data.get("cache"):
             config_data["cache"] = {}
-        config_data["cache"]["enabled"] = (
-            os.getenv("CACHE_ENABLED", str(config_data["cache"].get("enabled", True))).lower() == "true"
+        cache_enabled = os.getenv("CACHE_ENABLED")
+        config_data["cache"]["enabled"] = _parse_bool(
+            cache_enabled if cache_enabled is not None else config_data["cache"].get("enabled", True)
         )
 
         # 监控配置
         if not config_data.get("monitoring"):
             config_data["monitoring"] = {}
-        config_data["monitoring"]["enabled"] = (
-            os.getenv("MONITORING_ENABLED", str(config_data["monitoring"].get("enabled", True))).lower() == "true"
+        monitoring_enabled = os.getenv("MONITORING_ENABLED")
+        config_data["monitoring"]["enabled"] = _parse_bool(
+            monitoring_enabled if monitoring_enabled is not None else config_data["monitoring"].get("enabled", True)
         )
 
         # 日志配置
@@ -402,13 +475,24 @@ class Config(BaseModel):
             logger.error("创建目录失败 [%s]: %s (%s)", source, path, exc)
             raise
 
+    @staticmethod
+    def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+        """深度合并配置字典（不会修改输入）"""
+        merged = dict(base)
+        for key, value in override.items():
+            if isinstance(merged.get(key), dict) and isinstance(value, dict):
+                merged[key] = Config._deep_merge(merged[key], value)
+            else:
+                merged[key] = value
+        return merged
+
     @classmethod
     def _get_default_config(cls) -> dict[str, Any]:
         """获取默认配置"""
         return {
             "app": {
                 "name": "VirtualChemLab",
-                "version": "2.0.0",
+                "version": APP_VERSION,
                 "environment": "development",
                 "debug": True,
             },
@@ -443,6 +527,9 @@ def load_env_file(env_file: str = ".env") -> None:
         env_file: 环境变量文件路径
     """
     env_path = Path(env_file)
+    if not env_path.is_absolute() and not env_path.exists():
+        candidate = PROJECT_ROOT / env_file
+        env_path = candidate if candidate.exists() else env_path
     if not env_path.exists():
         return
 

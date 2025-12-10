@@ -17,7 +17,16 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from src.utils.logger import SensitiveDataFilter
+
 logger = logging.getLogger(__name__)
+
+
+def _ensure_sensitive_filter(target: logging.Handler | logging.Logger) -> None:
+    """Ensure SensitiveDataFilter is attached once."""
+    filters = getattr(target, "filters", [])
+    if not any(isinstance(f, SensitiveDataFilter) for f in filters):
+        target.addFilter(SensitiveDataFilter())
 
 
 class LogLevel(Enum):
@@ -306,6 +315,7 @@ class EnhancedLogger:
 
         logger.info(f"增强日志记录器初始化完成: {name}")
 
+
     def _configure_logging(self) -> None:
         """配置日志系统"""
         if self._configured:
@@ -322,6 +332,7 @@ class EnhancedLogger:
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(logging.INFO)
         console_handler.setFormatter(StructuredFormatter(include_context=True))
+        _ensure_sensitive_filter(console_handler)
         self.logger.addHandler(console_handler)
 
         # 文件处理器
@@ -333,6 +344,7 @@ class EnhancedLogger:
         )
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(StructuredFormatter(include_context=True))
+        _ensure_sensitive_filter(file_handler)
         self.logger.addHandler(file_handler)
 
         # 错误文件处理器
@@ -344,6 +356,7 @@ class EnhancedLogger:
         )
         error_handler.setLevel(logging.ERROR)
         error_handler.setFormatter(StructuredFormatter(include_context=True))
+        _ensure_sensitive_filter(error_handler)
         self.logger.addHandler(error_handler)
 
         # 审计文件处理器
@@ -355,8 +368,10 @@ class EnhancedLogger:
         )
         audit_handler.setLevel(logging.INFO)
         audit_handler.setFormatter(StructuredFormatter(include_context=True))
+        _ensure_sensitive_filter(audit_handler)
         self.logger.addHandler(audit_handler)
 
+        _ensure_sensitive_filter(self.logger)
         self._configured = True
 
     def push_context(self, context: LogContext) -> None:

@@ -8,6 +8,8 @@ import os
 from pathlib import Path
 from typing import Any, Literal
 
+from src import __version__ as APP_VERSION
+
 # 允许测试覆盖 Path.__file__，用于模拟不同的配置根目录
 if not hasattr(Path, "__file__"):
     Path.__file__ = __file__
@@ -199,7 +201,7 @@ class MonitoringConfig(BaseModel):
 class AppConfig(BaseModel):
     """应用配置"""
     name: str = Field(default="VirtualChemLab", description="应用名称")
-    version: str = Field(default="2.0.0", description="应用版本")
+    version: str = Field(default=APP_VERSION, description="应用版本")
     environment: Literal["development", "staging", "production", "test"] = Field(
         default="development", description="运行环境"
     )

@@ -15,6 +15,8 @@ from datetime import datetime
 from pathlib import Path
 from tkinter import messagebox, scrolledtext, ttk
 
+from src import __version__ as APP_VERSION
+
 # 设置标准输出为UTF-8编码（Windows兼容）
 if sys.platform == "win32":
     try:
@@ -29,7 +31,7 @@ class DeveloperPanel:
 
     def __init__(self, root):
         self.root = root
-        self.root.title("虚拟化学实验室 开发者启动面板 v2.0.0")
+        self.root.title(f"虚拟化学实验室 开发者启动面板 v{APP_VERSION}")
         self.root.geometry("900x700")
         self.root.resizable(True, True)
 
@@ -69,7 +71,7 @@ class DeveloperPanel:
         title_label = ttk.Label(title_frame, text="🧪 虚拟化学实验室 开发者启动面板", font=("Arial", 16, "bold"))
         title_label.pack()
 
-        version_label = ttk.Label(title_frame, text="版本: v2.0.0 | 开发者工具集", font=("Arial", 9))
+        version_label = ttk.Label(title_frame, text=f"版本: v{APP_VERSION} | 开发者工具集", font=("Arial", 9))
         version_label.pack()
 
         # 创建标签页

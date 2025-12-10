@@ -13,6 +13,7 @@ from typing import Any, Optional
 import jsonschema
 from jsonschema import Draft7Validator
 
+from src import __version__ as APP_VERSION
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -176,7 +177,7 @@ class ConfigManager:
                     "type": "object",
                     "properties": {
                         "name": {"type": "string", "default": "VirtualChemLab"},
-                        "version": {"type": "string", "default": "2.0.0"},
+                        "version": {"type": "string", "default": APP_VERSION},
                         "language": {"type": "string", "default": "zh_CN"},
                         "theme": {"type": "string", "enum": ["light", "dark", "auto"], "default": "dark"},
                         "window": {
@@ -344,8 +345,9 @@ class ConfigManager:
     def migrate_config(self, from_version: str, to_version: str) -> bool:
         """迁移配置"""
         try:
+            target_versions = {"2.0.0", APP_VERSION}
             # 简单的版本迁移逻辑
-            if from_version == "1.0.0" and to_version == "2.0.0":
+            if from_version == "1.0.0" and to_version in target_versions:
                 # 迁移逻辑
                 if "paths" in self._config:
                     # 移除旧的paths配置
@@ -361,6 +363,12 @@ class ConfigManager:
                         "backup_count": 5
                     }
 
+                self._config.setdefault("app", {})["version"] = to_version
+                logger.info(f"配置已从 {from_version} 迁移到 {to_version}")
+                return True
+
+            if from_version == "2.0.0" and to_version == APP_VERSION:
+                self._config.setdefault("app", {})["version"] = APP_VERSION
                 logger.info(f"配置已从 {from_version} 迁移到 {to_version}")
                 return True
 
@@ -381,7 +389,7 @@ class ConfigManager:
         return {
             "app": {
                 "name": "VirtualChemLab",
-                "version": "2.0.0",
+                "version": APP_VERSION,
                 "language": "zh_CN",
                 "theme": "dark",
                 "window": {"width": 1200, "height": 800, "maximized": False},
