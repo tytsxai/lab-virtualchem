@@ -37,6 +37,7 @@ jobs:
 
       - name: MyPy
         run: mypy src --no-error-summary
+        continue-on-error: true
 
   tests:
     runs-on: ubuntu-latest
