@@ -101,11 +101,29 @@ class QuickFixer:
         self.log(f"完成! 共修复 {count} 个文件", "SUCCESS" if count > 0 else "INFO")
         return count
 
-    def fix_version_sync(self) -> bool:
-        """同步版本号"""
+    def _read_current_version(self) -> str | None:
+        """从 src/__init__.py 读取当前应用版本号。"""
+        init_file = self.project_root / "src" / "__init__.py"
+        if not init_file.exists():
+            return None
+        try:
+            text = init_file.read_text(encoding="utf-8")
+        except Exception:
+            return None
+        match = re.search(r'__version__\s*=\s*"([^"]+)"', text)
+        return match.group(1) if match else None
+
+    def fix_version_sync(self, target_version: str | None = None) -> bool:
+        """同步版本号到当前应用版本或指定版本。"""
         self.log("开始同步版本号", "INFO")
 
-        version = "2.0.0"  # 统一版本号
+        version = target_version or self._read_current_version()
+        if not version:
+            self.log(
+                "无法解析当前版本号，请检查 src/__init__.py 或使用 --target-version 指定",
+                "ERROR",
+            )
+            return False
 
         files_to_update = {
             "README.md": (r"version-\d+\.\d+\.\d+", f"version-{version}"),
@@ -248,6 +266,10 @@ def main():
     parser.add_argument("--print-to-logger", action="store_true", help="替换print为logger")
     parser.add_argument("--fix-imports", action="store_true", help="修复通配符导入")
     parser.add_argument("--version-sync", action="store_true", help="同步版本号")
+    parser.add_argument(
+        "--target-version",
+        help="同步到指定版本号（默认读取 src/__init__.py 的 __version__）",
+    )
     parser.add_argument("--fix-indentation", action="store_true", help="修复缩进错误")
     parser.add_argument("--dry-run", action="store_true", help="仅预览不实际修改")
 
@@ -263,7 +285,7 @@ def main():
         fixer.fix_print_to_logger()
 
     if args.all or args.version_sync:
-        fixer.fix_version_sync()
+        fixer.fix_version_sync(target_version=args.target_version)
 
     if args.all or args.fix_imports:
         fixer.fix_import_star()

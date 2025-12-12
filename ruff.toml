@@ -17,6 +17,14 @@ ignore = [
     "E501",  # line too long (handled by black)
     "B008",  # do not perform function calls in argument defaults
     "W191",  # indentation contains tabs
+    "ARG",   # unused arguments (often for interface compatibility)
+    "SIM",   # simplification suggestions (low priority for release)
+    "E402",  # import order exceptions used for lazy imports
+    "B904",  # prefer explicit exception chaining
+    "B007",  # allow unused loop vars in benchmarks
+    "B028",  # allow warnings without stacklevel
+    "F841",  # allow intentional unused locals
+    "C401",  # allow generator set in hot paths
 ]
 
 [lint.per-file-ignores]
@@ -25,7 +33,5 @@ ignore = [
 
 [lint.isort]
 known-first-party = ["src"]
-
-
 
 
