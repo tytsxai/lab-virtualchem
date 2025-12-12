@@ -16,7 +16,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type
+from typing import Any
 
 from .enhanced_event_bus import Event, subscribe_event
 from .enhanced_observability import LogLevel, get_observability
@@ -56,13 +56,13 @@ class PluginInfo:
     description: str
     author: str
     plugin_type: PluginType
-    dependencies: List[str] = field(default_factory=list)
-    optional_dependencies: List[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
+    optional_dependencies: list[str] = field(default_factory=list)
     entry_point: str = ""
-    config_schema: Optional[Dict[str, Any]] = None
-    tags: Dict[str, str] = field(default_factory=dict)
+    config_schema: dict[str, Any] | None = None
+    tags: dict[str, str] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "name": self.name,
@@ -85,11 +85,11 @@ class PluginInstance:
     module: Any
     instance: Any
     state: PluginState = PluginState.UNLOADED
-    load_time: Optional[float] = None
-    error: Optional[str] = None
-    config: Dict[str, Any] = field(default_factory=dict)
+    load_time: float | None = None
+    error: str | None = None
+    config: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "info": self.info.to_dict(),
@@ -104,7 +104,7 @@ class PluginInterface(ABC):
     """插件接口"""
 
     @abstractmethod
-    def initialize(self, config: Dict[str, Any]) -> None:
+    def initialize(self, config: dict[str, Any]) -> None:
         """初始化插件"""
         raise NotImplementedError
 
@@ -133,11 +133,11 @@ class PluginInterface(ABC):
             plugin_type=PluginType.UTILITY,
         )
 
-    def get_config_schema(self) -> Optional[Dict[str, Any]]:
+    def get_config_schema(self) -> dict[str, Any] | None:
         """获取配置模式"""
         return None
 
-    def on_event(self, event: Event) -> None:
+    def on_event(self, _event: Event) -> None:
         """处理事件"""
         # 默认空实现，插件可按需覆盖
         return
@@ -145,15 +145,15 @@ class PluginInterface(ABC):
 
 class PluginManager:
     """插件管理器"""
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         self._config = config or {}
         self._error_handler = get_error_handler()
         self._observability = get_observability()
 
         # 插件存储
-        self._plugins: Dict[str, PluginInstance] = {}
-        self._plugin_classes: Dict[str, Type[PluginInterface]] = {}
-        self._plugin_directories: List[Path] = []
+        self._plugins: dict[str, PluginInstance] = {}
+        self._plugin_classes: dict[str, type[PluginInterface]] = {}
+        self._plugin_directories: list[Path] = []
 
         # 插件状态
         self._state_lock = threading.RLock()
@@ -246,7 +246,7 @@ class PluginManager:
             module_name = f"plugin_{file_path.stem}_{id(self)}"
 
             # 读取文件内容
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 source_code = f.read()
 
             # 编译模块
@@ -272,7 +272,7 @@ class PluginManager:
         except Exception as e:
             logger.error(f"Failed to load plugin from file {file_path}: {e}")
 
-    def _find_plugin_class(self, module: Any) -> Optional[Type[PluginInterface]]:
+    def _find_plugin_class(self, module: Any) -> type[PluginInterface] | None:
         """查找插件类"""
         for _name, obj in inspect.getmembers(module):
             if (inspect.isclass(obj) and
@@ -281,7 +281,7 @@ class PluginManager:
                 return obj
         return None
 
-    def _register_plugin_class(self, plugin_class: Type[PluginInterface]) -> None:
+    def _register_plugin_class(self, plugin_class: type[PluginInterface]) -> None:
         """注册插件类"""
         plugin_name = plugin_class.__name__
         self._plugin_classes[plugin_name] = plugin_class
@@ -294,7 +294,7 @@ class PluginManager:
             function="_register_plugin_class"
         )
 
-    def load_plugin(self, name: str, config: Optional[Dict[str, Any]] = None) -> bool:
+    def load_plugin(self, name: str, config: dict[str, Any] | None = None) -> bool:
         """加载插件"""
         if name not in self._plugin_classes:
             logger.error(f"Plugin class not found: {name}")
@@ -486,26 +486,26 @@ class PluginManager:
                 plugin.error = str(e)
                 return False
 
-    def get_plugin(self, name: str) -> Optional[PluginInstance]:
+    def get_plugin(self, name: str) -> PluginInstance | None:
         """获取插件实例"""
         return self._plugins.get(name)
 
-    def get_plugins_by_type(self, plugin_type: PluginType) -> List[PluginInstance]:
+    def get_plugins_by_type(self, plugin_type: PluginType) -> list[PluginInstance]:
         """按类型获取插件"""
         return [
             plugin for plugin in self._plugins.values()
             if plugin.info.plugin_type == plugin_type
         ]
 
-    def get_plugin_list(self) -> List[PluginInstance]:
+    def get_plugin_list(self) -> list[PluginInstance]:
         """获取插件列表"""
         return list(self._plugins.values())
 
-    def get_available_plugins(self) -> List[str]:
+    def get_available_plugins(self) -> list[str]:
         """获取可用插件列表"""
         return list(self._plugin_classes.keys())
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         return self._stats.copy()
 
@@ -566,7 +566,7 @@ def get_plugin_manager() -> PluginManager:
     return _global_plugin_manager
 
 
-def load_plugin(name: str, config: Optional[Dict[str, Any]] = None) -> bool:
+def load_plugin(name: str, config: dict[str, Any] | None = None) -> bool:
     """加载插件"""
     return _global_plugin_manager.load_plugin(name, config)
 
@@ -586,6 +586,6 @@ def stop_plugin(name: str) -> bool:
     return _global_plugin_manager.stop_plugin(name)
 
 
-def get_plugin(name: str) -> Optional[PluginInstance]:
+def get_plugin(name: str) -> PluginInstance | None:
     """获取插件实例"""
     return _global_plugin_manager.get_plugin(name)

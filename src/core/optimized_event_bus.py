@@ -7,10 +7,11 @@ import asyncio
 import logging
 import threading
 from collections import deque
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -27,12 +28,12 @@ class EventPriority(Enum):
 class Event:
     """事件"""
     name: str
-    data: Dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
     priority: EventPriority = EventPriority.NORMAL
-    source: Optional[str] = None
+    source: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             'name': self.name,
@@ -49,7 +50,7 @@ class EventSubscriber:
     handler: Callable
     event_pattern: str
     priority: EventPriority = EventPriority.NORMAL
-    filter_func: Optional[Callable[[Event], bool]] = None
+    filter_func: Callable[[Event], bool] | None = None
     is_async: bool = False
     subscriber_id: str = field(default_factory=lambda: str(id(object())))
 
@@ -69,9 +70,9 @@ class TrieNode:
     """Trie树节点"""
 
     def __init__(self):
-        self.children: Dict[str, TrieNode] = {}
-        self.subscribers: List[EventSubscriber] = []
-        self.wildcard_subscribers: List[EventSubscriber] = []  # *匹配的订阅者
+        self.children: dict[str, TrieNode] = {}
+        self.subscribers: list[EventSubscriber] = []
+        self.wildcard_subscribers: list[EventSubscriber] = []  # *匹配的订阅者
         self.is_wildcard = False
 
     def add_subscriber(self, subscriber: EventSubscriber):
@@ -137,7 +138,7 @@ class EventBusTrie:
             # 到达叶节点，添加订阅者
             node.add_subscriber(subscriber)
 
-    def search(self, event_name: str) -> List[EventSubscriber]:
+    def search(self, event_name: str) -> list[EventSubscriber]:
         """搜索匹配的订阅者
 
         Args:
@@ -161,9 +162,9 @@ class EventBusTrie:
     def _dfs_search(
         self,
         node: TrieNode,
-        parts: List[str],
+        parts: list[str],
         index: int,
-        subscribers: List[EventSubscriber]
+        subscribers: list[EventSubscriber]
     ):
         """深度优先搜索"""
         # 如果当前节点有通配符订阅者，添加它们（匹配剩余所有部分）
@@ -239,10 +240,10 @@ class OptimizedEventBus:
         self._trie = EventBusTrie()
 
         # 全局订阅者（监听所有事件）
-        self._global_subscribers: List[EventSubscriber] = []
+        self._global_subscribers: list[EventSubscriber] = []
 
         # 订阅者管理
-        self._subscribers_by_id: Dict[str, EventSubscriber] = {}
+        self._subscribers_by_id: dict[str, EventSubscriber] = {}
 
         # 事件历史
         self._history: deque = deque(maxlen=max_history)
@@ -260,7 +261,7 @@ class OptimizedEventBus:
         event_pattern: str,
         handler: Callable,
         priority: EventPriority = EventPriority.NORMAL,
-        filter_func: Optional[Callable[[Event], bool]] = None
+        filter_func: Callable[[Event], bool] | None = None
     ) -> str:
         """订阅事件
 
@@ -399,7 +400,7 @@ class OptimizedEventBus:
             await asyncio.gather(*tasks, return_exceptions=True)
             self._stats.events_processed += len(tasks)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         with self._lock:
             return {
@@ -415,7 +416,7 @@ class OptimizedEventBus:
         with self._lock:
             self._stats = EventBusStats(subscribers_count=self._stats.subscribers_count)
 
-    def get_history(self, count: Optional[int] = None) -> List[Event]:
+    def get_history(self, count: int | None = None) -> list[Event]:
         """获取事件历史
 
         Args:

@@ -16,10 +16,11 @@ except ImportError:
 import threading
 import time
 import tracemalloc
+from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -51,11 +52,11 @@ class PerformanceMetrics:
     memory_usage: float
     memory_available: float
     disk_usage: float
-    network_io: Dict[str, float]
-    gc_stats: Dict[str, int]
+    network_io: dict[str, float]
+    gc_stats: dict[str, int]
     thread_count: int
     process_count: int
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -63,14 +64,14 @@ class OperationMetrics:
     """操作指标"""
     operation_name: str
     start_time: float
-    end_time: Optional[float] = None
-    duration: Optional[float] = None
-    cpu_time: Optional[float] = None
-    memory_delta: Optional[float] = None
+    end_time: float | None = None
+    duration: float | None = None
+    cpu_time: float | None = None
+    memory_delta: float | None = None
     success: bool = False
     error_count: int = 0
     retry_count: int = 0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -81,18 +82,18 @@ class OptimizationSuggestion:
     expected_improvement: str
     implementation_cost: str
     priority: int
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class PerformanceMonitor:
     """性能监控器"""
 
     def __init__(self):
-        self.metrics_history: List[PerformanceMetrics] = []
-        self.operation_metrics: Dict[str, List[OperationMetrics]] = {}
-        self.optimization_suggestions: List[OptimizationSuggestion] = []
+        self.metrics_history: list[PerformanceMetrics] = []
+        self.operation_metrics: dict[str, list[OperationMetrics]] = {}
+        self.optimization_suggestions: list[OptimizationSuggestion] = []
         self.monitoring_active = False
-        self.monitor_thread: Optional[threading.Thread] = None
+        self.monitor_thread: threading.Thread | None = None
         self.lock = threading.RLock()
 
         # 性能阈值
@@ -273,7 +274,7 @@ class PerformanceMonitor:
             if len(self.operation_metrics[operation_name]) > 100:
                 self.operation_metrics[operation_name] = self.operation_metrics[operation_name][-50:]
 
-    def get_performance_summary(self) -> Dict[str, Any]:
+    def get_performance_summary(self) -> dict[str, Any]:
         """获取性能摘要"""
         with self.lock:
             if not self.metrics_history:
@@ -301,7 +302,7 @@ class PerformanceMonitor:
                 "process_count": recent_metrics[-1].process_count
             }
 
-    def get_operation_stats(self, operation_name: str) -> Optional[Dict[str, Any]]:
+    def get_operation_stats(self, operation_name: str) -> dict[str, Any] | None:
         """获取操作统计"""
         with self.lock:
             if operation_name not in self.operation_metrics:
@@ -323,7 +324,7 @@ class PerformanceMonitor:
                 "min_duration": min(durations) if durations else 0
             }
 
-    def get_optimization_suggestions(self) -> List[OptimizationSuggestion]:
+    def get_optimization_suggestions(self) -> list[OptimizationSuggestion]:
         """获取优化建议"""
         with self.lock:
             return self.optimization_suggestions.copy()
@@ -334,13 +335,13 @@ class PerformanceOptimizer:
 
     def __init__(self, monitor: PerformanceMonitor):
         self.monitor = monitor
-        self.optimization_cache: Dict[str, Any] = {}
-        self.optimization_history: List[Dict[str, Any]] = []
+        self.optimization_cache: dict[str, Any] = {}
+        self.optimization_history: list[dict[str, Any]] = []
         self.lock = threading.RLock()
 
         logger.info("性能优化器初始化完成")
 
-    def optimize_memory(self) -> Dict[str, Any]:
+    def optimize_memory(self) -> dict[str, Any]:
         """优化内存"""
         optimization_result = {
             "strategy": "memory",
@@ -373,7 +374,7 @@ class PerformanceOptimizer:
 
         return optimization_result
 
-    def optimize_cpu(self) -> Dict[str, Any]:
+    def optimize_cpu(self) -> dict[str, Any]:
         """优化CPU"""
         optimization_result = {
             "strategy": "cpu",
@@ -407,7 +408,7 @@ class PerformanceOptimizer:
 
         return optimization_result
 
-    def optimize_io(self) -> Dict[str, Any]:
+    def optimize_io(self) -> dict[str, Any]:
         """优化IO"""
         optimization_result = {
             "strategy": "io",
@@ -432,7 +433,7 @@ class PerformanceOptimizer:
 
         return optimization_result
 
-    def auto_optimize(self) -> List[Dict[str, Any]]:
+    def auto_optimize(self) -> list[dict[str, Any]]:
         """自动优化"""
         results = []
 
@@ -466,7 +467,7 @@ class EnhancedPerformanceManager:
     def __init__(self):
         self.monitor = PerformanceMonitor()
         self.optimizer = PerformanceOptimizer(self.monitor)
-        self.operation_timers: Dict[str, float] = {}
+        self.operation_timers: dict[str, float] = {}
         self.lock = threading.RLock()
 
         # 启动监控
@@ -583,7 +584,7 @@ class EnhancedPerformanceManager:
 performance_manager = EnhancedPerformanceManager()
 
 
-def performance_monitor(operation_name: Optional[str] = None):
+def performance_monitor(operation_name: str | None = None):
     """性能监控装饰器"""
     def decorator(func: Callable) -> Callable:
         name = operation_name or func.__name__

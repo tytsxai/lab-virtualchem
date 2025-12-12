@@ -8,13 +8,13 @@ from __future__ import annotations
 import logging
 import shutil
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any
 
 from PySide6.QtCore import QTimer, Signal
 from PySide6.QtWidgets import (
     QFileDialog,
-    QMessageBox,
     QMainWindow,
+    QMessageBox,
     QSplitter,
     QStackedWidget,
     QVBoxLayout,
@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (
 
 from ..core.common_exceptions import UIError
 from ..core.di_container import DIContainer
-from ..core.error_handler import get_error_handler, safe_execute
+from ..core.error_handler import get_error_handler
 from ..core.service_registration import get_configured_container
 from ..core.template_engine import TemplateEngine
 from .components import (
@@ -36,6 +36,9 @@ from .components import (
 )
 
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:  # pragma: no cover
+    from .experiment_state_manager import ExperimentStateManager
 
 
 class RefactoredMainWindow(QMainWindow):
@@ -64,21 +67,21 @@ class RefactoredMainWindow(QMainWindow):
 
         # 组件管理
         self._window_manager = WindowManager(self)
-        self._components: Dict[str, Any] = {}
+        self._components: dict[str, Any] = {}
 
         # UI组件
-        self._menu_component: Optional[MenuComponent] = None
-        self._toolbar_component: Optional[ToolbarComponent] = None
-        self._statusbar_component: Optional[StatusBarComponent] = None
+        self._menu_component: MenuComponent | None = None
+        self._toolbar_component: ToolbarComponent | None = None
+        self._statusbar_component: StatusBarComponent | None = None
 
         # 主内容区域和状态
-        self._central_widget: Optional[QWidget] = None
-        self._splitter: Optional[QSplitter] = None
-        self._stacked_widget: Optional[QStackedWidget] = None
-        self._template_engine: Optional[TemplateEngine] = None
-        self._current_experiment_id: Optional[str] = None
-        self._state_manager: Optional["ExperimentStateManager"] = None  # 引号避免循环导入
-        self._current_view: Optional[QWidget] = None
+        self._central_widget: QWidget | None = None
+        self._splitter: QSplitter | None = None
+        self._stacked_widget: QStackedWidget | None = None
+        self._template_engine: TemplateEngine | None = None
+        self._current_experiment_id: str | None = None
+        self._state_manager: ExperimentStateManager | None = None  # 引号避免循环导入
+        self._current_view: QWidget | None = None
 
         # 初始化定时器
         self._init_timer = QTimer()
@@ -638,7 +641,7 @@ class RefactoredMainWindow(QMainWindow):
         )
         self._error_handler.handle_error(ui_error)
 
-    def get_component(self, name: str) -> Optional[Any]:
+    def get_component(self, name: str) -> Any | None:
         """获取组件"""
         return self._components.get(name)
 

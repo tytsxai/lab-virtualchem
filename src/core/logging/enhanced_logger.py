@@ -8,7 +8,7 @@ import time
 from dataclasses import asdict, dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 
 class LogLevel(Enum):
@@ -37,8 +37,8 @@ class LogEntry:
     line: int
     thread_id: int
     process_id: int
-    extra_data: Optional[Dict[str, Any]] = None
-    exception_info: Optional[str] = None
+    extra_data: dict[str, Any] | None = None
+    exception_info: str | None = None
 
 class EnhancedLogger:
     """增强日志器"""
@@ -66,10 +66,10 @@ class EnhancedLogger:
         }
 
         # 处理器
-        self.handlers: Dict[str, logging.Handler] = {}
+        self.handlers: dict[str, logging.Handler] = {}
 
         # 日志条目存储
-        self.log_entries: List[LogEntry] = []
+        self.log_entries: list[LogEntry] = []
         self.max_entries = 10000
         self.entries_lock = threading.Lock()
 
@@ -202,7 +202,7 @@ class EnhancedLogger:
         if name in self.handlers and format_type in self.formats:
             self.handlers[name].setFormatter(self.formats[format_type])
 
-    def debug(self, message: str, *args, extra_data: Optional[Dict[str, Any]] = None, **kwargs):
+    def debug(self, message: str, *args, extra_data: dict[str, Any] | None = None, **kwargs):
         """记录调试日志 (兼容标准logging接口)"""
         # 支持 logger.debug("msg %s", arg) 调用风格
         if args:
@@ -212,33 +212,33 @@ class EnhancedLogger:
                 message = f"{message} | args={args}"
         self._log(logging.DEBUG, message, extra_data, **kwargs)
 
-    def info(self, message: str, extra_data: Optional[Dict[str, Any]] = None, **kwargs):
+    def info(self, message: str, extra_data: dict[str, Any] | None = None, **kwargs):
         """记录信息日志"""
         self._log(logging.INFO, message, extra_data, **kwargs)
 
-    def warning(self, message: str, extra_data: Optional[Dict[str, Any]] = None, **kwargs):
+    def warning(self, message: str, extra_data: dict[str, Any] | None = None, **kwargs):
         """记录警告日志"""
         self._log(logging.WARNING, message, extra_data, **kwargs)
 
-    def error(self, message: str, extra_data: Optional[Dict[str, Any]] = None, **kwargs):
+    def error(self, message: str, extra_data: dict[str, Any] | None = None, **kwargs):
         """记录错误日志"""
         self._log(logging.ERROR, message, extra_data, **kwargs)
 
-    def critical(self, message: str, extra_data: Optional[Dict[str, Any]] = None, **kwargs):
+    def critical(self, message: str, extra_data: dict[str, Any] | None = None, **kwargs):
         """记录严重错误日志"""
         self._log(logging.CRITICAL, message, extra_data, **kwargs)
 
-    def exception(self, message: str, extra_data: Optional[Dict[str, Any]] = None, **kwargs):
+    def exception(self, message: str, extra_data: dict[str, Any] | None = None, **kwargs):
         """记录异常日志"""
         self._log(logging.ERROR, message, extra_data, exc_info=True, **kwargs)
 
-    def performance(self, message: str, extra_data: Optional[Dict[str, Any]] = None, **kwargs):
+    def performance(self, message: str, extra_data: dict[str, Any] | None = None, **_kwargs):
         """记录性能日志"""
         # 使用性能处理器记录
         performance_logger = logging.getLogger(f"{self.name}.performance")
         performance_logger.info(message, extra={'extra_data': extra_data})
 
-    def _log(self, level: int, message: str, extra_data: Optional[Dict[str, Any]] = None, **kwargs):
+    def _log(self, level: int, message: str, extra_data: dict[str, Any] | None = None, **kwargs):
         """内部日志记录方法"""
         # 创建日志条目
         entry = LogEntry(
@@ -285,7 +285,7 @@ class EnhancedLogger:
         elif level_name == 'CRITICAL':
             self.stats['critical_count'] += 1
 
-    def get_log_entries(self, level: Optional[str] = None, limit: int = 100) -> List[LogEntry]:
+    def get_log_entries(self, level: str | None = None, limit: int = 100) -> list[LogEntry]:
         """获取日志条目"""
         with self.entries_lock:
             entries = self.log_entries.copy()
@@ -295,7 +295,7 @@ class EnhancedLogger:
 
         return entries[-limit:]
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """获取统计信息"""
         with self.entries_lock:
             return {
@@ -311,7 +311,7 @@ class EnhancedLogger:
         with self.entries_lock:
             self.log_entries.clear()
 
-    def export_logs(self, file_path: Union[str, Path], format_type: LogFormat = LogFormat.JSON):
+    def export_logs(self, file_path: str | Path, format_type: LogFormat = LogFormat.JSON):
         """导出日志"""
         file_path = Path(file_path)
 

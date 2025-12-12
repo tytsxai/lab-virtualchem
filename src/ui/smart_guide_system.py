@@ -128,7 +128,7 @@ class GuideOverlay(QWidget):
 
             for action in self.message.actions:
                 btn = QPushButton(action.get("label", "确定"))
-                btn.clicked.connect(lambda checked=False, aid=action.get("id", ""): self._on_action(aid))
+                btn.clicked.connect(lambda _checked=False, aid=action.get("id", ""): self._on_action(aid))
                 actions_layout.addWidget(btn)
 
             layout.addLayout(actions_layout)
@@ -477,7 +477,7 @@ class SmartGuideSystem(QObject):
         if context_key in help_messages:
             self.show_guide(help_messages[context_key])
 
-    def get_suggestion(self, current_state: dict[str, Any]) -> str | None:
+    def get_suggestion(self, _current_state: dict[str, Any]) -> str | None:
         """根据当前状态获取建议"""
         # 基于用户历史和当前状态提供智能建议
         if self.context.user_mistakes > 2:

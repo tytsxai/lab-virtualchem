@@ -15,8 +15,9 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from .. import __version__ as APP_VERSION
 from src.utils.logger import SensitiveDataFilter
+
+from .. import __version__ as APP_VERSION
 
 # 尝试导入额外的日志库
 try:

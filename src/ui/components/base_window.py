@@ -6,15 +6,22 @@
 from __future__ import annotations
 
 import logging
-from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from abc import abstractmethod
+from collections.abc import Callable
+from typing import Any
 
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QWidget
 
 from ...core.common_exceptions import UIError
+from ...core.enhanced_event_bus import (
+    Event,
+    EventPriority,
+    get_event_bus,
+    publish_event,
+    subscribe_event,
+)
 from ...core.error_handler import get_error_handler, safe_execute
-from ...core.enhanced_event_bus import Event, EventPriority, get_event_bus, subscribe_event, publish_event
 
 logger = logging.getLogger(__name__)
 
@@ -28,12 +35,12 @@ class BaseWindowComponent(QWidget):
     component_warning = Signal(str)
     component_info = Signal(str)
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
         self._initialized = False
         self._error_handler = get_error_handler()
         self._event_bus = get_event_bus()
-        self._component_data: Dict[str, Any] = {}
+        self._component_data: dict[str, Any] = {}
         self._subscriptions: list = []
 
     def initialize(self) -> None:
@@ -75,7 +82,7 @@ class BaseWindowComponent(QWidget):
         self._error_handler.handle_error(ui_error)
         self.component_error.emit(str(error))
 
-    def safe_execute(self, func: callable, *args, **kwargs) -> Any:
+    def safe_execute(self, func: Callable[..., Any], *args, **kwargs) -> Any:
         """安全执行函数"""
         from ...core.common_exceptions import ErrorCategory, ErrorSeverity
         return safe_execute(
@@ -120,7 +127,7 @@ class BaseWindowComponent(QWidget):
         event_name: str,
         callback: Callable[[Event], None],
         priority: EventPriority = EventPriority.NORMAL,
-        tags_filter: Optional[Dict[str, str]] = None,
+        tags_filter: dict[str, str] | None = None,
         once: bool = False
     ) -> None:
         """订阅事件"""
@@ -134,7 +141,7 @@ class BaseWindowComponent(QWidget):
         event_name: str,
         data: Any = None,
         priority: EventPriority = EventPriority.NORMAL,
-        tags: Optional[Dict[str, str]] = None
+        tags: dict[str, str] | None = None
     ) -> None:
         """发布事件"""
         publish_event(event_name, data, self.__class__.__name__, priority, tags)
@@ -148,9 +155,9 @@ class WindowManager(QObject):
     window_destroyed = Signal(str)
     window_error = Signal(str, str)
 
-    def __init__(self, parent: Optional[QObject] = None):
+    def __init__(self, parent: QObject | None = None):
         super().__init__(parent)
-        self._windows: Dict[str, BaseWindowComponent] = {}
+        self._windows: dict[str, BaseWindowComponent] = {}
         self._error_handler = get_error_handler()
 
     def register_window(self, name: str, window: BaseWindowComponent) -> None:
@@ -170,11 +177,11 @@ class WindowManager(QObject):
             self.window_destroyed.emit(name)
             logger.debug(f"Window {name} unregistered")
 
-    def get_window(self, name: str) -> Optional[BaseWindowComponent]:
+    def get_window(self, name: str) -> BaseWindowComponent | None:
         """获取窗口"""
         return self._windows.get(name)
 
-    def get_all_windows(self) -> Dict[str, BaseWindowComponent]:
+    def get_all_windows(self) -> dict[str, BaseWindowComponent]:
         """获取所有窗口"""
         return self._windows.copy()
 
@@ -197,15 +204,15 @@ class ComponentRegistry:
     """组件注册表"""
 
     def __init__(self):
-        self._components: Dict[str, type] = {}
-        self._instances: Dict[str, BaseWindowComponent] = {}
+        self._components: dict[str, type] = {}
+        self._instances: dict[str, BaseWindowComponent] = {}
 
     def register_component(self, name: str, component_class: type) -> None:
         """注册组件类"""
         self._components[name] = component_class
         logger.debug(f"Component class {name} registered")
 
-    def create_component(self, name: str, parent: Optional[QWidget] = None) -> Optional[BaseWindowComponent]:
+    def create_component(self, name: str, parent: QWidget | None = None) -> BaseWindowComponent | None:
         """创建组件实例"""
         if name not in self._components:
             logger.error(f"Component {name} not registered")
@@ -220,7 +227,7 @@ class ComponentRegistry:
             logger.error(f"Failed to create component {name}: {e}")
             return None
 
-    def get_component(self, name: str) -> Optional[BaseWindowComponent]:
+    def get_component(self, name: str) -> BaseWindowComponent | None:
         """获取组件实例"""
         return self._instances.get(name)
 
@@ -230,7 +237,7 @@ class ComponentRegistry:
             instance = self._instances.pop(name)
             instance.cleanup()
 
-    def get_registered_components(self) -> Dict[str, type]:
+    def get_registered_components(self) -> dict[str, type]:
         """获取已注册的组件"""
         return self._components.copy()
 
@@ -249,6 +256,6 @@ def register_component(name: str, component_class: type) -> None:
     _global_registry.register_component(name, component_class)
 
 
-def create_component(name: str, parent: Optional[QWidget] = None) -> Optional[BaseWindowComponent]:
+def create_component(name: str, parent: QWidget | None = None) -> BaseWindowComponent | None:
     """创建组件"""
     return _global_registry.create_component(name, parent)

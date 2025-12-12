@@ -1,12 +1,10 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 PyMunk物理引擎适配器
 为VirtualChemLab提供统一的物理引擎接口，底层使用PyMunk实现
 """
 
 from enum import Enum
-from typing import List, Optional, Tuple
 
 import pymunk
 from pymunk import Vec2d
@@ -94,24 +92,24 @@ class PhysicsBody:
 
     def __init__(self, pymunk_body: pymunk.Body):
         self._body = pymunk_body
-        self.shapes: List[PhysicsShape] = []
+        self.shapes: list[PhysicsShape] = []
 
     @property
-    def position(self) -> Tuple[float, float]:
+    def position(self) -> tuple[float, float]:
         """位置"""
         return (self._body.position.x, self._body.position.y)
 
     @position.setter
-    def position(self, value: Tuple[float, float]):
+    def position(self, value: tuple[float, float]):
         self._body.position = Vec2d(value[0], value[1])
 
     @property
-    def velocity(self) -> Tuple[float, float]:
+    def velocity(self) -> tuple[float, float]:
         """速度"""
         return (self._body.velocity.x, self._body.velocity.y)
 
     @velocity.setter
-    def velocity(self, value: Tuple[float, float]):
+    def velocity(self, value: tuple[float, float]):
         self._body.velocity = Vec2d(value[0], value[1])
 
     @property
@@ -142,23 +140,23 @@ class PhysicsBody:
         self._body.mass = value
 
     @property
-    def force(self) -> Tuple[float, float]:
+    def force(self) -> tuple[float, float]:
         """作用力"""
         return (self._body.force.x, self._body.force.y)
 
     @force.setter
-    def force(self, value: Tuple[float, float]):
+    def force(self, value: tuple[float, float]):
         self._body.force = Vec2d(value[0], value[1])
 
-    def apply_force_at_world_point(self, force: Tuple[float, float], point: Tuple[float, float]):
+    def apply_force_at_world_point(self, force: tuple[float, float], point: tuple[float, float]):
         """在世界坐标的某点施加力"""
         self._body.apply_force_at_world_point(Vec2d(force[0], force[1]), Vec2d(point[0], point[1]))
 
-    def apply_force_at_local_point(self, force: Tuple[float, float], point: Tuple[float, float]):
+    def apply_force_at_local_point(self, force: tuple[float, float], point: tuple[float, float]):
         """在本地坐标的某点施加力"""
         self._body.apply_force_at_local_point(Vec2d(force[0], force[1]), Vec2d(point[0], point[1]))
 
-    def apply_impulse_at_world_point(self, impulse: Tuple[float, float], point: Tuple[float, float]):
+    def apply_impulse_at_world_point(self, impulse: tuple[float, float], point: tuple[float, float]):
         """在世界坐标的某点施加冲量"""
         self._body.apply_impulse_at_world_point(Vec2d(impulse[0], impulse[1]), Vec2d(point[0], point[1]))
 
@@ -170,17 +168,17 @@ class PyMunkPhysicsEngine:
         """初始化物理引擎"""
         self._space = pymunk.Space()
         self._space.gravity = Vec2d(0, -981)  # 默认重力 981 cm/s²
-        self._bodies: List[PhysicsBody] = []
+        self._bodies: list[PhysicsBody] = []
         self._collision_handlers = {}
         self._time_step = 1.0 / 60.0  # 默认60 FPS
 
     @property
-    def gravity(self) -> Tuple[float, float]:
+    def gravity(self) -> tuple[float, float]:
         """重力加速度"""
         return (self._space.gravity.x, self._space.gravity.y)
 
     @gravity.setter
-    def gravity(self, value: Tuple[float, float]):
+    def gravity(self, value: tuple[float, float]):
         """设置重力加速度"""
         self._space.gravity = Vec2d(value[0], value[1])
 
@@ -208,7 +206,7 @@ class PyMunkPhysicsEngine:
         self,
         radius: float,
         mass: float = 1.0,
-        position: Tuple[float, float] = (0, 0),
+        position: tuple[float, float] = (0, 0),
         body_type: BodyType = BodyType.DYNAMIC,
         friction: float = 0.5,
         elasticity: float = 0.5
@@ -246,7 +244,7 @@ class PyMunkPhysicsEngine:
         width: float,
         height: float,
         mass: float = 1.0,
-        position: Tuple[float, float] = (0, 0),
+        position: tuple[float, float] = (0, 0),
         body_type: BodyType = BodyType.DYNAMIC,
         friction: float = 0.5,
         elasticity: float = 0.5
@@ -281,8 +279,8 @@ class PyMunkPhysicsEngine:
 
     def create_segment_body(
         self,
-        point_a: Tuple[float, float],
-        point_b: Tuple[float, float],
+        point_a: tuple[float, float],
+        point_b: tuple[float, float],
         thickness: float = 1.0,
         body_type: BodyType = BodyType.STATIC,
         friction: float = 1.0,
@@ -312,9 +310,9 @@ class PyMunkPhysicsEngine:
 
     def create_polygon_body(
         self,
-        vertices: List[Tuple[float, float]],
+        vertices: list[tuple[float, float]],
         mass: float = 1.0,
-        position: Tuple[float, float] = (0, 0),
+        position: tuple[float, float] = (0, 0),
         body_type: BodyType = BodyType.DYNAMIC,
         friction: float = 0.5,
         elasticity: float = 0.5
@@ -368,8 +366,8 @@ class PyMunkPhysicsEngine:
         self,
         body_a: PhysicsBody,
         body_b: PhysicsBody,
-        anchor_a: Tuple[float, float] = (0, 0),
-        anchor_b: Tuple[float, float] = (0, 0),
+        anchor_a: tuple[float, float] = (0, 0),
+        anchor_b: tuple[float, float] = (0, 0),
         rest_length: float = 0,
         stiffness: float = 10.0,
         damping: float = 1.0
@@ -390,8 +388,8 @@ class PyMunkPhysicsEngine:
         self,
         body_a: PhysicsBody,
         body_b: PhysicsBody,
-        anchor_a: Tuple[float, float] = (0, 0),
-        anchor_b: Tuple[float, float] = (0, 0)
+        anchor_a: tuple[float, float] = (0, 0),
+        anchor_b: tuple[float, float] = (0, 0)
     ) -> pymunk.Constraint:
         """在两个刚体之间添加钉住关节"""
         joint = pymunk.PinJoint(
@@ -406,7 +404,7 @@ class PyMunkPhysicsEngine:
         self,
         body_a: PhysicsBody,
         body_b: PhysicsBody,
-        pivot: Tuple[float, float]
+        pivot: tuple[float, float]
     ) -> pymunk.Constraint:
         """在两个刚体之间添加枢轴关节"""
         joint = pymunk.PivotJoint(
@@ -423,9 +421,9 @@ class PyMunkPhysicsEngine:
 
     def ray_cast(
         self,
-        start: Tuple[float, float],
-        end: Tuple[float, float]
-    ) -> Optional[dict]:
+        start: tuple[float, float],
+        end: tuple[float, float]
+    ) -> dict | None:
         """射线检测
 
         Returns:
@@ -457,9 +455,9 @@ class PyMunkPhysicsEngine:
 
     def point_query(
         self,
-        point: Tuple[float, float],
+        point: tuple[float, float],
         max_distance: float = 0
-    ) -> List[dict]:
+    ) -> list[dict]:
         """点查询 - 查找距离某点最近的形状"""
         results = []
 
@@ -482,7 +480,7 @@ class PyMunkPhysicsEngine:
 
         return results
 
-    def step(self, dt: Optional[float] = None):
+    def step(self, dt: float | None = None):
         """推进物理模拟一帧
 
         Args:

@@ -248,7 +248,7 @@ class SmartErrorRecovery(QObject):
 
         for recovery in strategies:
             btn = QPushButton(f"{recovery.strategy.value}: {recovery.description}")
-            btn.clicked.connect(lambda checked, r=recovery: self._execute_recovery(r, dialog))
+            btn.clicked.connect(lambda _checked, r=recovery: self._execute_recovery(r, dialog))
             layout.addWidget(btn)
 
         # 取消按钮

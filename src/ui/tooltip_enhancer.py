@@ -205,8 +205,10 @@ class TooltipEnhancer:
             recursive: 是否递归处理子控件
         """
         try:
-            # 获取所有子控件
-            children = container.findChildren(QWidget)
+            if recursive:
+                children = container.findChildren(QWidget)
+            else:
+                children = [c for c in container.children() if isinstance(c, QWidget)]
 
             for child in children:
                 # 根据对象名或类型自动匹配工具提示
@@ -299,4 +301,3 @@ class RichTooltip:
         html_parts.append('</div>')
 
         return "".join(html_parts)
-

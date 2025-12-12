@@ -9,7 +9,6 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
-from uuid import uuid4
 
 from ..models.user_record import UserRecord
 
@@ -65,19 +64,19 @@ class IReportBuilder(ABC):
     """报告构建器接口 - Builder模式"""
 
     @abstractmethod
-    def add_header(self, title: str, subtitle: str | None = None) -> "IReportBuilder":
+    def add_header(self, title: str, subtitle: str | None = None) -> IReportBuilder:
         """添加标题"""
 
     @abstractmethod
-    def add_section(self, section_name: str, content: Any) -> "IReportBuilder":
+    def add_section(self, section_name: str, content: Any) -> IReportBuilder:
         """添加章节"""
 
     @abstractmethod
-    def add_table(self, headers: list[str], rows: list[list[Any]]) -> "IReportBuilder":
+    def add_table(self, headers: list[str], rows: list[list[Any]]) -> IReportBuilder:
         """添加表格"""
 
     @abstractmethod
-    def add_chart(self, chart_type: str, data: dict[str, Any], title: str | None = None) -> "IReportBuilder":
+    def add_chart(self, chart_type: str, data: dict[str, Any], title: str | None = None) -> IReportBuilder:
         """添加图表"""
 
     @abstractmethod
@@ -148,6 +147,7 @@ class SimpleReportExporter(IReportExporter):
         format: ReportFormat,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
+        metadata = metadata or {}
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -199,23 +199,23 @@ class SimpleReportBuilder(IReportBuilder):
     title: str | None = None
     subtitle: str | None = None
 
-    def add_header(self, title: str, subtitle: str | None = None) -> "SimpleReportBuilder":
+    def add_header(self, title: str, subtitle: str | None = None) -> SimpleReportBuilder:
         self.title = title
         self.subtitle = subtitle
         return self
 
-    def add_section(self, section_name: str, content: Any) -> "SimpleReportBuilder":
+    def add_section(self, section_name: str, content: Any) -> SimpleReportBuilder:
         self.sections.append(f"# {section_name}\n{content}")
         return self
 
-    def add_table(self, headers: list[str], rows: list[list[Any]]) -> "SimpleReportBuilder":
+    def add_table(self, headers: list[str], rows: list[list[Any]]) -> SimpleReportBuilder:
         header_line = "| " + " | ".join(headers) + " |"
         sep_line = "| " + " | ".join(["---"] * len(headers)) + " |"
         body = "\n".join("| " + " | ".join(str(cell) for cell in row) + " |" for row in rows)
         self.sections.append("\n".join([header_line, sep_line, body]))
         return self
 
-    def add_chart(self, chart_type: str, data: dict[str, Any], title: str | None = None) -> "SimpleReportBuilder":
+    def add_chart(self, chart_type: str, data: dict[str, Any], title: str | None = None) -> SimpleReportBuilder:
         chart_title = title or chart_type
         self.sections.append(f"![{chart_title}](chart://{chart_type})\n{json.dumps(data)}")
         return self

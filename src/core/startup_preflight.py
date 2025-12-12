@@ -7,16 +7,17 @@ application proceeds to heavy initialization (Qt, DI, DB, etc.).
 
 from __future__ import annotations
 
-import os
 import logging
-from typing import Any, Iterable, Tuple
+import os
+from collections.abc import Iterable
+from typing import Any
 
 from src import __version__ as APP_VERSION
 
 logger = logging.getLogger(__name__)
 
 
-REQUIRED_SECRETS: tuple[Tuple[str, str], ...] = (
+REQUIRED_SECRETS: tuple[tuple[str, str], ...] = (
     ("JWT_SECRET_KEY", "JWT 密钥"),
     ("SESSION_SECRET_KEY", "会话密钥"),
 )
@@ -36,7 +37,7 @@ def _resolve_secret(env_name: str, config_value: str | None = None) -> str:
     return os.getenv(env_name, "") or (config_value or "")
 
 
-def ensure_secure_startup(config: Any | None = None, extra_required: Iterable[Tuple[str, str]] | None = None) -> None:
+def ensure_secure_startup(config: Any | None = None, extra_required: Iterable[tuple[str, str]] | None = None) -> None:
     """统一启动前安全校验，避免弱密钥在生产环境运行。
 
     Args:
@@ -51,7 +52,7 @@ def ensure_secure_startup(config: Any | None = None, extra_required: Iterable[Tu
 
     # 构造校验列表（包含配置中的环境变量名称和实际值）
     if config and hasattr(config, "security"):
-        security_cfg = getattr(config, "security")
+        security_cfg = config.security
         base_required: list[tuple[str, str, str | None]] = [
             (getattr(security_cfg, "jwt_secret_env", "JWT_SECRET_KEY"), "JWT 密钥", getattr(security_cfg, "jwt_secret_key", None)),
             (getattr(security_cfg, "session_secret_env", "SESSION_SECRET_KEY"), "会话密钥", getattr(security_cfg, "session_secret_key", None)),

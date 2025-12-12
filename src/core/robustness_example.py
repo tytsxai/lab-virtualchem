@@ -8,19 +8,27 @@ VirtualChemLab 代码健壮性增强使用示例
 import functools
 import logging
 import time
-from typing import Any, Callable, Dict, Optional
+from collections.abc import Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
-def enhance_robustness(operation_name: str = "", security_level: str = "medium",
-                      enable_caching: bool = False, enable_retry: bool = False,
-                      timeout: float = 30.0):
+def enhance_robustness(
+    operation_name: str = "",
+    security_level: str = "medium",
+    enable_caching: bool = False,
+    enable_retry: bool = False,
+    timeout: float = 30.0,
+):
     """健壮性增强装饰器"""
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             start_time = time.time()
-            logger.info(f"开始执行 {operation_name or func.__name__}")
+            logger.info(
+                f"开始执行 {operation_name or func.__name__} "
+                f"(security={security_level}, caching={enable_caching}, retry={enable_retry}, timeout={timeout})"
+            )
 
             try:
                 result = func(*args, **kwargs)
@@ -34,12 +42,15 @@ def enhance_robustness(operation_name: str = "", security_level: str = "medium",
         return wrapper
     return decorator
 
-def validate_input(validation_rules: Optional[Dict[str, Any]] = None):
+def validate_input(validation_rules: dict[str, Any] | None = None):
     """输入验证装饰器"""
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            logger.info(f"验证输入参数: {func.__name__}")
+            if validation_rules:
+                logger.info(f"验证输入参数: {func.__name__} rules={list(validation_rules.keys())}")
+            else:
+                logger.info(f"验证输入参数: {func.__name__}")
             return func(*args, **kwargs)
         return wrapper
     return decorator
@@ -67,12 +78,12 @@ def log_operation(operation_name: str = ""):
 # 模拟健壮性集成管理器
 class MockRobustnessIntegration:
     def __init__(self):
-        self.settings: Optional[RobustnessSettings] = None
+        self.settings: RobustnessSettings | None = None
 
     def generate_comprehensive_report(self) -> str:
         return "健壮性增强报告\n" + "="*50 + "\n" + "功能正常运行\n"
 
-    def monitor_performance(self, operation_name: str) -> Dict[str, Any]:
+    def monitor_performance(self, operation_name: str) -> dict[str, Any]:
         """监控性能"""
         return {"operation": operation_name, "status": "monitored"}
 
@@ -98,7 +109,7 @@ class IntegrationLevel:
     enable_retry=True,
     timeout=30.0
 )
-def user_login(username: str, password: str) -> Dict[str, Any]:
+def user_login(username: str, password: str) -> dict[str, Any]:
     """用户登录示例"""
     # 模拟登录逻辑
     time.sleep(0.1)  # 模拟网络延迟
@@ -119,7 +130,7 @@ def user_login(username: str, password: str) -> Dict[str, Any]:
     "experiment_data": {"type": dict, "required": True},
     "temperature": {"type": float, "min": -273.15, "max": 1000.0}
 })
-def process_experiment(experiment_data: Dict[str, Any], temperature: float) -> Dict[str, Any]:
+def process_experiment(experiment_data: dict[str, Any], temperature: float) -> dict[str, Any]:
     """实验数据处理示例"""
     # 模拟实验处理
     time.sleep(0.05)
@@ -143,13 +154,13 @@ def save_experiment_data(data: str, filename: str) -> bool:
     if ".." in filename or "/" in filename:
         raise ValueError("文件名包含不安全字符")
 
-    print(f"保存数据到文件: {filename}")
+    print(f"保存数据到文件: {filename} (长度: {len(data)})")
     return True
 
 
 # 示例4: 操作日志增强
 @log_operation(operation_name="data_analysis")
-def analyze_data(data: list) -> Dict[str, Any]:
+def analyze_data(data: list) -> dict[str, Any]:
     """数据分析示例"""
     # 模拟数据分析
     time.sleep(0.1)

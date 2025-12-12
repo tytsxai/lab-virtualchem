@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QPushButton, QHBoxLayout
+from PySide6.QtWidgets import QDialog, QHBoxLayout, QPushButton, QTextEdit, QVBoxLayout
 
 from ..utils.logger import get_logger
 
@@ -64,7 +64,7 @@ class KnowledgeBrowser(QDialog):
                 for file_path in self.knowledge_dir.glob("*.json"):
                     try:
                         import json
-                        with open(file_path, 'r', encoding='utf-8') as f:
+                        with open(file_path, encoding='utf-8') as f:
                             data = json.load(f)
                             content.append(f"## {file_path.stem}")
                             content.append(str(data))

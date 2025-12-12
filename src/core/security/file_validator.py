@@ -2,7 +2,7 @@
 
 import hashlib
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import magic
 
@@ -153,7 +153,7 @@ class FileValidator:
         except Exception:
             return False
 
-    def scan_file_for_malware(self, file_path: str) -> Dict[str, Any]:
+    def scan_file_for_malware(self, file_path: str) -> dict[str, Any]:
         """扫描文件恶意软件"""
         result = {
             'safe': True,
@@ -218,7 +218,7 @@ class FileValidator:
         except Exception:
             return False
 
-    def check_file_content(self, file_path: str) -> List[str]:
+    def check_file_content(self, file_path: str) -> list[str]:
         """检查文件内容"""
         threats = []
 
@@ -256,7 +256,7 @@ class FileValidator:
             threats.append(f'内容检查错误: {str(e)}')
             return threats
 
-    def validate_upload(self, file_path: str, original_filename: str) -> Dict[str, Any]:
+    def validate_upload(self, file_path: str, original_filename: str) -> dict[str, Any]:
         """验证文件上传"""
         result = {
             'valid': False,
@@ -309,7 +309,7 @@ class FileValidator:
             result['errors'].append(f'验证错误: {str(e)}')
             return result
 
-    def get_file_info(self, file_path: str) -> Dict[str, Any]:
+    def get_file_info(self, file_path: str) -> dict[str, Any]:
         """获取文件信息"""
         try:
             path = Path(file_path)

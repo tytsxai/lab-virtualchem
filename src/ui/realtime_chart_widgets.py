@@ -74,7 +74,7 @@ class RealtimeLineChart(QWidget):
         self.y_max = y_max
         self.update()
 
-    def paintEvent(self, event):
+    def paintEvent(self, _event):
         """绘制图表"""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -258,7 +258,7 @@ class RealtimeBarChart(QWidget):
         self.bar_colors.clear()
         self.update()
 
-    def paintEvent(self, event):
+    def paintEvent(self, _event):
         """绘制图表"""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -514,7 +514,7 @@ class GaugeWidget(QWidget):
         """获取当前值"""
         return self._current_value
 
-    def paintEvent(self, event):
+    def paintEvent(self, _event):
         """绘制仪表盘"""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)

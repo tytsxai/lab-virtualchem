@@ -9,7 +9,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .robustness_integration import enhance_robustness, log_operation, validate_input
 
@@ -46,11 +46,11 @@ class UserProfile:
     user_id: str
     learning_style: LearningStyle
     difficulty_preference: DifficultyPreference
-    interests: List[str] = field(default_factory=list)
-    strengths: List[str] = field(default_factory=list)
-    weaknesses: List[str] = field(default_factory=list)
-    learning_goals: List[str] = field(default_factory=list)
-    preferred_topics: List[str] = field(default_factory=list)
+    interests: list[str] = field(default_factory=list)
+    strengths: list[str] = field(default_factory=list)
+    weaknesses: list[str] = field(default_factory=list)
+    learning_goals: list[str] = field(default_factory=list)
+    preferred_topics: list[str] = field(default_factory=list)
     study_time_preference: str = "morning"
     session_duration_preference: int = 30  # 分钟
     feedback_frequency: str = "immediate"
@@ -62,17 +62,18 @@ class LearningSession:
     session_id: str
     user_id: str
     start_time: datetime
-    end_time: Optional[datetime] = None
-    duration: Optional[float] = None
-    topics_covered: List[str] = field(default_factory=list)
+    session_type: str = "general"
+    end_time: datetime | None = None
+    duration: float | None = None
+    topics_covered: list[str] = field(default_factory=list)
     exercises_completed: int = 0
     accuracy_score: float = 0.0
     engagement_level: float = 0.0
     difficulty_level: str = "beginner"
     ai_interactions: int = 0
     hints_requested: int = 0
-    concepts_mastered: List[str] = field(default_factory=list)
-    concepts_struggled: List[str] = field(default_factory=list)
+    concepts_mastered: list[str] = field(default_factory=list)
+    concepts_struggled: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -84,9 +85,9 @@ class AIRecommendation:
     description: str
     estimated_time: int  # 分钟
     difficulty_level: str
-    learning_objectives: List[str]
-    prerequisites: List[str] = field(default_factory=list)
-    resources: List[str] = field(default_factory=list)
+    learning_objectives: list[str]
+    prerequisites: list[str] = field(default_factory=list)
+    resources: list[str] = field(default_factory=list)
     ai_reasoning: str = ""
     confidence_score: float = 0.0
 
@@ -97,21 +98,21 @@ class LearningInsight:
     insight_type: str  # "strength", "weakness", "pattern", "recommendation"
     title: str
     description: str
-    data_points: List[Dict[str, Any]]
+    data_points: list[dict[str, Any]]
     confidence: float
     actionable: bool
-    suggested_actions: List[str] = field(default_factory=list)
+    suggested_actions: list[str] = field(default_factory=list)
 
 
 class EnhancedAISystem:
     """增强的AI智能系统"""
 
     def __init__(self):
-        self.user_profiles: Dict[str, UserProfile] = {}
-        self.learning_sessions: Dict[str, LearningSession] = {}
-        self.ai_recommendations: Dict[str, List[AIRecommendation]] = {}
-        self.learning_insights: Dict[str, List[LearningInsight]] = {}
-        self.knowledge_base: Dict[str, Any] = {}
+        self.user_profiles: dict[str, UserProfile] = {}
+        self.learning_sessions: dict[str, LearningSession] = {}
+        self.ai_recommendations: dict[str, list[AIRecommendation]] = {}
+        self.learning_insights: dict[str, list[LearningInsight]] = {}
+        self.knowledge_base: dict[str, Any] = {}
         self.ai_provider: AIProvider = AIProvider.OLLAMA
 
         # 初始化系统
@@ -173,7 +174,7 @@ class EnhancedAISystem:
         user_id: str,
         learning_style: str,
         difficulty_preference: str,
-        additional_info: Optional[Dict[str, Any]] = None
+        additional_info: dict[str, Any] | None = None
     ) -> UserProfile:
         """创建用户AI档案"""
         logger.info(f"创建用户AI档案: {user_id}")
@@ -262,7 +263,7 @@ class EnhancedAISystem:
         self,
         user_id: str,
         session_type: str = "general",
-        topics: Optional[List[str]] = None
+        topics: list[str] | None = None
     ) -> LearningSession:
         """开始学习会话"""
         session_id = f"session_{user_id}_{int(time.time())}"
@@ -271,6 +272,7 @@ class EnhancedAISystem:
             session_id=session_id,
             user_id=user_id,
             start_time=datetime.now(),
+            session_type=session_type,
             topics_covered=topics or []
         )
 
@@ -288,7 +290,7 @@ class EnhancedAISystem:
     def update_learning_session(
         self,
         session_id: str,
-        update_data: Dict[str, Any]
+        update_data: dict[str, Any]
     ) -> bool:
         """更新学习会话"""
         if session_id not in self.learning_sessions:
@@ -330,7 +332,7 @@ class EnhancedAISystem:
         enable_caching=False
     )
     @log_operation(operation_name="end_session")
-    def end_learning_session(self, session_id: str) -> Optional[LearningSession]:
+    def end_learning_session(self, session_id: str) -> LearningSession | None:
         """结束学习会话"""
         if session_id not in self.learning_sessions:
             logger.warning(f"学习会话 {session_id} 不存在")
@@ -413,7 +415,7 @@ class EnhancedAISystem:
         self,
         user_id: str,
         limit: int = 5
-    ) -> List[AIRecommendation]:
+    ) -> list[AIRecommendation]:
         """获取AI推荐"""
         if user_id not in self.ai_recommendations:
             return []
@@ -433,8 +435,8 @@ class EnhancedAISystem:
     def get_learning_insights(
         self,
         user_id: str,
-        insight_type: Optional[str] = None
-    ) -> List[LearningInsight]:
+        insight_type: str | None = None
+    ) -> list[LearningInsight]:
         """获取学习洞察"""
         if user_id not in self.learning_insights:
             return []
@@ -456,8 +458,8 @@ class EnhancedAISystem:
         self,
         user_id: str,
         question: str,
-        context: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        context: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """向AI提问"""
         try:
             # 获取用户档案
@@ -493,8 +495,8 @@ class EnhancedAISystem:
     def _build_question_prompt(
         self,
         question: str,
-        profile: Optional[UserProfile],
-        context: Optional[Dict[str, Any]]
+        profile: UserProfile | None,
+        context: dict[str, Any] | None
     ) -> str:
         """构建问题提示词"""
         prompt = f"问题: {question}\n\n"
@@ -561,7 +563,7 @@ class EnhancedAISystem:
         else:
             return "这是一个很好的问题。建议您继续深入学习相关概念。"
 
-    def _generate_follow_up_questions(self, question: str) -> List[str]:
+    def _generate_follow_up_questions(self, question: str) -> list[str]:
         """生成后续问题"""
         follow_ups = []
 
@@ -581,7 +583,7 @@ class EnhancedAISystem:
 
         return follow_ups[:3]  # 返回最多3个后续问题
 
-    def _find_related_topics(self, question: str) -> List[str]:
+    def _find_related_topics(self, question: str) -> list[str]:
         """查找相关主题"""
         related_topics = []
 
@@ -599,7 +601,7 @@ class EnhancedAISystem:
         security_level="low",
         enable_caching=True
     )
-    def get_learning_analytics(self, user_id: str) -> Dict[str, Any]:
+    def get_learning_analytics(self, user_id: str) -> dict[str, Any]:
         """获取学习分析"""
         if user_id not in self.user_profiles:
             return {}

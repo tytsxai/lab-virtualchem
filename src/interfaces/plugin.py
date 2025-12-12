@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import importlib
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 
 class PluginType(str, Enum):
@@ -277,6 +278,7 @@ class SimplePlugin(IPlugin):
         return self._priority
 
     def initialize(self, config: dict[str, Any] | None = None) -> bool:
+        self._config = config or {}
         self._available = True
         return True
 

@@ -10,11 +10,12 @@ import logging
 import threading
 import time
 from collections import defaultdict, deque
+from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 import psutil
 
@@ -45,9 +46,9 @@ class PerformanceMetric:
     value: float
     timestamp: float
     unit: str = ""
-    tags: Dict[str, str] = field(default_factory=dict)
+    tags: dict[str, str] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "name": self.name,
@@ -65,7 +66,7 @@ class PerformanceThreshold:
     threshold_value: float
     comparison: str  # "gt", "lt", "eq"
     severity: str = "warning"
-    action: Optional[str] = None
+    action: str | None = None
 
 
 class PerformanceCollector:
@@ -73,7 +74,7 @@ class PerformanceCollector:
 
     def __init__(self, max_history: int = 1000):
         self._max_history = max_history
-        self._metrics: Dict[str, deque] = defaultdict(lambda: deque(maxlen=max_history))
+        self._metrics: dict[str, deque] = defaultdict(lambda: deque(maxlen=max_history))
         self._lock = threading.RLock()
 
     def collect_metric(self, metric: PerformanceMetric) -> None:
@@ -81,7 +82,7 @@ class PerformanceCollector:
         with self._lock:
             self._metrics[metric.name].append(metric)
 
-    def get_metric_history(self, metric_name: str, limit: Optional[int] = None) -> List[PerformanceMetric]:
+    def get_metric_history(self, metric_name: str, limit: int | None = None) -> list[PerformanceMetric]:
         """获取指标历史"""
         with self._lock:
             history = list(self._metrics[metric_name])
@@ -89,14 +90,14 @@ class PerformanceCollector:
                 history = history[-limit:]
             return history
 
-    def get_latest_metric(self, metric_name: str) -> Optional[PerformanceMetric]:
+    def get_latest_metric(self, metric_name: str) -> PerformanceMetric | None:
         """获取最新指标"""
         with self._lock:
             if metric_name in self._metrics and self._metrics[metric_name]:
                 return self._metrics[metric_name][-1]
             return None
 
-    def get_metric_stats(self, metric_name: str) -> Optional[Dict[str, float]]:
+    def get_metric_stats(self, metric_name: str) -> dict[str, float] | None:
         """获取指标统计"""
         with self._lock:
             if metric_name not in self._metrics or not self._metrics[metric_name]:
@@ -111,7 +112,7 @@ class PerformanceCollector:
                 "latest": values[-1]
             }
 
-    def clear_metrics(self, metric_name: Optional[str] = None) -> None:
+    def clear_metrics(self, metric_name: str | None = None) -> None:
         """清除指标"""
         with self._lock:
             if metric_name:
@@ -124,14 +125,14 @@ class PerformanceAnalyzer:
     """性能分析器"""
 
     def __init__(self):
-        self._thresholds: List[PerformanceThreshold] = []
+        self._thresholds: list[PerformanceThreshold] = []
         self._error_handler = get_error_handler()
 
     def add_threshold(self, threshold: PerformanceThreshold) -> None:
         """添加阈值"""
         self._thresholds.append(threshold)
 
-    def check_thresholds(self, metric: PerformanceMetric) -> List[PerformanceThreshold]:
+    def check_thresholds(self, metric: PerformanceMetric) -> list[PerformanceThreshold]:
         """检查阈值"""
         triggered = []
 
@@ -174,14 +175,14 @@ class PerformanceAnalyzer:
 class UnifiedPerformanceMonitor:
     """统一性能监控器"""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         self._config = config or {}
         self._collector = PerformanceCollector(
             max_history=self._config.get("max_history", 1000)
         )
         self._analyzer = PerformanceAnalyzer()
         self._monitoring = False
-        self._monitor_thread: Optional[threading.Thread] = None
+        self._monitor_thread: threading.Thread | None = None
         self._error_handler = get_error_handler()
 
         # 系统监控
@@ -286,7 +287,7 @@ class UnifiedPerformanceMonitor:
             unit="%"
         ))
 
-    def measure_function(self, func_name: Optional[str] = None):
+    def measure_function(self, func_name: str | None = None):
         """函数性能测量装饰器"""
         def decorator(func: Callable) -> Callable:
             @wraps(func)
@@ -376,23 +377,23 @@ class UnifiedPerformanceMonitor:
                 unit="%"
             ))
 
-    def get_metric_history(self, metric_name: str, limit: Optional[int] = None) -> List[PerformanceMetric]:
+    def get_metric_history(self, metric_name: str, limit: int | None = None) -> list[PerformanceMetric]:
         """获取指标历史"""
         return self._collector.get_metric_history(metric_name, limit)
 
-    def get_latest_metric(self, metric_name: str) -> Optional[PerformanceMetric]:
+    def get_latest_metric(self, metric_name: str) -> PerformanceMetric | None:
         """获取最新指标"""
         return self._collector.get_latest_metric(metric_name)
 
-    def get_metric_stats(self, metric_name: str) -> Optional[Dict[str, float]]:
+    def get_metric_stats(self, metric_name: str) -> dict[str, float] | None:
         """获取指标统计"""
         return self._collector.get_metric_stats(metric_name)
 
-    def get_all_metrics(self) -> Dict[str, List[PerformanceMetric]]:
+    def get_all_metrics(self) -> dict[str, list[PerformanceMetric]]:
         """获取所有指标"""
         return {name: list(metrics) for name, metrics in self._collector._metrics.items()}
 
-    def clear_metrics(self, metric_name: Optional[str] = None) -> None:
+    def clear_metrics(self, metric_name: str | None = None) -> None:
         """清除指标"""
         self._collector.clear_metrics(metric_name)
 
@@ -400,7 +401,7 @@ class UnifiedPerformanceMonitor:
         """添加阈值"""
         self._analyzer.add_threshold(threshold)
 
-    def get_performance_report(self) -> Dict[str, Any]:
+    def get_performance_report(self) -> dict[str, Any]:
         """获取性能报告"""
         report = {
             "timestamp": time.time(),
@@ -440,7 +441,7 @@ def get_performance_monitor() -> UnifiedPerformanceMonitor:
     return _global_performance_monitor
 
 
-def measure_performance(func_name: Optional[str] = None):
+def measure_performance(func_name: str | None = None):
     """性能测量装饰器"""
     return _global_performance_monitor.measure_function(func_name)
 

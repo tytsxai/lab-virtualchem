@@ -14,20 +14,14 @@ from typing import Any
 # 延迟导入以避免循环依赖
 
 try:  # 兼容旧的错误类型导入路径
-    from ..core.validation import ValidationError as _CoreValidationError
+    from ..core.validation import ValidationError
 except ImportError:  # pragma: no cover - 容错
-    class _CoreValidationError(Exception):
+    class ValidationError(Exception):
         """兜底的验证异常"""
 
         def __init__(self, message: str = "", field: str | None = None, **_: Any) -> None:
             super().__init__(message)
             self.field = field
-
-
-ValidationError = _CoreValidationError
-
-# 对外暴露统一的 ValidationError 类型，供调用方和测试引用
-from src.core.validation import ValidationError  # noqa: E402,F401
 
 logger = logging.getLogger(__name__)
 

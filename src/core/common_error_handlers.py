@@ -4,8 +4,9 @@
 """
 
 import logging
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, Type
+from typing import Any
 
 from .common_exceptions import ErrorCategory, ErrorSeverity, VirtualChemLabError
 
@@ -19,7 +20,7 @@ class CommonErrorHandlers:
     def safe_execute_with_default(
         func: Callable,
         default_value: Any = None,
-        error_class: Type[VirtualChemLabError] = VirtualChemLabError,
+        error_class: type[VirtualChemLabError] = VirtualChemLabError,
         category: ErrorCategory = ErrorCategory.SYSTEM,
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
         *args,
@@ -45,7 +46,7 @@ class CommonErrorHandlers:
         max_retries: int = 3,
         delay: float = 1.0,
         backoff_factor: float = 2.0,
-        error_class: Type[VirtualChemLabError] = VirtualChemLabError,
+        error_class: type[VirtualChemLabError] = VirtualChemLabError,
         category: ErrorCategory = ErrorCategory.SYSTEM,
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
     ):
@@ -101,7 +102,7 @@ class CommonErrorHandlers:
     @staticmethod
     def log_and_raise(
         error: Exception,
-        error_class: Type[VirtualChemLabError] = VirtualChemLabError,
+        error_class: type[VirtualChemLabError] = VirtualChemLabError,
         category: ErrorCategory = ErrorCategory.SYSTEM,
         severity: ErrorSeverity = ErrorSeverity.MEDIUM
     ) -> None:
@@ -119,7 +120,7 @@ class CommonErrorHandlers:
     def handle_file_operation(
         operation: str,
         file_path: str,
-        error_class: Type[VirtualChemLabError] = VirtualChemLabError,
+        error_class: type[VirtualChemLabError] = VirtualChemLabError,
         category: ErrorCategory = ErrorCategory.FILE_SYSTEM,
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
     ):
@@ -163,7 +164,7 @@ class CommonErrorHandlers:
     @staticmethod
     def handle_database_operation(
         operation: str,
-        error_class: Type[VirtualChemLabError] = VirtualChemLabError,
+        error_class: type[VirtualChemLabError] = VirtualChemLabError,
         category: ErrorCategory = ErrorCategory.DATABASE,
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
     ):
@@ -190,7 +191,7 @@ class CommonErrorHandlers:
     def handle_network_operation(
         operation: str,
         url: str = "",
-        error_class: Type[VirtualChemLabError] = VirtualChemLabError,
+        error_class: type[VirtualChemLabError] = VirtualChemLabError,
         category: ErrorCategory = ErrorCategory.NETWORK,
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
     ):
@@ -218,7 +219,7 @@ class CommonErrorHandlers:
 def safe_execute_with_default(
     func: Callable,
     default_value: Any = None,
-    error_class: Type[VirtualChemLabError] = VirtualChemLabError,
+    error_class: type[VirtualChemLabError] = VirtualChemLabError,
     category: ErrorCategory = ErrorCategory.SYSTEM,
     severity: ErrorSeverity = ErrorSeverity.MEDIUM,
     *args,
@@ -234,7 +235,7 @@ def retry_on_failure(
     max_retries: int = 3,
     delay: float = 1.0,
     backoff_factor: float = 2.0,
-    error_class: Type[VirtualChemLabError] = VirtualChemLabError,
+    error_class: type[VirtualChemLabError] = VirtualChemLabError,
     category: ErrorCategory = ErrorCategory.SYSTEM,
     severity: ErrorSeverity = ErrorSeverity.MEDIUM,
 ):
@@ -247,7 +248,7 @@ def retry_on_failure(
 def handle_file_operation(
     operation: str,
     file_path: str,
-    error_class: Type[VirtualChemLabError] = VirtualChemLabError,
+    error_class: type[VirtualChemLabError] = VirtualChemLabError,
     category: ErrorCategory = ErrorCategory.STORAGE,
     severity: ErrorSeverity = ErrorSeverity.MEDIUM,
 ):
@@ -259,7 +260,7 @@ def handle_file_operation(
 
 def handle_database_operation(
     operation: str,
-    error_class: Type[VirtualChemLabError] = VirtualChemLabError,
+    error_class: type[VirtualChemLabError] = VirtualChemLabError,
     category: ErrorCategory = ErrorCategory.STORAGE,
     severity: ErrorSeverity = ErrorSeverity.MEDIUM,
 ):
@@ -272,7 +273,7 @@ def handle_database_operation(
 def handle_network_operation(
     operation: str,
     url: str = "",
-    error_class: Type[VirtualChemLabError] = VirtualChemLabError,
+    error_class: type[VirtualChemLabError] = VirtualChemLabError,
     category: ErrorCategory = ErrorCategory.NETWORK,
     severity: ErrorSeverity = ErrorSeverity.MEDIUM,
 ):

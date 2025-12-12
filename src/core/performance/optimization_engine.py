@@ -3,9 +3,10 @@
 import gc
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 import psutil
 
@@ -24,13 +25,13 @@ class PerformanceMetric:
     value: float
     unit: str
     timestamp: float
-    threshold: Optional[float] = None
+    threshold: float | None = None
 
 @dataclass
 class OptimizationRule:
     """优化规则"""
     name: str
-    condition: Callable[[Dict[str, Any]], bool]
+    condition: Callable[[dict[str, Any]], bool]
     action: Callable[[], None]
     priority: int = 0
     enabled: bool = True
@@ -40,10 +41,10 @@ class PerformanceOptimizer:
 
     def __init__(self):
         """初始化优化器"""
-        self.metrics: Dict[str, List[PerformanceMetric]] = {}
-        self.rules: List[OptimizationRule] = []
+        self.metrics: dict[str, list[PerformanceMetric]] = {}
+        self.rules: list[OptimizationRule] = []
         self.is_monitoring = False
-        self.monitor_thread: Optional[threading.Thread] = None
+        self.monitor_thread: threading.Thread | None = None
         self.optimization_level = OptimizationLevel.BASIC
         self.lock = threading.Lock()
 
@@ -141,7 +142,7 @@ class PerformanceOptimizer:
                 print(f"性能监控错误: {e}")
                 time.sleep(interval)
 
-    def _collect_metrics(self) -> Dict[str, Any]:
+    def _collect_metrics(self) -> dict[str, Any]:
         """收集性能指标"""
         metrics = {}
 
@@ -178,7 +179,7 @@ class PerformanceOptimizer:
 
         return metrics
 
-    def _store_metrics(self, metrics: Dict[str, Any]):
+    def _store_metrics(self, metrics: dict[str, Any]):
         """存储性能指标"""
         timestamp = time.time()
 
@@ -216,7 +217,7 @@ class PerformanceOptimizer:
         }
         return units.get(metric_name, '')
 
-    def _check_optimization_rules(self, metrics: Dict[str, Any]):
+    def _check_optimization_rules(self, metrics: dict[str, Any]):
         """检查优化规则"""
         with self.lock:
             for rule in self.rules:
@@ -358,7 +359,7 @@ class PerformanceOptimizer:
         # 实现压缩启用逻辑
         pass
 
-    def get_performance_summary(self) -> Dict[str, Any]:
+    def get_performance_summary(self) -> dict[str, Any]:
         """获取性能摘要"""
         with self.lock:
             summary = {
@@ -388,7 +389,7 @@ class PerformanceOptimizer:
         """设置性能阈值"""
         self.thresholds[metric_name] = threshold
 
-    def get_metrics_history(self, metric_name: str, limit: int = 100) -> List[PerformanceMetric]:
+    def get_metrics_history(self, metric_name: str, limit: int = 100) -> list[PerformanceMetric]:
         """获取指标历史"""
         with self.lock:
             if metric_name not in self.metrics:

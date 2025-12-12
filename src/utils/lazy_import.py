@@ -170,7 +170,6 @@ class LazyImporter:
         Args:
             keys: 模块名或别名列表
         """
-        import time
         import concurrent.futures
 
         # 并行预加载以提升性能

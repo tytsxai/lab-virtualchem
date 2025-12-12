@@ -430,7 +430,7 @@ class TemperatureGauge(QWidget):
 
         self.update()
 
-    def paintEvent(self, event: QPaintEvent):
+    def paintEvent(self, _event: QPaintEvent):
         """绘制温度计"""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -544,7 +544,7 @@ class PHIndicator(QWidget):
         self._ph_value = max(0.0, min(ph, 14.0))
         self.update()
 
-    def paintEvent(self, event: QPaintEvent):
+    def paintEvent(self, _event: QPaintEvent):
         """绘制pH指示器"""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -644,7 +644,7 @@ class ReactionProgressBar(QWidget):
         self._progress = max(0.0, min(progress, 100.0))
         self.update()
 
-    def paintEvent(self, event: QPaintEvent):
+    def paintEvent(self, _event: QPaintEvent):
         """绘制进度条"""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)

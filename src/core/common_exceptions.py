@@ -8,7 +8,7 @@ from __future__ import annotations
 import logging
 import traceback
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -44,9 +44,9 @@ class VirtualChemLabError(Exception):
         message: str,
         category: ErrorCategory = ErrorCategory.SYSTEM,
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
-        error_code: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
-        cause: Optional[Exception] = None
+        error_code: str | None = None,
+        details: dict[str, Any] | None = None,
+        cause: Exception | None = None
     ):
         super().__init__(message)
         self.message = message
@@ -83,7 +83,7 @@ class VirtualChemLabError(Exception):
             logger.log(log_level, f"Caused by: {self.cause}")
             logger.log(log_level, traceback.format_exc())
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "message": self.message,
@@ -105,9 +105,9 @@ class ConfigurationError(VirtualChemLabError):
     def __init__(
         self,
         message: str,
-        config_key: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
-        cause: Optional[Exception] = None
+        config_key: str | None = None,
+        details: dict[str, Any] | None = None,
+        cause: Exception | None = None
     ):
         super().__init__(
             message=message,
@@ -127,10 +127,10 @@ class ValidationError(VirtualChemLabError):
     def __init__(
         self,
         message: str,
-        field: Optional[str] = None,
-        value: Optional[Any] = None,
-        details: Optional[Dict[str, Any]] = None,
-        cause: Optional[Exception] = None
+        field: str | None = None,
+        value: Any | None = None,
+        details: dict[str, Any] | None = None,
+        cause: Exception | None = None
     ):
         super().__init__(
             message=message,
@@ -152,10 +152,10 @@ class NetworkError(VirtualChemLabError):
     def __init__(
         self,
         message: str,
-        url: Optional[str] = None,
-        status_code: Optional[int] = None,
-        details: Optional[Dict[str, Any]] = None,
-        cause: Optional[Exception] = None
+        url: str | None = None,
+        status_code: int | None = None,
+        details: dict[str, Any] | None = None,
+        cause: Exception | None = None
     ):
         super().__init__(
             message=message,
@@ -177,10 +177,10 @@ class StorageError(VirtualChemLabError):
     def __init__(
         self,
         message: str,
-        operation: Optional[str] = None,
-        path: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
-        cause: Optional[Exception] = None
+        operation: str | None = None,
+        path: str | None = None,
+        details: dict[str, Any] | None = None,
+        cause: Exception | None = None
     ):
         super().__init__(
             message=message,
@@ -202,10 +202,10 @@ class UIError(VirtualChemLabError):
     def __init__(
         self,
         message: str,
-        widget: Optional[str] = None,
-        action: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
-        cause: Optional[Exception] = None
+        widget: str | None = None,
+        action: str | None = None,
+        details: dict[str, Any] | None = None,
+        cause: Exception | None = None
     ):
         super().__init__(
             message=message,
@@ -227,11 +227,11 @@ class PerformanceError(VirtualChemLabError):
     def __init__(
         self,
         message: str,
-        metric: Optional[str] = None,
-        threshold: Optional[float] = None,
-        actual_value: Optional[float] = None,
-        details: Optional[Dict[str, Any]] = None,
-        cause: Optional[Exception] = None
+        metric: str | None = None,
+        threshold: float | None = None,
+        actual_value: float | None = None,
+        details: dict[str, Any] | None = None,
+        cause: Exception | None = None
     ):
         super().__init__(
             message=message,
@@ -255,9 +255,9 @@ class SecurityError(VirtualChemLabError):
     def __init__(
         self,
         message: str,
-        threat_type: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
-        cause: Optional[Exception] = None
+        threat_type: str | None = None,
+        details: dict[str, Any] | None = None,
+        cause: Exception | None = None
     ):
         super().__init__(
             message=message,
@@ -277,9 +277,9 @@ class BusinessLogicError(VirtualChemLabError):
     def __init__(
         self,
         message: str,
-        operation: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
-        cause: Optional[Exception] = None
+        operation: str | None = None,
+        details: dict[str, Any] | None = None,
+        cause: Exception | None = None
     ):
         super().__init__(
             message=message,
@@ -299,9 +299,9 @@ class SystemError(VirtualChemLabError):
     def __init__(
         self,
         message: str,
-        component: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
-        cause: Optional[Exception] = None
+        component: str | None = None,
+        details: dict[str, Any] | None = None,
+        cause: Exception | None = None
     ):
         super().__init__(
             message=message,

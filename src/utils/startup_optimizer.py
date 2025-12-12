@@ -193,6 +193,7 @@ class StartupOptimizer:
             (资源名称, 加载结果, 耗时)
         """
         start_time = time.time()
+        logger.debug(f"开始加载资源: {resource_name} (priority={priority})")
 
         try:
             # 在线程池中执行加载函数（避免阻塞）

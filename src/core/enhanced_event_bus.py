@@ -10,9 +10,10 @@ import logging
 import threading
 import time
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from .error_handler import get_error_handler
 
@@ -32,12 +33,12 @@ class Event:
     """事件对象"""
     name: str
     data: Any = None
-    source: Optional[str] = None
+    source: str | None = None
     timestamp: float = field(default_factory=time.time)
     priority: EventPriority = EventPriority.NORMAL
-    tags: Dict[str, str] = field(default_factory=dict)
+    tags: dict[str, str] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "name": self.name,
@@ -55,9 +56,9 @@ class EventSubscription:
     callback: Callable[[Event], None]
     event_name: str
     priority: EventPriority = EventPriority.NORMAL
-    tags_filter: Optional[Dict[str, str]] = None
+    tags_filter: dict[str, str] | None = None
     once: bool = False
-    subscriber_id: Optional[str] = None
+    subscriber_id: str | None = None
 
     def matches(self, event: Event) -> bool:
         """检查是否匹配事件"""
@@ -79,12 +80,12 @@ class EnhancedEventBus:
 
     def __init__(self, max_queue_size: int = 10000):
         self._max_queue_size = max_queue_size
-        self._subscriptions: Dict[str, List[EventSubscription]] = defaultdict(list)
-        self._global_subscriptions: List[EventSubscription] = []
+        self._subscriptions: dict[str, list[EventSubscription]] = defaultdict(list)
+        self._global_subscriptions: list[EventSubscription] = []
         self._event_queue: asyncio.Queue = asyncio.Queue(maxsize=max_queue_size)
         self._running = False
-        self._event_loop: Optional[asyncio.AbstractEventLoop] = None
-        self._worker_task: Optional[asyncio.Task] = None
+        self._event_loop: asyncio.AbstractEventLoop | None = None
+        self._worker_task: asyncio.Task | None = None
         self._lock = threading.RLock()
         self._error_handler = get_error_handler()
 
@@ -182,7 +183,7 @@ class EnhancedEventBus:
             self._stats["errors_count"] += 1
             logger.error(f"Error processing event: {e}")
 
-    def _get_subscriptions(self, event: Event) -> List[EventSubscription]:
+    def _get_subscriptions(self, event: Event) -> list[EventSubscription]:
         """获取事件订阅"""
         subscriptions = []
 
@@ -222,9 +223,9 @@ class EnhancedEventBus:
         event_name: str,
         callback: Callable[[Event], None],
         priority: EventPriority = EventPriority.NORMAL,
-        tags_filter: Optional[Dict[str, str]] = None,
+        tags_filter: dict[str, str] | None = None,
         once: bool = False,
-        subscriber_id: Optional[str] = None
+        subscriber_id: str | None = None
     ) -> EventSubscription:
         """订阅事件"""
         subscription = EventSubscription(
@@ -247,9 +248,9 @@ class EnhancedEventBus:
         self,
         callback: Callable[[Event], None],
         priority: EventPriority = EventPriority.NORMAL,
-        tags_filter: Optional[Dict[str, str]] = None,
+        tags_filter: dict[str, str] | None = None,
         once: bool = False,
-        subscriber_id: Optional[str] = None
+        subscriber_id: str | None = None
     ) -> EventSubscription:
         """订阅所有事件"""
         subscription = EventSubscription(
@@ -277,9 +278,9 @@ class EnhancedEventBus:
         self,
         event_name: str,
         data: Any = None,
-        source: Optional[str] = None,
+        source: str | None = None,
         priority: EventPriority = EventPriority.NORMAL,
-        tags: Optional[Dict[str, str]] = None
+        tags: dict[str, str] | None = None
     ) -> None:
         """发布事件"""
         if not self._running:
@@ -312,9 +313,9 @@ class EnhancedEventBus:
         self,
         event_name: str,
         data: Any = None,
-        source: Optional[str] = None,
+        source: str | None = None,
         priority: EventPriority = EventPriority.NORMAL,
-        tags: Optional[Dict[str, str]] = None
+        tags: dict[str, str] | None = None
     ) -> None:
         """同步发布事件"""
         event = Event(
@@ -346,7 +347,7 @@ class EnhancedEventBus:
             self._stats["errors_count"] += 1
             logger.error(f"Failed to publish sync event: {e}")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         return self._stats.copy()
 
@@ -359,7 +360,7 @@ class EnhancedEventBus:
             "errors_count": 0
         }
 
-    def get_subscription_count(self, event_name: Optional[str] = None) -> int:
+    def get_subscription_count(self, event_name: str | None = None) -> int:
         """获取订阅数量"""
         if event_name:
             return len(self._subscriptions.get(event_name, []))
@@ -384,9 +385,9 @@ def subscribe_event(
     event_name: str,
     callback: Callable[[Event], None],
     priority: EventPriority = EventPriority.NORMAL,
-    tags_filter: Optional[Dict[str, str]] = None,
+    tags_filter: dict[str, str] | None = None,
     once: bool = False,
-    subscriber_id: Optional[str] = None
+    subscriber_id: str | None = None
 ) -> EventSubscription:
     """订阅事件"""
     return _global_event_bus.subscribe(
@@ -397,9 +398,9 @@ def subscribe_event(
 def publish_event(
     event_name: str,
     data: Any = None,
-    source: Optional[str] = None,
+    source: str | None = None,
     priority: EventPriority = EventPriority.NORMAL,
-    tags: Optional[Dict[str, str]] = None
+    tags: dict[str, str] | None = None
 ) -> None:
     """发布事件"""
     _global_event_bus.publish(event_name, data, source, priority, tags)
@@ -408,9 +409,9 @@ def publish_event(
 def publish_event_sync(
     event_name: str,
     data: Any = None,
-    source: Optional[str] = None,
+    source: str | None = None,
     priority: EventPriority = EventPriority.NORMAL,
-    tags: Optional[Dict[str, str]] = None
+    tags: dict[str, str] | None = None
 ) -> None:
     """同步发布事件"""
     _global_event_bus.publish_sync(event_name, data, source, priority, tags)

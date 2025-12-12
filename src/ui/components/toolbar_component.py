@@ -6,14 +6,13 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QHBoxLayout, QToolBar, QWidget
 
-from .base_window import BaseWindowComponent
 from ...core.common_exceptions import UIError
+from .base_window import BaseWindowComponent
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +24,9 @@ class ToolbarComponent(BaseWindowComponent):
     action_triggered = Signal(str)
     toolbar_ready = Signal()
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
-        self._toolbar: Optional[QToolBar] = None
+        self._toolbar: QToolBar | None = None
         self._actions: dict[str, QAction] = {}
 
     def _setup_ui(self) -> None:
@@ -103,7 +102,7 @@ class ToolbarComponent(BaseWindowComponent):
         self._toolbar.addAction(action)
         logger.debug(f"Action {name} added to toolbar")
 
-    def add_action(self, name: str, text: str, shortcut: Optional[str] = None) -> None:
+    def add_action(self, name: str, text: str, shortcut: str | None = None) -> None:
         """添加动作"""
         action = QAction(text, self)
         if shortcut:
@@ -118,7 +117,7 @@ class ToolbarComponent(BaseWindowComponent):
             self._toolbar.removeAction(action)
             logger.debug(f"Action {name} removed from toolbar")
 
-    def get_action(self, name: str) -> Optional[QAction]:
+    def get_action(self, name: str) -> QAction | None:
         """获取动作"""
         return self._actions.get(name)
 
@@ -127,7 +126,7 @@ class ToolbarComponent(BaseWindowComponent):
         if name in self._actions:
             self._actions[name].setEnabled(enabled)
 
-    def get_toolbar(self) -> Optional[QToolBar]:
+    def get_toolbar(self) -> QToolBar | None:
         """获取工具栏"""
         return self._toolbar
 

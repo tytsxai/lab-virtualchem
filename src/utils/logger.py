@@ -125,7 +125,7 @@ class SensitiveDataFilter(logging.Filter):
         record.args = ()
 
         if hasattr(record, "extra_data"):
-            record.extra_data = sanitize_log_value(getattr(record, "extra_data"))
+            record.extra_data = sanitize_log_value(record.extra_data)
 
         for key, value in list(record.__dict__.items()):
             if key in {

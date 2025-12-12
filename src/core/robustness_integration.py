@@ -6,9 +6,10 @@
 
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from .enhanced_error_recovery import EnhancedErrorRecovery
 from .enhanced_logging import EnhancedLogger
@@ -47,7 +48,7 @@ class RobustnessSettings:
 class RobustnessIntegrationManager:
     """健壮性集成管理器"""
 
-    def __init__(self, settings: Optional[RobustnessSettings] = None):
+    def __init__(self, settings: RobustnessSettings | None = None):
         self.settings = settings or RobustnessSettings()
 
         # 初始化各个组件
@@ -117,12 +118,12 @@ class RobustnessIntegrationManager:
     def enhance_function(
         self,
         func: Callable,
-        operation_name: Optional[str] = None,
-        validation_rules: Optional[Dict[str, Any]] = None,
+        operation_name: str | None = None,
+        validation_rules: dict[str, Any] | None = None,
         security_level: str = "medium",
         enable_caching: bool = False,
         enable_retry: bool = True,
-        timeout: Optional[float] = None
+        timeout: float | None = None
     ) -> Callable:
         """增强函数健壮性"""
 
@@ -199,10 +200,12 @@ class RobustnessIntegrationManager:
                     raise
         return wrapper
 
-    def validate_data(self, data: Any, validation_rules: Optional[Dict[str, Any]] = None) -> bool:
+    def validate_data(self, data: Any, validation_rules: dict[str, Any] | None = None) -> bool:
         """验证数据"""
         if not self.settings.enable_validation:
             return True
+        if validation_rules:
+            logger.debug("收到自定义 validation_rules，但当前验证器尚未按规则解析")
 
         try:
             result = self.validator.validate(data)
@@ -218,7 +221,7 @@ class RobustnessIntegrationManager:
 
         self.logger.audit(event_type, description, **kwargs)
 
-    def monitor_performance(self, operation_name: str) -> Dict[str, Any]:
+    def monitor_performance(self, operation_name: str) -> dict[str, Any]:
         """监控性能"""
         if not self.settings.enable_performance_monitoring:
             return {}
@@ -232,21 +235,21 @@ class RobustnessIntegrationManager:
 
         return self.security_manager.validate_input(input_data)
 
-    def run_tests(self) -> Dict[str, Any]:
+    def run_tests(self) -> dict[str, Any]:
         """运行测试"""
         if not self.settings.enable_testing:
             return {}
 
         return self.testing_framework.run_comprehensive_tests()
 
-    def auto_optimize(self) -> List[Dict[str, Any]]:
+    def auto_optimize(self) -> list[dict[str, Any]]:
         """自动优化"""
         if not self.settings.auto_optimization:
             return []
 
         return self.performance_manager.optimizer.auto_optimize()
 
-    def auto_security_scan(self) -> List[str]:
+    def auto_security_scan(self) -> list[str]:
         """自动安全扫描"""
         if not self.settings.auto_security_scan:
             return []
@@ -333,12 +336,12 @@ robustness_integration = RobustnessIntegrationManager()
 
 
 def enhance_robustness(
-    operation_name: Optional[str] = None,
-    validation_rules: Optional[Dict[str, Any]] = None,
+    operation_name: str | None = None,
+    validation_rules: dict[str, Any] | None = None,
     security_level: str = "medium",
     enable_caching: bool = False,
     enable_retry: bool = True,
-    timeout: Optional[float] = None
+    timeout: float | None = None
 ):
     """健壮性增强装饰器"""
     def decorator(func: Callable) -> Callable:
@@ -349,7 +352,7 @@ def enhance_robustness(
     return decorator
 
 
-def validate_input(validation_rules: Optional[Dict[str, Any]] = None):
+def validate_input(validation_rules: dict[str, Any] | None = None):
     """输入验证装饰器"""
     def decorator(func: Callable) -> Callable:
         def wrapper(*args, **kwargs):
@@ -371,6 +374,7 @@ def secure_operation(security_level: str = "medium"):
     """安全操作装饰器"""
     def decorator(func: Callable) -> Callable:
         def wrapper(*args, **kwargs):
+            logger.debug(f"执行安全操作: {func.__name__} (级别: {security_level})")
             # 检查所有字符串参数
             for arg in args:
                 if isinstance(arg, str):
@@ -387,7 +391,7 @@ def secure_operation(security_level: str = "medium"):
     return decorator
 
 
-def log_operation(operation_name: Optional[str] = None):
+def log_operation(operation_name: str | None = None):
     """操作日志装饰器"""
     def decorator(func: Callable) -> Callable:
         name = operation_name or func.__name__

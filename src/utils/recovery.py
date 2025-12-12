@@ -12,7 +12,7 @@ from pathlib import Path
 from threading import Lock
 from typing import Any
 
-from .error_handler import safe_execute
+from .error_handler import ValidationError, safe_execute
 
 logger = logging.getLogger(__name__)
 

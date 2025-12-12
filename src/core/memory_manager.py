@@ -17,7 +17,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 from weakref import WeakSet
 
 try:
@@ -28,7 +28,7 @@ except ImportError:
     # psutil 不可用时的占位符
     class psutil:  # type: ignore
         @staticmethod
-        def Process(pid: int = 0) -> Any:
+        def Process(_pid: int = 0) -> Any:
             class Process:
                 def memory_info(self) -> Any:
                     class MemoryInfo:
@@ -159,7 +159,7 @@ class MemoryManager:
         self.threshold_critical = threshold_critical
 
         self.is_monitoring = False
-        self._monitor_thread: Optional[threading.Thread] = None
+        self._monitor_thread: threading.Thread | None = None
         self._stop_event = threading.Event()
         self.metrics_history: list[MemoryMetrics] = []
         self.max_history: int = 1000

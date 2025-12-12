@@ -9,7 +9,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 from .robustness_integration import enhance_robustness, log_operation, validate_input
 
@@ -49,7 +49,7 @@ class User:
     email: str
     avatar: str = ""
     status: str = "offline"
-    last_seen: Optional[datetime] = None
+    last_seen: datetime | None = None
     timezone: str = "UTC"
 
 
@@ -59,7 +59,7 @@ class CollaborationMember:
     user: User
     role: CollaborationRole
     joined_at: datetime
-    permissions: Set[str] = field(default_factory=set)
+    permissions: set[str] = field(default_factory=set)
     is_active: bool = True
 
 
@@ -73,11 +73,11 @@ class CollaborationSession:
     owner_id: str
     created_at: datetime
     status: SessionStatus
-    members: List[CollaborationMember] = field(default_factory=list)
+    members: list[CollaborationMember] = field(default_factory=list)
     max_members: int = 10
     is_public: bool = False
-    tags: List[str] = field(default_factory=list)
-    settings: Dict[str, Any] = field(default_factory=dict)
+    tags: list[str] = field(default_factory=list)
+    settings: dict[str, Any] = field(default_factory=dict)
     last_activity: datetime = field(default_factory=datetime.now)
 
 
@@ -91,8 +91,8 @@ class CollaborationMessage:
     message_type: str = "text"  # text, image, file, system
     timestamp: datetime = field(default_factory=datetime.now)
     edited: bool = False
-    reactions: Dict[str, List[str]] = field(default_factory=dict)  # emoji -> user_ids
-    attachments: List[Dict[str, Any]] = field(default_factory=list)
+    reactions: dict[str, list[str]] = field(default_factory=dict)  # emoji -> user_ids
+    attachments: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
@@ -106,21 +106,21 @@ class SharedResource:
     created_at: datetime
     size: int = 0
     url: str = ""
-    permissions: Dict[str, List[str]] = field(default_factory=dict)
+    permissions: dict[str, list[str]] = field(default_factory=dict)
     version: int = 1
     is_locked: bool = False
-    locked_by: Optional[str] = None
+    locked_by: str | None = None
 
 
 class EnhancedCollaborationSystem:
     """增强的协作系统"""
 
     def __init__(self):
-        self.sessions: Dict[str, CollaborationSession] = {}
-        self.messages: Dict[str, List[CollaborationMessage]] = {}
-        self.shared_resources: Dict[str, List[SharedResource]] = {}
-        self.user_sessions: Dict[str, Set[str]] = {}  # user_id -> session_ids
-        self.active_users: Dict[str, datetime] = {}  # user_id -> last_activity
+        self.sessions: dict[str, CollaborationSession] = {}
+        self.messages: dict[str, list[CollaborationMessage]] = {}
+        self.shared_resources: dict[str, list[SharedResource]] = {}
+        self.user_sessions: dict[str, set[str]] = {}  # user_id -> session_ids
+        self.active_users: dict[str, datetime] = {}  # user_id -> last_activity
 
         # 权限系统
         self.role_permissions = {
@@ -168,7 +168,7 @@ class EnhancedCollaborationSystem:
         description: str,
         collaboration_type: str,
         owner_id: str,
-        settings: Optional[Dict[str, Any]] = None
+        settings: dict[str, Any] | None = None
     ) -> CollaborationSession:
         """创建协作会话"""
         session_id = f"session_{uuid.uuid4().hex[:8]}"
@@ -307,8 +307,8 @@ class EnhancedCollaborationSystem:
         sender_id: str,
         content: str,
         message_type: str = "text",
-        attachments: Optional[List[Dict[str, Any]]] = None
-    ) -> Optional[CollaborationMessage]:
+        attachments: list[dict[str, Any]] | None = None
+    ) -> CollaborationMessage | None:
         """发送消息"""
         if session_id not in self.sessions:
             logger.warning(f"会话 {session_id} 不存在")
@@ -357,8 +357,8 @@ class EnhancedCollaborationSystem:
         resource_type: str,
         url: str = "",
         size: int = 0,
-        permissions: Optional[Dict[str, List[str]]] = None
-    ) -> Optional[SharedResource]:
+        permissions: dict[str, list[str]] | None = None
+    ) -> SharedResource | None:
         """共享资源"""
         if session_id not in self.sessions:
             logger.warning(f"会话 {session_id} 不存在")
@@ -411,7 +411,7 @@ class EnhancedCollaborationSystem:
         user_id: str,
         limit: int = 50,
         offset: int = 0
-    ) -> List[CollaborationMessage]:
+    ) -> list[CollaborationMessage]:
         """获取会话消息"""
         if session_id not in self.sessions:
             return []
@@ -438,8 +438,8 @@ class EnhancedCollaborationSystem:
         self,
         session_id: str,
         user_id: str,
-        resource_type: Optional[str] = None
-    ) -> List[SharedResource]:
+        resource_type: str | None = None
+    ) -> list[SharedResource]:
         """获取会话资源"""
         if session_id not in self.sessions:
             return []
@@ -461,7 +461,7 @@ class EnhancedCollaborationSystem:
         security_level="low",
         enable_caching=True
     )
-    def get_user_sessions(self, user_id: str) -> List[CollaborationSession]:
+    def get_user_sessions(self, user_id: str) -> list[CollaborationSession]:
         """获取用户的会话列表"""
         if user_id not in self.user_sessions:
             return []
@@ -504,7 +504,7 @@ class EnhancedCollaborationSystem:
         security_level="low",
         enable_caching=True
     )
-    def get_session_analytics(self, session_id: str, user_id: str) -> Dict[str, Any]:
+    def get_session_analytics(self, session_id: str, user_id: str) -> dict[str, Any]:
         """获取会话分析"""
         if session_id not in self.sessions:
             return {}
@@ -613,8 +613,8 @@ class EnhancedCollaborationSystem:
         self,
         query: str,
         user_id: str,
-        session_type: Optional[str] = None
-    ) -> List[CollaborationSession]:
+        session_type: str | None = None
+    ) -> list[CollaborationSession]:
         """搜索会话"""
         user_session_ids = self.user_sessions.get(user_id, set())
         matching_sessions = []

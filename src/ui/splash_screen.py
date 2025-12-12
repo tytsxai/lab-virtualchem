@@ -21,7 +21,6 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import QApplication, QWidget
 
 from .. import __version__ as APP_VERSION
-
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)

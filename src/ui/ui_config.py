@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from .responsive import ResponsiveHelper, ScreenSize
 from .themes import ThemeType
@@ -110,7 +110,7 @@ class UIConfig:
         except Exception as e:
             logger.info(f"保存UI配置失败: {e}")
 
-    def _merge_config(self, user_config: Dict[str, Any]) -> None:
+    def _merge_config(self, user_config: dict[str, Any]) -> None:
         """合并用户配置"""
         for key, value in user_config.items():
             if key in self.config and isinstance(value, dict):

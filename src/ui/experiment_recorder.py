@@ -485,7 +485,7 @@ class RecorderControlWidget(QWidget):
         self.status_label.setText("⏺ 录制中")
         self.pause_btn.setText("暂停")
 
-    def _on_recording_stopped(self, duration: float) -> None:
+    def _on_recording_stopped(self, _duration: float) -> None:
         """录制停止"""
         self.status_label.setText("✓ 已完成")
         self.record_btn.setEnabled(True)

@@ -9,12 +9,13 @@ import json
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import jsonschema
 import yaml
 
 from src import __version__ as APP_VERSION
+
 from .common_exceptions import ConfigurationError
 from .error_handler import get_error_handler
 
@@ -25,8 +26,8 @@ logger = logging.getLogger(__name__)
 class ConfigSection:
     """配置节"""
     name: str
-    data: Dict[str, Any] = field(default_factory=dict)
-    schema: Optional[Dict[str, Any]] = None
+    data: dict[str, Any] = field(default_factory=dict)
+    schema: dict[str, Any] | None = None
     required: bool = False
 
     def get(self, key: str, default: Any = None) -> Any:
@@ -61,9 +62,9 @@ class ConfigSection:
 class UnifiedConfigManager:
     """统一配置管理器"""
 
-    def __init__(self, config_dir: Optional[Path] = None):
+    def __init__(self, config_dir: Path | None = None):
         self._config_dir = config_dir or Path("config")
-        self._sections: Dict[str, ConfigSection] = {}
+        self._sections: dict[str, ConfigSection] = {}
         self._error_handler = get_error_handler()
         self._initialized = False
 
@@ -199,7 +200,7 @@ class UnifiedConfigManager:
     def _load_config_file(self, config_file: Path) -> None:
         """加载配置文件"""
         try:
-            with open(config_file, 'r', encoding='utf-8') as f:
+            with open(config_file, encoding='utf-8') as f:
                 if config_file.suffix.lower() == '.yaml' or config_file.suffix.lower() == '.yml':
                     config_data = yaml.safe_load(f)
                 else:
@@ -267,11 +268,11 @@ class UnifiedConfigManager:
         if section_name in self._sections:
             self._sections[section_name].remove(config_key)
 
-    def get_section(self, section_name: str) -> Optional[ConfigSection]:
+    def get_section(self, section_name: str) -> ConfigSection | None:
         """获取配置节"""
         return self._sections.get(section_name)
 
-    def add_section(self, section_name: str, schema: Optional[Dict[str, Any]] = None, required: bool = False) -> None:
+    def add_section(self, section_name: str, schema: dict[str, Any] | None = None, required: bool = False) -> None:
         """添加配置节"""
         if section_name not in self._sections:
             self._sections[section_name] = ConfigSection(
@@ -290,7 +291,7 @@ class UnifiedConfigManager:
 
         return all_valid
 
-    def save_config(self, filename: Optional[str] = None) -> None:
+    def save_config(self, filename: str | None = None) -> None:
         """保存配置"""
         if not filename:
             filename = "config.json"
@@ -323,7 +324,7 @@ class UnifiedConfigManager:
         )
         self._error_handler.handle_error(config_error)
 
-    def get_all_sections(self) -> Dict[str, ConfigSection]:
+    def get_all_sections(self) -> dict[str, ConfigSection]:
         """获取所有配置节"""
         return self._sections.copy()
 

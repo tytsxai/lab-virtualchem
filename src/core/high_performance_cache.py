@@ -8,9 +8,10 @@ import logging
 import threading
 import time
 from collections import OrderedDict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,7 @@ class CacheEntry:
     key: str
     value: Any
     created_at: datetime
-    expires_at: Optional[datetime]
+    expires_at: datetime | None
     access_count: int = 0
     last_accessed: datetime = field(default=None)
     size_bytes: int = 0  # 估算的内存占用
@@ -51,7 +52,7 @@ class CacheStats:
         total = self.hits + self.misses
         return (self.hits / total * 100) if total > 0 else 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             'hits': self.hits,
@@ -152,8 +153,8 @@ class HighPerformanceLRUCache:
         self,
         key: str,
         value: Any,
-        ttl: Optional[int] = None,
-        size_bytes: Optional[int] = None
+        ttl: int | None = None,
+        size_bytes: int | None = None
     ) -> None:
         """设置缓存值 - O(1)
 
@@ -202,7 +203,7 @@ class HighPerformanceLRUCache:
             self._stats.sets += 1
             self._stats.total_size += size_bytes
 
-    def get_many(self, keys: List[str]) -> Dict[str, Any]:
+    def get_many(self, keys: list[str]) -> dict[str, Any]:
         """批量获取 - O(n)
 
         Args:
@@ -218,7 +219,7 @@ class HighPerformanceLRUCache:
                 result[key] = value
         return result
 
-    def set_many(self, items: Dict[str, Any], ttl: Optional[int] = None) -> None:
+    def set_many(self, items: dict[str, Any], ttl: int | None = None) -> None:
         """批量设置 - O(n)
 
         Args:
@@ -246,7 +247,7 @@ class HighPerformanceLRUCache:
                 return True
             return False
 
-    def delete_many(self, keys: List[str]) -> int:
+    def delete_many(self, keys: list[str]) -> int:
         """批量删除 - O(n)
 
         Args:
@@ -311,7 +312,7 @@ class HighPerformanceLRUCache:
 
             return count
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         with self._lock:
             stats = self._stats.to_dict()
@@ -326,7 +327,7 @@ class HighPerformanceLRUCache:
         with self._lock:
             self._stats = CacheStats(total_size=self._stats.total_size)
 
-    def get_top_accessed(self, n: int = 10) -> List[Tuple[str, int]]:
+    def get_top_accessed(self, n: int = 10) -> list[tuple[str, int]]:
         """获取访问最多的条目
 
         Args:
@@ -340,7 +341,7 @@ class HighPerformanceLRUCache:
             items.sort(key=lambda x: x[1], reverse=True)
             return items[:n]
 
-    def warmup(self, loader: Callable[[str], Any], keys: List[str]) -> int:
+    def warmup(self, loader: Callable[[str], Any], keys: list[str]) -> int:
         """缓存预热
 
         Args:
@@ -377,7 +378,7 @@ class HighPerformanceLRUCache:
             else:
                 # 默认估算
                 return 256
-        except:
+        except Exception:
             return 256
 
     def _start_cleanup_thread(self) -> None:
@@ -405,7 +406,7 @@ class HighPerformanceLRUCache:
         """析构函数"""
         try:
             self.stop()
-        except:
+        except Exception:
             pass
 
 

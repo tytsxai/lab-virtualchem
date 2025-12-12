@@ -8,10 +8,11 @@
 from __future__ import annotations
 
 import contextlib
+from collections.abc import Iterable
 from datetime import datetime
 from html import escape
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from ..models.experiment import ExperimentTemplate
 from ..models.user_record import UserRecord
@@ -548,7 +549,7 @@ class HTMLGenerator(HTMLReportGenerator):
             step_template = template_steps.get(step_record.step_id)
             title = step_template.text if step_template else step_record.step_id
             if step_template and hasattr(step_template, "title"):
-                title = getattr(step_template, "title") or step_template.text
+                title = step_template.title or step_template.text
 
             description = ""
             if step_template:

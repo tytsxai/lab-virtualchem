@@ -9,9 +9,10 @@ import logging
 import re
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import Any
 
 try:
     from pydantic import BaseModel
@@ -48,19 +49,19 @@ class ValidationRule:
     message: str
     severity: ValidationSeverity = ValidationSeverity.ERROR
     required: bool = True
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class ValidationResult:
     """验证结果"""
     is_valid: bool
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
-    info: List[str] = field(default_factory=list)
-    validated_data: Optional[Any] = None
-    execution_time: Optional[float] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    info: list[str] = field(default_factory=list)
+    validated_data: Any | None = None
+    execution_time: float | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class BaseValidator(ABC):
@@ -94,7 +95,7 @@ class TypeValidator(BaseValidator):
 class RangeValidator(BaseValidator):
     """范围验证器"""
 
-    def __init__(self, min_value: Optional[float] = None, max_value: Optional[float] = None):
+    def __init__(self, min_value: float | None = None, max_value: float | None = None):
         self.min_value = min_value
         self.max_value = max_value
 
@@ -123,7 +124,7 @@ class RangeValidator(BaseValidator):
 class LengthValidator(BaseValidator):
     """长度验证器"""
 
-    def __init__(self, min_length: Optional[int] = None, max_length: Optional[int] = None):
+    def __init__(self, min_length: int | None = None, max_length: int | None = None):
         self.min_length = min_length
         self.max_length = max_length
 
@@ -197,9 +198,9 @@ class CustomValidator(BaseValidator):
 class SchemaValidator(BaseValidator):
     """模式验证器"""
 
-    def __init__(self, schema: Dict[str, Any]):
+    def __init__(self, schema: dict[str, Any]):
         self.schema = schema
-        self.field_validators: Dict[str, List[BaseValidator]] = {}
+        self.field_validators: dict[str, list[BaseValidator]] = {}
         self._parse_schema()
 
     def _parse_schema(self) -> None:
@@ -273,7 +274,7 @@ class SchemaValidator(BaseValidator):
 class PydanticValidator(BaseValidator):
     """Pydantic验证器"""
 
-    def __init__(self, model_class: Type[Any]):
+    def __init__(self, model_class: type[Any]):
         if not PYDANTIC_AVAILABLE:
             raise ImportError("Pydantic不可用，请安装: pip install pydantic")
         self.model_class = model_class
@@ -299,7 +300,7 @@ class ValidationChain(BaseValidator):
     """验证链"""
 
     def __init__(self):
-        self.validators: List[BaseValidator] = []
+        self.validators: list[BaseValidator] = []
 
     def add_validator(self, validator: BaseValidator) -> 'ValidationChain':
         """添加验证器"""
@@ -333,9 +334,9 @@ class EnhancedValidator:
 
     def __init__(self, validation_level: ValidationLevel = ValidationLevel.STRICT):
         self.validation_level = validation_level
-        self.validators: Dict[str, BaseValidator] = {}
-        self.validation_cache: Dict[str, ValidationResult] = {}
-        self.validation_stats: Dict[str, Dict[str, int]] = {}
+        self.validators: dict[str, BaseValidator] = {}
+        self.validation_cache: dict[str, ValidationResult] = {}
+        self.validation_stats: dict[str, dict[str, int]] = {}
 
         logger.info(f"增强验证器初始化完成，级别: {validation_level.value}")
 
@@ -344,7 +345,7 @@ class EnhancedValidator:
         self.validators[name] = validator
         logger.debug(f"注册验证器: {name}")
 
-    def validate(self, data: Any, validator_name: Optional[str] = None) -> ValidationResult:
+    def validate(self, data: Any, validator_name: str | None = None) -> ValidationResult:
         """验证数据"""
         start_time = time.time()
 
@@ -410,13 +411,13 @@ class EnhancedValidator:
 
         return chain
 
-    def _extract_schema(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _extract_schema(self, _data: dict[str, Any]) -> dict[str, Any] | None:
         """从数据中提取模式"""
         # 这里可以实现智能模式提取逻辑
         # 目前返回None，表示无法提取
         return None
 
-    def _generate_cache_key(self, data: Any, validator_name: Optional[str]) -> str:
+    def _generate_cache_key(self, data: Any, validator_name: str | None) -> str:
         """生成缓存键"""
         import hashlib
 
@@ -452,7 +453,7 @@ class EnhancedValidator:
         stats['errors'] += len(result.errors)
         stats['warnings'] += len(result.warnings)
 
-    def get_validation_stats(self) -> Dict[str, Dict[str, int]]:
+    def get_validation_stats(self) -> dict[str, dict[str, int]]:
         """获取验证统计"""
         return self.validation_stats.copy()
 
@@ -507,8 +508,8 @@ enhanced_validator = EnhancedValidator()
 
 def validate_data(
     data: Any,
-    validator_name: Optional[str] = None,
-    validation_level: Optional[ValidationLevel] = None
+    validator_name: str | None = None,
+    validation_level: ValidationLevel | None = None
 ) -> ValidationResult:
     """验证数据的便捷函数"""
     if validation_level:

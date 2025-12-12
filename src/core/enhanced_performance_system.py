@@ -12,7 +12,7 @@ from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .robustness_integration import enhance_robustness, log_operation
 
@@ -53,7 +53,7 @@ class CacheEntry:
     last_accessed: datetime
     access_count: int = 0
     size: int = 0
-    ttl: Optional[float] = None
+    ttl: float | None = None
     priority: int = 0
 
 
@@ -81,7 +81,7 @@ class OptimizationRule:
     action: str
     priority: int
     enabled: bool = True
-    last_triggered: Optional[datetime] = None
+    last_triggered: datetime | None = None
     trigger_count: int = 0
 
 
@@ -102,7 +102,7 @@ class EnhancedPerformanceSystem:
     """增强的性能优化系统"""
 
     def __init__(self):
-        self.cache: Dict[str, CacheEntry] = {}
+        self.cache: dict[str, CacheEntry] = {}
         self.cache_stats = {
             "hits": 0,
             "misses": 0,
@@ -110,8 +110,8 @@ class EnhancedPerformanceSystem:
             "size": 0
         }
         self.performance_history: deque = deque(maxlen=1000)
-        self.optimization_rules: List[OptimizationRule] = []
-        self.resource_monitor: Optional[threading.Thread] = None
+        self.optimization_rules: list[OptimizationRule] = []
+        self.resource_monitor: threading.Thread | None = None
         self.monitoring_active = False
         self.optimization_enabled = True
         self.auto_optimization = True
@@ -272,7 +272,7 @@ class EnhancedPerformanceSystem:
             logger.error(f"条件评估错误: {e}")
             return False
 
-    def _execute_optimization_action(self, action: str, metrics: PerformanceMetrics) -> None:
+    def _execute_optimization_action(self, action: str, _metrics: PerformanceMetrics) -> None:
         """执行优化动作"""
         try:
             if action == "trigger_gc":
@@ -387,7 +387,7 @@ class EnhancedPerformanceSystem:
         enable_caching=False
     )
     @log_operation(operation_name="cache_get")
-    def cache_get(self, key: str) -> Optional[Any]:
+    def cache_get(self, key: str) -> Any | None:
         """获取缓存值"""
         if key not in self.cache:
             self.cache_stats["misses"] += 1
@@ -419,7 +419,7 @@ class EnhancedPerformanceSystem:
         self,
         key: str,
         value: Any,
-        ttl: Optional[float] = None,
+        ttl: float | None = None,
         priority: int = 0
     ) -> bool:
         """设置缓存值"""
@@ -485,7 +485,7 @@ class EnhancedPerformanceSystem:
         security_level="low",
         enable_caching=True
     )
-    def get_performance_metrics(self, limit: int = 100) -> List[PerformanceMetrics]:
+    def get_performance_metrics(self, limit: int = 100) -> list[PerformanceMetrics]:
         """获取性能指标"""
         return list(self.performance_history)[-limit:]
 
@@ -494,7 +494,7 @@ class EnhancedPerformanceSystem:
         security_level="low",
         enable_caching=True
     )
-    def get_cache_stats(self) -> Dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, Any]:
         """获取缓存统计"""
         total_requests = self.cache_stats["hits"] + self.cache_stats["misses"]
         hit_rate = self.cache_stats["hits"] / total_requests if total_requests > 0 else 0.0
@@ -536,7 +536,7 @@ class EnhancedPerformanceSystem:
         enable_caching=False
     )
     @log_operation(operation_name="optimize_system")
-    def optimize_system(self, level: OptimizationLevel = OptimizationLevel.BASIC) -> Dict[str, Any]:
+    def optimize_system(self, level: OptimizationLevel = OptimizationLevel.BASIC) -> dict[str, Any]:
         """优化系统性能"""
         optimization_results = {
             "level": level.value,
@@ -612,7 +612,7 @@ class EnhancedPerformanceSystem:
         logger.info("执行系统级优化")
         # 这里可以添加系统级优化逻辑
 
-    def _calculate_improvements(self) -> Dict[str, Any]:
+    def _calculate_improvements(self) -> dict[str, Any]:
         """计算改进效果"""
         # 这里应该计算实际的改进效果
         # 为了演示，返回模拟数据
@@ -628,7 +628,7 @@ class EnhancedPerformanceSystem:
         security_level="low",
         enable_caching=True
     )
-    def get_optimization_report(self) -> Dict[str, Any]:
+    def get_optimization_report(self) -> dict[str, Any]:
         """获取优化报告"""
         if not self.performance_history:
             return {"error": "没有性能数据"}
@@ -665,7 +665,7 @@ class EnhancedPerformanceSystem:
             "recommendations": self._generate_recommendations(latest_metrics)
         }
 
-    def _generate_recommendations(self, metrics: PerformanceMetrics) -> List[str]:
+    def _generate_recommendations(self, metrics: PerformanceMetrics) -> list[str]:
         """生成优化建议"""
         recommendations = []
 

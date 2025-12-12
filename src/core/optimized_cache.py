@@ -7,7 +7,7 @@ import threading
 from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -16,7 +16,7 @@ class CacheEntry:
     key: str
     value: Any
     created_at: datetime
-    expires_at: Optional[datetime]
+    expires_at: datetime | None
     access_count: int = 0
     last_accessed: datetime = None
 
@@ -34,7 +34,7 @@ class OptimizedLRUCache:
         self._cache: OrderedDict[str, CacheEntry] = OrderedDict()
         self._lock = threading.RLock()
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """获取缓存值 - O(1)"""
         with self._lock:
             if key not in self._cache:
@@ -54,7 +54,7 @@ class OptimizedLRUCache:
 
             return entry.value
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> None:
         """设置缓存值 - O(1)"""
         if ttl is None:
             ttl = self.default_ttl
@@ -135,7 +135,7 @@ class OptimizedLFUCache:
         self._min_freq = 0
         self._lock = threading.RLock()
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """获取缓存值"""
         with self._lock:
             if key not in self._cache:
@@ -155,7 +155,7 @@ class OptimizedLFUCache:
 
             return entry.value
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> None:
         """设置缓存值"""
         if ttl is None:
             ttl = self.default_ttl

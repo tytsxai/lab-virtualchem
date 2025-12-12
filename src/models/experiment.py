@@ -6,10 +6,10 @@ import json
 import statistics
 import warnings
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
 from typing import Any, ClassVar
 from uuid import uuid4
-from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 from pydantic_core import InitErrorDetails, PydanticCustomError
@@ -678,7 +678,7 @@ class ExperimentTemplate(BaseModel):
             score -= 20
         return max(0, min(100, score))
 
-    def handle_emergency(self, emergency_type: str, **kwargs: Any) -> str:
+    def handle_emergency(self, emergency_type: str, **_kwargs: Any) -> str:
         """应急处理入口"""
         self.emergency_stop()
         responses = {

@@ -16,7 +16,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .common_exceptions import SecurityError
 from .enhanced_event_bus import Event, EventPriority, publish_event, subscribe_event
@@ -63,16 +63,16 @@ class User:
     email: str
     password_hash: str
     salt: str
-    roles: List[str] = field(default_factory=list)
-    permissions: List[Permission] = field(default_factory=list)
+    roles: list[str] = field(default_factory=list)
+    permissions: list[Permission] = field(default_factory=list)
     is_active: bool = True
     is_locked: bool = False
     failed_login_attempts: int = 0
-    last_login: Optional[float] = None
+    last_login: float | None = None
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -95,14 +95,14 @@ class SecurityEvent:
     id: str
     event_type: str
     severity: SecurityLevel
-    user_id: Optional[str]
-    ip_address: Optional[str]
-    user_agent: Optional[str]
+    user_id: str | None
+    ip_address: str | None
+    user_agent: str | None
     description: str
     timestamp: float
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -126,9 +126,9 @@ class ThreatDetection:
     description: str
     mitigation: str
     timestamp: float
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "threat_type": self.threat_type.value,
@@ -191,18 +191,18 @@ class SimpleEncryptionProvider(EncryptionProvider):
 class SecurityManager:
     """安全管理器"""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         self._config = config or {}
         self._error_handler = get_error_handler()
         self._observability = get_observability()
 
         # 用户管理
-        self._users: Dict[str, User] = {}
-        self._sessions: Dict[str, Dict[str, Any]] = {}
+        self._users: dict[str, User] = {}
+        self._sessions: dict[str, dict[str, Any]] = {}
 
         # 安全事件
-        self._security_events: List[SecurityEvent] = []
-        self._threat_detections: List[ThreatDetection] = []
+        self._security_events: list[SecurityEvent] = []
+        self._threat_detections: list[ThreatDetection] = []
 
         # 加密提供者
         self._encryption_provider = SimpleEncryptionProvider()
@@ -263,8 +263,8 @@ class SecurityManager:
         username: str,
         email: str,
         password: str,
-        roles: Optional[List[str]] = None,
-        permissions: Optional[List[Permission]] = None
+        roles: list[str] | None = None,
+        permissions: list[Permission] | None = None
     ) -> User:
         """创建用户"""
         if len(password) < self._password_min_length:
@@ -301,7 +301,7 @@ class SecurityManager:
 
         return user
 
-    def authenticate_user(self, username: str, password: str, ip_address: Optional[str] = None) -> Optional[str]:
+    def authenticate_user(self, username: str, password: str, ip_address: str | None = None) -> str | None:
         """用户认证"""
         # 查找用户
         user = None
@@ -396,7 +396,7 @@ class SecurityManager:
             logger.error(f"Password verification failed: {e}")
             return False
 
-    def _create_session(self, user_id: str, ip_address: Optional[str] = None) -> str:
+    def _create_session(self, user_id: str, ip_address: str | None = None) -> str:
         """创建会话"""
         session_id = secrets.token_hex(16)
 
@@ -414,7 +414,7 @@ class SecurityManager:
 
         return session_id
 
-    def validate_session(self, session_id: str) -> Optional[str]:
+    def validate_session(self, session_id: str) -> str | None:
         """验证会话"""
         with self._lock:
             session = self._sessions.get(session_id)
@@ -521,10 +521,10 @@ class SecurityManager:
         self,
         event_type: str,
         severity: SecurityLevel,
-        user_id: Optional[str],
+        user_id: str | None,
         description: str,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
         **metadata
     ) -> None:
         """记录安全事件"""
@@ -560,11 +560,11 @@ class SecurityManager:
             extra_data=event.to_dict()
         )
 
-    def get_user(self, user_id: str) -> Optional[User]:
+    def get_user(self, user_id: str) -> User | None:
         """获取用户"""
         return self._users.get(user_id)
 
-    def get_user_by_username(self, username: str) -> Optional[User]:
+    def get_user_by_username(self, username: str) -> User | None:
         """根据用户名获取用户"""
         for user in self._users.values():
             if user.username == username:
@@ -573,9 +573,9 @@ class SecurityManager:
 
     def get_security_events(
         self,
-        severity: Optional[SecurityLevel] = None,
-        limit: Optional[int] = None
-    ) -> List[SecurityEvent]:
+        severity: SecurityLevel | None = None,
+        limit: int | None = None
+    ) -> list[SecurityEvent]:
         """获取安全事件"""
         events = self._security_events.copy()
 
@@ -591,9 +591,9 @@ class SecurityManager:
 
     def get_threat_detections(
         self,
-        threat_type: Optional[ThreatType] = None,
-        limit: Optional[int] = None
-    ) -> List[ThreatDetection]:
+        threat_type: ThreatType | None = None,
+        limit: int | None = None
+    ) -> list[ThreatDetection]:
         """获取威胁检测"""
         detections = self._threat_detections.copy()
 
@@ -607,7 +607,7 @@ class SecurityManager:
 
         return detections
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         return self._stats.copy()
 
@@ -772,12 +772,12 @@ def get_security_manager() -> SecurityManager:
     return _global_security_manager
 
 
-def authenticate_user(username: str, password: str, ip_address: Optional[str] = None) -> Optional[str]:
+def authenticate_user(username: str, password: str, ip_address: str | None = None) -> str | None:
     """用户认证"""
     return _global_security_manager.authenticate_user(username, password, ip_address)
 
 
-def validate_session(session_id: str) -> Optional[str]:
+def validate_session(session_id: str) -> str | None:
     """验证会话"""
     return _global_security_manager.validate_session(session_id)
 

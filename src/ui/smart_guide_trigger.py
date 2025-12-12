@@ -207,7 +207,7 @@ class SmartGuideTrigger(QObject):
 
         return False
 
-    def _detect_stuck(self, trigger: GuideTrigger) -> bool:
+    def _detect_stuck(self, _trigger: GuideTrigger) -> bool:
         """检测用户是否卡住"""
         # 检查最近N次操作
         recent_count = 10

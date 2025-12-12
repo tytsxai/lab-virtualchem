@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from enum import Enum
 
 from PySide6.QtCore import QEvent, QObject, Qt, Signal
@@ -40,7 +41,7 @@ class KeyboardNavigationManager(QObject):
         self.mode = NavigationMode.NORMAL
 
         # 快捷键映射
-        self.shortcuts: dict[QKeySequence, tuple[str, callable]] = {}
+        self.shortcuts: dict[QKeySequence, tuple[str, Callable[[], None]]] = {}
 
         # 焦点历史
         self.focus_history: list[QWidget] = []
@@ -73,7 +74,7 @@ class KeyboardNavigationManager(QObject):
         self.navigation_mode_changed.emit(mode)
         logger.info(f"导航模式已设置: {mode.value}")
 
-    def register_shortcut(self, key_sequence: str | QKeySequence, name: str, callback: callable):
+    def register_shortcut(self, key_sequence: str | QKeySequence, name: str, callback: Callable[[], None]):
         """注册快捷键
 
         Args:

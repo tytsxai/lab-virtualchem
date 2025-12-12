@@ -15,14 +15,13 @@ import asyncio
 import logging
 import re
 import threading
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from re import Pattern
 from typing import (
     Any,
-    Awaitable,
-    Callable,
     ClassVar,
     TypeVar,
     cast,
@@ -67,7 +66,7 @@ class Event:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Event":
+    def from_dict(cls, data: dict[str, Any]) -> Event:
         """从字典创建事件"""
         return cls(
             name=data["name"],
@@ -153,7 +152,7 @@ class EventBus:
         handler: EventHandler,
         priority: EventPriority = EventPriority.NORMAL,
         filter_func: EventFilter | None = None,
-    ) -> "EventBus":
+    ) -> EventBus:
         """
         订阅事件
 
@@ -290,7 +289,7 @@ class EventBus:
             return results
         return []
 
-    def use_middleware(self, middleware: Middleware) -> "EventBus":
+    def use_middleware(self, middleware: Middleware) -> EventBus:
         """
         添加中间件
 

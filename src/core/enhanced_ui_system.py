@@ -9,7 +9,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .robustness_integration import enhance_robustness, log_operation, validate_input
 
@@ -106,8 +106,8 @@ class Theme:
     colors: ColorScheme
     typography: Typography
     spacing: Spacing
-    animations: Dict[str, Animation] = field(default_factory=dict)
-    custom_properties: Dict[str, Any] = field(default_factory=dict)
+    animations: dict[str, Animation] = field(default_factory=dict)
+    custom_properties: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -115,18 +115,18 @@ class UIComponent:
     """UI组件"""
     id: str
     type: str
-    properties: Dict[str, Any]
-    children: List['UIComponent'] = field(default_factory=list)
-    styles: Dict[str, Any] = field(default_factory=dict)
-    animations: List[Animation] = field(default_factory=list)
-    responsive: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    properties: dict[str, Any]
+    children: list['UIComponent'] = field(default_factory=list)
+    styles: dict[str, Any] = field(default_factory=dict)
+    animations: list[Animation] = field(default_factory=list)
+    responsive: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
 @dataclass
 class LayoutConfig:
     """布局配置"""
     type: LayoutType
-    breakpoints: Dict[str, int]
+    breakpoints: dict[str, int]
     grid_columns: int = 12
     container_max_width: int = 1200
     sidebar_width: int = 250
@@ -138,11 +138,11 @@ class EnhancedUISystem:
     """增强的用户界面系统"""
 
     def __init__(self):
-        self.themes: Dict[str, Theme] = {}
-        self.current_theme: Optional[Theme] = None
-        self.layout_config: Optional[LayoutConfig] = None
-        self.components: Dict[str, UIComponent] = {}
-        self.user_preferences: Dict[str, Any] = {}
+        self.themes: dict[str, Theme] = {}
+        self.current_theme: Theme | None = None
+        self.layout_config: LayoutConfig | None = None
+        self.components: dict[str, UIComponent] = {}
+        self.user_preferences: dict[str, Any] = {}
 
         # 初始化系统
         self._initialize_themes()
@@ -432,9 +432,9 @@ class EnhancedUISystem:
         self,
         component_id: str,
         component_type: str,
-        properties: Dict[str, Any],
-        styles: Optional[Dict[str, Any]] = None,
-        animations: Optional[List[Animation]] = None
+        properties: dict[str, Any],
+        styles: dict[str, Any] | None = None,
+        animations: list[Animation] | None = None
     ) -> UIComponent:
         """创建UI组件"""
         component = UIComponent(
@@ -465,7 +465,7 @@ class EnhancedUISystem:
     def update_component(
         self,
         component_id: str,
-        updates: Dict[str, Any]
+        updates: dict[str, Any]
     ) -> bool:
         """更新UI组件"""
         if component_id not in self.components:
@@ -542,7 +542,7 @@ class EnhancedUISystem:
         self,
         component_id: str,
         screen_width: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """获取响应式样式"""
         if component_id not in self.components:
             return {}
@@ -643,9 +643,9 @@ class EnhancedUISystem:
         security_level="low",
         enable_caching=True
     )
-    def get_component_tree(self) -> Dict[str, Any]:
+    def get_component_tree(self) -> dict[str, Any]:
         """获取组件树"""
-        def serialize_component(component: UIComponent) -> Dict[str, Any]:
+        def serialize_component(component: UIComponent) -> dict[str, Any]:
             return {
                 "id": component.id,
                 "type": component.type,
@@ -743,7 +743,7 @@ class EnhancedUISystem:
 
         return json.dumps(config, ensure_ascii=False, indent=2)
 
-    def _log_ui_event(self, event_type: str, data: Dict[str, Any]) -> None:
+    def _log_ui_event(self, event_type: str, data: dict[str, Any]) -> None:
         """记录UI事件"""
         logger.info(f"UI事件: {event_type}: {data}")
 

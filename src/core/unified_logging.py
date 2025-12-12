@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 from ..utils.logger import get_logger
 
@@ -29,10 +29,10 @@ class LogContext:
     """日志上下文"""
     operation: str
     component: str
-    user_id: Optional[str] = None
-    session_id: Optional[str] = None
-    request_id: Optional[str] = None
-    extra_data: Optional[Dict[str, Any]] = None
+    user_id: str | None = None
+    session_id: str | None = None
+    request_id: str | None = None
+    extra_data: dict[str, Any] | None = None
 
     def __post_init__(self):
         if self.extra_data is None:
@@ -47,7 +47,7 @@ class UnifiedLogger:
         self._context_stack: list[LogContext] = []
         self._lock = threading.RLock()
 
-    def _get_current_context(self) -> Optional[LogContext]:
+    def _get_current_context(self) -> LogContext | None:
         """获取当前日志上下文"""
         with self._lock:
             return self._context_stack[-1] if self._context_stack else None
@@ -143,25 +143,27 @@ class UnifiedLogger:
 
     def log_operation_start(self, operation: str, component: str, **kwargs) -> None:
         """记录操作开始"""
-        self.info(f"开始执行: {operation}", **kwargs)
+        self.info(f"开始执行: {operation}", component=component, **kwargs)
 
-    def log_operation_end(self, operation: str, component: str, duration: Optional[float] = None, **kwargs) -> None:
+    def log_operation_end(self, operation: str, component: str, duration: float | None = None, **kwargs) -> None:
         """记录操作结束"""
         message = f"完成执行: {operation}"
         if duration is not None:
             duration_str = f"{duration:.3f}".rstrip("0").rstrip(".")
             message += f" (耗时: {duration_str}秒)"
-        self.info(message, **kwargs)
+        self.info(message, component=component, **kwargs)
 
     def log_operation_error(self, operation: str, component: str, error: Exception, **kwargs) -> None:
         """记录操作错误"""
-        self.error(f"执行失败: {operation} - {str(error)}", **kwargs)
+        self.error(f"执行失败: {operation} - {str(error)}", component=component, **kwargs)
 
     def log_performance(self, operation: str, component: str, duration: float, **kwargs) -> None:
         """记录性能日志"""
         level = LogLevel.WARNING if duration > 1.0 else LogLevel.INFO
         duration_str = f"{duration:.3f}".rstrip("0").rstrip(".")
-        formatted = self._format_message(f"性能: {operation} 耗时 {duration_str}秒", level, **kwargs)
+        formatted = self._format_message(
+            f"性能: {operation} 耗时 {duration_str}秒", level, component=component, **kwargs
+        )
         getattr(self.logger, level.value.lower())(formatted)
 
     def log_user_action(self, action: str, user_id: str, **kwargs) -> None:
@@ -209,7 +211,7 @@ def log_operation(operation: str, component: str, **kwargs):
     return decorator
 
 
-def log_performance(operation: str, component: str, duration: Optional[float] = None, **kwargs):
+def log_performance(operation: str, component: str, duration: float | None = None, **kwargs):
     """
     性能日志装饰器或便捷函数
 
@@ -292,7 +294,7 @@ def log_operation_start(operation: str, component: str, **kwargs) -> None:
     _unified_logger.log_operation_start(operation, component, **kwargs)
 
 
-def log_operation_end(operation: str, component: str, duration: Optional[float] = None, **kwargs) -> None:
+def log_operation_end(operation: str, component: str, duration: float | None = None, **kwargs) -> None:
     """记录操作结束"""
     _unified_logger.log_operation_end(operation, component, duration, **kwargs)
 

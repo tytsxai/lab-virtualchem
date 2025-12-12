@@ -10,7 +10,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .robustness_integration import enhance_robustness, log_operation
 
@@ -69,7 +69,7 @@ class DeviceInfo:
     platform: str  # ios, android, windows, macos, linux
     browser: str
     version: str
-    capabilities: Dict[str, bool] = field(default_factory=dict)
+    capabilities: dict[str, bool] = field(default_factory=dict)
 
 
 @dataclass
@@ -83,7 +83,7 @@ class TouchEvent:
     duration: float = 0.0
     pressure: float = 0.0
     target_element: str = ""
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -110,20 +110,20 @@ class OfflineData:
     last_updated: datetime
     size: int
     priority: int
-    ttl: Optional[float] = None
-    dependencies: List[str] = field(default_factory=list)
+    ttl: float | None = None
+    dependencies: list[str] = field(default_factory=list)
 
 
 class EnhancedMobileSystem:
     """增强的移动端支持系统"""
 
     def __init__(self):
-        self.devices: Dict[str, DeviceInfo] = {}
-        self.touch_events: List[TouchEvent] = []
-        self.responsive_layouts: Dict[ScreenSize, ResponsiveLayout] = {}
-        self.offline_cache: Dict[str, OfflineData] = {}
+        self.devices: dict[str, DeviceInfo] = {}
+        self.touch_events: list[TouchEvent] = []
+        self.responsive_layouts: dict[ScreenSize, ResponsiveLayout] = {}
+        self.offline_cache: dict[str, OfflineData] = {}
         self.network_status: NetworkStatus = NetworkStatus.ONLINE
-        self.current_device: Optional[DeviceInfo] = None
+        self.current_device: DeviceInfo | None = None
 
         # 初始化系统
         self._initialize_responsive_layouts()
@@ -298,7 +298,7 @@ class EnhancedMobileSystem:
         else:
             return "unknown"
 
-    def _detect_capabilities(self, user_agent: str, device_type: DeviceType) -> Dict[str, bool]:
+    def _detect_capabilities(self, _user_agent: str, device_type: DeviceType) -> dict[str, bool]:
         """检测设备能力"""
         capabilities = {
             "touch": device_type in [DeviceType.MOBILE, DeviceType.TABLET],
@@ -387,8 +387,8 @@ class EnhancedMobileSystem:
         data_type: str,
         content: Any,
         priority: int = 1,
-        ttl: Optional[float] = None,
-        dependencies: Optional[List[str]] = None
+        ttl: float | None = None,
+        dependencies: list[str] | None = None
     ) -> OfflineData:
         """缓存离线数据"""
         # 计算数据大小
@@ -418,7 +418,7 @@ class EnhancedMobileSystem:
         security_level="low",
         enable_caching=True
     )
-    def get_offline_data(self, data_id: str) -> Optional[OfflineData]:
+    def get_offline_data(self, data_id: str) -> OfflineData | None:
         """获取离线数据"""
         if data_id not in self.offline_cache:
             return None
@@ -455,7 +455,7 @@ class EnhancedMobileSystem:
         security_level="low",
         enable_caching=True
     )
-    def get_mobile_optimizations(self, device_id: str) -> Dict[str, Any]:
+    def get_mobile_optimizations(self, device_id: str) -> dict[str, Any]:
         """获取移动端优化建议"""
         if device_id not in self.devices:
             return {}
@@ -750,7 +750,7 @@ class EnhancedMobileSystem:
         security_level="low",
         enable_caching=True
     )
-    def get_touch_analytics(self, limit: int = 100) -> Dict[str, Any]:
+    def get_touch_analytics(self, limit: int = 100) -> dict[str, Any]:
         """获取触摸分析"""
         recent_events = self.touch_events[-limit:] if self.touch_events else []
 

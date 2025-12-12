@@ -18,14 +18,15 @@ import hashlib
 import json
 import shutil
 import zlib
+from collections.abc import Iterable
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from threading import Lock, RLock
-from typing import Any, Iterable
+from typing import Any
 
-from ..models.user_record import UserRecord
 from ..core.validation import ValidationError
+from ..models.user_record import UserRecord
 from ..utils.error_handler import safe_execute
 from ..utils.logger import get_logger
 
@@ -874,7 +875,7 @@ class JSONStore:
             # 尝试从用户数据目录读取配置
             config_file = Path(self.base_dir) / "config.json"
             if config_file.exists():
-                with open(config_file, 'r', encoding='utf-8') as f:
+                with open(config_file, encoding='utf-8') as f:
                     config = json.load(f)
                     return config.get(key, default)
         except Exception as e:
@@ -897,7 +898,7 @@ class JSONStore:
             # 读取现有配置
             config = {}
             if config_file.exists():
-                with open(config_file, 'r', encoding='utf-8') as f:
+                with open(config_file, encoding='utf-8') as f:
                     config = json.load(f)
 
             # 更新配置

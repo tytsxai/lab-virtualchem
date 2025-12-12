@@ -11,7 +11,7 @@ import threading
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .enhanced_event_bus import Event, EventPriority, publish_event, subscribe_event
 from .enhanced_observability import LogLevel, get_observability
@@ -44,9 +44,9 @@ class LanguageInfo:
     region: str
     script: str = ""
     direction: str = "ltr"  # ltr 或 rtl
-    plural_forms: List[str] = field(default_factory=list)
+    plural_forms: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "code": self.code.value,
@@ -66,9 +66,9 @@ class TranslationEntry:
     value: str
     context: str = ""
     plural_key: str = ""
-    tags: Dict[str, str] = field(default_factory=dict)
+    tags: dict[str, str] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "key": self.key,
@@ -84,11 +84,11 @@ class LocalizationResource:
     """本地化资源"""
     language: LanguageCode
     namespace: str
-    entries: Dict[str, TranslationEntry] = field(default_factory=dict)
+    entries: dict[str, TranslationEntry] = field(default_factory=dict)
     last_modified: float = 0.0
     version: str = "1.0.0"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "language": self.language.value,
@@ -102,23 +102,23 @@ class LocalizationResource:
 class EnhancedI18nManager:
     """增强国际化管理器"""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         self._config = config or {}
         self._error_handler = get_error_handler()
         self._observability = get_observability()
         self._cache_manager = get_cache_manager()
 
         # 语言信息
-        self._languages: Dict[LanguageCode, LanguageInfo] = {}
+        self._languages: dict[LanguageCode, LanguageInfo] = {}
         self._current_language: LanguageCode = LanguageCode.EN
         self._fallback_language: LanguageCode = LanguageCode.EN
 
         # 翻译资源
-        self._resources: Dict[str, LocalizationResource] = {}
-        self._namespaces: Dict[str, Dict[LanguageCode, str]] = {}
+        self._resources: dict[str, LocalizationResource] = {}
+        self._namespaces: dict[str, dict[LanguageCode, str]] = {}
 
         # 翻译缓存
-        self._translation_cache: Dict[str, str] = {}
+        self._translation_cache: dict[str, str] = {}
         self._cache_enabled = self._config.get("cache_enabled", True)
 
         # 统计信息
@@ -268,7 +268,7 @@ class EnhancedI18nManager:
             return False
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 data = json.load(f)
 
             resource = LocalizationResource(
@@ -334,7 +334,7 @@ class EnhancedI18nManager:
             if subdir.is_dir():
                 self.load_resource_directory(subdir)
 
-    def _infer_language_from_filename(self, filename: str) -> Optional[LanguageCode]:
+    def _infer_language_from_filename(self, filename: str) -> LanguageCode | None:
         """从文件名推断语言"""
         for lang_code in LanguageCode:
             if filename.lower() == lang_code.value.lower():
@@ -380,11 +380,11 @@ class EnhancedI18nManager:
         """获取当前语言"""
         return self._current_language
 
-    def get_language_info(self, language: LanguageCode) -> Optional[LanguageInfo]:
+    def get_language_info(self, language: LanguageCode) -> LanguageInfo | None:
         """获取语言信息"""
         return self._languages.get(language)
 
-    def get_supported_languages(self) -> List[LanguageInfo]:
+    def get_supported_languages(self) -> list[LanguageInfo]:
         """获取支持的语言列表"""
         return list(self._languages.values())
 
@@ -392,7 +392,7 @@ class EnhancedI18nManager:
         self,
         key: str,
         namespace: str = "default",
-        language: Optional[LanguageCode] = None,
+        language: LanguageCode | None = None,
         **kwargs
     ) -> str:
         """翻译文本"""
@@ -447,7 +447,7 @@ class EnhancedI18nManager:
         key: str,
         namespace: str,
         language: LanguageCode
-    ) -> Optional[str]:
+    ) -> str | None:
         """查找翻译"""
         resource_key = f"{language.value}:{namespace}"
         resource = self._resources.get(resource_key)
@@ -462,7 +462,7 @@ class EnhancedI18nManager:
         key: str,
         count: int,
         namespace: str = "default",
-        language: Optional[LanguageCode] = None,
+        language: LanguageCode | None = None,
         **kwargs
     ) -> str:
         """翻译复数形式"""
@@ -501,7 +501,7 @@ class EnhancedI18nManager:
 
         return translation
 
-    def _get_plural_form(self, count: int, plural_forms: List[str]) -> str:
+    def _get_plural_form(self, count: int, plural_forms: list[str]) -> str:
         """获取复数形式"""
         if not plural_forms:
             return "other"
@@ -581,7 +581,7 @@ class EnhancedI18nManager:
         self,
         language: LanguageCode,
         namespace: str = "default"
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """获取所有翻译"""
         resource_key = f"{language.value}:{namespace}"
         resource = self._resources.get(resource_key)
@@ -591,7 +591,7 @@ class EnhancedI18nManager:
 
         return {}
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         return {
             **self._stats,

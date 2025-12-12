@@ -9,7 +9,7 @@ import sys
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -19,10 +19,10 @@ class ModuleInfo:
     """模块信息"""
     name: str
     priority: int = 0  # 优先级（数字越大越优先）
-    dependencies: List[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
     loaded: bool = False
     load_time: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class SmartLazyLoader:
@@ -44,16 +44,16 @@ class SmartLazyLoader:
         self.enable_background_loading = enable_background_loading
 
         # 模块注册表
-        self._modules: Dict[str, ModuleInfo] = {}
+        self._modules: dict[str, ModuleInfo] = {}
 
         # 已加载的模块缓存
-        self._loaded_modules: Dict[str, Any] = {}
+        self._loaded_modules: dict[str, Any] = {}
 
         # 加载锁（可重入，避免依赖加载死锁）
         self._lock = threading.RLock()
 
         # 后台加载线程
-        self._background_thread: Optional[threading.Thread] = None
+        self._background_thread: threading.Thread | None = None
         self._background_loading = False
 
         # 统计信息
@@ -67,7 +67,7 @@ class SmartLazyLoader:
 
         logger.info("智能懒加载器初始化完成")
 
-    def register(self, module_name: str, priority: int = 0, dependencies: Optional[List[str]] = None):
+    def register(self, module_name: str, priority: int = 0, dependencies: list[str] | None = None):
         """注册模块
 
         Args:
@@ -142,7 +142,7 @@ class SmartLazyLoader:
                 self._stats["load_errors"] += 1
                 raise
 
-    def load_many(self, module_names: List[str]) -> Dict[str, Any]:
+    def load_many(self, module_names: list[str]) -> dict[str, Any]:
         """批量加载模块
 
         Args:
@@ -215,7 +215,7 @@ class SmartLazyLoader:
         self._background_loading = False
         logger.info("后台预加载完成")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         with self._lock:
             return {
@@ -229,12 +229,12 @@ class SmartLazyLoader:
                 "background_running": self._background_loading,
             }
 
-    def get_loaded_modules(self) -> List[str]:
+    def get_loaded_modules(self) -> list[str]:
         """获取已加载的模块列表"""
         with self._lock:
             return list(self._loaded_modules.keys())
 
-    def get_unloaded_modules(self) -> List[str]:
+    def get_unloaded_modules(self) -> list[str]:
         """获取未加载的模块列表"""
         with self._lock:
             return [name for name, info in self._modules.items() if not info.loaded and name not in self._loaded_modules]
@@ -247,7 +247,7 @@ class SmartLazyLoader:
                 module_info.loaded = False
         logger.info("模块缓存已清空")
 
-    def invalidate(self, module_name: Optional[str] = None):
+    def invalidate(self, module_name: str | None = None):
         """使模块缓存失效，支持单个或全部"""
         with self._lock:
             targets = [module_name] if module_name else list(self._loaded_modules.keys())
@@ -262,7 +262,7 @@ class SmartLazyLoader:
 
 
 # 全局懒加载器实例
-_lazy_loader: Optional[SmartLazyLoader] = None
+_lazy_loader: SmartLazyLoader | None = None
 
 
 def get_lazy_loader() -> SmartLazyLoader:
@@ -273,7 +273,7 @@ def get_lazy_loader() -> SmartLazyLoader:
     return _lazy_loader
 
 
-def lazy_import(module_name: str, *args, **kwargs) -> Any:
+def lazy_import(module_name: str, *_args: Any, **_kwargs: Any) -> Any:
     """懒加载导入函数
 
     使用示例：

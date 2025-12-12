@@ -3,16 +3,23 @@ SQLAlchemy数据库模型
 定义所有数据表结构
 """
 
-from datetime import datetime
-from typing import Optional, Dict, Any
 import json
+from datetime import datetime
+from typing import Any
 
 from sqlalchemy import (
-    Column, Integer, String, Float, Boolean, DateTime, Text, JSON,
-    ForeignKey, Index, UniqueConstraint, CheckConstraint
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
 )
 from sqlalchemy.orm import declarative_base, relationship
-from sqlalchemy.sql import func
 
 Base = declarative_base()
 
@@ -103,7 +110,7 @@ class ExperimentRecord(Base):
     def __repr__(self):
         return f"<ExperimentRecord(record_id='{self.record_id}', experiment_id='{self.experiment_id}')>"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             'record_id': self.record_id,

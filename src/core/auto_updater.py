@@ -9,10 +9,10 @@ import platform
 import shutil
 import subprocess
 import tempfile
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Optional
 
 from .. import __version__ as APP_VERSION
 
@@ -51,7 +51,7 @@ class AutoUpdater:
 
     def __init__(
         self,
-        current_version: Optional[str] = None,
+        current_version: str | None = None,
         update_url: str = "https://api.virtualchemlab.com/updates",
         check_interval: int = 86400  # 24小时
     ):
@@ -67,11 +67,11 @@ class AutoUpdater:
         self.check_interval = check_interval
 
         # 更新信息
-        self.latest_version: Optional[VersionInfo] = None
-        self.last_check_time: Optional[datetime] = None
+        self.latest_version: VersionInfo | None = None
+        self.last_check_time: datetime | None = None
 
         # 下载进度回调
-        self.progress_callback: Optional[Callable[[int, int], None]] = None
+        self.progress_callback: Callable[[int, int], None] | None = None
 
         # 平台信息
         self.platform = self._detect_platform()
@@ -94,7 +94,7 @@ class AutoUpdater:
         else:
             return 'unknown'
 
-    def check_for_updates(self, force: bool = False) -> Optional[VersionInfo]:
+    def check_for_updates(self, force: bool = False) -> VersionInfo | None:
         """检查更新
 
         Args:
@@ -160,8 +160,8 @@ class AutoUpdater:
     def download_update(
         self,
         version_info: VersionInfo,
-        progress_callback: Optional[Callable[[int, int], None]] = None
-    ) -> Optional[Path]:
+        progress_callback: Callable[[int, int], None] | None = None
+    ) -> Path | None:
         """下载更新
 
         Args:
@@ -279,7 +279,7 @@ class AutoUpdater:
     def auto_update(
         self,
         auto_install: bool = False,
-        progress_callback: Optional[Callable[[int, int], None]] = None
+        progress_callback: Callable[[int, int], None] | None = None
     ) -> bool:
         """自动更新流程
 
@@ -309,7 +309,7 @@ class AutoUpdater:
             logger.info(f"更新已下载到: {update_file}")
             return True
 
-    def get_changelog(self, version: Optional[str] = None) -> str:
+    def get_changelog(self, version: str | None = None) -> str:
         """获取更新日志
 
         Args:

@@ -207,7 +207,7 @@ class IntegratedPerformanceOptimizer(QObject):
 
     def _calculate_performance_score(
         self,
-        frontend_stats: dict[str, Any],
+        _frontend_stats: dict[str, Any],
         backend_stats: dict[str, Any],
         high_freq_stats: dict[str, Any],
     ) -> float:

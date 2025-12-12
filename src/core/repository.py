@@ -7,9 +7,10 @@
 import json
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from collections.abc import Callable as TypingCallable
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Callable as TypingCallable, Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 T = TypeVar("T")
 

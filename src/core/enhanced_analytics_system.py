@@ -10,7 +10,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .robustness_integration import enhance_robustness, log_operation
 
@@ -50,7 +50,7 @@ class DataPoint:
     """数据点"""
     timestamp: datetime
     value: float
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -59,7 +59,7 @@ class Metric:
     metric_id: str
     name: str
     type: MetricType
-    data_points: List[DataPoint] = field(default_factory=list)
+    data_points: list[DataPoint] = field(default_factory=list)
     current_value: float = 0.0
     average_value: float = 0.0
     trend: TrendDirection = TrendDirection.STABLE
@@ -74,9 +74,9 @@ class AnalysisResult:
     analysis_type: AnalysisType
     timestamp: datetime
     summary: str
-    insights: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
-    metrics: Dict[str, Metric] = field(default_factory=dict)
+    insights: list[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
+    metrics: dict[str, Metric] = field(default_factory=dict)
     confidence: float = 0.0
     actionable: bool = True
 
@@ -90,7 +90,7 @@ class Prediction:
     predicted_value: float
     confidence: float
     time_horizon: int  # 天数
-    factors: List[str] = field(default_factory=list)
+    factors: list[str] = field(default_factory=list)
     created_at: datetime = field(default_factory=datetime.now)
 
 
@@ -101,7 +101,7 @@ class LearningPath:
     user_id: str
     current_level: str
     target_level: str
-    steps: List[Dict[str, Any]] = field(default_factory=list)
+    steps: list[dict[str, Any]] = field(default_factory=list)
     estimated_duration: int = 0  # 天数
     success_probability: float = 0.0
     created_at: datetime = field(default_factory=datetime.now)
@@ -111,11 +111,11 @@ class EnhancedAnalyticsSystem:
     """增强的高级分析系统"""
 
     def __init__(self):
-        self.user_metrics: Dict[str, Dict[str, Metric]] = {}
-        self.analysis_results: Dict[str, List[AnalysisResult]] = {}
-        self.predictions: Dict[str, List[Prediction]] = {}
-        self.learning_paths: Dict[str, List[LearningPath]] = {}
-        self.benchmarks: Dict[str, Dict[str, float]] = {}
+        self.user_metrics: dict[str, dict[str, Metric]] = {}
+        self.analysis_results: dict[str, list[AnalysisResult]] = {}
+        self.predictions: dict[str, list[Prediction]] = {}
+        self.learning_paths: dict[str, list[LearningPath]] = {}
+        self.benchmarks: dict[str, dict[str, float]] = {}
 
         # 初始化系统
         self._initialize_benchmarks()
@@ -165,7 +165,7 @@ class EnhancedAnalyticsSystem:
         user_id: str,
         metric_name: str,
         value: float,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: dict[str, Any] | None = None
     ) -> bool:
         """添加数据点"""
         if user_id not in self.user_metrics:
@@ -238,7 +238,7 @@ class EnhancedAnalyticsSystem:
         # 计算置信度
         metric.confidence = self._calculate_confidence(values)
 
-    def _analyze_trend(self, values: List[float]) -> TrendDirection:
+    def _analyze_trend(self, values: list[float]) -> TrendDirection:
         """分析趋势"""
         if len(values) < 3:
             return TrendDirection.STABLE
@@ -276,7 +276,7 @@ class EnhancedAnalyticsSystem:
         else:
             return TrendDirection.DECLINING
 
-    def _calculate_confidence(self, values: List[float]) -> float:
+    def _calculate_confidence(self, values: list[float]) -> float:
         """计算置信度"""
         if len(values) < 2:
             return 0.0
@@ -338,7 +338,7 @@ class EnhancedAnalyticsSystem:
         logger.info(f"学习分析已完成: {user_id}")
         return analysis_result
 
-    def _analyze_learning_progress(self, metrics: Dict[str, Metric]) -> List[str]:
+    def _analyze_learning_progress(self, metrics: dict[str, Metric]) -> list[str]:
         """分析学习进度"""
         insights = []
 
@@ -370,7 +370,7 @@ class EnhancedAnalyticsSystem:
 
         return insights
 
-    def _analyze_learning_patterns(self, metrics: Dict[str, Metric]) -> List[str]:
+    def _analyze_learning_patterns(self, metrics: dict[str, Metric]) -> list[str]:
         """分析学习模式"""
         insights = []
 
@@ -388,7 +388,7 @@ class EnhancedAnalyticsSystem:
 
         return insights
 
-    def _analyze_time_patterns(self, metrics: Dict[str, Metric]) -> List[str]:
+    def _analyze_time_patterns(self, _metrics: dict[str, Metric]) -> list[str]:
         """分析时间模式"""
         insights = []
 
@@ -397,7 +397,7 @@ class EnhancedAnalyticsSystem:
 
         return insights
 
-    def _analyze_difficulty_patterns(self, metrics: Dict[str, Metric]) -> List[str]:
+    def _analyze_difficulty_patterns(self, metrics: dict[str, Metric]) -> list[str]:
         """分析难度模式"""
         insights = []
 
@@ -411,7 +411,7 @@ class EnhancedAnalyticsSystem:
 
         return insights
 
-    def _analyze_preference_patterns(self, metrics: Dict[str, Metric]) -> List[str]:
+    def _analyze_preference_patterns(self, metrics: dict[str, Metric]) -> list[str]:
         """分析偏好模式"""
         insights = []
 
@@ -422,7 +422,7 @@ class EnhancedAnalyticsSystem:
 
         return insights
 
-    def _generate_learning_recommendations(self, metrics: Dict[str, Metric]) -> List[str]:
+    def _generate_learning_recommendations(self, metrics: dict[str, Metric]) -> list[str]:
         """生成学习建议"""
         recommendations = []
 
@@ -450,7 +450,7 @@ class EnhancedAnalyticsSystem:
 
         return recommendations
 
-    def _generate_learning_summary(self, metrics: Dict[str, Metric]) -> str:
+    def _generate_learning_summary(self, metrics: dict[str, Metric]) -> str:
         """生成学习摘要"""
         if not metrics:
             return "暂无学习数据"
@@ -485,7 +485,7 @@ class EnhancedAnalyticsSystem:
 
         return f"整体学习表现：{', '.join(summary_parts)}。"
 
-    def _calculate_overall_confidence(self, metrics: Dict[str, Metric]) -> float:
+    def _calculate_overall_confidence(self, metrics: dict[str, Metric]) -> float:
         """计算整体置信度"""
         if not metrics:
             return 0.0
@@ -548,7 +548,7 @@ class EnhancedAnalyticsSystem:
         logger.info(f"预测已生成: {user_id} - {prediction_type}")
         return prediction
 
-    def _predict_value(self, metrics: Dict[str, Metric], prediction_type: str, time_horizon: int) -> float:
+    def _predict_value(self, metrics: dict[str, Metric], prediction_type: str, _time_horizon: int) -> float:
         """预测数值"""
         # 简化的预测逻辑
         if prediction_type == "accuracy":
@@ -576,13 +576,13 @@ class EnhancedAnalyticsSystem:
 
         return 0.0
 
-    def _calculate_prediction_confidence(self, metrics: Dict[str, Metric], prediction_type: str) -> float:
+    def _calculate_prediction_confidence(self, metrics: dict[str, Metric], prediction_type: str) -> float:
         """计算预测置信度"""
         if prediction_type in metrics:
             return metrics[prediction_type].confidence
         return 0.5  # 默认置信度
 
-    def _identify_prediction_factors(self, metrics: Dict[str, Metric], prediction_type: str) -> List[str]:
+    def _identify_prediction_factors(self, metrics: dict[str, Metric], prediction_type: str) -> list[str]:
         """识别预测因素"""
         factors = []
 
@@ -653,7 +653,7 @@ class EnhancedAnalyticsSystem:
 
         return learning_path
 
-    def _assess_current_level(self, metrics: Dict[str, Metric]) -> str:
+    def _assess_current_level(self, metrics: dict[str, Metric]) -> str:
         """评估当前水平"""
         if "accuracy" in metrics:
             accuracy = metrics["accuracy"].current_value
@@ -667,7 +667,7 @@ class EnhancedAnalyticsSystem:
                 return "beginner"
         return "beginner"
 
-    def _generate_learning_steps(self, current_level: str, target_level: str) -> List[Dict[str, Any]]:
+    def _generate_learning_steps(self, current_level: str, target_level: str) -> list[dict[str, Any]]:
         """生成学习步骤"""
         steps = []
 
@@ -694,7 +694,7 @@ class EnhancedAnalyticsSystem:
 
         return steps
 
-    def _get_level_requirements(self, level: str) -> List[str]:
+    def _get_level_requirements(self, level: str) -> list[str]:
         """获取水平要求"""
         requirements = {
             "beginner": ["掌握基础概念", "完成基础实验"],
@@ -704,7 +704,7 @@ class EnhancedAnalyticsSystem:
         }
         return requirements.get(level, [])
 
-    def _estimate_learning_duration(self, metrics: Dict[str, Metric], steps: List[Dict[str, Any]]) -> int:
+    def _estimate_learning_duration(self, metrics: dict[str, Metric], steps: list[dict[str, Any]]) -> int:
         """估算学习持续时间"""
         base_duration = len(steps) * 30  # 每步30天
 
@@ -718,7 +718,7 @@ class EnhancedAnalyticsSystem:
 
         return base_duration
 
-    def _calculate_success_probability(self, metrics: Dict[str, Metric], steps: List[Dict[str, Any]]) -> float:
+    def _calculate_success_probability(self, metrics: dict[str, Metric], _steps: list[dict[str, Any]]) -> float:
         """计算成功概率"""
         base_probability = 0.7  # 基础成功概率
 
@@ -762,7 +762,7 @@ class EnhancedAnalyticsSystem:
         security_level="low",
         enable_caching=True
     )
-    def get_analytics_dashboard(self, user_id: str) -> Dict[str, Any]:
+    def get_analytics_dashboard(self, user_id: str) -> dict[str, Any]:
         """获取分析仪表板"""
         dashboard = {
             "user_id": user_id,
@@ -829,7 +829,7 @@ class EnhancedAnalyticsSystem:
 
         return dashboard
 
-    def _generate_dashboard_recommendations(self, user_id: str) -> List[str]:
+    def _generate_dashboard_recommendations(self, user_id: str) -> list[str]:
         """生成仪表板推荐"""
         recommendations = []
 

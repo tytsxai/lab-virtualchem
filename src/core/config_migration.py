@@ -7,11 +7,13 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from src import __version__ as APP_VERSION
+
 from .common_exceptions import ConfigurationError
 from .error_handler import get_error_handler
 from .unified_config_manager import UnifiedConfigManager
@@ -25,8 +27,8 @@ class MigrationStep:
     from_version: str
     to_version: str
     description: str
-    migration_function: callable
-    rollback_function: Optional[callable] = None
+    migration_function: Callable[[dict[str, Any]], dict[str, Any]]
+    rollback_function: Callable[[dict[str, Any]], dict[str, Any]] | None = None
     required: bool = True
 
 
@@ -34,10 +36,10 @@ class MigrationStep:
 class ConfigVersion:
     """配置版本"""
     version: str
-    schema: Dict[str, Any]
-    migration_steps: List[MigrationStep] = field(default_factory=list)
-    deprecated_keys: List[str] = field(default_factory=list)
-    new_keys: List[str] = field(default_factory=list)
+    schema: dict[str, Any]
+    migration_steps: list[MigrationStep] = field(default_factory=list)
+    deprecated_keys: list[str] = field(default_factory=list)
+    new_keys: list[str] = field(default_factory=list)
 
 
 class ConfigMigrationManager:
@@ -45,7 +47,7 @@ class ConfigMigrationManager:
 
     def __init__(self, config_manager: UnifiedConfigManager):
         self._config_manager = config_manager
-        self._versions: Dict[str, ConfigVersion] = {}
+        self._versions: dict[str, ConfigVersion] = {}
         self._current_version = APP_VERSION
         self._error_handler = get_error_handler()
 
@@ -150,7 +152,7 @@ class ConfigMigrationManager:
                 new_keys=["ui", "performance"],
             )
 
-    def _migrate_1_0_to_2_0(self, config_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _migrate_1_0_to_2_0(self, config_data: dict[str, Any]) -> dict[str, Any]:
         """迁移 1.0.0 -> 2.0.0"""
         logger.info("Migrating config from 1.0.0 to 2.0.0")
 
@@ -178,7 +180,7 @@ class ConfigMigrationManager:
 
         return config_data
 
-    def _rollback_2_0_to_1_0(self, config_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _rollback_2_0_to_1_0(self, config_data: dict[str, Any]) -> dict[str, Any]:
         """回滚 2.0.0 -> 1.0.0"""
         logger.info("Rolling back config from 2.0.0 to 1.0.0")
 
@@ -193,14 +195,14 @@ class ConfigMigrationManager:
 
         return config_data
 
-    def _migrate_2_0_to_current(self, config_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _migrate_2_0_to_current(self, config_data: dict[str, Any]) -> dict[str, Any]:
         """迁移 2.0.0 -> 当前应用版本（占位迁移）"""
         logger.info("Migrating config from 2.0.0 to %s", APP_VERSION)
         config_data.setdefault("app", {})
         config_data["app"]["version"] = APP_VERSION
         return config_data
 
-    def _rollback_current_to_2_0(self, config_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _rollback_current_to_2_0(self, config_data: dict[str, Any]) -> dict[str, Any]:
         """回滚 当前版本 -> 2.0.0（占位回滚）"""
         logger.info("Rolling back config from %s to 2.0.0", APP_VERSION)
         config_data.setdefault("app", {})
@@ -212,7 +214,7 @@ class ConfigMigrationManager:
         self._versions[version.version] = version
         logger.debug(f"Registered config version: {version.version}")
 
-    def get_version(self, version: str) -> Optional[ConfigVersion]:
+    def get_version(self, version: str) -> ConfigVersion | None:
         """获取配置版本"""
         return self._versions.get(version)
 
@@ -226,7 +228,7 @@ class ConfigMigrationManager:
             raise ConfigurationError(f"Unknown config version: {version}")
         self._current_version = version
 
-    def detect_config_version(self, config_data: Dict[str, Any]) -> str:
+    def detect_config_version(self, config_data: dict[str, Any]) -> str:
         """检测配置版本"""
         # 检查是否有版本信息
         if "app" in config_data and "version" in config_data["app"]:
@@ -240,9 +242,9 @@ class ConfigMigrationManager:
 
     def migrate_config(
         self,
-        config_data: Dict[str, Any],
-        target_version: Optional[str] = None
-    ) -> Dict[str, Any]:
+        config_data: dict[str, Any],
+        target_version: str | None = None
+    ) -> dict[str, Any]:
         """迁移配置"""
         if target_version is None:
             target_version = self._current_version
@@ -279,7 +281,7 @@ class ConfigMigrationManager:
 
         return migrated_data
 
-    def _get_migration_path(self, from_version: str, to_version: str) -> List[MigrationStep]:
+    def _get_migration_path(self, from_version: str, to_version: str) -> list[MigrationStep]:
         """获取迁移路径"""
         if from_version == to_version:
             return []
@@ -295,7 +297,7 @@ class ConfigMigrationManager:
             # 需要升级
             return self._get_upgrade_path(from_version, to_version)
 
-    def _get_upgrade_path(self, from_version: str, to_version: str) -> List[MigrationStep]:
+    def _get_upgrade_path(self, from_version: str, to_version: str) -> list[MigrationStep]:
         """获取升级路径"""
         path = []
         current_version = from_version
@@ -318,7 +320,7 @@ class ConfigMigrationManager:
 
         return path
 
-    def _get_rollback_path(self, from_version: str, to_version: str) -> List[MigrationStep]:
+    def _get_rollback_path(self, from_version: str, to_version: str) -> list[MigrationStep]:
         """获取回滚路径"""
         path = []
         current_version = from_version
@@ -341,7 +343,7 @@ class ConfigMigrationManager:
 
         return path
 
-    def _find_next_version(self, current_version: str) -> Optional[str]:
+    def _find_next_version(self, current_version: str) -> str | None:
         """查找下一个版本"""
         versions = sorted(self._versions.keys())
         try:
@@ -352,7 +354,7 @@ class ConfigMigrationManager:
             pass
         return None
 
-    def _find_previous_version(self, current_version: str) -> Optional[str]:
+    def _find_previous_version(self, current_version: str) -> str | None:
         """查找上一个版本"""
         versions = sorted(self._versions.keys())
         try:
@@ -363,7 +365,7 @@ class ConfigMigrationManager:
             pass
         return None
 
-    def validate_config_version(self, config_data: Dict[str, Any]) -> bool:
+    def validate_config_version(self, config_data: dict[str, Any]) -> bool:
         """验证配置版本"""
         version = self.detect_config_version(config_data)
         version_info = self._versions.get(version)
@@ -379,7 +381,7 @@ class ConfigMigrationManager:
             logger.error(f"Config validation failed: {e}")
             return False
 
-    def backup_config(self, config_data: Dict[str, Any], backup_path: Path) -> None:
+    def backup_config(self, config_data: dict[str, Any], backup_path: Path) -> None:
         """备份配置"""
         try:
             with open(backup_path, 'w', encoding='utf-8') as f:
@@ -389,10 +391,10 @@ class ConfigMigrationManager:
             logger.error(f"Failed to backup config: {e}")
             raise
 
-    def restore_config(self, backup_path: Path) -> Dict[str, Any]:
+    def restore_config(self, backup_path: Path) -> dict[str, Any]:
         """恢复配置"""
         try:
-            with open(backup_path, 'r', encoding='utf-8') as f:
+            with open(backup_path, encoding='utf-8') as f:
                 config_data = json.load(f)
             logger.info(f"Config restored from {backup_path}")
             return config_data
@@ -400,7 +402,7 @@ class ConfigMigrationManager:
             logger.error(f"Failed to restore config: {e}")
             raise
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         return self._stats.copy()
 
@@ -413,11 +415,11 @@ class ConfigMigrationManager:
             "rollbacks_failed": 0
         }
 
-    def get_version_history(self) -> List[str]:
+    def get_version_history(self) -> list[str]:
         """获取版本历史"""
         return sorted(self._versions.keys())
 
-    def get_migration_info(self, from_version: str, to_version: str) -> Dict[str, Any]:
+    def get_migration_info(self, from_version: str, to_version: str) -> dict[str, Any]:
         """获取迁移信息"""
         path = self._get_migration_path(from_version, to_version)
 
@@ -449,13 +451,13 @@ def get_config_migration_manager() -> ConfigMigrationManager:
     return _global_config_migration
 
 
-def migrate_config(config_data: Dict[str, Any], target_version: Optional[str] = None) -> Dict[str, Any]:
+def migrate_config(config_data: dict[str, Any], target_version: str | None = None) -> dict[str, Any]:
     """迁移配置"""
     migration_manager = get_config_migration_manager()
     return migration_manager.migrate_config(config_data, target_version)
 
 
-def detect_config_version(config_data: Dict[str, Any]) -> str:
+def detect_config_version(config_data: dict[str, Any]) -> str:
     """检测配置版本"""
     migration_manager = get_config_migration_manager()
     return migration_manager.detect_config_version(config_data)

@@ -14,7 +14,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .enhanced_event_bus import EventPriority, publish_event
 from .error_handler import get_error_handler
@@ -51,12 +51,12 @@ class LogEntry:
     function: str
     line_number: int
     thread_id: int
-    trace_id: Optional[str] = None
-    span_id: Optional[str] = None
-    tags: Dict[str, str] = field(default_factory=dict)
-    extra_data: Dict[str, Any] = field(default_factory=dict)
+    trace_id: str | None = None
+    span_id: str | None = None
+    tags: dict[str, str] = field(default_factory=dict)
+    extra_data: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "timestamp": self.timestamp,
@@ -78,15 +78,15 @@ class TraceSpan:
     """追踪跨度"""
     trace_id: str
     span_id: str
-    parent_span_id: Optional[str]
+    parent_span_id: str | None
     operation_name: str
     start_time: float
-    end_time: Optional[float] = None
-    duration: Optional[float] = None
+    end_time: float | None = None
+    duration: float | None = None
     trace_type: TraceType = TraceType.REQUEST
-    tags: Dict[str, str] = field(default_factory=dict)
-    logs: List[Dict[str, Any]] = field(default_factory=list)
-    error: Optional[str] = None
+    tags: dict[str, str] = field(default_factory=dict)
+    logs: list[dict[str, Any]] = field(default_factory=list)
+    error: str | None = None
 
     def finish(self) -> None:
         """完成跨度"""
@@ -102,7 +102,7 @@ class TraceSpan:
             **kwargs
         })
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "trace_id": self.trace_id,
@@ -125,10 +125,10 @@ class MetricData:
     name: str
     value: float
     timestamp: float
-    tags: Dict[str, str] = field(default_factory=dict)
+    tags: dict[str, str] = field(default_factory=dict)
     unit: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "name": self.name,
@@ -142,25 +142,25 @@ class MetricData:
 class EnhancedObservability:
     """增强可观测性系统"""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         self._config = config or {}
         self._error_handler = get_error_handler()
 
         # 日志系统
-        self._log_entries: List[LogEntry] = []
-        self._log_file: Optional[Path] = None
+        self._log_entries: list[LogEntry] = []
+        self._log_file: Path | None = None
         self._log_level = LogLevel.INFO
         self._max_log_entries = self._config.get("max_log_entries", 10000)
 
         # 追踪系统
-        self._active_spans: Dict[str, TraceSpan] = {}
-        self._completed_spans: List[TraceSpan] = []
-        self._trace_context: Dict[str, str] = {}
+        self._active_spans: dict[str, TraceSpan] = {}
+        self._completed_spans: list[TraceSpan] = []
+        self._trace_context: dict[str, str] = {}
         self._max_spans = self._config.get("max_spans", 1000)
 
         # 指标系统
-        self._metrics: Dict[str, List[MetricData]] = {}
-        self._metric_aggregates: Dict[str, Dict[str, float]] = {}
+        self._metrics: dict[str, list[MetricData]] = {}
+        self._metric_aggregates: dict[str, dict[str, float]] = {}
         self._max_metrics = self._config.get("max_metrics", 5000)
 
         # 统计信息
@@ -257,7 +257,7 @@ class EnhancedObservability:
         **kwargs
     ) -> None:
         """记录日志"""
-        if level.value not in [l.value for l in LogLevel]:
+        if level.value not in [lvl.value for lvl in LogLevel]:
             return
 
         # 检查日志级别
@@ -298,7 +298,7 @@ class EnhancedObservability:
         self,
         operation_name: str,
         trace_type: TraceType = TraceType.REQUEST,
-        parent_span_id: Optional[str] = None,
+        parent_span_id: str | None = None,
         **tags
     ) -> str:
         """开始追踪"""
@@ -326,7 +326,7 @@ class EnhancedObservability:
 
         return span_id
 
-    def finish_trace(self, span_id: str, error: Optional[str] = None) -> None:
+    def finish_trace(self, span_id: str, error: str | None = None) -> None:
         """完成追踪"""
         if span_id not in self._active_spans:
             return
@@ -404,10 +404,10 @@ class EnhancedObservability:
 
     def get_logs(
         self,
-        level: Optional[LogLevel] = None,
-        module: Optional[str] = None,
-        limit: Optional[int] = None
-    ) -> List[LogEntry]:
+        level: LogLevel | None = None,
+        module: str | None = None,
+        limit: int | None = None
+    ) -> list[LogEntry]:
         """获取日志"""
         logs = self._log_entries.copy()
 
@@ -427,10 +427,10 @@ class EnhancedObservability:
 
     def get_traces(
         self,
-        trace_id: Optional[str] = None,
-        operation_name: Optional[str] = None,
-        limit: Optional[int] = None
-    ) -> List[TraceSpan]:
+        trace_id: str | None = None,
+        operation_name: str | None = None,
+        limit: int | None = None
+    ) -> list[TraceSpan]:
         """获取追踪"""
         traces = self._completed_spans.copy()
 
@@ -450,9 +450,9 @@ class EnhancedObservability:
 
     def get_metrics(
         self,
-        name: Optional[str] = None,
-        limit: Optional[int] = None
-    ) -> Dict[str, List[MetricData]]:
+        name: str | None = None,
+        limit: int | None = None
+    ) -> dict[str, list[MetricData]]:
         """获取指标"""
         if name:
             return {name: self._metrics.get(name, [])}
@@ -466,14 +466,14 @@ class EnhancedObservability:
 
         return metrics
 
-    def get_metric_aggregates(self, name: Optional[str] = None) -> Dict[str, Dict[str, float]]:
+    def get_metric_aggregates(self, name: str | None = None) -> dict[str, dict[str, float]]:
         """获取指标聚合"""
         if name:
             return {name: self._metric_aggregates.get(name, {})}
 
         return self._metric_aggregates.copy()
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         return {
             **self._stats,
@@ -544,7 +544,7 @@ def start_trace(operation_name: str, trace_type: TraceType = TraceType.REQUEST, 
     return _global_observability.start_trace(operation_name, trace_type, **tags)
 
 
-def finish_trace(span_id: str, error: Optional[str] = None) -> None:
+def finish_trace(span_id: str, error: str | None = None) -> None:
     """完成追踪"""
     _global_observability.finish_trace(span_id, error)
 

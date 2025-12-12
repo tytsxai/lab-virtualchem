@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import logging
 import sys
-from typing import Optional
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
@@ -26,7 +25,7 @@ class RefactoredBootstrap:
     """重构后的启动引导器"""
 
     def __init__(self):
-        self._app: Optional[QApplication] = None
+        self._app: QApplication | None = None
         self._main_window = None
         self._initialized = False
         self._error_handler = get_error_handler()

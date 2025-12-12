@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Generic, TypeVar
+from typing import Any, Generic, TypeVar
 from uuid import uuid4
 
 T = TypeVar("T")
@@ -236,9 +237,9 @@ class InMemoryStorageService(StorageService):
     def _resolve_id(self, entity: Any) -> str:
         """获取或生成实体ID"""
         if hasattr(entity, "id"):
-            return str(getattr(entity, "id"))
+            return str(entity.id)
         if hasattr(entity, "record_id"):
-            return str(getattr(entity, "record_id"))
+            return str(entity.record_id)
         return uuid4().hex
 
     def _match(self, value: Any, operator: QueryOperator, expected: Any) -> bool:

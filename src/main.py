@@ -19,12 +19,13 @@ PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 import logging  # noqa: E402
-from . import __version__ as APP_VERSION  # noqa: E402
 
 from src.core.config_loader import get_config  # noqa: E402
-from src.core.startup_preflight import ensure_secure_startup  # noqa: E402
 from src.core.service_registration import configure_container  # noqa: E402
+from src.core.startup_preflight import ensure_secure_startup  # noqa: E402
 from src.utils.logger import get_logger, setup_logger  # noqa: E402
+
+from . import __version__ as APP_VERSION  # noqa: E402
 
 # 设置日志
 setup_logger("virtualchemlab", logging.INFO)

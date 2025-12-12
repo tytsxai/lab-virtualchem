@@ -8,9 +8,10 @@ from __future__ import annotations
 import logging
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from .enhanced_event_bus import EventPriority, publish_event
 from .error_handler import get_error_handler
@@ -47,7 +48,7 @@ class AlertRule:
     cooldown: float = 300.0  # 冷却时间（秒）
     enabled: bool = True
     description: str = ""
-    tags: Dict[str, str] = field(default_factory=dict)
+    tags: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -60,13 +61,13 @@ class Alert:
     severity: AlertSeverity
     timestamp: float = field(default_factory=time.time)
     state: AlertState = AlertState.ACTIVE
-    acknowledged_by: Optional[str] = None
-    acknowledged_at: Optional[float] = None
-    resolved_at: Optional[float] = None
+    acknowledged_by: str | None = None
+    acknowledged_at: float | None = None
+    resolved_at: float | None = None
     description: str = ""
-    tags: Dict[str, str] = field(default_factory=dict)
+    tags: dict[str, str] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "rule_name": self.rule_name,
@@ -91,18 +92,18 @@ class AlertAction:
     action_type: str  # "notification", "auto_fix", "escalation"
     action_function: Callable[[Alert], None]
     enabled: bool = True
-    conditions: Dict[str, Any] = field(default_factory=dict)
+    conditions: dict[str, Any] = field(default_factory=dict)
 
 
 class PerformanceAlerting:
     """性能告警系统"""
 
     def __init__(self):
-        self._rules: Dict[str, AlertRule] = {}
-        self._active_alerts: Dict[str, Alert] = {}
-        self._alert_history: List[Alert] = []
-        self._actions: Dict[str, AlertAction] = {}
-        self._cooldowns: Dict[str, float] = {}
+        self._rules: dict[str, AlertRule] = {}
+        self._active_alerts: dict[str, Alert] = {}
+        self._alert_history: list[Alert] = []
+        self._actions: dict[str, AlertAction] = {}
+        self._cooldowns: dict[str, float] = {}
         self._lock = threading.RLock()
         self._error_handler = get_error_handler()
 
@@ -206,7 +207,7 @@ class PerformanceAlerting:
                 del self._rules[rule_name]
                 logger.debug(f"Removed alert rule: {rule_name}")
 
-    def get_rule(self, rule_name: str) -> Optional[AlertRule]:
+    def get_rule(self, rule_name: str) -> AlertRule | None:
         """获取告警规则"""
         return self._rules.get(rule_name)
 
@@ -223,7 +224,7 @@ class PerformanceAlerting:
                 del self._actions[action_name]
                 logger.debug(f"Removed alert action: {action_name}")
 
-    def get_action(self, action_name: str) -> Optional[AlertAction]:
+    def get_action(self, action_name: str) -> AlertAction | None:
         """获取告警动作"""
         return self._actions.get(action_name)
 
@@ -453,20 +454,20 @@ class PerformanceAlerting:
         except Exception as e:
             logger.error(f"Failed to escalate critical alert: {e}")
 
-    def get_active_alerts(self) -> Dict[str, Alert]:
+    def get_active_alerts(self) -> dict[str, Alert]:
         """获取活跃告警"""
         with self._lock:
             return {name: alert for name, alert in self._active_alerts.items()
                    if alert.state == AlertState.ACTIVE}
 
-    def get_alert_history(self, limit: Optional[int] = None) -> List[Alert]:
+    def get_alert_history(self, limit: int | None = None) -> list[Alert]:
         """获取告警历史"""
         with self._lock:
             if limit:
                 return self._alert_history[-limit:]
             return self._alert_history.copy()
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         with self._lock:
             return self._stats.copy()

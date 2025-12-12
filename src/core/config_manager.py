@@ -8,12 +8,13 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import jsonschema
 from jsonschema import Draft7Validator
 
 from src import __version__ as APP_VERSION
+
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -124,10 +125,10 @@ class ConfigSection:
 class ConfigManager:
     """配置管理器 - 增强版单例模式"""
 
-    _instance: Optional["ConfigManager"] = None
+    _instance: ConfigManager | None = None
     _initialized: bool = False
 
-    def __new__(cls) -> "ConfigManager":
+    def __new__(cls) -> ConfigManager:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._initialized = False

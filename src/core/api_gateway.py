@@ -10,10 +10,11 @@ import logging
 import threading
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from .enhanced_event_bus import Event, EventPriority, publish_event, subscribe_event
 from .enhanced_observability import LogLevel, get_observability
@@ -47,16 +48,16 @@ class ApiRequest:
     """API请求"""
     method: HttpMethod
     path: str
-    headers: Dict[str, str] = field(default_factory=dict)
-    query_params: Dict[str, str] = field(default_factory=dict)
-    body: Optional[Dict[str, Any]] = None
-    user_id: Optional[str] = None
-    session_id: Optional[str] = None
-    ip_address: Optional[str] = None
-    user_agent: Optional[str] = None
+    headers: dict[str, str] = field(default_factory=dict)
+    query_params: dict[str, str] = field(default_factory=dict)
+    body: dict[str, Any] | None = None
+    user_id: str | None = None
+    session_id: str | None = None
+    ip_address: str | None = None
+    user_agent: str | None = None
     timestamp: float = field(default_factory=time.time)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "method": self.method.value,
@@ -76,14 +77,14 @@ class ApiRequest:
 class ApiResponse:
     """API响应"""
     status: ApiResponseStatus
-    data: Optional[Any] = None
+    data: Any | None = None
     message: str = ""
-    error_code: Optional[str] = None
-    headers: Dict[str, str] = field(default_factory=dict)
+    error_code: str | None = None
+    headers: dict[str, str] = field(default_factory=dict)
     status_code: int = 200
     timestamp: float = field(default_factory=time.time)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "status": self.status.value,
@@ -102,12 +103,12 @@ class ApiRoute:
     method: HttpMethod
     path: str
     handler: Callable[[ApiRequest], ApiResponse]
-    permissions: List[Permission] = field(default_factory=list)
-    rate_limit: Optional[int] = None
+    permissions: list[Permission] = field(default_factory=list)
+    rate_limit: int | None = None
     description: str = ""
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "method": self.method.value,
@@ -159,27 +160,27 @@ class ApiHandler(ABC):
 class ApiGateway:
     """API网关"""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         self._config = config or {}
         self._error_handler = get_error_handler()
         self._observability = get_observability()
         self._security_manager = get_security_manager()
 
         # 路由管理
-        self._routes: Dict[str, ApiRoute] = {}
-        self._route_patterns: Dict[str, str] = {}
+        self._routes: dict[str, ApiRoute] = {}
+        self._route_patterns: dict[str, str] = {}
 
         # 中间件
-        self._middleware: List[Callable[[ApiRequest], ApiRequest]] = []
-        self._post_middleware: List[Callable[[ApiResponse], ApiResponse]] = []
+        self._middleware: list[Callable[[ApiRequest], ApiRequest]] = []
+        self._post_middleware: list[Callable[[ApiResponse], ApiResponse]] = []
 
         # 限流
-        self._rate_limits: Dict[str, Dict[str, Any]] = {}
+        self._rate_limits: dict[str, dict[str, Any]] = {}
         self._rate_limit_window = self._config.get("rate_limit_window", 60)  # 1分钟
 
         # 统计信息
         self._stats = ApiStats()
-        self._route_stats: Dict[str, ApiStats] = {}
+        self._route_stats: dict[str, ApiStats] = {}
 
         # 线程安全
         self._lock = threading.RLock()
@@ -237,10 +238,10 @@ class ApiGateway:
         method: HttpMethod,
         path: str,
         handler: Callable[[ApiRequest], ApiResponse],
-        permissions: Optional[List[Permission]] = None,
-        rate_limit: Optional[int] = None,
+        permissions: list[Permission] | None = None,
+        rate_limit: int | None = None,
         description: str = "",
-        tags: Optional[List[str]] = None
+        tags: list[str] | None = None
     ) -> None:
         """注册路由"""
         route_key = f"{method.value}:{path}"
@@ -360,7 +361,7 @@ class ApiGateway:
                 error_code="INTERNAL_ERROR"
             )
 
-    def _find_route(self, method: HttpMethod, path: str) -> Optional[ApiRoute]:
+    def _find_route(self, method: HttpMethod, path: str) -> ApiRoute | None:
         """查找路由"""
         route_key = f"{method.value}:{path}"
         return self._routes.get(route_key)
@@ -393,7 +394,7 @@ class ApiGateway:
         client_limits["requests"].append(current_time)
         return True
 
-    def _update_stats(self, route: Optional[ApiRoute], response_time: float, success: bool) -> None:
+    def _update_stats(self, route: ApiRoute | None, response_time: float, success: bool) -> None:
         """更新统计"""
         with self._lock:
             self._stats.update_stats(response_time, success)
@@ -407,7 +408,7 @@ class ApiGateway:
         self,
         message: str,
         status_code: int = 400,
-        error_code: Optional[str] = None
+        error_code: str | None = None
     ) -> ApiResponse:
         """创建错误响应"""
         return ApiResponse(
@@ -432,7 +433,7 @@ class ApiGateway:
         )
 
     # 默认处理器
-    def _health_check_handler(self, request: ApiRequest) -> ApiResponse:
+    def _health_check_handler(self, _request: ApiRequest) -> ApiResponse:
         """健康检查处理器"""
         return self._create_success_response({
             "status": "healthy",
@@ -440,7 +441,7 @@ class ApiGateway:
             "version": "1.0.0"
         })
 
-    def _api_info_handler(self, request: ApiRequest) -> ApiResponse:
+    def _api_info_handler(self, _request: ApiRequest) -> ApiResponse:
         """API信息处理器"""
         return self._create_success_response({
             "name": "VirtualChemLab API",
@@ -450,7 +451,7 @@ class ApiGateway:
             "timestamp": time.time()
         })
 
-    def _api_stats_handler(self, request: ApiRequest) -> ApiResponse:
+    def _api_stats_handler(self, _request: ApiRequest) -> ApiResponse:
         """API统计处理器"""
         return self._create_success_response({
             "global_stats": {
@@ -472,7 +473,7 @@ class ApiGateway:
             }
         })
 
-    def _routes_list_handler(self, request: ApiRequest) -> ApiResponse:
+    def _routes_list_handler(self, _request: ApiRequest) -> ApiResponse:
         """路由列表处理器"""
         routes_data = []
         for route_key, route in self._routes.items():
@@ -485,16 +486,16 @@ class ApiGateway:
             "total_routes": len(routes_data)
         })
 
-    def get_routes(self) -> Dict[str, ApiRoute]:
+    def get_routes(self) -> dict[str, ApiRoute]:
         """获取所有路由"""
         return self._routes.copy()
 
-    def get_route(self, method: HttpMethod, path: str) -> Optional[ApiRoute]:
+    def get_route(self, method: HttpMethod, path: str) -> ApiRoute | None:
         """获取特定路由"""
         route_key = f"{method.value}:{path}"
         return self._routes.get(route_key)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         return {
             "global_stats": self._stats.__dict__,
@@ -543,14 +544,14 @@ class ApiGateway:
 
         # 这里需要根据handler_name找到实际的处理器函数
         # 简化实现，实际应用中需要更复杂的处理器查找机制
-        def dummy_handler(request: ApiRequest) -> ApiResponse:
+        def dummy_handler(_request: ApiRequest) -> ApiResponse:
             return self._create_success_response({"message": f"Handler {handler_name} not implemented"})
 
         self.register_route(
             method, path, dummy_handler, permissions, rate_limit, description, tags
         )
 
-    def _handle_stats_request(self, event: Event) -> None:
+    def _handle_stats_request(self, _event: Event) -> None:
         """处理统计请求事件"""
         stats = self.get_stats()
 
@@ -594,10 +595,10 @@ def register_api_route(
     method: HttpMethod,
     path: str,
     handler: Callable[[ApiRequest], ApiResponse],
-    permissions: Optional[List[Permission]] = None,
-    rate_limit: Optional[int] = None,
+    permissions: list[Permission] | None = None,
+    rate_limit: int | None = None,
     description: str = "",
-    tags: Optional[List[str]] = None
+    tags: list[str] | None = None
 ) -> None:
     """注册API路由"""
     _global_api_gateway.register_route(

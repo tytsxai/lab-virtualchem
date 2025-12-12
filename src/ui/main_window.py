@@ -49,8 +49,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from .. import __version__ as APP_VERSION
 
+from .. import __version__ as APP_VERSION
 from ..core.auth import DeveloperAuth
 from ..core.di_container import DIContainer
 from ..core.template_engine import TemplateEngine
@@ -332,12 +332,6 @@ class MainWindow(QMainWindow):
         """创建工具栏"""
         toolbar = self.addToolBar("主工具栏")
         toolbar.setMovable(False)
-
-    def create_status_bar(self) -> None:
-        """创建状态栏"""
-        self.status_bar = QStatusBar()
-        self.setStatusBar(self.status_bar)
-        self.status_bar.showMessage("就绪")
 
     def create_right_panel(self) -> QWidget:
         """创建右侧面板，包含游戏化和辅助工具"""
@@ -3247,7 +3241,7 @@ class MainWindow(QMainWindow):
 
             wizard = WelcomeWizard(self, self.i18n)
 
-            def on_wizard_finished(completed: bool):
+            def on_wizard_finished(_completed: bool):
                 if self.workflow_manager:
                     # 获取用户偏好
                     preferences = {}

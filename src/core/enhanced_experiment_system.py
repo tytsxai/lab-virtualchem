@@ -9,7 +9,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .robustness_integration import enhance_robustness, log_operation, validate_input
 
@@ -39,8 +39,8 @@ class ExperimentMetrics:
     experiment_id: str
     user_id: str
     start_time: datetime
-    end_time: Optional[datetime] = None
-    duration: Optional[float] = None
+    end_time: datetime | None = None
+    duration: float | None = None
     accuracy: float = 0.0
     efficiency: float = 0.0
     safety_score: float = 0.0
@@ -48,9 +48,9 @@ class ExperimentMetrics:
     mistakes_count: int = 0
     hints_used: int = 0
     retry_count: int = 0
-    step_completion_times: List[float] = field(default_factory=list)
-    error_patterns: List[str] = field(default_factory=list)
-    performance_data: Dict[str, Any] = field(default_factory=dict)
+    step_completion_times: list[float] = field(default_factory=list)
+    error_patterns: list[str] = field(default_factory=list)
+    performance_data: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -60,9 +60,9 @@ class LearningRecommendation:
     priority: int  # 1-5, 5为最高优先级
     title: str
     description: str
-    action_items: List[str]
-    resources: List[str] = field(default_factory=list)
-    estimated_time: Optional[int] = None  # 分钟
+    action_items: list[str]
+    resources: list[str] = field(default_factory=list)
+    estimated_time: int | None = None  # 分钟
 
 
 @dataclass
@@ -72,21 +72,21 @@ class ExperimentAnalysis:
     user_id: str
     analysis_time: datetime
     overall_score: float
-    strengths: List[str]
-    weaknesses: List[str]
-    recommendations: List[LearningRecommendation]
-    progress_trend: Dict[str, float]
-    comparison_data: Dict[str, Any] = field(default_factory=dict)
+    strengths: list[str]
+    weaknesses: list[str]
+    recommendations: list[LearningRecommendation]
+    progress_trend: dict[str, float]
+    comparison_data: dict[str, Any] = field(default_factory=dict)
 
 
 class EnhancedExperimentSystem:
     """增强的实验系统"""
 
     def __init__(self):
-        self.experiments: Dict[str, ExperimentMetrics] = {}
-        self.analyses: Dict[str, ExperimentAnalysis] = {}
-        self.learning_history: Dict[str, List[ExperimentAnalysis]] = {}
-        self.performance_baselines: Dict[str, Dict[str, float]] = {}
+        self.experiments: dict[str, ExperimentMetrics] = {}
+        self.analyses: dict[str, ExperimentAnalysis] = {}
+        self.learning_history: dict[str, list[ExperimentAnalysis]] = {}
+        self.performance_baselines: dict[str, dict[str, float]] = {}
 
     @enhance_robustness(
         operation_name="start_experiment",
@@ -103,7 +103,7 @@ class EnhancedExperimentSystem:
         self,
         experiment_id: str,
         user_id: str,
-        template: Dict[str, Any]
+        template: dict[str, Any]
     ) -> ExperimentMetrics:
         """开始实验"""
         logger.info(f"开始实验 {experiment_id}，用户 {user_id}")
@@ -135,8 +135,8 @@ class EnhancedExperimentSystem:
         self,
         experiment_id: str,
         step_id: str,
-        step_data: Dict[str, Any],
-        performance_data: Optional[Dict[str, Any]] = None
+        step_data: dict[str, Any],
+        performance_data: dict[str, Any] | None = None
     ) -> bool:
         """更新实验进度"""
         if experiment_id not in self.experiments:
@@ -182,7 +182,7 @@ class EnhancedExperimentSystem:
     def complete_experiment(
         self,
         experiment_id: str,
-        final_data: Dict[str, Any]
+        final_data: dict[str, Any]
     ) -> ExperimentMetrics:
         """完成实验"""
         if experiment_id not in self.experiments:
@@ -294,9 +294,9 @@ class EnhancedExperimentSystem:
     def _generate_learning_recommendations(
         self,
         metrics: ExperimentMetrics,
-        strengths: List[str],
-        weaknesses: List[str]
-    ) -> List[LearningRecommendation]:
+        strengths: list[str],
+        _weaknesses: list[str]
+    ) -> list[LearningRecommendation]:
         """生成学习建议"""
         recommendations = []
 
@@ -364,7 +364,7 @@ class EnhancedExperimentSystem:
 
         return recommendations
 
-    def _calculate_progress_trend(self, user_id: str) -> Dict[str, float]:
+    def _calculate_progress_trend(self, user_id: str) -> dict[str, float]:
         """计算学习进度趋势"""
         if user_id not in self.learning_history:
             return {}
@@ -385,7 +385,7 @@ class EnhancedExperimentSystem:
 
         return trends
 
-    def _log_experiment_event(self, experiment_id: str, event_type: str, data: Dict[str, Any]) -> None:
+    def _log_experiment_event(self, experiment_id: str, event_type: str, data: dict[str, Any]) -> None:
         """记录实验事件"""
         logger.info(f"实验事件: {experiment_id} - {event_type}: {data}")
 
@@ -394,7 +394,7 @@ class EnhancedExperimentSystem:
         security_level="low",
         enable_caching=True
     )
-    def get_experiment_analysis(self, experiment_id: str) -> Optional[ExperimentAnalysis]:
+    def get_experiment_analysis(self, experiment_id: str) -> ExperimentAnalysis | None:
         """获取实验分析"""
         return self.analyses.get(experiment_id)
 
@@ -403,7 +403,7 @@ class EnhancedExperimentSystem:
         security_level="low",
         enable_caching=True
     )
-    def get_user_learning_history(self, user_id: str) -> List[ExperimentAnalysis]:
+    def get_user_learning_history(self, user_id: str) -> list[ExperimentAnalysis]:
         """获取用户学习历史"""
         return self.learning_history.get(user_id, [])
 
@@ -412,7 +412,7 @@ class EnhancedExperimentSystem:
         security_level="low",
         enable_caching=True
     )
-    def get_learning_recommendations(self, user_id: str) -> List[LearningRecommendation]:
+    def get_learning_recommendations(self, user_id: str) -> list[LearningRecommendation]:
         """获取学习建议"""
         if user_id not in self.learning_history:
             return []
@@ -430,7 +430,7 @@ class EnhancedExperimentSystem:
         security_level="low",
         enable_caching=True
     )
-    def get_performance_statistics(self, user_id: str) -> Dict[str, Any]:
+    def get_performance_statistics(self, user_id: str) -> dict[str, Any]:
         """获取性能统计"""
         if user_id not in self.learning_history:
             return {}
@@ -460,7 +460,7 @@ class EnhancedExperimentSystem:
             "improvement_rate": self._calculate_improvement_rate(scores)
         }
 
-    def _calculate_improvement_rate(self, scores: List[float]) -> float:
+    def _calculate_improvement_rate(self, scores: list[float]) -> float:
         """计算改进率"""
         if len(scores) < 2:
             return 0.0

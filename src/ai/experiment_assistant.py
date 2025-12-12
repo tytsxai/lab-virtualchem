@@ -195,8 +195,8 @@ class ExperimentAssistant:
         return suggestions
 
     def _generate_step_guidance(
-        self, current_step: str, context: dict[str, Any]
-    ) -> list[ExperimentSuggestion]:  # noqa: ARG002
+        self, current_step: str, _context: dict[str, Any]
+    ) -> list[ExperimentSuggestion]:
         """生成步骤指导建议"""
         suggestions: list[ExperimentSuggestion] = []
 
@@ -217,8 +217,8 @@ class ExperimentAssistant:
         return suggestions
 
     def _generate_safety_reminders(
-        self, current_step: str, context: dict[str, Any]
-    ) -> list[ExperimentSuggestion]:  # noqa: ARG002
+        self, current_step: str, _context: dict[str, Any]
+    ) -> list[ExperimentSuggestion]:
         """生成安全提醒"""
         suggestions = []
 
@@ -244,8 +244,8 @@ class ExperimentAssistant:
         return suggestions
 
     def _generate_efficiency_tips(
-        self, current_step: str, context: dict[str, Any]
-    ) -> list[ExperimentSuggestion]:  # noqa: ARG002
+        self, current_step: str, _context: dict[str, Any]
+    ) -> list[ExperimentSuggestion]:
         """生成效率提示"""
         suggestions = []
 
@@ -266,8 +266,8 @@ class ExperimentAssistant:
         return suggestions
 
     def _generate_error_prevention(
-        self, current_step: str, context: dict[str, Any]
-    ) -> list[ExperimentSuggestion]:  # noqa: ARG002
+        self, current_step: str, _context: dict[str, Any]
+    ) -> list[ExperimentSuggestion]:
         """生成错误预防建议"""
         suggestions: list[ExperimentSuggestion] = []
 

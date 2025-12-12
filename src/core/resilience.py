@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from functools import wraps
-from typing import Any, TypeVar, Union
+from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -272,7 +272,7 @@ class Retry:
         else:
             raise RuntimeError("重试失败，没有异常信息")
 
-    async def async_execute(self, func: Callable[..., T], *args, retry_on: tuple = (Exception,), **kwargs) -> Union[T, Any]:
+    async def async_execute(self, func: Callable[..., T], *args, retry_on: tuple = (Exception,), **kwargs) -> T | Any:
         """异步执行带重试的函数"""
         last_exception = None
         delay = self.config.initial_delay

@@ -15,7 +15,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from src.utils.logger import SensitiveDataFilter
 
@@ -52,12 +52,12 @@ class LogCategory(Enum):
 @dataclass
 class LogContext:
     """日志上下文"""
-    user_id: Optional[str] = None
-    session_id: Optional[str] = None
-    request_id: Optional[str] = None
-    operation: Optional[str] = None
-    component: Optional[str] = None
-    extra_data: Dict[str, Any] = field(default_factory=dict)
+    user_id: str | None = None
+    session_id: str | None = None
+    request_id: str | None = None
+    operation: str | None = None
+    component: str | None = None
+    extra_data: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -68,9 +68,9 @@ class LogEntry:
     category: LogCategory
     message: str
     context: LogContext
-    exception_info: Optional[str] = None
-    performance_data: Optional[Dict[str, Any]] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    exception_info: str | None = None
+    performance_data: dict[str, Any] | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class StructuredFormatter(logging.Formatter):
@@ -129,7 +129,7 @@ class PerformanceLogger:
 
     def __init__(self, logger: logging.Logger):
         self.logger = logger
-        self.performance_data: Dict[str, List[float]] = {}
+        self.performance_data: dict[str, list[float]] = {}
         self.lock = threading.Lock()
 
     def start_timer(self, operation: str) -> float:
@@ -141,7 +141,7 @@ class PerformanceLogger:
             self.performance_data[operation].append(start_time)
         return start_time
 
-    def end_timer(self, operation: str, start_time: float, context: Optional[LogContext] = None) -> float:
+    def end_timer(self, operation: str, start_time: float, context: LogContext | None = None) -> float:
         """结束计时"""
         end_time = time.time()
         duration = end_time - start_time
@@ -170,7 +170,7 @@ class PerformanceLogger:
 
         return duration
 
-    def get_performance_stats(self) -> Dict[str, Dict[str, float]]:
+    def get_performance_stats(self) -> dict[str, dict[str, float]]:
         """获取性能统计"""
         stats = {}
         with self.lock:
@@ -191,16 +191,16 @@ class AuditLogger:
 
     def __init__(self, logger: logging.Logger):
         self.logger = logger
-        self.audit_events: List[LogEntry] = []
+        self.audit_events: list[LogEntry] = []
         self.lock = threading.Lock()
 
     def log_event(
         self,
         event_type: str,
         description: str,
-        user_id: Optional[str] = None,
-        session_id: Optional[str] = None,
-        extra_data: Optional[Dict[str, Any]] = None
+        user_id: str | None = None,
+        session_id: str | None = None,
+        extra_data: dict[str, Any] | None = None
     ) -> None:
         """记录审计事件"""
         context = LogContext(
@@ -225,7 +225,7 @@ class AuditLogger:
             extra={'context': context}
         )
 
-    def get_audit_events(self, limit: Optional[int] = None) -> List[LogEntry]:
+    def get_audit_events(self, limit: int | None = None) -> list[LogEntry]:
         """获取审计事件"""
         with self.lock:
             events = self.audit_events.copy()
@@ -239,15 +239,15 @@ class ErrorTracker:
 
     def __init__(self, logger: logging.Logger):
         self.logger = logger
-        self.error_patterns: Dict[str, int] = {}
-        self.error_history: List[LogEntry] = []
+        self.error_patterns: dict[str, int] = {}
+        self.error_history: list[LogEntry] = []
         self.lock = threading.Lock()
 
     def track_error(
         self,
         error: Exception,
-        context: Optional[LogContext] = None,
-        extra_data: Optional[Dict[str, Any]] = None
+        context: LogContext | None = None,
+        extra_data: dict[str, Any] | None = None
     ) -> None:
         """追踪错误"""
         error_type = type(error).__name__
@@ -282,7 +282,7 @@ class ErrorTracker:
             }
         )
 
-    def get_error_stats(self) -> Dict[str, Any]:
+    def get_error_stats(self) -> dict[str, Any]:
         """获取错误统计"""
         with self.lock:
             return {
@@ -301,7 +301,7 @@ class EnhancedLogger:
         self.logger.setLevel(logging.DEBUG)
 
         # 上下文栈
-        self.context_stack: List[LogContext] = []
+        self.context_stack: list[LogContext] = []
         self.context_lock = threading.RLock()
 
         # 子组件
@@ -379,12 +379,12 @@ class EnhancedLogger:
         with self.context_lock:
             self.context_stack.append(context)
 
-    def pop_context(self) -> Optional[LogContext]:
+    def pop_context(self) -> LogContext | None:
         """弹出上下文"""
         with self.context_lock:
             return self.context_stack.pop() if self.context_stack else None
 
-    def get_current_context(self) -> Optional[LogContext]:
+    def get_current_context(self) -> LogContext | None:
         """获取当前上下文"""
         with self.context_lock:
             return self.context_stack[-1] if self.context_stack else None
@@ -405,27 +405,26 @@ class EnhancedLogger:
         message: str,
         category: LogCategory = LogCategory.SYSTEM,
         exc_info: bool = False,
-        extra_data: Optional[Dict[str, Any]] = None
+        extra_data: dict[str, Any] | None = None
     ) -> None:
         """内部日志方法"""
         context = self.get_current_context() or LogContext()
+        exc = sys.exc_info() if exc_info else None
 
-        # 创建日志记录
+        extra: dict[str, Any] = {"category": category, "context": context}
+        if extra_data:
+            extra["extra_data"] = extra_data
+
         record = self.logger.makeRecord(
             self.logger.name,
             getattr(logging, level.value),
-            "", 0, message, (), None
+            "",
+            0,
+            message,
+            (),
+            exc,
+            extra=extra,
         )
-
-        # 添加上下文
-        if hasattr(record, 'context'):
-            record.context = context
-
-        # 添加额外数据
-        if extra_data and hasattr(record, 'extra_data'):
-            record.extra_data = extra_data
-
-        # 处理日志
         self.logger.handle(record)
 
     def debug(self, message: str, **kwargs) -> None:
@@ -469,15 +468,15 @@ class EnhancedLogger:
         finally:
             self.performance_logger.end_timer(operation, start_time, self.get_current_context())
 
-    def get_performance_stats(self) -> Dict[str, Dict[str, float]]:
+    def get_performance_stats(self) -> dict[str, dict[str, float]]:
         """获取性能统计"""
         return self.performance_logger.get_performance_stats()
 
-    def get_audit_events(self, limit: Optional[int] = None) -> List[LogEntry]:
+    def get_audit_events(self, limit: int | None = None) -> list[LogEntry]:
         """获取审计事件"""
         return self.audit_logger.get_audit_events(limit)
 
-    def get_error_stats(self) -> Dict[str, Any]:
+    def get_error_stats(self) -> dict[str, Any]:
         """获取错误统计"""
         return self.error_tracker.get_error_stats()
 
@@ -532,7 +531,7 @@ class EnhancedLogger:
 enhanced_logger = EnhancedLogger()
 
 
-def get_enhanced_logger(name: Optional[str] = None) -> EnhancedLogger:
+def get_enhanced_logger(name: str | None = None) -> EnhancedLogger:
     """获取增强日志记录器"""
     if name:
         return EnhancedLogger(name)

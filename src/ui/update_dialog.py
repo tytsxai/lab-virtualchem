@@ -4,14 +4,18 @@
 """
 
 import logging
-from typing import Optional
 
 try:
+    from PySide6.QtCore import QThread, Signal
     from PySide6.QtWidgets import (
-        QDialog, QVBoxLayout, QHBoxLayout, QLabel,
-        QPushButton, QProgressBar, QTextEdit
+        QDialog,
+        QHBoxLayout,
+        QLabel,
+        QProgressBar,
+        QPushButton,
+        QTextEdit,
+        QVBoxLayout,
     )
-    from PySide6.QtCore import Qt, QThread, Signal
     PYSIDE6_AVAILABLE = True
 except ImportError:
     PYSIDE6_AVAILABLE = False
@@ -66,8 +70,8 @@ if PYSIDE6_AVAILABLE:
             super().__init__(parent)
             self.version_info = version_info
             self.updater = updater
-            self.download_thread: Optional[UpdateDownloadThread] = None
-            self.downloaded_file: Optional[str] = None
+            self.download_thread: UpdateDownloadThread | None = None
+            self.downloaded_file: str | None = None
 
             self.setWindowTitle("软件更新")
             self.setMinimumWidth(500)

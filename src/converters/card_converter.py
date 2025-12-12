@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from tools.chemlab_integration.src.converters.card_converter import CardConverter  # noqa: F401
+from tools.chemlab_integration.src.converters.card_converter import (
+    CardConverter,  # noqa: F401
+)
 
 __all__ = ["CardConverter"]
 

@@ -6,13 +6,12 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from PySide6.QtCore import QTimer, Signal
 from PySide6.QtWidgets import QLabel, QProgressBar, QStatusBar, QWidget
 
-from .base_window import BaseWindowComponent
 from ...core.common_exceptions import UIError
+from .base_window import BaseWindowComponent
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +23,12 @@ class StatusBarComponent(BaseWindowComponent):
     status_changed = Signal(str)
     progress_changed = Signal(int)
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
-        self._statusbar: Optional[QStatusBar] = None
-        self._status_label: Optional[QLabel] = None
-        self._progress_bar: Optional[QProgressBar] = None
-        self._timer: Optional[QTimer] = None
+        self._statusbar: QStatusBar | None = None
+        self._status_label: QLabel | None = None
+        self._progress_bar: QProgressBar | None = None
+        self._timer: QTimer | None = None
 
     def _setup_ui(self) -> None:
         """设置UI"""
@@ -105,7 +104,7 @@ class StatusBarComponent(BaseWindowComponent):
         """检查进度条是否可见"""
         return self._progress_bar is not None and self._progress_bar.isVisible()
 
-    def get_statusbar(self) -> Optional[QStatusBar]:
+    def get_statusbar(self) -> QStatusBar | None:
         """获取状态栏"""
         return self._statusbar
 

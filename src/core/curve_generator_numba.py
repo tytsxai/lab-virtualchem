@@ -14,8 +14,8 @@ try:
 except ImportError:
     NUMBA_AVAILABLE = False
     # 如果Numba不可用，定义一个空装饰器
-    def jit(*args, **kwargs):
-        def decorator(func):
+    def jit(*_args: Any, **_kwargs: Any):
+        def decorator(func: Any):
             return func
         return decorator
 

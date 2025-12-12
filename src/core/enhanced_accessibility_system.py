@@ -9,7 +9,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .robustness_integration import enhance_robustness, log_operation, validate_input
 
@@ -67,8 +67,8 @@ class AccessibilityProfile:
     auditory_impairment: AuditoryImpairmentType
     motor_impairment: MotorImpairmentType
     cognitive_impairment: CognitiveImpairmentType
-    preferences: Dict[str, Any] = field(default_factory=dict)
-    assistive_technologies: List[str] = field(default_factory=list)
+    preferences: dict[str, Any] = field(default_factory=dict)
+    assistive_technologies: list[str] = field(default_factory=list)
     created_at: datetime = field(default_factory=datetime.now)
     last_updated: datetime = field(default_factory=datetime.now)
 
@@ -81,8 +81,8 @@ class AccessibilityFeature:
     type: AccessibilityType
     description: str
     enabled: bool
-    settings: Dict[str, Any] = field(default_factory=dict)
-    compatibility: List[str] = field(default_factory=list)
+    settings: dict[str, Any] = field(default_factory=dict)
+    compatibility: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -92,19 +92,19 @@ class AccessibilityEvent:
     user_id: str
     event_type: str
     timestamp: datetime
-    data: Dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
     success: bool = True
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 class EnhancedAccessibilitySystem:
     """增强的无障碍访问系统"""
 
     def __init__(self):
-        self.user_profiles: Dict[str, AccessibilityProfile] = {}
-        self.accessibility_features: Dict[str, AccessibilityFeature] = {}
-        self.accessibility_events: List[AccessibilityEvent] = []
-        self.current_settings: Dict[str, Any] = {}
+        self.user_profiles: dict[str, AccessibilityProfile] = {}
+        self.accessibility_features: dict[str, AccessibilityFeature] = {}
+        self.accessibility_events: list[AccessibilityEvent] = []
+        self.current_settings: dict[str, Any] = {}
 
         # 初始化系统
         self._initialize_accessibility_features()
@@ -304,8 +304,8 @@ class EnhancedAccessibilitySystem:
         auditory_impairment: str,
         motor_impairment: str,
         cognitive_impairment: str,
-        preferences: Optional[Dict[str, Any]] = None,
-        assistive_technologies: Optional[List[str]] = None
+        preferences: dict[str, Any] | None = None,
+        assistive_technologies: list[str] | None = None
     ) -> AccessibilityProfile:
         """创建无障碍档案"""
         logger.info(f"创建无障碍档案: {user_id}")
@@ -409,7 +409,7 @@ class EnhancedAccessibilitySystem:
     def update_accessibility_settings(
         self,
         user_id: str,
-        settings: Dict[str, Any]
+        settings: dict[str, Any]
     ) -> bool:
         """更新无障碍设置"""
         if user_id not in self.user_profiles:
@@ -464,7 +464,7 @@ class EnhancedAccessibilitySystem:
 
         return "\n".join(css_rules)
 
-    def _get_visual_accessibility_css(self, profile: AccessibilityProfile) -> List[str]:
+    def _get_visual_accessibility_css(self, profile: AccessibilityProfile) -> list[str]:
         """获取视觉无障碍CSS"""
         css_rules = []
 
@@ -571,7 +571,7 @@ button:focus, input:focus, select:focus, textarea:focus {
 
         return css_rules
 
-    def _get_auditory_accessibility_css(self, profile: AccessibilityProfile) -> List[str]:
+    def _get_auditory_accessibility_css(self, _profile: AccessibilityProfile) -> list[str]:
         """获取听觉无障碍CSS"""
         css_rules = []
 
@@ -621,7 +621,7 @@ button:focus, input:focus, select:focus, textarea:focus {
 
         return css_rules
 
-    def _get_motor_accessibility_css(self, profile: AccessibilityProfile) -> List[str]:
+    def _get_motor_accessibility_css(self, _profile: AccessibilityProfile) -> list[str]:
         """获取运动无障碍CSS"""
         css_rules = []
 
@@ -683,7 +683,7 @@ button:focus, input:focus, select:focus, textarea:focus {
 
         return css_rules
 
-    def _get_cognitive_accessibility_css(self, profile: AccessibilityProfile) -> List[str]:
+    def _get_cognitive_accessibility_css(self, _profile: AccessibilityProfile) -> list[str]:
         """获取认知无障碍CSS"""
         css_rules = []
 
@@ -827,7 +827,7 @@ button, input, select, textarea {
         security_level="low",
         enable_caching=True
     )
-    def get_accessibility_report(self, user_id: str) -> Dict[str, Any]:
+    def get_accessibility_report(self, user_id: str) -> dict[str, Any]:
         """获取无障碍报告"""
         if user_id not in self.user_profiles:
             return {"error": "用户无障碍档案不存在"}
@@ -883,7 +883,7 @@ button, input, select, textarea {
             "recommendations": self._generate_accessibility_recommendations(profile)
         }
 
-    def _generate_accessibility_recommendations(self, profile: AccessibilityProfile) -> List[str]:
+    def _generate_accessibility_recommendations(self, profile: AccessibilityProfile) -> list[str]:
         """生成无障碍推荐"""
         recommendations = []
 
@@ -917,9 +917,9 @@ button, input, select, textarea {
         self,
         user_id: str,
         event_type: str,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         success: bool = True,
-        error_message: Optional[str] = None
+        error_message: str | None = None
     ) -> None:
         """记录无障碍事件"""
         event = AccessibilityEvent(

@@ -23,13 +23,16 @@ sys.path.insert(0, str(PROJECT_ROOT))
 import asyncio  # noqa: E402
 import logging  # noqa: E402
 
-from . import __version__ as APP_VERSION  # noqa: E402
-
 from src.core.license_manager import LicenseManager  # noqa: E402
-from src.core.license_middleware import LicenseException, LicenseMiddleware  # noqa: E402
+from src.core.license_middleware import (  # noqa: E402
+    LicenseException,
+    LicenseMiddleware,
+)
+from src.core.startup_preflight import ensure_secure_startup  # noqa: E402
 from src.utils.config import Config  # noqa: E402
 from src.utils.logger import setup_logger  # noqa: E402
-from src.core.startup_preflight import ensure_secure_startup  # noqa: E402
+
+from . import __version__ as APP_VERSION  # noqa: E402
 
 logger = setup_logger("virtualchemlab", logging.INFO)
 DISPLAY_VERSION = f"v{APP_VERSION}"

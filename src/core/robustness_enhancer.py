@@ -9,10 +9,11 @@ import functools
 import logging
 import threading
 import time
+from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Optional
 
 from .error_system.error_handler import GlobalErrorHandler
 from .error_system.exceptions import BaseAppException
@@ -50,15 +51,15 @@ class OperationMetrics:
     """操作指标"""
     operation_name: str
     start_time: float
-    end_time: Optional[float] = None
-    duration: Optional[float] = None
+    end_time: float | None = None
+    duration: float | None = None
     success: bool = False
     error_count: int = 0
     retry_count: int = 0
-    memory_usage: Optional[float] = None
-    cpu_usage: Optional[float] = None
-    validation_errors: List[str] = field(default_factory=list)
-    security_warnings: List[str] = field(default_factory=list)
+    memory_usage: float | None = None
+    cpu_usage: float | None = None
+    validation_errors: list[str] = field(default_factory=list)
+    security_warnings: list[str] = field(default_factory=list)
 
 
 class RobustnessEnhancer:
@@ -81,8 +82,8 @@ class RobustnessEnhancer:
         self.config = RobustnessConfig()
         self.error_handler = GlobalErrorHandler()
         self.input_validator = InputValidator()
-        self.metrics: Dict[str, OperationMetrics] = {}
-        self.operation_cache: Dict[str, Any] = {}
+        self.metrics: dict[str, OperationMetrics] = {}
+        self.operation_cache: dict[str, Any] = {}
         self._metrics_lock = threading.RLock()
 
         # 性能监控
@@ -102,12 +103,12 @@ class RobustnessEnhancer:
     def enhance_function(
         self,
         func: Callable,
-        operation_name: Optional[str] = None,
-        validation_rules: Optional[Dict[str, ValidatorChain]] = None,
+        operation_name: str | None = None,
+        validation_rules: dict[str, ValidatorChain] | None = None,
         security_level: str = "medium",
         enable_caching: bool = False,
         enable_retry: bool = True,
-        timeout: Optional[float] = None
+        timeout: float | None = None
     ) -> Callable:
         """增强函数健壮性"""
 
@@ -128,11 +129,11 @@ class RobustnessEnhancer:
         args: tuple,
         kwargs: dict,
         operation_name: str,
-        validation_rules: Optional[Dict[str, ValidatorChain]] = None,
+        validation_rules: dict[str, ValidatorChain] | None = None,
         security_level: str = "medium",
         enable_caching: bool = False,
         enable_retry: bool = True,
-        timeout: Optional[float] = None
+        timeout: float | None = None
     ) -> Any:
         """执行增强的操作"""
 
@@ -215,7 +216,7 @@ class RobustnessEnhancer:
         self,
         args: tuple,
         kwargs: dict,
-        validation_rules: Dict[str, ValidatorChain],
+        validation_rules: dict[str, ValidatorChain],
         metrics: OperationMetrics
     ) -> None:
         """验证输入"""
@@ -287,7 +288,7 @@ class RobustnessEnhancer:
         kwargs: dict,
         operation_name: str,
         enable_retry: bool,
-        timeout: Optional[float],
+        timeout: float | None,
         metrics: OperationMetrics
     ) -> Any:
         """执行操作（带重试）"""
@@ -382,12 +383,12 @@ class RobustnessEnhancer:
         else:
             logger.error(f"操作失败: {log_data}")
 
-    def get_operation_metrics(self, operation_name: str) -> Optional[OperationMetrics]:
+    def get_operation_metrics(self, operation_name: str) -> OperationMetrics | None:
         """获取操作指标"""
         with self._metrics_lock:
             return self.metrics.get(operation_name)
 
-    def get_all_metrics(self) -> Dict[str, OperationMetrics]:
+    def get_all_metrics(self) -> dict[str, OperationMetrics]:
         """获取所有操作指标"""
         with self._metrics_lock:
             return self.metrics.copy()
@@ -455,9 +456,9 @@ class PerformanceMonitor:
     """性能监控器"""
 
     def __init__(self):
-        self.operation_times: Dict[str, List[float]] = {}
-        self.memory_usage: List[float] = []
-        self.cpu_usage: List[float] = []
+        self.operation_times: dict[str, list[float]] = {}
+        self.memory_usage: list[float] = []
+        self.cpu_usage: list[float] = []
 
     def record_operation(self, metrics: OperationMetrics) -> None:
         """记录操作性能"""
@@ -466,7 +467,7 @@ class PerformanceMonitor:
                 self.operation_times[metrics.operation_name] = []
             self.operation_times[metrics.operation_name].append(metrics.duration)
 
-    def get_performance_summary(self) -> Dict[str, Any]:
+    def get_performance_summary(self) -> dict[str, Any]:
         """获取性能摘要"""
         summary = {}
 
@@ -486,10 +487,10 @@ class SecurityMonitor:
     """安全监控器"""
 
     def __init__(self):
-        self.security_events: List[Dict[str, Any]] = []
-        self.threat_detections: List[Dict[str, Any]] = []
+        self.security_events: list[dict[str, Any]] = []
+        self.threat_detections: list[dict[str, Any]] = []
 
-    def record_security_event(self, event_type: str, details: Dict[str, Any]) -> None:
+    def record_security_event(self, event_type: str, details: dict[str, Any]) -> None:
         """记录安全事件"""
         event = {
             "timestamp": time.time(),
@@ -498,7 +499,7 @@ class SecurityMonitor:
         }
         self.security_events.append(event)
 
-    def get_security_summary(self) -> Dict[str, Any]:
+    def get_security_summary(self) -> dict[str, Any]:
         """获取安全摘要"""
         return {
             "total_events": len(self.security_events),
@@ -516,12 +517,12 @@ robustness_enhancer = RobustnessEnhancer()
 
 
 def enhance_function(
-    operation_name: Optional[str] = None,
-    validation_rules: Optional[Dict[str, ValidatorChain]] = None,
+    operation_name: str | None = None,
+    validation_rules: dict[str, ValidatorChain] | None = None,
     security_level: str = "medium",
     enable_caching: bool = False,
     enable_retry: bool = True,
-    timeout: Optional[float] = None
+    timeout: float | None = None
 ):
     """函数增强装饰器"""
     def decorator(func: Callable) -> Callable:
@@ -533,7 +534,7 @@ def enhance_function(
 
 
 @contextmanager
-def robustness_context(operation_name: str, **kwargs):
+def robustness_context(operation_name: str, **_kwargs):
     """健壮性上下文管理器"""
     metrics = robustness_enhancer._start_operation(operation_name)
     try:

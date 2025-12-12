@@ -6,8 +6,9 @@ from __future__ import annotations
 
 import logging
 import uuid
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable
+from typing import Any
 
 from src.contracts.experiment_service import (
     ExperimentRequest,

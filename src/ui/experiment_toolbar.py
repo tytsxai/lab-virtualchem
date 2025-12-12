@@ -493,7 +493,7 @@ class FloatingToolPalette(QFrame):
                 }
             """
             )
-            btn.clicked.connect(lambda checked, tid=tool_data["id"]: self.tool_selected.emit(tid))
+            btn.clicked.connect(lambda _checked, tid=tool_data["id"]: self.tool_selected.emit(tid))
 
             row = i // 2
             col = i % 2

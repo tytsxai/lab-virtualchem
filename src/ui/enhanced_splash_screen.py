@@ -10,7 +10,6 @@ from PySide6.QtGui import QColor, QFont, QLinearGradient, QPainter, QPen
 from PySide6.QtWidgets import QLabel, QProgressBar, QSplashScreen, QVBoxLayout, QWidget
 
 from .. import __version__ as APP_VERSION
-
 from ..utils.logger import get_logger
 from ..utils.startup_optimizer import ProgressEstimator
 
@@ -188,7 +187,7 @@ class EnhancedSplashScreen(QSplashScreen):
         """
         )
 
-    def paintEvent(self, event):
+    def paintEvent(self, _event):
         """绘制背景"""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)

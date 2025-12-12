@@ -7,7 +7,8 @@ from __future__ import annotations
 
 import importlib
 import logging
-from typing import Any, Callable, Dict, Optional, Type
+from collections.abc import Callable
+from typing import Any
 
 from .common_exceptions import SystemError
 from .error_handler import get_error_handler, safe_execute
@@ -19,9 +20,9 @@ class ImportManager:
     """导入管理器"""
 
     def __init__(self):
-        self._modules: Dict[str, Any] = {}
-        self._lazy_modules: Dict[str, str] = {}
-        self._import_cache: Dict[str, Any] = {}
+        self._modules: dict[str, Any] = {}
+        self._lazy_modules: dict[str, str] = {}
+        self._import_cache: dict[str, Any] = {}
         self._error_handler = get_error_handler()
 
     def register_module(self, name: str, module: Any) -> None:
@@ -34,7 +35,7 @@ class ImportManager:
         self._lazy_modules[name] = module_path
         logger.debug(f"Lazy module {name} registered with path {module_path}")
 
-    def get_module(self, name: str) -> Optional[Any]:
+    def get_module(self, name: str) -> Any | None:
         """获取模块"""
         # 首先检查已注册的模块
         if name in self._modules:
@@ -53,7 +54,7 @@ class ImportManager:
             logger.error(f"Failed to import module {name}: {e}")
             return None
 
-    def _load_lazy_module(self, name: str) -> Optional[Any]:
+    def _load_lazy_module(self, name: str) -> Any | None:
         """加载懒加载模块"""
         if name not in self._lazy_modules:
             return None
@@ -68,7 +69,7 @@ class ImportManager:
             logger.error(f"Failed to load lazy module {name} from {module_path}: {e}")
             return None
 
-    def import_class(self, module_name: str, class_name: str) -> Optional[Type]:
+    def import_class(self, module_name: str, class_name: str) -> type | None:
         """导入类"""
         module = self.get_module(module_name)
         if module is None:
@@ -80,7 +81,7 @@ class ImportManager:
             logger.error(f"Class {class_name} not found in module {module_name}: {e}")
             return None
 
-    def import_function(self, module_name: str, function_name: str) -> Optional[Callable]:
+    def import_function(self, module_name: str, function_name: str) -> Callable | None:
         """导入函数"""
         module = self.get_module(module_name)
         if module is None:
@@ -126,17 +127,17 @@ def register_lazy_module(name: str, module_path: str) -> None:
     _global_import_manager.register_lazy_module(name, module_path)
 
 
-def get_module(name: str) -> Optional[Any]:
+def get_module(name: str) -> Any | None:
     """获取模块"""
     return _global_import_manager.get_module(name)
 
 
-def import_class(module_name: str, class_name: str) -> Optional[Type]:
+def import_class(module_name: str, class_name: str) -> type | None:
     """导入类"""
     return _global_import_manager.import_class(module_name, class_name)
 
 
-def import_function(module_name: str, function_name: str) -> Optional[Callable]:
+def import_function(module_name: str, function_name: str) -> Callable | None:
     """导入函数"""
     return _global_import_manager.import_function(module_name, function_name)
 

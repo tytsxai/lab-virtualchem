@@ -6,14 +6,13 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QMenu, QMenuBar, QWidget
 
-from .base_window import BaseWindowComponent
 from ...core.common_exceptions import UIError
+from .base_window import BaseWindowComponent
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +24,9 @@ class MenuComponent(BaseWindowComponent):
     action_triggered = Signal(str)
     menu_ready = Signal()
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
-        self._menubar: Optional[QMenuBar] = None
+        self._menubar: QMenuBar | None = None
         self._menus: dict[str, QMenu] = {}
         self._actions: dict[str, QAction] = {}
 
@@ -179,7 +178,7 @@ class MenuComponent(BaseWindowComponent):
         """添加菜单"""
         return self._add_menu(name, title)
 
-    def add_action(self, name: str, text: str, menu_name: str, shortcut: Optional[str] = None) -> None:
+    def add_action(self, name: str, text: str, menu_name: str, shortcut: str | None = None) -> None:
         """添加动作到指定菜单"""
         if menu_name not in self._menus:
             raise UIError(f"Menu {menu_name} not found", widget="MenuComponent", action="add_action")
@@ -199,7 +198,7 @@ class MenuComponent(BaseWindowComponent):
                 menu.removeAction(action)
             logger.debug(f"Action {name} removed")
 
-    def get_action(self, name: str) -> Optional[QAction]:
+    def get_action(self, name: str) -> QAction | None:
         """获取动作"""
         return self._actions.get(name)
 
@@ -208,11 +207,11 @@ class MenuComponent(BaseWindowComponent):
         if name in self._actions:
             self._actions[name].setEnabled(enabled)
 
-    def get_menu(self, name: str) -> Optional[QMenu]:
+    def get_menu(self, name: str) -> QMenu | None:
         """获取菜单"""
         return self._menus.get(name)
 
-    def get_menubar(self) -> Optional[QMenuBar]:
+    def get_menubar(self) -> QMenuBar | None:
         """获取菜单栏"""
         return self._menubar
 

@@ -8,7 +8,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 from .robustness_integration import enhance_robustness, log_operation, validate_input
 
@@ -55,8 +55,8 @@ class Achievement:
     description: str
     type: AchievementType
     difficulty: DifficultyLevel
-    requirements: Dict[str, Any]
-    rewards: List[Dict[str, Any]]
+    requirements: dict[str, Any]
+    rewards: list[dict[str, Any]]
     icon: str
     rarity: str = "common"  # common, rare, epic, legendary
     hidden: bool = False
@@ -69,7 +69,7 @@ class UserAchievement:
     achievement_id: str
     user_id: str
     unlocked_at: datetime
-    progress: Dict[str, Any] = field(default_factory=dict)
+    progress: dict[str, Any] = field(default_factory=dict)
     is_unlocked: bool = False
 
 
@@ -81,14 +81,14 @@ class UserProfile:
     level: int = 1
     experience_points: int = 0
     total_points: int = 0
-    badges: List[str] = field(default_factory=list)
-    titles: List[str] = field(default_factory=list)
+    badges: list[str] = field(default_factory=list)
+    titles: list[str] = field(default_factory=list)
     avatar: str = "default"
     theme: str = "default"
-    unlocked_features: Set[str] = field(default_factory=set)
-    currency: Dict[str, int] = field(default_factory=dict)
-    statistics: Dict[str, Any] = field(default_factory=dict)
-    preferences: Dict[str, Any] = field(default_factory=dict)
+    unlocked_features: set[str] = field(default_factory=set)
+    currency: dict[str, int] = field(default_factory=dict)
+    statistics: dict[str, Any] = field(default_factory=dict)
+    preferences: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.now)
     last_active: datetime = field(default_factory=datetime.now)
 
@@ -100,7 +100,7 @@ class LeaderboardEntry:
     username: str
     score: float
     rank: int
-    additional_data: Dict[str, Any] = field(default_factory=dict)
+    additional_data: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -118,11 +118,11 @@ class EnhancedGamificationSystem:
     """增强的游戏化系统"""
 
     def __init__(self):
-        self.achievements: Dict[str, Achievement] = {}
-        self.user_achievements: Dict[str, List[UserAchievement]] = {}
-        self.user_profiles: Dict[str, UserProfile] = {}
-        self.leaderboards: Dict[str, List[LeaderboardEntry]] = {}
-        self.rewards: Dict[str, Reward] = {}
+        self.achievements: dict[str, Achievement] = {}
+        self.user_achievements: dict[str, list[UserAchievement]] = {}
+        self.user_profiles: dict[str, UserProfile] = {}
+        self.leaderboards: dict[str, list[LeaderboardEntry]] = {}
+        self.rewards: dict[str, Reward] = {}
 
         # 初始化系统
         self._initialize_achievements()
@@ -297,8 +297,8 @@ class EnhancedGamificationSystem:
     def update_user_progress(
         self,
         user_id: str,
-        experiment_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        experiment_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """更新用户进度"""
         if user_id not in self.user_profiles:
             logger.warning(f"用户 {user_id} 档案不存在")
@@ -336,7 +336,7 @@ class EnhancedGamificationSystem:
             "total_points": profile.total_points
         }
 
-    def _update_statistics(self, profile: UserProfile, experiment_data: Dict[str, Any]) -> None:
+    def _update_statistics(self, profile: UserProfile, experiment_data: dict[str, Any]) -> None:
         """更新统计数据"""
         stats = profile.statistics
 
@@ -376,7 +376,7 @@ class EnhancedGamificationSystem:
 
         stats["last_experiment_date"] = today.isoformat()
 
-    def _calculate_experience_and_level(self, profile: UserProfile, experiment_data: Dict[str, Any]) -> None:
+    def _calculate_experience_and_level(self, profile: UserProfile, experiment_data: dict[str, Any]) -> None:
         """计算经验值和等级"""
         # 基础经验值
         base_exp = experiment_data.get("base_experience", 50)
@@ -413,7 +413,7 @@ class EnhancedGamificationSystem:
         import math
         return int(math.sqrt(experience_points / 100)) + 1
 
-    def _check_achievements(self, user_id: str, experiment_data: Dict[str, Any]) -> List[UserAchievement]:
+    def _check_achievements(self, user_id: str, experiment_data: dict[str, Any]) -> list[UserAchievement]:
         """检查成就解锁"""
         if user_id not in self.user_achievements:
             return []
@@ -455,7 +455,7 @@ class EnhancedGamificationSystem:
         self,
         achievement: Achievement,
         profile: UserProfile,
-        experiment_data: Dict[str, Any]
+        experiment_data: dict[str, Any]
     ) -> bool:
         """检查成就要求"""
         requirements = achievement.requirements
@@ -484,7 +484,7 @@ class EnhancedGamificationSystem:
 
         return False
 
-    def _grant_rewards(self, user_id: str, rewards: List[Dict[str, Any]]) -> None:
+    def _grant_rewards(self, user_id: str, rewards: list[dict[str, Any]]) -> None:
         """发放奖励"""
         if user_id not in self.user_profiles:
             return
@@ -535,7 +535,7 @@ class EnhancedGamificationSystem:
         leaderboard_name: str,
         user_id: str,
         score: float,
-        additional_data: Dict[str, Any]
+        additional_data: dict[str, Any]
     ) -> None:
         """更新单个排行榜"""
         if leaderboard_name not in self.leaderboards:
@@ -578,7 +578,7 @@ class EnhancedGamificationSystem:
         security_level="low",
         enable_caching=True
     )
-    def get_user_profile(self, user_id: str) -> Optional[UserProfile]:
+    def get_user_profile(self, user_id: str) -> UserProfile | None:
         """获取用户档案"""
         return self.user_profiles.get(user_id)
 
@@ -587,7 +587,7 @@ class EnhancedGamificationSystem:
         security_level="low",
         enable_caching=True
     )
-    def get_user_achievements(self, user_id: str) -> List[UserAchievement]:
+    def get_user_achievements(self, user_id: str) -> list[UserAchievement]:
         """获取用户成就"""
         return self.user_achievements.get(user_id, [])
 
@@ -596,7 +596,7 @@ class EnhancedGamificationSystem:
         security_level="low",
         enable_caching=True
     )
-    def get_leaderboard(self, leaderboard_name: str, limit: int = 10) -> List[LeaderboardEntry]:
+    def get_leaderboard(self, leaderboard_name: str, limit: int = 10) -> list[LeaderboardEntry]:
         """获取排行榜"""
         if leaderboard_name not in self.leaderboards:
             return []
@@ -608,7 +608,7 @@ class EnhancedGamificationSystem:
         security_level="low",
         enable_caching=True
     )
-    def get_available_achievements(self, user_id: str) -> List[Achievement]:
+    def get_available_achievements(self, user_id: str) -> list[Achievement]:
         """获取可用成就"""
         if user_id not in self.user_achievements:
             return list(self.achievements.values())
@@ -627,7 +627,7 @@ class EnhancedGamificationSystem:
         security_level="low",
         enable_caching=True
     )
-    def get_user_statistics(self, user_id: str) -> Dict[str, Any]:
+    def get_user_statistics(self, user_id: str) -> dict[str, Any]:
         """获取用户统计信息"""
         if user_id not in self.user_profiles:
             return {}
@@ -664,7 +664,7 @@ class EnhancedGamificationSystem:
             }
         }
 
-    def _log_gamification_event(self, user_id: str, event_type: str, data: Dict[str, Any]) -> None:
+    def _log_gamification_event(self, user_id: str, event_type: str, data: dict[str, Any]) -> None:
         """记录游戏化事件"""
         logger.info(f"游戏化事件: {user_id} - {event_type}: {data}")
 

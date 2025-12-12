@@ -3,9 +3,10 @@
 import logging
 import time
 import traceback
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +29,9 @@ class ErrorContext:
     timestamp: float
     component: str
     operation: str
-    user_id: Optional[str] = None
-    session_id: Optional[str] = None
-    additional_data: Optional[Dict[str, Any]] = None
+    user_id: str | None = None
+    session_id: str | None = None
+    additional_data: dict[str, Any] | None = None
 
 @dataclass
 class RecoveryAction:
@@ -47,8 +48,8 @@ class ErrorRecoverySystem:
 
     def __init__(self):
         """初始化恢复系统"""
-        self.recovery_rules: Dict[str, List[RecoveryAction]] = {}
-        self.error_history: List[ErrorContext] = []
+        self.recovery_rules: dict[str, list[RecoveryAction]] = {}
+        self.error_history: list[ErrorContext] = []
         self.max_history = 1000
         self.is_enabled = True
 
@@ -151,7 +152,7 @@ class ErrorRecoverySystem:
         if len(self.error_history) > self.max_history:
             self.error_history = self.error_history[-self.max_history:]
 
-    def _find_recovery_actions(self, error: Exception, context: ErrorContext) -> List[RecoveryAction]:
+    def _find_recovery_actions(self, error: Exception, _context: ErrorContext) -> list[RecoveryAction]:
         """查找恢复动作"""
         error_type = error.__class__.__name__
         actions = []
@@ -185,7 +186,7 @@ class ErrorRecoverySystem:
         else:
             raise ValueError(f"未知的恢复策略: {action.strategy}")
 
-    def _execute_retry(self, action: RecoveryAction, context: ErrorContext) -> Any:
+    def _execute_retry(self, action: RecoveryAction, _context: ErrorContext) -> Any:
         """执行重试策略"""
         for attempt in range(action.max_attempts):
             try:
@@ -202,7 +203,7 @@ class ErrorRecoverySystem:
 
         return None
 
-    def _execute_fallback(self, action: RecoveryAction, context: ErrorContext) -> Any:
+    def _execute_fallback(self, action: RecoveryAction, _context: ErrorContext) -> Any:
         """执行回退策略"""
         try:
             return action.action()
@@ -210,7 +211,7 @@ class ErrorRecoverySystem:
             logger.error(f"回退策略失败: {e}")
             raise e
 
-    def _execute_ignore(self, action: RecoveryAction, context: ErrorContext) -> Any:
+    def _execute_ignore(self, _action: RecoveryAction, context: ErrorContext) -> Any:
         """执行忽略策略"""
         logger.warning(f"忽略错误: {context.error_message}")
         return None
@@ -248,7 +249,7 @@ class ErrorRecoverySystem:
         # 实现内存错误升级逻辑
         pass
 
-    def get_error_statistics(self) -> Dict[str, Any]:
+    def get_error_statistics(self) -> dict[str, Any]:
         """获取错误统计"""
         if not self.error_history:
             return {}

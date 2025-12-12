@@ -5,20 +5,22 @@
 """
 
 import logging
-from pathlib import Path
-from typing import Optional, List, Dict, Any
 from contextlib import contextmanager
+from pathlib import Path
+from typing import Any
 
-from sqlalchemy import create_engine, select, and_, or_, func
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy import and_, create_engine, func
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import QueuePool
-from sqlalchemy.exc import SQLAlchemyError
 
 from .. import __version__ as APP_VERSION
-
 from ..models.database import (
-    Base, User, ExperimentRecord, Template, Configuration,
-    License, CacheEntry, AuditLog, DatabaseVersion
+    Base,
+    Configuration,
+    DatabaseVersion,
+    ExperimentRecord,
+    Template,
+    User,
 )
 from ..models.user_record import UserRecord
 
@@ -137,8 +139,8 @@ class DatabaseManager:
         username: str,
         email: str,
         role: str = 'student',
-        preferences: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        preferences: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """创建用户
 
         Args:
@@ -177,7 +179,7 @@ class DatabaseManager:
             logger.info(f"创建用户: {user_id}")
             return user_dict
 
-    def get_user(self, user_id: str) -> Optional[Dict[str, Any]]:
+    def get_user(self, user_id: str) -> dict[str, Any] | None:
         """获取用户
 
         Args:
@@ -245,11 +247,11 @@ class DatabaseManager:
 
     def list_users(
         self,
-        role: Optional[str] = None,
-        is_active: Optional[bool] = None,
+        role: str | None = None,
+        is_active: bool | None = None,
         limit: int = 100,
         offset: int = 0
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """列出用户
 
         Args:
@@ -287,7 +289,7 @@ class DatabaseManager:
     # 实验记录操作
     # ========================================================================
 
-    def save_experiment_record(self, record: UserRecord) -> Dict[str, Any]:
+    def save_experiment_record(self, record: UserRecord) -> dict[str, Any]:
         """保存实验记录
 
         Args:
@@ -351,7 +353,7 @@ class DatabaseManager:
                 logger.info(f"创建实验记录: {record.record_id}")
                 return db_record.to_dict()
 
-    def get_experiment_record(self, record_id: str) -> Optional[Dict[str, Any]]:
+    def get_experiment_record(self, record_id: str) -> dict[str, Any] | None:
         """获取实验记录
 
         Args:
@@ -373,10 +375,10 @@ class DatabaseManager:
     def list_user_experiments(
         self,
         user_id: str,
-        status: Optional[str] = None,
+        status: str | None = None,
         limit: int = 100,
         offset: int = 0
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """列出用户的实验记录
 
         Args:
@@ -488,7 +490,7 @@ class DatabaseManager:
                 logger.info(f"创建模板: {template_id}")
                 return template
 
-    def get_template(self, template_id: str) -> Optional[Dict[str, Any]]:
+    def get_template(self, template_id: str) -> dict[str, Any] | None:
         """获取模板"""
         with self.get_session() as session:
             template = session.query(Template).filter(
@@ -509,10 +511,10 @@ class DatabaseManager:
 
     def list_templates(
         self,
-        category: Optional[str] = None,
-        difficulty: Optional[str] = None,
+        category: str | None = None,
+        difficulty: str | None = None,
         limit: int = 100
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """列出模板"""
         with self.get_session() as session:
             query = session.query(Template)
@@ -542,7 +544,7 @@ class DatabaseManager:
         key: str,
         value: Any,
         category: str = 'general',
-        description: Optional[str] = None
+        description: str | None = None
     ) -> Configuration:
         """设置配置"""
         with self.get_session() as session:
@@ -602,7 +604,7 @@ class DatabaseManager:
 
             return config.get_value()
 
-    def get_configs_by_category(self, category: str) -> Dict[str, Any]:
+    def get_configs_by_category(self, category: str) -> dict[str, Any]:
         """获取某分类的所有配置"""
         with self.get_session() as session:
             configs = session.query(Configuration).filter(
@@ -615,7 +617,7 @@ class DatabaseManager:
     # 统计和分析
     # ========================================================================
 
-    def get_user_stats(self, user_id: str) -> Dict[str, Any]:
+    def get_user_stats(self, user_id: str) -> dict[str, Any]:
         """获取用户统计信息"""
         with self.get_session() as session:
             user = session.query(User).filter(User.user_id == user_id).first()
@@ -651,7 +653,7 @@ class DatabaseManager:
                 'last_login': user.last_login.isoformat() if user.last_login else None
             }
 
-    def get_experiment_statistics(self) -> Dict[str, Any]:
+    def get_experiment_statistics(self) -> dict[str, Any]:
         """获取实验统计信息"""
         with self.get_session() as session:
             total_records = session.query(func.count(ExperimentRecord.id)).scalar()
@@ -687,7 +689,7 @@ class DatabaseManager:
     # 批量操作
     # ========================================================================
 
-    def bulk_save_experiments(self, records: List[UserRecord]) -> int:
+    def bulk_save_experiments(self, records: list[UserRecord]) -> int:
         """批量保存实验记录
 
         Args:

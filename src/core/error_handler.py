@@ -13,12 +13,13 @@ import json
 import logging
 import os
 import traceback
+from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any
 
 from .common_error_handlers import (
     safe_execute_with_default as _common_safe_execute_with_default,
@@ -66,11 +67,11 @@ class ErrorCategory(str, Enum):
 class ErrorContext:
     """错误上下文（测试/兼容用）"""
 
-    user_id: Optional[str] = None
-    session_id: Optional[str] = None
-    component: Optional[str] = None
-    operation: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    user_id: str | None = None
+    session_id: str | None = None
+    component: str | None = None
+    operation: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -89,7 +90,7 @@ class ErrorRecord:
     handled: bool
     recovery_attempts: int
     max_recovery_attempts: int
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class ErrorHandler:
@@ -97,13 +98,13 @@ class ErrorHandler:
 
     def __init__(self):
         # 新版错误处理所需结构（VirtualChemLabError）
-        self._error_callbacks: Dict[CoreErrorCategory, List[Callable[[VirtualChemLabError], None]]] = {}
-        self._error_stats: Dict[str, int] = {}
-        self._recovery_strategies: Dict[Type[VirtualChemLabError], Callable[[VirtualChemLabError], Any]] = {}
+        self._error_callbacks: dict[CoreErrorCategory, list[Callable[[VirtualChemLabError], None]]] = {}
+        self._error_stats: dict[str, int] = {}
+        self._recovery_strategies: dict[type[VirtualChemLabError], Callable[[VirtualChemLabError], Any]] = {}
 
         # 兼容测试要求的接口
-        self.error_handlers: Dict[Type[Exception], Callable[[Exception, ErrorContext], Any]] = {}
-        self.error_records: List[ErrorRecord] = []
+        self.error_handlers: dict[type[Exception], Callable[[Exception, ErrorContext], Any]] = {}
+        self.error_records: list[ErrorRecord] = []
         self.max_error_records: int = 1000
 
         # 注册一个默认处理器，保证 error_handlers 非空
@@ -121,7 +122,7 @@ class ErrorHandler:
 
     def register_recovery_strategy(
         self,
-        error_type: Type[VirtualChemLabError],
+        error_type: type[VirtualChemLabError],
         strategy: Callable[[VirtualChemLabError], Any],
     ) -> None:
         """注册恢复策略"""
@@ -129,7 +130,7 @@ class ErrorHandler:
 
     # -------- 新版 VirtualChemLabError 处理逻辑 --------
 
-    def handle_error(self, error: Union[VirtualChemLabError, Exception], context: Optional[ErrorContext] = None) -> Any:
+    def handle_error(self, error: VirtualChemLabError | Exception, context: ErrorContext | None = None) -> Any:
         """
         处理错误
 
@@ -264,7 +265,7 @@ class ErrorHandler:
             logger.error(f"Fallback operation failed: {e}")
             return None
 
-    def get_error_stats(self) -> Dict[str, int]:
+    def get_error_stats(self) -> dict[str, int]:
         """获取错误统计"""
         return self._error_stats.copy()
 
@@ -279,11 +280,11 @@ class ErrorHandler:
         logger.error(f"Handled error: {error} (component={context.component}, operation={context.operation})")
         return True
 
-    def register_handler(self, error_type: Type[Exception], handler: Callable[[Exception, ErrorContext], Any]) -> None:
+    def register_handler(self, error_type: type[Exception], handler: Callable[[Exception, ErrorContext], Any]) -> None:
         """注册基于异常类型的处理器（测试使用）"""
         self.error_handlers[error_type] = handler
 
-    def unregister_handler(self, error_type: Type[Exception]) -> bool:
+    def unregister_handler(self, error_type: type[Exception]) -> bool:
         """注销处理器（测试使用）"""
         if error_type in self.error_handlers:
             del self.error_handlers[error_type]
@@ -319,7 +320,7 @@ class ErrorHandler:
             # 仅保留最新的 max_error_records 条（测试有断言）
             self.error_records = self.error_records[-self.max_error_records :]
 
-    def _serialize_error_record(self, record: ErrorRecord) -> Dict[str, Any]:
+    def _serialize_error_record(self, record: ErrorRecord) -> dict[str, Any]:
         """将错误记录转换为可持久化的字典"""
         return {
             "id": record.id,
@@ -358,20 +359,20 @@ class ErrorHandler:
         self._append_error_record(error, context, handled)
         return True
 
-    def get_error_records(self, limit: Optional[int] = None) -> List[ErrorRecord]:
+    def get_error_records(self, limit: int | None = None) -> list[ErrorRecord]:
         """获取错误记录（测试使用）"""
         records = self.error_records
         if limit is not None:
             return records[-limit:]
         return list(records)
 
-    def get_error_statistics(self) -> Dict[str, Any]:
+    def get_error_statistics(self) -> dict[str, Any]:
         """获取错误统计（测试使用）"""
         total = len(self.error_records)
         handled = sum(1 for r in self.error_records if r.handled)
         unhandled = total - handled
 
-        type_counts: Dict[str, int] = {}
+        type_counts: dict[str, int] = {}
         for r in self.error_records:
             name = type(r.exception).__name__
             type_counts[name] = type_counts.get(name, 0) + 1
@@ -397,7 +398,7 @@ def get_error_handler() -> ErrorHandler:
 def error_context(
     category: CoreErrorCategory = CoreErrorCategory.SYSTEM,
     severity: CoreErrorSeverity = CoreErrorSeverity.MEDIUM,
-    error_class: Type[VirtualChemLabError] = VirtualChemLabError,
+    error_class: type[VirtualChemLabError] = VirtualChemLabError,
 ):
     """错误上下文管理器（新版 VirtualChemLabError 用）"""
     try:
@@ -416,7 +417,7 @@ def error_context(
 def safe_execute(
     func: Callable,
     *args,
-    error_class: Type[VirtualChemLabError] = VirtualChemLabError,
+    error_class: type[VirtualChemLabError] = VirtualChemLabError,
     category: CoreErrorCategory = CoreErrorCategory.SYSTEM,
     severity: CoreErrorSeverity = CoreErrorSeverity.MEDIUM,
     fallback_value: Any = None,
@@ -467,7 +468,7 @@ def log_and_continue(
 
 def log_and_raise(
     error: Exception,
-    error_class: Type[VirtualChemLabError] = VirtualChemLabError,
+    error_class: type[VirtualChemLabError] = VirtualChemLabError,
     category: CoreErrorCategory = CoreErrorCategory.SYSTEM,
     severity: CoreErrorSeverity = CoreErrorSeverity.MEDIUM,
 ) -> None:

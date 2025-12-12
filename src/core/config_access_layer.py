@@ -4,8 +4,9 @@
 """
 
 import threading
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from ..utils.logger import get_logger
 from .config_loader import Config, get_config
@@ -19,9 +20,9 @@ _MISSING = object()
 class ConfigAccessLayer:
     """配置访问抽象层"""
 
-    def __init__(self, config: Optional[Config] = None):
+    def __init__(self, config: Config | None = None):
         self._config = config or get_config()
-        self._cache: Dict[str, Any] = {}
+        self._cache: dict[str, Any] = {}
         self._lock = threading.RLock()
 
     def get(self, key: str, default: Any = None) -> Any:
@@ -52,7 +53,7 @@ class ConfigAccessLayer:
         """检查配置是否存在"""
         return self.get(key) is not None
 
-    def get_section(self, section: str) -> Dict[str, Any]:
+    def get_section(self, section: str) -> dict[str, Any]:
         """获取配置节"""
         value = self.get(section)
         if value is None:
@@ -64,7 +65,7 @@ class ConfigAccessLayer:
 
         return value if isinstance(value, dict) else {}
 
-    def get_path(self, key: str, base_path: Optional[Path] = None) -> Path:
+    def get_path(self, key: str, base_path: Path | None = None) -> Path:
         """获取路径配置，自动解析为Path对象"""
         path_str = self.get(key)
         if not path_str:
@@ -107,7 +108,7 @@ class ConfigAccessLayer:
 
         return bool(value)
 
-    def get_list(self, key: str, default: Optional[list] = None) -> list:
+    def get_list(self, key: str, default: list | None = None) -> list:
         """获取列表配置"""
         value = self.get(key, default)
         if value is None:
@@ -123,7 +124,7 @@ class ConfigAccessLayer:
 
         return [value]
 
-    def get_dict(self, key: str, default: Optional[dict] = None) -> dict:
+    def get_dict(self, key: str, default: dict | None = None) -> dict:
         """获取字典配置"""
         value = self.get(key, default)
         if value is None:
@@ -166,7 +167,7 @@ class ConfigAccessLayer:
             self._cache.clear()
             logger.info("配置已重新加载")
 
-    def get_all(self) -> Dict[str, Any]:
+    def get_all(self) -> dict[str, Any]:
         """获取所有配置"""
         return self._config.dict() if hasattr(self._config, "dict") else {}
 
@@ -180,7 +181,7 @@ class ConfigAccessLayer:
         if missing:
             raise ValueError(f"Missing required configuration: {', '.join(missing)}")
 
-    def get_with_validation(self, key: str, validator: callable, default: Any = None) -> Any:
+    def get_with_validation(self, key: str, validator: Callable[[Any], Any], default: Any = None) -> Any:
         """获取配置并验证"""
         value = self.get(key, default)
 
@@ -192,7 +193,7 @@ class ConfigAccessLayer:
 
 
 # 全局配置访问层实例
-_config_access_layer: Optional[ConfigAccessLayer] = None
+_config_access_layer: ConfigAccessLayer | None = None
 _config_access_lock = threading.Lock()
 
 
@@ -233,12 +234,12 @@ def config_has(key: str) -> bool:
     return get_config_access().has(key)
 
 
-def config_get_section(section: str) -> Dict[str, Any]:
+def config_get_section(section: str) -> dict[str, Any]:
     """获取配置节"""
     return get_config_access().get_section(section)
 
 
-def config_get_path(key: str, base_path: Optional[Path] = None) -> Path:
+def config_get_path(key: str, base_path: Path | None = None) -> Path:
     """获取路径配置"""
     return get_config_access().get_path(key, base_path)
 
@@ -258,12 +259,12 @@ def config_get_bool(key: str, default: bool = False) -> bool:
     return get_config_access().get_bool(key, default)
 
 
-def config_get_list(key: str, default: Optional[list] = None) -> list:
+def config_get_list(key: str, default: list | None = None) -> list:
     """获取列表配置"""
     return get_config_access().get_list(key, default)
 
 
-def config_get_dict(key: str, default: Optional[dict] = None) -> dict:
+def config_get_dict(key: str, default: dict | None = None) -> dict:
     """获取字典配置"""
     return get_config_access().get_dict(key, default)
 
@@ -273,7 +274,7 @@ def config_validate_required(*keys: str) -> None:
     get_config_access().validate_required(*keys)
 
 
-def config_get_with_validation(key: str, validator: callable, default: Any = None) -> Any:
+def config_get_with_validation(key: str, validator: Callable[[Any], Any], default: Any = None) -> Any:
     """获取配置并验证"""
     return get_config_access().get_with_validation(key, validator, default)
 

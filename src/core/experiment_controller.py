@@ -17,7 +17,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, List
+from typing import Any
 
 from src.core.curve_generator import CurveGenerator
 from src.core.rule_validator import RuleValidator
@@ -79,8 +79,8 @@ class StepResult:
     is_valid: bool
     message: str
     mistake: Mistake | None = None
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
     def __iter__(self):
         """支持 (passed, message, mistake) 解包，用于兼容服务层接口"""
@@ -410,8 +410,8 @@ class ExperimentController:
                 step_id=current_step.id,
                 passed=str(passed),
             )
-        errors: List[str] = []
-        warnings: List[str] = []
+        errors: list[str] = []
+        warnings: list[str] = []
         if not passed and message:
             errors.append(message)
 

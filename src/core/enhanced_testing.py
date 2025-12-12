@@ -9,9 +9,10 @@ import functools
 import logging
 import time
 import traceback
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -53,26 +54,26 @@ class TestResult:
     duration: float
     start_time: float
     end_time: float
-    error_message: Optional[str] = None
-    stack_trace: Optional[str] = None
+    error_message: str | None = None
+    stack_trace: str | None = None
     assertions_passed: int = 0
     assertions_failed: int = 0
-    coverage_percentage: Optional[float] = None
-    performance_metrics: Optional[Dict[str, Any]] = None
-    security_vulnerabilities: Optional[List[str]] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    coverage_percentage: float | None = None
+    performance_metrics: dict[str, Any] | None = None
+    security_vulnerabilities: list[str] | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class TestSuite:
     """测试套件"""
     name: str
-    tests: List[Callable]
-    setup_func: Optional[Callable] = None
-    teardown_func: Optional[Callable] = None
+    tests: list[Callable]
+    setup_func: Callable | None = None
+    teardown_func: Callable | None = None
     parallel: bool = False
-    timeout: Optional[float] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    timeout: float | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class TestAssertion:
@@ -138,10 +139,10 @@ class TestRunner:
     """测试运行器"""
 
     def __init__(self):
-        self.test_results: List[TestResult] = []
-        self.test_suites: List[TestSuite] = []
+        self.test_results: list[TestResult] = []
+        self.test_suites: list[TestSuite] = []
         self.assertion = TestAssertion()
-        self.running_tests: Dict[str, TestResult] = {}
+        self.running_tests: dict[str, TestResult] = {}
 
         logger.info("测试运行器初始化完成")
 
@@ -150,7 +151,7 @@ class TestRunner:
         self.test_suites.append(suite)
         logger.debug(f"添加测试套件: {suite.name}")
 
-    def run_test(self, test_func: Callable, test_name: Optional[str] = None) -> TestResult:
+    def run_test(self, test_func: Callable, test_name: str | None = None) -> TestResult:
         """运行单个测试"""
         name = test_name or test_func.__name__
 
@@ -215,7 +216,7 @@ class TestRunner:
 
         return result
 
-    def run_suite(self, suite: TestSuite) -> List[TestResult]:
+    def run_suite(self, suite: TestSuite) -> list[TestResult]:
         """运行测试套件"""
         results = []
 
@@ -250,7 +251,7 @@ class TestRunner:
         logger.info(f"测试套件完成: {suite.name}")
         return results
 
-    def _run_tests_parallel(self, tests: List[Callable]) -> List[TestResult]:
+    def _run_tests_parallel(self, tests: list[Callable]) -> list[TestResult]:
         """并行运行测试"""
         # 这里可以实现并行测试逻辑
         # 目前使用串行实现
@@ -260,7 +261,7 @@ class TestRunner:
             results.append(result)
         return results
 
-    def run_all_tests(self) -> List[TestResult]:
+    def run_all_tests(self) -> list[TestResult]:
         """运行所有测试"""
         all_results = []
 
@@ -273,7 +274,7 @@ class TestRunner:
         logger.info("所有测试运行完成")
         return all_results
 
-    def get_test_summary(self) -> Dict[str, Any]:
+    def get_test_summary(self) -> dict[str, Any]:
         """获取测试摘要"""
         total_tests = len(self.test_results)
         passed_tests = sum(1 for r in self.test_results if r.status == TestStatus.PASSED)
@@ -300,9 +301,9 @@ class CoverageAnalyzer:
     """覆盖率分析器"""
 
     def __init__(self):
-        self.coverage_data: Dict[str, Dict[str, Any]] = {}
-        self.line_coverage: Dict[str, List[int]] = {}
-        self.branch_coverage: Dict[str, Dict[str, bool]] = {}
+        self.coverage_data: dict[str, dict[str, Any]] = {}
+        self.line_coverage: dict[str, list[int]] = {}
+        self.branch_coverage: dict[str, dict[str, bool]] = {}
 
         logger.info("覆盖率分析器初始化完成")
 
@@ -326,7 +327,7 @@ class CoverageAnalyzer:
         if module_name in self.coverage_data:
             self.coverage_data[module_name]["branches_executed"].add(branch_id)
 
-    def calculate_coverage(self, module_name: str) -> Dict[str, float]:
+    def calculate_coverage(self, module_name: str) -> dict[str, float]:
         """计算覆盖率"""
         if module_name not in self.coverage_data:
             return {"line_coverage": 0.0, "branch_coverage": 0.0}
@@ -349,7 +350,7 @@ class CoverageAnalyzer:
             "overall_coverage": (line_coverage + branch_coverage) / 2
         }
 
-    def get_overall_coverage(self) -> Dict[str, float]:
+    def get_overall_coverage(self) -> dict[str, float]:
         """获取总体覆盖率"""
         if not self.coverage_data:
             return {"line_coverage": 0.0, "branch_coverage": 0.0, "overall_coverage": 0.0}
@@ -374,11 +375,11 @@ class PerformanceTester:
     """性能测试器"""
 
     def __init__(self):
-        self.performance_results: Dict[str, List[Dict[str, Any]]] = {}
+        self.performance_results: dict[str, list[dict[str, Any]]] = {}
 
         logger.info("性能测试器初始化完成")
 
-    def benchmark_function(self, func: Callable, iterations: int = 1000, *args, **kwargs) -> Dict[str, Any]:
+    def benchmark_function(self, func: Callable, iterations: int = 1000, *args, **kwargs) -> dict[str, Any]:
         """基准测试函数"""
         times = []
 
@@ -431,7 +432,7 @@ class PerformanceTester:
 
         return result
 
-    def stress_test(self, func: Callable, duration: float = 60.0, *args, **kwargs) -> Dict[str, Any]:
+    def stress_test(self, func: Callable, duration: float = 60.0, *args, **kwargs) -> dict[str, Any]:
         """压力测试"""
         start_time = time.time()
         end_time = start_time + duration
@@ -469,11 +470,11 @@ class SecurityTester:
     """安全测试器"""
 
     def __init__(self):
-        self.security_results: List[Dict[str, Any]] = []
+        self.security_results: list[dict[str, Any]] = []
 
         logger.info("安全测试器初始化完成")
 
-    def test_sql_injection(self, func: Callable, *args, **kwargs) -> List[str]:
+    def test_sql_injection(self, func: Callable, *args, **kwargs) -> list[str]:
         """测试SQL注入"""
         vulnerabilities = []
 
@@ -496,7 +497,7 @@ class SecurityTester:
 
         return vulnerabilities
 
-    def test_xss(self, func: Callable, *args, **kwargs) -> List[str]:
+    def test_xss(self, func: Callable, *args, **kwargs) -> list[str]:
         """测试XSS"""
         vulnerabilities = []
 
@@ -518,7 +519,7 @@ class SecurityTester:
 
         return vulnerabilities
 
-    def test_input_validation(self, func: Callable, *args, **kwargs) -> List[str]:
+    def test_input_validation(self, func: Callable, *args, **kwargs) -> list[str]:
         """测试输入验证"""
         vulnerabilities = []
 
@@ -555,7 +556,7 @@ class EnhancedTestingFramework:
 
         logger.info("增强测试框架初始化完成")
 
-    def run_comprehensive_tests(self) -> Dict[str, Any]:
+    def run_comprehensive_tests(self) -> dict[str, Any]:
         """运行综合测试"""
         results = {
             "unit_tests": [],
@@ -633,11 +634,11 @@ class EnhancedTestingFramework:
 testing_framework = EnhancedTestingFramework()
 
 
-def test_case(test_type: TestType = TestType.UNIT):
+def test_case(_test_type: TestType = TestType.UNIT):
     """测试用例装饰器"""
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*_args: Any, **_kwargs: Any):
             return testing_framework.test_runner.run_test(func)
         return wrapper
     return decorator

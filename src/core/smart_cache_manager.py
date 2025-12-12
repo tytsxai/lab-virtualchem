@@ -13,10 +13,11 @@ import pickle
 import threading
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from .enhanced_observability import (
     LogLevel,
@@ -52,9 +53,9 @@ class CacheEntry:
     created_at: float
     accessed_at: float
     access_count: int = 0
-    ttl: Optional[float] = None
+    ttl: float | None = None
     size: int = 0
-    tags: Dict[str, str] = field(default_factory=dict)
+    tags: dict[str, str] = field(default_factory=dict)
 
     def is_expired(self) -> bool:
         """检查是否过期"""
@@ -98,12 +99,12 @@ class CacheBackend(ABC):
     """缓存后端接口"""
 
     @abstractmethod
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """获取缓存"""
         pass
 
     @abstractmethod
-    def set(self, key: str, value: Any, ttl: Optional[float] = None) -> bool:
+    def set(self, key: str, value: Any, ttl: float | None = None) -> bool:
         """设置缓存"""
         pass
 
@@ -118,7 +119,7 @@ class CacheBackend(ABC):
         pass
 
     @abstractmethod
-    def keys(self) -> List[str]:
+    def keys(self) -> list[str]:
         """获取所有键"""
         pass
 
@@ -132,11 +133,11 @@ class MemoryCacheBackend(CacheBackend):
     """内存缓存后端"""
 
     def __init__(self, max_size: int = 1000):
-        self._cache: Dict[str, CacheEntry] = {}
+        self._cache: dict[str, CacheEntry] = {}
         self._max_size = max_size
         self._lock = threading.RLock()
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """获取缓存"""
         with self._lock:
             if key in self._cache:
@@ -149,7 +150,7 @@ class MemoryCacheBackend(CacheBackend):
                 return entry.value
             return None
 
-    def set(self, key: str, value: Any, ttl: Optional[float] = None) -> bool:
+    def set(self, key: str, value: Any, ttl: float | None = None) -> bool:
         """设置缓存"""
         with self._lock:
             entry = CacheEntry(
@@ -182,7 +183,7 @@ class MemoryCacheBackend(CacheBackend):
         with self._lock:
             self._cache.clear()
 
-    def keys(self) -> List[str]:
+    def keys(self) -> list[str]:
         """获取所有键"""
         with self._lock:
             return list(self._cache.keys())
@@ -224,7 +225,7 @@ class DiskCacheBackend(CacheBackend):
         key_hash = hashlib.sha256(key.encode()).hexdigest()
         return self._cache_dir / f"{key_hash}.cache"
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """获取缓存"""
         cache_path = self._get_cache_path(key)
 
@@ -245,7 +246,7 @@ class DiskCacheBackend(CacheBackend):
             logger.error(f"Failed to read cache file {cache_path}: {e}")
             return None
 
-    def set(self, key: str, value: Any, ttl: Optional[float] = None) -> bool:
+    def set(self, key: str, value: Any, ttl: float | None = None) -> bool:
         """设置缓存"""
         cache_path = self._get_cache_path(key)
 
@@ -291,7 +292,7 @@ class DiskCacheBackend(CacheBackend):
         except Exception as e:
             logger.error(f"Failed to clear cache directory: {e}")
 
-    def keys(self) -> List[str]:
+    def keys(self) -> list[str]:
         """获取所有键"""
         keys = []
         try:
@@ -348,20 +349,20 @@ class DiskCacheBackend(CacheBackend):
 class SmartCacheManager:
     """智能缓存管理器"""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         self._config = config or {}
         self._error_handler = get_error_handler()
         self._observability = get_observability()
 
         # 缓存后端
-        self._backends: Dict[CacheLevel, CacheBackend] = {}
+        self._backends: dict[CacheLevel, CacheBackend] = {}
         self._backend_order = [CacheLevel.L1, CacheLevel.L2, CacheLevel.L3]
 
         # 统计信息
         self._stats = CacheStats()
 
         # 缓存预热
-        self._preload_functions: Dict[str, Callable] = {}
+        self._preload_functions: dict[str, Callable] = {}
 
         # 初始化后端
         self._setup_backends()
@@ -382,7 +383,7 @@ class SmartCacheManager:
             # 这里可以集成Redis等分布式缓存
             pass
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """获取缓存"""
         # 按级别顺序查找
         for level in self._backend_order:
@@ -430,8 +431,8 @@ class SmartCacheManager:
         self,
         key: str,
         value: Any,
-        ttl: Optional[float] = None,
-        levels: Optional[List[CacheLevel]] = None
+        ttl: float | None = None,
+        levels: list[CacheLevel] | None = None
     ) -> bool:
         """设置缓存"""
         if levels is None:
@@ -457,7 +458,7 @@ class SmartCacheManager:
             f"Cache set: {key}",
             module="SmartCacheManager",
             function="set",
-            extra_data={"levels": [l.value for l in levels], "success": success}
+            extra_data={"levels": [lvl.value for lvl in levels], "success": success}
         )
 
         return success
@@ -495,8 +496,8 @@ class SmartCacheManager:
         self,
         key: str,
         factory: Callable[[], Any],
-        ttl: Optional[float] = None,
-        levels: Optional[List[CacheLevel]] = None
+        ttl: float | None = None,
+        levels: list[CacheLevel] | None = None
     ) -> Any:
         """获取或设置缓存"""
         value = self.get(key)
@@ -516,8 +517,8 @@ class SmartCacheManager:
         self,
         key: str,
         factory: Callable[[], Any],
-        ttl: Optional[float] = None,
-        levels: Optional[List[CacheLevel]] = None
+        ttl: float | None = None,
+        levels: list[CacheLevel] | None = None
     ) -> Any:
         """异步获取或设置缓存"""
         value = self.get(key)
@@ -540,7 +541,7 @@ class SmartCacheManager:
         """注册预热函数"""
         self._preload_functions[key] = func
 
-    def preload(self, keys: Optional[List[str]] = None) -> None:
+    def preload(self, keys: list[str] | None = None) -> None:
         """预热缓存"""
         if keys is None:
             keys = list(self._preload_functions.keys())
@@ -562,7 +563,7 @@ class SmartCacheManager:
                 except Exception as e:
                     logger.error(f"Failed to preload cache {key}: {e}")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         stats = {
             "hits": self._stats.hits,
@@ -608,12 +609,12 @@ def get_cache_manager() -> SmartCacheManager:
     return _global_cache_manager
 
 
-def cache_get(key: str) -> Optional[Any]:
+def cache_get(key: str) -> Any | None:
     """获取缓存"""
     return _global_cache_manager.get(key)
 
 
-def cache_set(key: str, value: Any, ttl: Optional[float] = None) -> bool:
+def cache_set(key: str, value: Any, ttl: float | None = None) -> bool:
     """设置缓存"""
     return _global_cache_manager.set(key, value, ttl)
 
@@ -628,11 +629,11 @@ def cache_clear() -> None:
     _global_cache_manager.clear()
 
 
-def cache_get_or_set(key: str, factory: Callable[[], Any], ttl: Optional[float] = None) -> Any:
+def cache_get_or_set(key: str, factory: Callable[[], Any], ttl: float | None = None) -> Any:
     """获取或设置缓存"""
     return _global_cache_manager.get_or_set(key, factory, ttl)
 
 
-def cache_preload(keys: Optional[List[str]] = None) -> None:
+def cache_preload(keys: list[str] | None = None) -> None:
     """预热缓存"""
     _global_cache_manager.preload(keys)

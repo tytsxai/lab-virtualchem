@@ -4,9 +4,10 @@ import gc
 import logging
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 import psutil
 
@@ -25,7 +26,7 @@ class MemoryOptimizationRule:
     """内存优化规则"""
     name: str
     target: OptimizationTarget
-    condition: Callable[[Dict[str, Any]], bool]
+    condition: Callable[[dict[str, Any]], bool]
     action: Callable[[], None]
     priority: int = 0
     enabled: bool = True
@@ -36,11 +37,11 @@ class MemoryOptimizer:
 
     def __init__(self):
         """初始化内存优化器"""
-        self.rules: List[MemoryOptimizationRule] = []
+        self.rules: list[MemoryOptimizationRule] = []
         self.is_monitoring = False
-        self.monitor_thread: Optional[threading.Thread] = None
-        self.last_execution: Dict[str, float] = {}
-        self.optimization_stats: Dict[str, int] = {}
+        self.monitor_thread: threading.Thread | None = None
+        self.last_execution: dict[str, float] = {}
+        self.optimization_stats: dict[str, int] = {}
         self.lock = threading.Lock()
 
         # 内存阈值
@@ -148,7 +149,7 @@ class MemoryOptimizer:
                 logger.error(f"内存监控错误: {e}")
                 time.sleep(interval)
 
-    def _collect_memory_metrics(self) -> Dict[str, Any]:
+    def _collect_memory_metrics(self) -> dict[str, Any]:
         """收集内存指标"""
         metrics = {}
 
@@ -228,7 +229,7 @@ class MemoryOptimizer:
         except Exception:
             return 0.0
 
-    def _check_optimization_rules(self, metrics: Dict[str, Any]):
+    def _check_optimization_rules(self, metrics: dict[str, Any]):
         """检查优化规则"""
         with self.lock:
             for rule in self.rules:
@@ -390,7 +391,7 @@ class MemoryOptimizer:
         # 实现缓存压缩逻辑
         pass
 
-    def get_optimization_stats(self) -> Dict[str, Any]:
+    def get_optimization_stats(self) -> dict[str, Any]:
         """获取优化统计"""
         with self.lock:
             return {

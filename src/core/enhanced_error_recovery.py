@@ -8,10 +8,11 @@ import asyncio
 import functools
 import logging
 import time
+from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import Any
 
 from .error_system.error_handler import GlobalErrorHandler
 from .error_system.exceptions import BaseAppException
@@ -41,11 +42,11 @@ class ErrorSeverity(Enum):
 class RecoveryRule:
     """基于异常类型的恢复规则（测试/兼容用）"""
 
-    error_type: Type[BaseAppException] | Type[Exception]
+    error_type: type[BaseAppException] | type[Exception]
     strategy: RecoveryStrategy
     max_attempts: int = 3
     delay: float = 0.1
-    fallback_function: Optional[Callable[[Exception, Any | None], Any]] = None
+    fallback_function: Callable[[Exception, Any | None], Any] | None = None
     circuit_breaker_threshold: int = 3
     circuit_breaker_timeout: float = 60.0
 
@@ -71,34 +72,34 @@ class RecoveryAttempt:
     timestamp: float
     strategy: RecoveryStrategy
     success: bool = False
-    error: Optional[Exception] = None
-    duration: Optional[float] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    error: Exception | None = None
+    duration: float | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class CircuitBreakerState:
     """熔断器状态"""
     failure_count: int = 0
-    last_failure_time: Optional[float] = None
+    last_failure_time: float | None = None
     state: str = "closed"  # closed, open, half_open
-    next_attempt_time: Optional[float] = None
+    next_attempt_time: float | None = None
 
 
 class EnhancedErrorRecovery:
     """增强的错误恢复系统"""
 
-    def __init__(self, config: Optional[RecoveryConfig] = None):
+    def __init__(self, config: RecoveryConfig | None = None):
         self.config = config or RecoveryConfig()
         self.error_handler = GlobalErrorHandler()
-        self.circuit_breakers: Dict[str, CircuitBreakerState] = {}
-        self.recovery_history: Dict[str, List[RecoveryAttempt]] = {}
-        self.fallback_functions: Dict[str, Callable] = {}
-        self.degradation_handlers: Dict[str, Callable] = {}
+        self.circuit_breakers: dict[str, CircuitBreakerState] = {}
+        self.recovery_history: dict[str, list[RecoveryAttempt]] = {}
+        self.fallback_functions: dict[str, Callable] = {}
+        self.degradation_handlers: dict[str, Callable] = {}
 
         # 基于异常类型的恢复规则（供 tests/test_refactored_system.py 使用）
-        self.recovery_rules: Dict[Type[Exception], RecoveryRule] = {}
-        self._error_failure_counts: Dict[Type[Exception], int] = {}
+        self.recovery_rules: dict[type[Exception], RecoveryRule] = {}
+        self._error_failure_counts: dict[type[Exception], int] = {}
 
         logger.info("增强错误恢复系统初始化完成")
 
@@ -117,6 +118,7 @@ class EnhancedErrorRecovery:
         operation_name: str,
         operation_func: Callable,
         *args,
+        max_retries: int | None = None,
         **kwargs
     ) -> Any:
         """执行恢复操作"""
@@ -131,7 +133,7 @@ class EnhancedErrorRecovery:
 
         # 执行恢复策略
         return self._execute_with_recovery(
-            operation_name, operation_func, *args, **kwargs
+            operation_name, operation_func, *args, max_retries=max_retries, **kwargs
         )
 
     def _execute_with_recovery(
@@ -139,13 +141,15 @@ class EnhancedErrorRecovery:
         operation_name: str,
         operation_func: Callable,
         *args,
+        max_retries: int | None = None,
         **kwargs
     ) -> Any:
         """执行带恢复的操作"""
 
         last_error = None
 
-        for attempt in range(self.config.max_retries + 1):
+        retries = max_retries if max_retries is not None else self.config.max_retries
+        for attempt in range(retries + 1):
             try:
                 # 计算延迟
                 if attempt > 0:
@@ -344,7 +348,7 @@ class EnhancedErrorRecovery:
         if len(self.recovery_history[operation_name]) > 100:
             self.recovery_history[operation_name] = self.recovery_history[operation_name][-50:]
 
-    def get_recovery_stats(self, operation_name: str) -> Dict[str, Any]:
+    def get_recovery_stats(self, operation_name: str) -> dict[str, Any]:
         """获取恢复统计"""
         if operation_name not in self.recovery_history:
             return {"total_attempts": 0, "successful_attempts": 0, "success_rate": 0.0}
@@ -361,7 +365,7 @@ class EnhancedErrorRecovery:
             "recent_attempts": attempts[-10:] if attempts else []
         }
 
-    def get_circuit_breaker_status(self, operation_name: str) -> Optional[Dict[str, Any]]:
+    def get_circuit_breaker_status(self, operation_name: str) -> dict[str, Any] | None:
         """获取熔断器状态"""
         if operation_name not in self.circuit_breakers:
             return None
@@ -380,10 +384,10 @@ error_recovery = EnhancedErrorRecovery()
 
 
 def recoverable(
-    operation_name: Optional[str] = None,
-    max_retries: Optional[int] = None,
-    fallback_func: Optional[Callable] = None,
-    degradation_handler: Optional[Callable] = None
+    operation_name: str | None = None,
+    max_retries: int | None = None,
+    fallback_func: Callable | None = None,
+    degradation_handler: Callable | None = None
 ):
     """可恢复函数装饰器"""
     def decorator(func: Callable) -> Callable:
@@ -399,7 +403,7 @@ def recoverable(
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            return error_recovery.recover(name, func, *args, **kwargs)
+            return error_recovery.recover(name, func, *args, max_retries=max_retries, **kwargs)
 
         return wrapper
     return decorator
@@ -424,9 +428,9 @@ def get_error_recovery() -> EnhancedErrorRecovery:
 # ======= 基于异常类型的兼容性接口（供综合测试使用） =======
 
 def _match_rule_for_error(
-    rules: Dict[Type[Exception], RecoveryRule],
+    rules: dict[type[Exception], RecoveryRule],
     error: Exception,
-) -> Optional[RecoveryRule]:
+) -> RecoveryRule | None:
     """找到与异常类型匹配的恢复规则"""
     for exc_type, rule in rules.items():
         if isinstance(error, exc_type):
@@ -434,16 +438,16 @@ def _match_rule_for_error(
     return None
 
 
-def _get_error_type(error: Exception) -> Type[Exception]:
+def _get_error_type(error: Exception) -> type[Exception]:
     return type(error)
 
 
-def add_recovery_rule(self: EnhancedErrorRecovery, error_type: Type[Exception], rule: RecoveryRule) -> None:
+def add_recovery_rule(self: EnhancedErrorRecovery, error_type: type[Exception], rule: RecoveryRule) -> None:
     """注册基于异常类型的恢复规则"""
     self.recovery_rules[error_type] = rule
 
 
-def get_recovery_rule(self: EnhancedErrorRecovery, error: Exception) -> Optional[RecoveryRule]:
+def get_recovery_rule(self: EnhancedErrorRecovery, error: Exception) -> RecoveryRule | None:
     """根据异常获取恢复规则"""
     return _match_rule_for_error(self.recovery_rules, error)
 

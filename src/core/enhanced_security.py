@@ -10,7 +10,7 @@ import secrets
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -49,11 +49,11 @@ class SecurityEvent:
     timestamp: float
     event_type: ThreatType
     severity: SecurityLevel
-    source_ip: Optional[str] = None
-    user_id: Optional[str] = None
-    session_id: Optional[str] = None
+    source_ip: str | None = None
+    user_id: str | None = None
+    session_id: str | None = None
     description: str = ""
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
     blocked: bool = False
     action_taken: str = ""
 
@@ -65,7 +65,7 @@ class ThreatDetection:
     confidence: float
     pattern_matched: str
     input_data: str
-    context: Dict[str, Any] = field(default_factory=dict)
+    context: dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
 
 
@@ -74,10 +74,10 @@ class AccessControlRule:
     """访问控制规则"""
     resource: str
     access_level: AccessLevel
-    allowed_users: List[str] = field(default_factory=list)
-    allowed_roles: List[str] = field(default_factory=list)
-    conditions: Dict[str, Any] = field(default_factory=dict)
-    expires_at: Optional[float] = None
+    allowed_users: list[str] = field(default_factory=list)
+    allowed_roles: list[str] = field(default_factory=list)
+    conditions: dict[str, Any] = field(default_factory=dict)
+    expires_at: float | None = None
 
 
 class ThreatDetector:
@@ -145,7 +145,7 @@ class ThreatDetector:
 
         logger.info("威胁检测器初始化完成")
 
-    def detect_threats(self, input_data: str, context: Optional[Dict[str, Any]] = None) -> List[ThreatDetection]:
+    def detect_threats(self, input_data: str, context: dict[str, Any] | None = None) -> list[ThreatDetection]:
         """检测威胁"""
         threats = []
 
@@ -193,10 +193,10 @@ class AccessController:
     """访问控制器"""
 
     def __init__(self):
-        self.rules: List[AccessControlRule] = []
-        self.user_permissions: Dict[str, List[AccessLevel]] = {}
-        self.role_permissions: Dict[str, List[AccessLevel]] = {}
-        self.session_permissions: Dict[str, List[AccessLevel]] = {}
+        self.rules: list[AccessControlRule] = []
+        self.user_permissions: dict[str, list[AccessLevel]] = {}
+        self.role_permissions: dict[str, list[AccessLevel]] = {}
+        self.session_permissions: dict[str, list[AccessLevel]] = {}
         self.lock = __import__('threading').RLock()
 
         logger.info("访问控制器初始化完成")
@@ -259,7 +259,7 @@ class AccessController:
 
             return False
 
-    def _has_access_level(self, permissions: List[AccessLevel], required: AccessLevel) -> bool:
+    def _has_access_level(self, permissions: list[AccessLevel], required: AccessLevel) -> bool:
         """检查是否有足够的访问级别"""
         level_hierarchy = {
             AccessLevel.READ: 1,
@@ -275,7 +275,7 @@ class AccessController:
 
         return False
 
-    def _get_user_roles(self, user_id: str) -> List[str]:
+    def _get_user_roles(self, _user_id: str) -> list[str]:
         """获取用户角色"""
         # 这里应该从用户管理系统获取角色
         # 目前返回空列表
@@ -285,7 +285,7 @@ class AccessController:
 class DataEncryptor:
     """数据加密器"""
 
-    def __init__(self, secret_key: Optional[str] = None):
+    def __init__(self, secret_key: str | None = None):
         self.secret_key = secret_key or self._generate_secret_key()
         logger.info("数据加密器初始化完成")
 
@@ -336,7 +336,7 @@ class DataEncryptor:
             logger.error(f"数据解密失败: {e}")
             raise
 
-    def hash_password(self, password: str, salt: Optional[str] = None) -> str:
+    def hash_password(self, password: str, salt: str | None = None) -> str:
         """哈希密码"""
         if salt is None:
             salt = secrets.token_hex(16)
@@ -360,9 +360,9 @@ class SecurityAuditor:
     """安全审计器"""
 
     def __init__(self):
-        self.security_events: List[SecurityEvent] = []
-        self.threat_detections: List[ThreatDetection] = []
-        self.audit_log: List[Dict[str, Any]] = []
+        self.security_events: list[SecurityEvent] = []
+        self.threat_detections: list[ThreatDetection] = []
+        self.audit_log: list[dict[str, Any]] = []
         self.lock = __import__('threading').RLock()
 
         logger.info("安全审计器初始化完成")
@@ -407,7 +407,7 @@ class SecurityAuditor:
 
         logger.info(f"审计事件: {event_type} - {description}")
 
-    def get_security_summary(self) -> Dict[str, Any]:
+    def get_security_summary(self) -> dict[str, Any]:
         """获取安全摘要"""
         with self.lock:
             return {
@@ -442,12 +442,12 @@ class EnhancedSecurityManager:
         }
 
         # 失败尝试记录
-        self.failed_attempts: Dict[str, List[float]] = {}
-        self.locked_accounts: Dict[str, float] = {}
+        self.failed_attempts: dict[str, list[float]] = {}
+        self.locked_accounts: dict[str, float] = {}
 
         logger.info("增强安全管理器初始化完成")
 
-    def validate_input(self, input_data: str, context: Optional[Dict[str, Any]] = None) -> bool:
+    def validate_input(self, input_data: str, context: dict[str, Any] | None = None) -> bool:
         """验证输入"""
         if not self.security_config["enable_threat_detection"]:
             return True
@@ -548,7 +548,7 @@ class EnhancedSecurityManager:
 
         return is_valid
 
-    def _verify_user_credentials(self, user_id: str, password: str) -> bool:
+    def _verify_user_credentials(self, _user_id: str, password: str) -> bool:
         """验证用户凭据"""
         # 这里应该从用户数据库验证
         # 目前使用简单的模拟

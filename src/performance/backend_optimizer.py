@@ -91,7 +91,7 @@ class QueryOptimizer:
 
         return result, metrics
 
-    def _execute_actual_query(self, query: str, params: tuple) -> Any:
+    def _execute_actual_query(self, _query: str, _params: tuple) -> Any:
         """实际执行查询（需要实现）"""
         # 这里应该连接到实际的数据库
         # 示例返回空列表

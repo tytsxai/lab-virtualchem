@@ -2,7 +2,7 @@
 
 import logging
 import re
-from typing import Any, Optional
+from typing import Any
 
 from simpleeval import EvalWithCompoundTypes, simple_eval
 
@@ -40,7 +40,7 @@ class RuleValidator:
         r"subprocess",  # subprocess模块
     ]
 
-    def __init__(self, hazard_checker: Optional[Any] = None) -> None:
+    def __init__(self, hazard_checker: Any | None = None) -> None:
         """初始化验证器
 
         Args:

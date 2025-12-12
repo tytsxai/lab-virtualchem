@@ -534,7 +534,7 @@ class ExperimentCommandHandler(ICommandHandler):
             logger.error(f"处理实验命令失败: {e}")
             return CommandResult(command_id=command.command_id, status=CommandStatus.FAILED, error=str(e))
 
-    def _handle_create_experiment(self, command: CreateExperimentCommand) -> Any:
+    def _handle_create_experiment(self, _command: CreateExperimentCommand) -> Any:
         """处理创建实验命令"""
         # 实现创建实验逻辑
         return {"experiment_id": "exp_001", "status": "created"}
@@ -578,7 +578,7 @@ class ExperimentQueryHandler(IQueryHandler):
         # 实现获取实验逻辑
         return {"id": experiment_id, "title": "测试实验"}
 
-    def _handle_list_experiments(self, query: ListExperimentsQuery) -> Any:
+    def _handle_list_experiments(self, _query: ListExperimentsQuery) -> Any:
         """处理列出实验查询"""
         # 实现列出实验逻辑
         return [{"id": "exp_001", "title": "实验1"}, {"id": "exp_002", "title": "实验2"}]
