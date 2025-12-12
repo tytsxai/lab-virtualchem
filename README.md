@@ -194,7 +194,7 @@ pre-commit install
 pytest
 ```
 
-> Note: CI 与默认测试命令会生成覆盖率报告并执行 30% 覆盖率门禁（产出 `coverage.xml` 与 `htmlcov/`）。如需快速运行跳过覆盖率，可执行 `pytest --no-cov` 或 `make test-fast`。
+> Note: CI 与默认测试命令会生成覆盖率报告并执行 18% 覆盖率门禁（后续目标逐步提升到 30%，产出 `coverage.xml` 与 `htmlcov/`）。如需快速运行跳过覆盖率，可执行 `pytest --no-cov` 或 `make test-fast`。
 > 💡 提示：`tests/ui/test_refactored_main_window.py` 依赖真实的 Qt 图形界面环境。在无显示服务器（例如 CI 或纯终端）中，它会自动跳过。若要完整验证 UI 行为，请在本地具备 GUI 的环境执行 `pytest tests/ui/test_refactored_main_window.py`。
 
 4. **代码格式化**
