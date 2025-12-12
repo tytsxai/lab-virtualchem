@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import json
 from datetime import timedelta
 
-import json
 import pytest
 
 from src.utils.recovery import AutoSave, RecoveryManager

@@ -1,17 +1,18 @@
 """内存管理器测试"""
 
-import pytest
-import time
 import gc
-from unittest.mock import Mock, patch
+import time
 from datetime import datetime
+from unittest.mock import patch
+
+import pytest
 
 from src.core.memory_manager import (
     MemoryManager,
     MemoryMetrics,
     MemoryThreshold,
-    get_memory_manager,
     close_memory_manager,
+    get_memory_manager,
 )
 
 

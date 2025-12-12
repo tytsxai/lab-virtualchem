@@ -6,8 +6,8 @@ Rule Validator 单元测试
 import pytest
 
 from src.core.rule_validator import EvaluationError, RuleValidator
-from src.models.experiment import CheckPoint, CheckType, InputSpec, Step
 from src.core.validation import ValidationError
+from src.models.experiment import CheckPoint, CheckType, InputSpec, Step
 
 
 class TestRuleValidator:

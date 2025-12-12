@@ -5,7 +5,6 @@
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -13,7 +12,6 @@ from src.utils.logger import (
     EnhancedLogger,
     LogBuffer,
     LogEntry,
-    LogLevel,
     StructuredFormatter,
     clear_log_buffer,
     export_logs,
@@ -320,7 +318,7 @@ class TestGlobalFunctions:
             assert success is True
 
             # 验证导出的文件
-            with open(temp_file, 'r', encoding='utf-8') as f:
+            with open(temp_file, encoding='utf-8') as f:
                 lines = f.readlines()
                 # 应该包含初始条目 + 新添加的条目
                 assert len(lines) == initial_count + 1

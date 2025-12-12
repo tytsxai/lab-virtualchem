@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import os
 from types import SimpleNamespace
 
-import os
 import pytest
 
 from src.utils import health_check

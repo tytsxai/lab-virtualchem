@@ -14,7 +14,8 @@ from src.core.security import (
     Role,
     SecureToken,
 )
-from src.security.data_protection import DataEncryption as ProtectedDataEncryption, EncryptionAlgorithm
+from src.security.data_protection import DataEncryption as ProtectedDataEncryption
+from src.security.data_protection import EncryptionAlgorithm
 
 
 class TestInputValidator(unittest.TestCase):

@@ -6,15 +6,14 @@ import json
 from pathlib import Path
 from typing import Any
 
-import pytest
-
 from src.contracts.report_service import (
     ExportFormat,
     ReportRequest,
     ReportServiceConfig,
     ReportType,
 )
-from src.interfaces.report import IReportExporter, IReportGenerator, ReportFormat as GeneratorReportFormat
+from src.interfaces.report import IReportExporter, IReportGenerator
+from src.interfaces.report import ReportFormat as GeneratorReportFormat
 from src.models.user_record import ExperimentScore, UserRecord
 from src.services.report_service_impl import ReportServiceImpl
 

@@ -2,20 +2,21 @@
 公共错误处理模块测试
 """
 
-import pytest
 import time
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
+
+import pytest
 
 from src.core.common_error_handlers import (
     CommonErrorHandlers,
-    safe_execute_with_default,
-    retry_on_failure,
-    handle_file_operation,
-    handle_database_operation,
-    handle_network_operation,
     auto_recover,
-    retry,
     fallback,
+    handle_database_operation,
+    handle_file_operation,
+    handle_network_operation,
+    retry,
+    retry_on_failure,
+    safe_execute_with_default,
 )
 from src.core.common_exceptions import ErrorCategory, ErrorSeverity, VirtualChemLabError
 

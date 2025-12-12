@@ -2,32 +2,35 @@
 统一日志记录接口测试
 """
 
-import pytest
-import logging
 from datetime import datetime
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from src.core.unified_logging import (
-    UnifiedLogger,
-    LogLevel,
     LogContext,
-    get_unified_logger,
-    log_operation,
-    log_performance,
-    log_user_action,
-    debug,
-    info,
-    warning,
-    error,
+    LogLevel,
+    UnifiedLogger,
     critical,
-    log_operation_start,
+    debug,
+    error,
+    info,
+    log_context,
+    log_operation,
     log_operation_end,
     log_operation_error,
-    log_performance as log_perf,
-    log_user_action as log_user,
-    log_system_event,
+    log_operation_start,
+    log_performance,
     log_security_event,
-    log_context,
+    log_system_event,
+    log_user_action,
+    warning,
+)
+from src.core.unified_logging import (
+    log_performance as log_perf,
+)
+from src.core.unified_logging import (
+    log_user_action as log_user,
 )
 
 

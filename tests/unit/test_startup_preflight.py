@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import os
-
 import pytest
 
 from src.core.startup_preflight import ensure_secure_startup

@@ -2,11 +2,15 @@
 优化的缓存管理器测试
 """
 
-import pytest
 import time
-from datetime import datetime, timedelta
 
-from src.core.optimized_cache import OptimizedLRUCache, OptimizedLFUCache, create_optimized_cache
+import pytest
+
+from src.core.optimized_cache import (
+    OptimizedLFUCache,
+    OptimizedLRUCache,
+    create_optimized_cache,
+)
 
 
 class TestOptimizedLRUCache:

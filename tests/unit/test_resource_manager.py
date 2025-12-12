@@ -1,17 +1,17 @@
 """资源管理器测试"""
 
-import pytest
 import threading
 import time
-from unittest.mock import Mock, patch
-from typing import Any, Callable
+from unittest.mock import Mock
+
+import pytest
 
 from src.core.resource_manager import (
+    _resource_lock,
+    _resources,
+    cleanup_resources,
     register_resource,
     unregister_resource,
-    cleanup_resources,
-    _resources,
-    _resource_lock,
 )
 
 
@@ -284,7 +284,6 @@ class TestResourceManager:
 
     def test_performance(self):
         """测试性能"""
-        import time
 
         # 测试注册性能
         start_time = time.time()

@@ -1,12 +1,11 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 智能懒加载系统测试
 """
 
 import sys
-from pathlib import Path
 import time
+from pathlib import Path
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
@@ -136,11 +135,6 @@ def benchmark_loading():
 
     # 测试正常导入
     start_time = time.time()
-    import json as json1
-    import time as time1
-    import os as os1
-    import sys as sys1
-    import pathlib as pathlib1
     normal_time = time.time() - start_time
     print(f"  正常导入5个模块: {normal_time*1000:.2f}ms")
 
@@ -165,7 +159,7 @@ def benchmark_loading():
 
     # 统计
     stats = loader.get_stats()
-    print(f"\n  统计信息:")
+    print("\n  统计信息:")
     print(f"    已注册: {stats['total_registered']}")
     print(f"    已加载: {stats['total_loaded']}")
     print(f"    平均加载时间: {stats['avg_load_time_ms']:.2f}ms")

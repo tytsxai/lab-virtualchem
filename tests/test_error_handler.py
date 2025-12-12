@@ -3,10 +3,9 @@
 """
 
 import json
-import os
 import time
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -21,12 +20,6 @@ from src.core.error_handler import (
     handle_error_func,
     safe_execute,
     safe_execute_with_default,
-)
-from src.core.error_system.exceptions import (
-    BaseAppException,
-    ConfigurationError,
-    DataValidationError,
-    ExperimentError,
 )
 
 

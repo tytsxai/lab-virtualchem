@@ -1,19 +1,19 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 PyMunk适配器测试
 验证物理引擎适配器的所有功能
 """
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.core.physics import PyMunkPhysicsEngine, BodyType
+from src.core.physics import BodyType, PyMunkPhysicsEngine
 
 
 def test_engine_creation():
@@ -77,7 +77,7 @@ def test_create_box():
     assert body.mass == 2.0
     assert engine.body_count == 1
 
-    print(f"✓ 矩形刚体创建成功")
+    print("✓ 矩形刚体创建成功")
 
 
 def test_create_segment():
@@ -94,7 +94,7 @@ def test_create_segment():
     assert body is not None
     assert len(body.shapes) == 1
 
-    print(f"✓ 线段创建成功")
+    print("✓ 线段创建成功")
 
 
 def test_create_polygon():
@@ -112,7 +112,7 @@ def test_create_polygon():
     assert body is not None
     assert engine.body_count == 1
 
-    print(f"✓ 多边形刚体创建成功")
+    print("✓ 多边形刚体创建成功")
 
 
 def test_body_position():
@@ -127,7 +127,7 @@ def test_body_position():
     body.position = (100, 100)
     assert body.position == (100, 100)
 
-    print(f"✓ 位置控制正常")
+    print("✓ 位置控制正常")
 
 
 def test_body_velocity():
@@ -142,7 +142,7 @@ def test_body_velocity():
     body.velocity = (100, 50)
     assert body.velocity == (100, 50)
 
-    print(f"✓ 速度控制正常")
+    print("✓ 速度控制正常")
 
 
 def test_simulation():
@@ -204,7 +204,7 @@ def test_collision():
             break
 
     assert collision_detected or ball.velocity[1] > initial_velocity
-    print(f"✓ 碰撞检测正常")
+    print("✓ 碰撞检测正常")
 
 
 def test_spring_constraint():
@@ -256,7 +256,7 @@ def test_remove_body():
     engine.remove_body(body2)
     assert engine.body_count == 0
 
-    print(f"✓ 刚体移除功能正常")
+    print("✓ 刚体移除功能正常")
 
 
 def test_ray_cast():
@@ -314,7 +314,7 @@ def test_clear():
     assert engine.body_count == 0
     assert engine.shape_count == 0
 
-    print(f"✓ 清空功能正常")
+    print("✓ 清空功能正常")
 
 
 def test_apply_force():
@@ -340,7 +340,7 @@ def test_apply_force():
 
     # 球应该向上移动
     assert ball.position[1] > 100
-    print(f"✓ 施加力功能正常")
+    print("✓ 施加力功能正常")
 
 
 def test_performance():

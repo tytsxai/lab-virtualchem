@@ -6,6 +6,7 @@ import json
 
 import pytest
 
+from config.schemas.app_config import AppConfiguration as SchemaAppConfiguration
 from src import __version__ as APP_VERSION
 from src.core.config_loader import (
     AppConfig,
@@ -19,7 +20,6 @@ from src.core.config_loader import (
     SecurityConfig,
     get_config,
 )
-from config.schemas.app_config import AppConfiguration as SchemaAppConfiguration
 
 
 class TestAppConfig:

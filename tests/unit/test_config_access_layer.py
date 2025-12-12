@@ -2,28 +2,29 @@
 配置访问抽象层测试
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from src import __version__ as APP_VERSION
 from src.core.config_access_layer import (
     ConfigAccessLayer,
+    config,
+    config_get,
+    config_get_bool,
+    config_get_dict,
+    config_get_float,
+    config_get_int,
+    config_get_list,
+    config_get_path,
+    config_get_section,
+    config_get_with_validation,
+    config_has,
+    config_set,
+    config_validate_required,
     get_config_access,
     reload_config_access,
-    config_get,
-    config_set,
-    config_has,
-    config_get_section,
-    config_get_path,
-    config_get_int,
-    config_get_float,
-    config_get_bool,
-    config_get_list,
-    config_get_dict,
-    config_validate_required,
-    config_get_with_validation,
-    config,
 )
 
 

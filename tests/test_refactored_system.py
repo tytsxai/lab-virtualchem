@@ -3,58 +3,54 @@
 测试所有重构后的核心组件和功能
 """
 
-import pytest
 import time
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
+
+import pytest
 
 from src import __version__ as APP_VERSION
 from src.core.common_exceptions import (
-    VirtualChemLabError,
     ConfigurationError,
-    ValidationError,
-    NetworkError,
-    UIError,
-    PerformanceError,
     ErrorCategory,
     ErrorSeverity,
+    NetworkError,
+    PerformanceError,
+    UIError,
+    ValidationError,
+    VirtualChemLabError,
 )
-from src.core.error_handler import ErrorHandler, get_error_handler
-from src.core.enhanced_event_bus import (
-    EnhancedEventBus,
-    Event,
-    EventPriority,
-    get_event_bus,
-    publish_event,
-    subscribe_event,
+from src.core.config_migration import (
+    ConfigMigrationManager,
 )
 from src.core.enhanced_error_recovery import (
     EnhancedErrorRecovery,
     RecoveryRule,
     RecoveryStrategy,
-    get_error_recovery,
+)
+from src.core.enhanced_event_bus import (
+    EnhancedEventBus,
+    Event,
+    EventPriority,
+    get_event_bus,
+)
+from src.core.error_handler import ErrorHandler, get_error_handler
+from src.core.performance_alerting import (
+    AlertRule,
+    AlertSeverity,
+    PerformanceAlerting,
 )
 from src.core.unified_config_manager import (
     UnifiedConfigManager,
-    get_config_manager,
     get_config,
+    get_config_manager,
+    has_config,
     set_config,
 )
 from src.core.unified_performance_monitor import (
-    UnifiedPerformanceMonitor,
-    PerformanceMetric,
     MetricType,
+    PerformanceMetric,
+    UnifiedPerformanceMonitor,
     get_performance_monitor,
-)
-from src.core.performance_alerting import (
-    PerformanceAlerting,
-    AlertRule,
-    AlertSeverity,
-    get_performance_alerting,
-)
-from src.core.config_migration import (
-    ConfigMigrationManager,
-    get_config_migration_manager,
-    migrate_config,
 )
 
 

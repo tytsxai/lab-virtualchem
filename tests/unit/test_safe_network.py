@@ -5,7 +5,11 @@ from types import SimpleNamespace
 import pytest
 
 from src.utils import enhanced_error_handler, safe_network
-from src.utils.safe_network import NetworkHealthMonitor, RetryStrategy, SafeNetworkClient
+from src.utils.safe_network import (
+    NetworkHealthMonitor,
+    RetryStrategy,
+    SafeNetworkClient,
+)
 
 
 class DummyResponse:
@@ -145,8 +149,7 @@ def test_download_file_streams_chunks(tmp_path, monkeypatch):
             super().__init__(headers={"content-length": str(total_size)})
 
         def iter_content(self, chunk_size=8192):
-            for chunk in chunks:
-                yield chunk
+            yield from chunks
 
     monkeypatch.setattr(safe_network.requests, "get", lambda *_args, **_kwargs: StreamResponse())
 

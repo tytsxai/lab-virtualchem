@@ -1,13 +1,12 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Numba性能对比测试
 对比原始版本和Numba加速版本的性能差异
 """
 
 import sys
-from pathlib import Path
 import time
+from pathlib import Path
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
@@ -26,7 +25,7 @@ def benchmark_titration_curve(num_points: int = 1000, iterations: int = 100):
         "base_M": 0.1
     }
 
-    print(f"\n=== 滴定曲线生成性能测试 ===")
+    print("\n=== 滴定曲线生成性能测试 ===")
     print(f"数据点数: {num_points}")
     print(f"迭代次数: {iterations}")
     print()
@@ -90,7 +89,7 @@ def benchmark_temperature_curve(num_points: int = 1000, iterations: int = 100):
         "total_time_s": 600
     }
 
-    print(f"\n=== 温度曲线生成性能测试 ===")
+    print("\n=== 温度曲线生成性能测试 ===")
     print(f"数据点数: {num_points}")
     print(f"迭代次数: {iterations}")
     print()
@@ -143,7 +142,7 @@ def test_correctness():
     """验证Numba版本和原始版本的结果一致性"""
     import numpy as np
 
-    print(f"\n=== 正确性验证测试 ===")
+    print("\n=== 正确性验证测试 ===")
 
     params = {
         "acid_type": "strong",

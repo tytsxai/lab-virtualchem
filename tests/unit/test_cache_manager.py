@@ -1,16 +1,17 @@
 """缓存管理器测试"""
 
-import pytest
 import time
-from unittest.mock import Mock, patch
 from datetime import datetime, timedelta
+from unittest.mock import Mock, patch
+
+import pytest
 
 from src.core.cache_manager import (
+    CacheEntry,
     CacheManager,
     CacheStrategy,
-    CacheEntry,
-    get_cache_manager,
     close_cache_manager,
+    get_cache_manager,
 )
 
 

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import sqlite3
-import pytest
 
 from src.backend.db_optimizer import DatabaseOptimizer, _is_safe_identifier
 

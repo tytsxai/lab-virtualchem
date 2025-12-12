@@ -1,22 +1,21 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 数据库管理器测试
 测试SQLAlchemy数据访问层的功能和性能
 """
 
 import sys
-from pathlib import Path
-import time
 import tempfile
+import time
 from datetime import datetime
+from pathlib import Path
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+from src.models.user_record import ExperimentScore, UserRecord
 from src.storage.database_manager import DatabaseManager
-from src.models.user_record import UserRecord, ExperimentScore, StepRecord, Mistake
 
 
 def test_database_creation():
@@ -199,7 +198,7 @@ def test_config_operations():
             assert db.get_config('string_key') == 'string_value'
             assert db.get_config('int_key') == 42
             assert db.get_config('float_key') == 3.14
-            assert db.get_config('bool_key') == True
+            assert db.get_config('bool_key') is True
             assert db.get_config('json_key') == {'nested': 'value'}
 
             print("[OK] 配置类型转换")
@@ -320,8 +319,8 @@ def benchmark_performance():
             assert count/write_time > 100, f"写入性能不足: {count/write_time:.0f} records/s"
             assert len(loaded_records)/read_time > 1000, f"读取性能不足: {len(loaded_records)/read_time:.0f} records/s"
 
-            print(f"\n[EXCELLENT] 数据库性能测试通过！")
-            print(f"  预期性能提升: 相比JSON约10-50倍")
+            print("\n[EXCELLENT] 数据库性能测试通过！")
+            print("  预期性能提升: 相比JSON约10-50倍")
 
         finally:
             db.close()

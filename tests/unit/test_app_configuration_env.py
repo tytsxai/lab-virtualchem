@@ -2,7 +2,7 @@
 
 import pytest
 
-from config.schemas.app_config import AppConfiguration, AppConfig, DeveloperConfig
+from config.schemas.app_config import AppConfig, AppConfiguration, DeveloperConfig
 
 
 def test_production_requires_env_secrets(monkeypatch: pytest.MonkeyPatch) -> None:

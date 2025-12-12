@@ -1,17 +1,17 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 综合性能测试套件
 测试所有关键组件的性能指标
 """
 
+import os
 import sys
+import time
+from pathlib import Path
+
+import psutil
 
 from src import __version__ as APP_VERSION
-from pathlib import Path
-import time
-import psutil
-import os
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
@@ -104,7 +104,7 @@ class PerformanceTestSuite:
             'read_ops_per_sec': read_ops,
             'hit_rate': stats['hit_rate']
         }
-        print(f"\n[PASS] 缓存性能测试通过")
+        print("\n[PASS] 缓存性能测试通过")
 
     def test_event_bus_performance(self):
         """测试事件总线性能"""
@@ -112,7 +112,7 @@ class PerformanceTestSuite:
         print("3. 事件总线性能测试")
         print("=" * 70)
 
-        from src.core.optimized_event_bus import OptimizedEventBus, Event
+        from src.core.optimized_event_bus import Event, OptimizedEventBus
 
         bus = OptimizedEventBus()
 
@@ -139,7 +139,7 @@ class PerformanceTestSuite:
             'throughput': throughput,
             'avg_match_time_ms': stats['avg_match_time_ms']
         }
-        print(f"\n[PASS] 事件总线性能测试通过")
+        print("\n[PASS] 事件总线性能测试通过")
 
     def test_database_performance(self):
         """测试数据库性能"""
@@ -148,9 +148,10 @@ class PerformanceTestSuite:
         print("=" * 70)
 
         import tempfile
-        from src.storage.database_manager import DatabaseManager
-        from src.models.user_record import UserRecord, ExperimentScore
         from datetime import datetime
+
+        from src.models.user_record import ExperimentScore, UserRecord
+        from src.storage.database_manager import DatabaseManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = Path(tmpdir) / 'test.db'
@@ -197,7 +198,7 @@ class PerformanceTestSuite:
                     'write_rate': write_rate,
                     'read_rate': read_rate
                 }
-                print(f"\n[PASS] 数据库性能测试通过")
+                print("\n[PASS] 数据库性能测试通过")
 
             finally:
                 db.close()
@@ -224,9 +225,9 @@ class PerformanceTestSuite:
         }
 
         if status == 'PASS':
-            print(f"\n[PASS] 内存占用符合目标")
+            print("\n[PASS] 内存占用符合目标")
         else:
-            print(f"\n[WARNING] 内存占用略高，但仍在可接受范围")
+            print("\n[WARNING] 内存占用略高，但仍在可接受范围")
 
     def generate_report(self):
         """生成性能报告"""

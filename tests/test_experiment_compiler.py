@@ -9,7 +9,10 @@ import pytest
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.ai.experiment_compiler import ExperimentCompiler, compile_experiment  # noqa: E402
+from src.ai.experiment_compiler import (  # noqa: E402
+    ExperimentCompiler,
+    compile_experiment,
+)
 
 
 def test_compile_from_yaml():

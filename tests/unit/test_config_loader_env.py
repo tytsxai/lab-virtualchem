@@ -1,6 +1,5 @@
 """Config loader environment handling tests."""
 
-import os
 from typing import Any
 
 import pytest
@@ -241,5 +240,5 @@ def test_load_directory_creation_failure_raises(monkeypatch: pytest.MonkeyPatch,
     monkeypatch.setattr(Config, "_load_config_file", classmethod(_fake_load_config_file))
     monkeypatch.setattr(Config, "_merge_env_vars", classmethod(_identity_merge))
 
-    with pytest.raises(Exception):
+    with pytest.raises(OSError):
         Config.load(env="development")

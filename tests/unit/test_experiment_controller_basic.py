@@ -4,11 +4,13 @@ Minimal ExperimentController tests to ensure core flows work.
 
 from __future__ import annotations
 
-from types import SimpleNamespace
-
 import pytest
 
-from src.core.experiment_controller import ExperimentController, ExperimentMode, ExperimentState
+from src.core.experiment_controller import (
+    ExperimentController,
+    ExperimentMode,
+    ExperimentState,
+)
 from src.models.experiment import CheckPoint, CheckType, ExperimentTemplate, Step
 
 

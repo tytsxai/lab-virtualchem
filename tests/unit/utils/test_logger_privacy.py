@@ -4,9 +4,12 @@ import logging
 from io import StringIO
 from pathlib import Path
 
-import pytest
-
-from src.utils.logger import MASK_TEXT, SensitiveDataFilter, StructuredFormatter, setup_logger
+from src.utils.logger import (
+    MASK_TEXT,
+    SensitiveDataFilter,
+    StructuredFormatter,
+    setup_logger,
+)
 
 
 def _build_stream_logger(name: str, stream: StringIO, formatter: logging.Formatter) -> logging.Logger:

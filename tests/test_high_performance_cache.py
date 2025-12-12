@@ -1,21 +1,19 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 高性能缓存测试
 测试功能正确性和性能表现
 """
 
-import sys
-from pathlib import Path
-import time
 import random
-import string
+import sys
+import time
+from pathlib import Path
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.core.high_performance_cache import HighPerformanceLRUCache, create_high_performance_cache
+from src.core.high_performance_cache import HighPerformanceLRUCache
 
 
 def test_basic_operations():
@@ -35,14 +33,14 @@ def test_basic_operations():
     print("[OK] 默认值")
 
     # 删除
-    assert cache.delete('key1') == True
+    assert cache.delete('key1')
     assert cache.get('key1') is None
     print("[OK] 删除")
 
     # 存在性检查
     cache.set('key2', 'value2')
-    assert cache.exists('key2') == True
-    assert cache.exists('nonexistent') == False
+    assert cache.exists('key2')
+    assert not cache.exists('nonexistent')
     print("[OK] 存在性检查")
 
     # 清空
@@ -86,10 +84,10 @@ def test_lru_eviction():
 
     # 添加新键，应该驱逐key2（最旧的未访问）
     cache.set('key4', 'value4')
-    assert cache.exists('key1') == True
-    assert cache.exists('key2') == False  # 被驱逐
-    assert cache.exists('key3') == True
-    assert cache.exists('key4') == True
+    assert cache.exists('key1')
+    assert not cache.exists('key2')  # 被驱逐
+    assert cache.exists('key3')
+    assert cache.exists('key4')
     print("[OK] LRU驱逐策略")
 
 
@@ -222,7 +220,7 @@ def benchmark_performance():
 
     # 统计
     stats = cache.get_stats()
-    print(f"\n  缓存统计:")
+    print("\n  缓存统计:")
     print(f"    大小: {stats['current_size']}/{stats['max_size']}")
     print(f"    命中率: {stats['hit_rate']:.1f}%")
     print(f"    内存: {stats['memory_mb']:.2f}MB")

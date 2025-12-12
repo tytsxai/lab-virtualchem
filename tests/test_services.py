@@ -14,6 +14,7 @@ from src.contracts.experiment_service import (
     ExperimentStatus,
     StepSubmissionRequest,
 )
+from src.contracts.report_service import ReportType
 from src.contracts.storage_service import (
     QueryFilter,
     QueryOperator,
@@ -21,7 +22,6 @@ from src.contracts.storage_service import (
     SaveRequest,
     StorageServiceConfig,
 )
-from src.contracts.report_service import ReportType
 from src.models.experiment import ExperimentTemplate, Step
 from src.services import (
     ExperimentServiceImpl,

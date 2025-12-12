@@ -1,13 +1,12 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 PyMunk基础功能测试
 测试PyMunk物理引擎的基本功能是否正常工作
 """
 
-import pytest
+
 import pymunk
-import math
+import pytest
 
 
 def test_pymunk_import():
@@ -38,7 +37,7 @@ def test_create_static_body():
     space.add(static_shape)
 
     assert static_shape in space.shapes
-    print(f"✓ 静态刚体创建成功")
+    print("✓ 静态刚体创建成功")
 
 
 def test_create_dynamic_body():
@@ -141,7 +140,7 @@ def test_collision_detection():
 
     # 应该已经检测到碰撞（球反弹）
     assert collision_detected or ball.velocity.y > initial_velocity
-    print(f"✓ 碰撞检测正常，球已碰到地面")
+    print("✓ 碰撞检测正常，球已碰到地面")
 
 
 def test_constraint_system():
@@ -174,7 +173,7 @@ def test_constraint_system():
     space.add(joint)
 
     assert joint in space.constraints
-    print(f"✓ 约束系统正常工作")
+    print("✓ 约束系统正常工作")
 
 
 def test_performance():
@@ -272,7 +271,7 @@ def test_shape_types():
     space.add(poly_body, poly_shape)
 
     assert len(space.shapes) == 4
-    print(f"✓ 支持多种形状类型: 圆形、矩形、线段、多边形")
+    print("✓ 支持多种形状类型: 圆形、矩形、线段、多边形")
 
 
 if __name__ == '__main__':

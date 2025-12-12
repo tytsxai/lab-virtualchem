@@ -1,20 +1,20 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 优化的事件总线测试
 对比原始版本和Trie树优化版本的性能
 """
 
 import sys
-from pathlib import Path
 import time
+from pathlib import Path
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.core.event_bus import EventBus as OriginalEventBus, Event as OriginalEvent
-from src.core.optimized_event_bus import OptimizedEventBus, Event, EventPriority
+from src.core.event_bus import Event as OriginalEvent
+from src.core.event_bus import EventBus as OriginalEventBus
+from src.core.optimized_event_bus import Event, EventPriority, OptimizedEventBus
 
 
 def test_basic_functionality():
@@ -216,7 +216,7 @@ def benchmark_event_matching():
 
         # 获取详细统计
         stats = optimized_bus.get_stats()
-        print(f"\n  匹配统计:")
+        print("\n  匹配统计:")
         print(f"    平均匹配时间: {stats['avg_match_time_ms']:.4f}ms")
         print(f"    事件处理: {stats['events_processed']}")
 

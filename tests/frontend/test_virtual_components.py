@@ -4,7 +4,11 @@
 
 from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
-from src.frontend.virtual_list import InfiniteScrollList, VirtualListWidget, VirtualTreeWidget
+from src.frontend.virtual_list import (
+    InfiniteScrollList,
+    VirtualListWidget,
+    VirtualTreeWidget,
+)
 
 
 def _simple_renderer():
