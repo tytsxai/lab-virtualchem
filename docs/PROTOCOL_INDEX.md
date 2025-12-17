@@ -3,7 +3,7 @@
 > VirtualChemLab 通信协议完整文档导航
 
 **版本**: v2.0.0
-**最后更新**: 2025年10月6日
+**最后更新**: 2025年12月17日
 
 ---
 
@@ -16,10 +16,10 @@
    - 快速查找表
    - 代码片段
 
-2. **[协议演示](../examples/protocol_demo.py)**
-   - 可运行的示例代码
-   - 6个完整演示
-   - 最佳实践
+2. **[使用示例](./API_USAGE_EXAMPLES.md)**
+   - 可阅读的示例代码
+   - 常见调用模式
+   - 错误处理与最佳实践
 
 ### 深入学习 (30分钟)
 
@@ -39,12 +39,11 @@ docs/
 ├── API_EVENT_PROTOCOL.md              # 完整协议规范 (主文档)
 ├── API_PROTOCOL_QUICK_REFERENCE.md    # 快速参考卡
 ├── PROTOCOL_INDEX.md                  # 本文档 (索引)
-├── API_REFERENCE.md                   # API接口参考 (计划)
-├── EVENT_CATALOG.md                   # 事件目录 (计划)
-└── ERROR_CODES.md                     # 错误码完整列表 (计划)
-
-examples/
-└── protocol_demo.py                   # 协议演示代码
+├── API_REFERENCE.md                   # API接口参考
+├── API_USAGE_EXAMPLES.md              # API 使用示例
+├── EVENT_CATALOG.md                   # 事件目录
+├── ERROR_CODES.md                     # 错误码完整列表
+└── SECURITY_GUIDE.md                  # 安全指南
 ```
 
 ---
@@ -111,28 +110,12 @@ examples/
 
 ---
 
-### 3. 协议演示代码 💻
+### 3. 示例与联调入口 💻
 
-**文件**: [protocol_demo.py](../examples/protocol_demo.py)
+**推荐入口**:
 
-**演示内容**:
-1. REST API接口调用
-2. 事件总线使用
-3. 异步事件处理
-4. 错误处理
-5. 认证与授权
-6. 完整流程演示
-
-**运行方式**:
-```bash
-cd VirtualChemLab开发
-python examples/protocol_demo.py
-```
-
-**输出**:
-- 6个完整的演示场景
-- 详细的执行日志
-- 最佳实践示例
+1. `docs/API_USAGE_EXAMPLES.md`（可直接阅读）
+2. `examples/api_integration_example.py`（更接近可运行示例，需依赖已安装）
 
 ---
 
@@ -269,7 +252,7 @@ ws.onmessage = (event) => {
 **目标**: 了解基本概念，能够调用API和订阅事件
 
 1. ✅ 阅读 [快速参考卡](./API_PROTOCOL_QUICK_REFERENCE.md) (10分钟)
-2. ✅ 运行 [协议演示](../examples/protocol_demo.py) (5分钟)
+2. ✅ 浏览 [API 使用示例](./API_USAGE_EXAMPLES.md) (10分钟)
 3. ✅ 浏览 REST API章节 (15分钟)
 4. ✅ 浏览 事件总线章节 (15分钟)
 5. ✅ 练习基本API调用 (30分钟)
@@ -320,9 +303,9 @@ ws.onmessage = (event) => {
 | 文档 | 说明 |
 |------|------|
 | [架构文档](./ARCHITECTURE.md) | 系统架构设计 |
-| [快速开始](./QUICK_START_ARCHITECTURE.md) | 架构快速上手 |
+| [开发者指南](./DEVELOPER.md) | 开发流程与实践 |
 | [高级特性](./ADVANCED_FEATURES.md) | 高级功能文档 |
-| [开发指南](./DEVELOPER_QUICKSTART.md) | 开发者快速开始 |
+| [故障排除](./TROUBLESHOOTING.md) | 常见问题与排障 |
 
 ### 外部参考
 
@@ -337,9 +320,8 @@ ws.onmessage = (event) => {
 
 | 示例 | 文件 | 说明 |
 |------|------|------|
-| 协议演示 | [protocol_demo.py](../examples/protocol_demo.py) | 完整协议演示 |
-| 架构演示 | [architecture_demo.py](../examples/architecture_demo.py) | 架构组件演示 |
-| 高级特性 | [advanced_features_demo.py](../examples/advanced_features_demo.py) | 高级功能演示 |
+| API 集成 | [api_integration_example.py](../examples/api_integration_example.py) | API 调用示例 |
+| 系统示例 | [refactored_system_examples.py](../examples/refactored_system_examples.py) | 模块调用示例 |
 | API客户端 | [src/api/client.py](../src/api/client.py) | API客户端实现 |
 | API服务器 | [src/api/server.py](../src/api/server.py) | API服务器实现 |
 
@@ -366,7 +348,7 @@ ws.onmessage = (event) => {
 如果文档有不清楚的地方:
 
 1. 查看 [快速参考卡](./API_PROTOCOL_QUICK_REFERENCE.md)
-2. 运行 [协议演示代码](../examples/protocol_demo.py)
+2. 阅读 [API 使用示例](./API_USAGE_EXAMPLES.md)
 3. 查阅 [完整协议规范](./API_EVENT_PROTOCOL.md)
 4. 提交 Issue
 
@@ -425,7 +407,7 @@ ws.onmessage = (event) => {
 
 1. **新手**: 阅读 [快速参考卡](./API_PROTOCOL_QUICK_REFERENCE.md)
 2. **开发者**: 精读 [完整协议规范](./API_EVENT_PROTOCOL.md)
-3. **实践**: 运行 [协议演示代码](../examples/protocol_demo.py)
-4. **深入**: 研究相关架构文档
+3. **实践**: 运行 [API 集成示例](../examples/api_integration_example.py)
+4. **深入**: 研究相关架构与故障排除文档
 
 **祝学习愉快!** 🚀

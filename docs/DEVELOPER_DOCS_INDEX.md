@@ -1,13 +1,15 @@
 # VirtualChemLab 开发者文档索引
 
 **版本**: 2.0.0  
-**最后更新**: 2025-10-07
+**最后更新**: 2025-12-17
 
 ---
 
 ## 📚 文档导航
 
 本文档提供VirtualChemLab项目所有开发文档的索引和快速导航。
+
+> 文档维护状态与“当前事实来源”边界请参阅：`docs/DOCS_STATUS.md`。
 
 ---
 
@@ -141,7 +143,8 @@
 | 文档 | 描述 | 重要性 |
 |------|------|--------|
 | [DEPLOY.md](../DEPLOY.md) | 部署指南 | ⭐⭐⭐⭐⭐ |
-| [PRODUCTION_CHECKLIST.md](../PRODUCTION_CHECKLIST.md) | 生产环境检查清单 | ⭐⭐⭐⭐⭐ |
+| [QUICK_START_COMPLETION.md](../QUICK_START_COMPLETION.md) | 上线前复查清单 | ⭐⭐⭐⭐⭐ |
+| [TASK_CHECKLIST.md](../TASK_CHECKLIST.md) | 任务与交付验证清单 | ⭐⭐⭐⭐ |
 | [build.sh](../build.sh) | 构建脚本 | ⭐⭐⭐⭐ |
 
 ---
@@ -180,7 +183,6 @@
 | 文档 | 描述 | 重要性 |
 |------|------|--------|
 | [CHANGELOG.md](../CHANGELOG.md) | 完整更新日志 | ⭐⭐⭐⭐⭐ |
-| [CHANGELOG_20251007.md](../CHANGELOG_20251007.md) | 最新更新日志 | ⭐⭐⭐⭐ |
 
 ---
 
@@ -188,9 +190,9 @@
 
 | 文档 | 描述 | 重要性 |
 |------|------|--------|
-| [PENDING_TASKS.md](../PENDING_TASKS.md) | 待办任务列表 | ⭐⭐⭐⭐ |
-| [IMPROVEMENTS_CHECKLIST.md](../IMPROVEMENTS_CHECKLIST.md) | 改进检查清单 | ⭐⭐⭐ |
 | [IMPROVEMENTS_SUMMARY.md](../IMPROVEMENTS_SUMMARY.md) | 改进总结 | ⭐⭐⭐ |
+| [PROJECT_COMPLETION_ROADMAP.md](../PROJECT_COMPLETION_ROADMAP.md) | 里程碑与验收点 | ⭐⭐⭐ |
+| [CLEANUP_SUMMARY.md](../CLEANUP_SUMMARY.md) | 维护与清理记录 | ⭐⭐⭐ |
 
 ---
 
@@ -198,9 +200,7 @@
 
 历史文档和旧版本文档存放在 `archive/` 目录：
 
-- **历史报告**: 107个Markdown文档
-- **旧版文档**: 31个文档
-- **项目管理**: 12个文档
+- 主要用于保存旧版指南与历史报告（数量随清理会变化）
 
 详见 [archive/README.md](../archive/README.md)
 
@@ -255,9 +255,10 @@
 
 **推荐文档**:
 1. [DEPLOY.md](../DEPLOY.md)
-2. [PRODUCTION_CHECKLIST.md](../PRODUCTION_CHECKLIST.md)
-3. [MONITORING_GUIDE.md](MONITORING_GUIDE.md)
-4. [DEVICE_MANAGEMENT_GUIDE.md](DEVICE_MANAGEMENT_GUIDE.md)
+2. [QUICK_START_COMPLETION.md](../QUICK_START_COMPLETION.md)
+3. [TASK_CHECKLIST.md](../TASK_CHECKLIST.md)
+4. [MONITORING_GUIDE.md](MONITORING_GUIDE.md)
+5. [DEVICE_MANAGEMENT_GUIDE.md](DEVICE_MANAGEMENT_GUIDE.md)
 
 ---
 
@@ -385,5 +386,3 @@
 ---
 
 💡 **提示**: 使用 Ctrl+F 快速查找文档
-
-

@@ -435,7 +435,7 @@ BREAKING CHANGE: API endpoint changed from /v1 to /v2"
 
 ### 项目文档
 - [README](README.md)
-- [快速上手](QUICKSTART.md)
+- [快速上手](QUICK_START.md)
 - [架构设计](docs/architecture.md)
 
 ### 外部资源

@@ -1,4 +1,5 @@
 .PHONY: help install dev-install test test-fast lint lint-fix format type-check type-check-strict clean run build all-checks all-checks-strict ci sync-version bump-version
+.PHONY: docs-check
 
 PYTHON ?= $(shell \
 	if [ -x .venv312/bin/python ]; then echo .venv312/bin/python; \
@@ -75,3 +76,6 @@ sync-version:  ## 将 src/__init__.py 中的版本同步到配置/构建文件
 bump-version:  ## 设置新的 VERSION=MAJOR.MINOR.PATCH 并同步
 	@if [ -z "$(VERSION)" ]; then echo "请提供 VERSION=MAJOR.MINOR.PATCH"; exit 1; fi
 	$(PYTHON) tools/bump_version.py --set $(VERSION)
+
+docs-check:  ## 检查入口文档的本地链接是否失效
+	$(PYTHON) tools/check_docs_links.py

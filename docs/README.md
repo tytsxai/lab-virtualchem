@@ -10,6 +10,7 @@
 - [API文档](#api文档) — REST API 概览与示例
 - [部署指南](#部署指南) — Docker/K8s/传统部署与配置要点
 - [故障排除](#故障排除) — 常见问题、日志分析与支持渠道
+- [文档维护状态](DOCS_STATUS.md) — 哪些文档是当前事实来源
 
 ## 快速开始
 
@@ -18,7 +19,7 @@
 ### 系统要求
 
 - Python 3.10+（推荐 3.11）
-- Windows 10/11, macOS 10.14+, 或 Linux
+- Windows 10/11, macOS 10.15+, 或 Linux
 - 至少 4GB RAM
 - 1GB 可用磁盘空间
 
@@ -438,52 +439,23 @@ kubectl get services
 
 如果您遇到问题，可以通过以下方式获取帮助：
 
-1. 查看[FAQ](FAQ.md)
+1. 查看[FAQ](FAQ.md) 或 [故障排除指南](TROUBLESHOOTING.md)
 2. 提交[Issue](https://github.com/tytsxai/VirtualChemLab/issues)
 3. 联系技术支持: <support@virtualchemlab.com>
 
 ## 更新日志
 
-### v2.0.0 (2024-01-01)
+更新日志以根目录 `CHANGELOG.md` 为准：
 
-#### 新功能
-
-- 全新的用户界面
-- 支持异步实验处理
-- 集成缓存系统
-- 事件驱动架构
-- CQRS模式支持
-- 微服务架构
-
-#### 改进
-
-- 性能优化
-- 安全性增强
-- 测试覆盖提升
-- 文档完善
-
-#### 修复
-
-- 修复实验数据丢失问题
-- 修复用户权限验证问题
-- 修复数据库连接问题
-
-### v1.0.0 (2023-01-01)
-
-#### 初始版本
-
-- 基础实验功能
-- 用户管理
-- 简单的实验模板
-- 基础的数据记录
+- `CHANGELOG.md`
 
 ## 许可证
 
-本项目采用 MIT 许可证。详情请参阅 [LICENSE](LICENSE) 文件。
+本项目采用 MIT 许可证。详情请参阅 [LICENSE](../LICENSE) 文件。
 
 ## 贡献
 
-我们欢迎社区贡献！请参阅 [CONTRIBUTING.md](CONTRIBUTING.md) 了解如何参与项目开发。
+我们欢迎社区贡献！请参阅 [CONTRIBUTING.md](../CONTRIBUTING.md) 了解如何参与项目开发。
 
 ## 致谢
 
