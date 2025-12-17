@@ -1,0 +1,5 @@
+[run]
+# Store coverage data under temp/ so stale/corrupted .coverage files in the repo
+# root won't break pytest-cov runs.
+data_file = temp/.coverage
+

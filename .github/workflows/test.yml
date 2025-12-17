@@ -86,6 +86,7 @@ jobs:
           htmlcov/
           coverage.xml
           .coverage
+          temp/.coverage
         if-no-files-found: warn
 
   lint:
