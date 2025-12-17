@@ -252,6 +252,14 @@ def main() -> int:
         logger.info("VirtualChemLab %s 启动", DISPLAY_VERSION)
         logger.info("=" * 60)
 
+        # 加载配置并进行启动前安全校验（生产环境会 fail-fast）
+        splash.set_progress(15, "正在加载配置...")
+        from src.core.config_loader import get_config
+        from src.core.startup_preflight import ensure_secure_startup
+
+        config = get_config()
+        ensure_secure_startup(config=config)
+
         # 执行启动检查
         splash.set_progress(20, "正在执行系统检查...")
         try:
@@ -267,6 +275,10 @@ def main() -> int:
             logger.info(format_check_results(results))
 
             if not all_passed:
+                if config.app.environment == "production":
+                    logger.error("生产环境启动检查未通过，已终止启动")
+                    print("\n生产环境启动检查未通过，已终止启动。请查看日志文件: logs/app.log\n")
+                    return 1
                 logger.warning("部分系统检查未通过，但将继续启动")
                 print("\n部分系统检查未通过，某些功能可能受限")
                 print("详情请查看日志文件: logs/app.log\n")
@@ -277,10 +289,8 @@ def main() -> int:
 
         # 配置DI容器
         splash.set_progress(30, "正在配置服务容器...")
-        from src.core.config_loader import get_config
         from src.core.service_registration import configure_container
 
-        config = get_config()
         container = configure_container(config=config)
         logger.info(f"DI容器已配置: {len(container.get_all_services())} 个服务")
 

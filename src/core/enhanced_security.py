@@ -5,7 +5,9 @@
 """
 
 import hashlib
+import hmac
 import logging
+import os
 import secrets
 import time
 from dataclasses import dataclass, field
@@ -13,6 +15,12 @@ from enum import Enum
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+_TRUE_VALUES = {"1", "true", "yes", "y", "on"}
+
+
+def _env_flag(name: str) -> bool:
+    return os.getenv(name, "").strip().lower() in _TRUE_VALUES
 
 
 class SecurityLevel(Enum):
@@ -452,6 +460,8 @@ class EnhancedSecurityManager:
         self.access_controller = AccessController()
         self.data_encryptor = DataEncryptor()
         self.security_auditor = SecurityAuditor()
+        self._demo_auth_enabled = _env_flag("VCL_DEMO_AUTH_ENABLED")
+        self._warned_missing_auth_backend = False
 
         # 安全配置
         self.security_config = {
@@ -576,9 +586,19 @@ class EnhancedSecurityManager:
 
     def _verify_user_credentials(self, _user_id: str, password: str) -> bool:
         """验证用户凭据"""
-        # 这里应该从用户数据库验证
-        # 目前使用简单的模拟
-        return password == "password123"  # 仅用于演示
+        # 这里应该从用户数据库验证（生产环境必须接入真实的用户系统/凭据存储）
+        # 默认拒绝，避免误用演示逻辑导致弱口令风险。
+        if self._demo_auth_enabled:
+            return hmac.compare_digest(password, "password123")
+
+        if not self._warned_missing_auth_backend:
+            logger.error(
+                "未配置用户凭据验证后端，认证将始终失败。"
+                "如需运行演示逻辑，可临时设置 VCL_DEMO_AUTH_ENABLED=1（不建议生产环境）。"
+            )
+            self._warned_missing_auth_backend = True
+
+        return False
 
     def _record_failed_attempt(self, user_id: str) -> None:
         """记录失败尝试"""

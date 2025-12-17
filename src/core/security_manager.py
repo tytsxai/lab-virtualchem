@@ -9,6 +9,7 @@ import hashlib
 import hmac
 import json
 import logging
+import os
 import secrets
 import threading
 import time
@@ -24,6 +25,12 @@ from .enhanced_observability import LogLevel, get_observability
 from .error_handler import get_error_handler
 
 logger = logging.getLogger(__name__)
+
+_TRUE_VALUES = {"1", "true", "yes", "y", "on"}
+
+
+def _env_flag(name: str) -> bool:
+    return os.getenv(name, "").strip().lower() in _TRUE_VALUES
 
 
 class SecurityLevel(Enum):
@@ -235,7 +242,16 @@ class SecurityManager:
         self._setup_event_subscriptions()
 
         # 初始化
-        self._initialize_default_users()
+        if self._should_create_default_users():
+            self._initialize_default_users()
+        else:
+            logger.info("默认用户初始化已禁用（生产环境推荐）")
+
+    def _should_create_default_users(self) -> bool:
+        """是否创建默认用户（默认关闭）"""
+        return bool(self._config.get("create_default_users", False)) or _env_flag(
+            "VCL_CREATE_DEFAULT_USERS"
+        )
 
     def _setup_event_subscriptions(self) -> None:
         """设置事件订阅"""
@@ -246,11 +262,24 @@ class SecurityManager:
 
     def _initialize_default_users(self) -> None:
         """初始化默认用户"""
+        admin_password = self._config.get("default_admin_password") or os.getenv(
+            "VCL_DEFAULT_ADMIN_PASSWORD"
+        )
+        user_password = self._config.get("default_user_password") or os.getenv(
+            "VCL_DEFAULT_USER_PASSWORD"
+        )
+        if not admin_password or not user_password:
+            raise ValueError(
+                "已启用默认用户创建，但未提供默认密码。"
+                "请通过 config 传入 default_admin_password/default_user_password，"
+                "或设置环境变量 VCL_DEFAULT_ADMIN_PASSWORD/VCL_DEFAULT_USER_PASSWORD。"
+            )
+
         # 创建默认管理员用户
         self.create_user(
             username="admin",
             email="admin@example.com",
-            password="admin123",
+            password=admin_password,
             roles=["admin"],
             permissions=[Permission.ADMIN],
         )
@@ -259,7 +288,7 @@ class SecurityManager:
         self.create_user(
             username="user",
             email="user@example.com",
-            password="user123",
+            password=user_password,
             roles=["user"],
             permissions=[Permission.READ, Permission.WRITE],
         )
