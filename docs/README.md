@@ -66,6 +66,8 @@
    pytest -q
    ```
 
+   > 💡 在无显示环境（CI/纯终端）运行测试如遇 Qt 崩溃，可使用：`QT_QPA_PLATFORM=offscreen pytest -q` 或直接执行 `make test-fast`。
+
 如需更详细的按需安装策略，请参阅根目录下的 `INSTALL.md`。
 
 ### 首次使用
@@ -216,6 +218,8 @@ src/
 ```bash
 pytest -q
 ```
+
+> 💡 在无显示环境（CI/纯终端）运行测试如遇 Qt 崩溃，可使用：`QT_QPA_PLATFORM=offscreen pytest -q` 或直接执行 `make test-fast`。
 
 运行特定测试套件：
 

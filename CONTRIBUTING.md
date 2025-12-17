@@ -118,6 +118,9 @@ make test
 
 # 运行所有检查
 make all-checks
+
+# 严格门禁（包含 mypy 失败即阻断）
+make all-checks-strict
 ```
 
 ### 5. 提交代码

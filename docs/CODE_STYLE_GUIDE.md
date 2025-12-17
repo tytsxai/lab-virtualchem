@@ -49,10 +49,7 @@
 
 ```bash
 # 代码格式化
-black src tests --line-length 100
-
-# 导入排序
-isort src tests --profile black
+ruff format src tests
 
 # 代码检查
 ruff check src tests --fix
@@ -63,7 +60,7 @@ mypy src --strict
 
 ### 行长度
 
-- 最大行长度：**100字符**
+- 最大行长度：**88字符**
 - 文档字符串：**88字符**
 - 注释：**72字符**
 
@@ -805,4 +802,3 @@ warn_unused_configs = true
 
 **更新历史**:
 - 2025-10-07: 初始版本
-

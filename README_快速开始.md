@@ -33,6 +33,8 @@
    ```bash
    venv311/bin/python -m pytest -q
    ```
+   如在无显示环境（CI/纯终端）运行测试遇到 Qt 崩溃，可改用：
+   `QT_QPA_PLATFORM=offscreen venv311/bin/python -m pytest -q`（或直接执行 `make test-fast`）。
 
 ## 后续阅读
 

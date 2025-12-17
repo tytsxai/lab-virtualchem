@@ -122,7 +122,7 @@ tests/integration/
 - [ ] 修复 `refactored_main_window.py` 的 8 个 TODO
 - [ ] 修复 `report_service_impl.py` 的 2 个 TODO
 - [ ] 为核心模块添加类型注解
-- [ ] 运行 ruff/black/isort 修复代码风格
+- [ ] 运行 ruff format + ruff check --fix 修复代码风格
 - [ ] 编写核心模块单元测试
 
 ### P1 - 下周应该完成
@@ -157,6 +157,8 @@ make format
 
 # 类型检查
 make type-check
+# 严格门禁（当前仓库 mypy 仍在逐步修复，可按需启用）
+make type-check-strict
 ```
 
 ### 测试
@@ -321,9 +323,8 @@ start htmlcov/index.html  # Windows
 
 ```bash
 # 自动修复
+ruff format src/ tests/
 ruff check src/ --fix
-black src/ tests/
-isort src/ tests/
 
 # 或使用 make
 make format

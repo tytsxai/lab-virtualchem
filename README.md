@@ -162,6 +162,8 @@
    pytest -q
    ```
 
+   > 💡 在无显示环境（CI/纯终端）运行测试如遇 Qt 崩溃，可使用：`QT_QPA_PLATFORM=offscreen pytest -q` 或直接执行 `make test-fast`。
+
 6. **可选：开发者启动面板**
 
    ```bash
@@ -200,8 +202,7 @@ pytest
 4. **代码格式化**
 
 ```bash
-black src tests
-isort src tests
+ruff format src tests
 ruff check src tests --fix
 ```
 
@@ -322,8 +323,8 @@ VirtualChemLab/
 - **粒子系统**: 自定义粒子效果
 - **配置管理**: JSON配置文件
 - **错误处理**: 统一异常管理
-- **测试框架**: pytest + pytest-qt
-- **代码质量**: ruff + black + isort + mypy
+- **测试框架**: pytest（pytest-qt 可选；CI 默认禁用以降低 GUI/平台差异导致的波动）
+- **代码质量**: ruff（lint + format）+ mypy（可选门禁）
 
 ## 开发文档
 
@@ -360,10 +361,9 @@ VirtualChemLab/
 ### 代码规范
 
 - 遵循 [代码风格规范](docs/CODE_STYLE_GUIDE.md)
-- 使用 `black` 格式化代码
-- 使用 `isort` 排序导入
-- 使用 `ruff` 检查代码质量
-- 使用 `mypy` 进行类型检查
+- 使用 `ruff format` 格式化代码
+- 使用 `ruff check` 检查代码质量（必要时 `--fix`）
+- 使用 `mypy` 进行类型检查（当前默认非阻塞，可按需启用严格门禁）
 - 编写单元测试
 - 更新文档
 

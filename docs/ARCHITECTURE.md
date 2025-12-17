@@ -294,7 +294,7 @@ performance/
 
 - **Poetry**: 依赖管理
 - **Pytest**: 单元测试
-- **Black**: 代码格式化
+- **Ruff**: 代码质量与格式化（lint + format）
 - **MyPy**: 类型检查
 
 ### 4. 部署技术

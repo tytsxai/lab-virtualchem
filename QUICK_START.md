@@ -30,6 +30,8 @@ This short guide mirrors the canonical documentation and keeps the minimal, repe
    ```bash
    venv311/bin/python -m pytest -q
    ```
+   If you are running in a headless environment and Qt crashes, retry with:
+   `QT_QPA_PLATFORM=offscreen venv311/bin/python -m pytest -q` (or use `make test-fast`).
 
 ## Next Steps
 

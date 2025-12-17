@@ -120,7 +120,7 @@
 ### 构建文件
 - ✅ build_windows.bat - Windows构建脚本
 - ✅ build_macos.sh - macOS构建脚本
-- ✅ VirtualChemLab-optimized.spec - PyInstaller配置
+- ✅ VirtualChemLab.spec - PyInstaller配置
 - ✅ installer_windows.iss - Inno Setup配置
 
 ### 代码文件

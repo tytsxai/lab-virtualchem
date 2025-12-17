@@ -951,7 +951,7 @@ python tools/migrate_data.py     # 数据迁移
 
 # 开发命令
 pytest                           # 运行测试
-black src tests                  # 格式化代码
+ruff format src tests            # 格式化代码
 ruff check src tests            # 代码检查
 mypy src                        # 类型检查
 ```
@@ -985,4 +985,3 @@ data/users/                    # 用户数据
 ---
 
 💡 **提示**: 遇到问题先查看日志，90%的问题都能从日志中找到线索。
-

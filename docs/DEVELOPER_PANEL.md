@@ -96,7 +96,7 @@ python tools/developer_panel.py
 - **工具**: 
   - 生成密钥
   - 检查硬编码
-  - 代码格式化（Black）
+  - 代码格式化（Ruff）
   - 一键验证
 
 #### 测试工具
@@ -456,4 +456,3 @@ style.configure('TLabel', font=('Arial', 9))
 ---
 
 **开发者面板** - 让开发更高效 🚀
-
