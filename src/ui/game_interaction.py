@@ -6,7 +6,9 @@
 from __future__ import annotations
 
 import math
+import os
 import random
+import time
 from enum import Enum
 from typing import Any
 
@@ -411,13 +413,33 @@ class GamePhysicsScene(QGraphicsScene):
         self.scene_config = scene_config or {}
         self.physics_items: dict[str, GamePhysicsItem] = {}
 
+        # 物理循环参数（默认 60FPS，可通过 scene_config 或环境变量覆盖）
+        # - scene_config["physics_fps"] 优先
+        # - 环境变量 VCL_PHYSICS_FPS 其次
+        physics_fps = 60
+        try:
+            if "physics_fps" in self.scene_config:
+                physics_fps = int(self.scene_config["physics_fps"])
+            else:
+                env_fps = os.getenv("VCL_PHYSICS_FPS")
+                if env_fps:
+                    physics_fps = int(env_fps)
+        except Exception:
+            physics_fps = 60
+
+        physics_fps = max(1, min(240, physics_fps))
+        self._physics_interval_ms = max(1, int(1000 / physics_fps))
+        self._last_physics_tick = time.perf_counter()
+
         # 物理设置
         self.gravity_enabled = True
         self.collision_enabled = True
         self.physics_speed = 1.0
         self.physics_timer = QTimer()
         self.physics_timer.timeout.connect(self.update_physics)
-        self.physics_timer.start(16)  # 60 FPS
+        self.physics_timer.setInterval(self._physics_interval_ms)
+        # 注意：定时器采用“按需启动”，避免场景空闲时仍以 60FPS 空转发热
+        # 任何物体进入非 STATIC 状态时会自动唤醒（见 _on_physics_state_changed）
 
         # 设置场景
         width = self.scene_config.get("width", 800)
@@ -429,6 +451,12 @@ class GamePhysicsScene(QGraphicsScene):
         self.setBackgroundBrush(QBrush(QColor(bg_color)))
 
         logger.info(f"创建游戏化物理场景: {width}x{height}")
+
+    def _ensure_physics_timer_running(self) -> None:
+        """确保物理定时器在运行（空闲时会停止）。"""
+        if not self.physics_timer.isActive():
+            self._last_physics_tick = time.perf_counter()
+            self.physics_timer.start()
 
     def add_physics_item(
         self,
@@ -469,24 +497,45 @@ class GamePhysicsScene(QGraphicsScene):
 
     def update_physics(self):
         """更新物理状态"""
-        delta_time = 0.016  # 假设60FPS
+        # 根据真实 tick 计算 dt，避免固定 0.016 在低功耗/降帧场景下出现不一致
+        now = time.perf_counter()
+        delta_time = (now - self._last_physics_tick) * self.physics_speed
+        # 防止窗口切后台/系统暂停导致 dt 过大引发穿透或抖动
+        delta_time = max(0.0, min(0.05, delta_time))
+        self._last_physics_tick = now
 
-        for item in self.physics_items.values():
+        items = list(self.physics_items.values())
+
+        # 若没有任何活动物体，则停止定时器避免空转发热
+        has_active = any(item.physics_state != PhysicsState.STATIC for item in items)
+        if not has_active:
+            if self.physics_timer.isActive():
+                self.physics_timer.stop()
+            return
+
+        for item in items:
             item.update_physics(delta_time)
 
         # 碰撞检测
         if self.collision_enabled:
-            self._check_collisions()
+            self._check_collisions(items)
 
         self.physics_updated.emit()
 
-    def _check_collisions(self):
+    def _check_collisions(self, items: list[GamePhysicsItem]):
         """检测碰撞"""
-        items = list(self.physics_items.values())
+        if len(items) < 2:
+            return
+
+        # 只检查“至少一方在运动”的 pair，避免大量静止物体时 O(n^2) 空转
+        active_flags = [item.physics_state != PhysicsState.STATIC for item in items]
 
         for i in range(len(items)):
             for j in range(i + 1, len(items)):
                 item1, item2 = items[i], items[j]
+
+                if not (active_flags[i] or active_flags[j]):
+                    continue
 
                 if self._items_collide(item1, item2):
                     self.collision_detected.emit(item1.item_id, item2.item_id)
@@ -539,6 +588,8 @@ class GamePhysicsScene(QGraphicsScene):
     def _on_physics_state_changed(self, item_id: str, state: PhysicsState) -> None:
         """物理状态改变处理"""
         logger.debug(f"物品 {item_id} 物理状态改变: {state.value}")
+        if state != PhysicsState.STATIC:
+            self._ensure_physics_timer_running()
 
     def _on_collision_detected(self, item_id: str, other_item_id: str) -> None:
         """碰撞检测处理"""
@@ -583,9 +634,9 @@ class GamePhysicsScene(QGraphicsScene):
             return
 
         self.physics_speed = speed
-        base_interval = 16  # 约60FPS
-        interval = max(1, int(base_interval / speed))
-        self.physics_timer.setInterval(interval)
+        # speed 影响 dt，不直接改变定时器频率；频率由 _physics_interval_ms / physics_fps 控制
+        # 保留接口语义：提高 speed 会加快模拟推进
+        self._ensure_physics_timer_running()
 
 
 class GamePhysicsView(QGraphicsView):
@@ -608,7 +659,8 @@ class GamePhysicsView(QGraphicsView):
         # 视图设置
         self.setRenderHint(QPainter.Antialiasing)
         self.setRenderHint(QPainter.SmoothPixmapTransform)
-        self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
+        # FullViewportUpdate 会导致每帧整屏重绘，开发时很容易造成高 CPU/GPU 发热
+        self.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.SmartViewportUpdate)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
