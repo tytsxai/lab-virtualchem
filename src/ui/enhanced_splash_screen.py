@@ -25,7 +25,9 @@ class EnhancedSplashScreen(QSplashScreen):
         super().__init__()
 
         # 设置窗口属性
-        self.setWindowFlags(Qt.WindowType.SplashScreen | Qt.WindowType.FramelessWindowHint)
+        self.setWindowFlags(
+            Qt.WindowType.SplashScreen | Qt.WindowType.FramelessWindowHint
+        )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         # 进度估算器
@@ -303,6 +305,8 @@ def create_enhanced_splash_screen() -> EnhancedSplashScreen:
     from PySide6.QtWidgets import QApplication
 
     screen = QApplication.primaryScreen().geometry()
-    splash.move((screen.width() - splash.width()) // 2, (screen.height() - splash.height()) // 2)
+    splash.move(
+        (screen.width() - splash.width()) // 2, (screen.height() - splash.height()) // 2
+    )
 
     return splash

@@ -172,7 +172,10 @@ def run_layout_analysis_example() -> None:
 
 if __name__ == "__main__":
     # 设置日志
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
 
     # 运行示例
     run_layout_analysis_example()

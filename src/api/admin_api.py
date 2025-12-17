@@ -46,7 +46,9 @@ class AdminAPI:
             port: 端口
         """
         if not FLASK_AVAILABLE:
-            raise ImportError("Flask 未安装或导入失败。请运行: pip install flask flask-cors")
+            raise ImportError(
+                "Flask 未安装或导入失败。请运行: pip install flask flask-cors"
+            )
 
         self.license_manager = license_manager
         self.device_auth_manager = device_auth_manager
@@ -56,7 +58,9 @@ class AdminAPI:
         # 安全：优先使用环境变量提供的密钥，避免硬编码
         resolved_secret = admin_secret or os.getenv("VCL_ADMIN_SECRET_KEY")
         if not resolved_secret:
-            raise ValueError("必须提供管理后台 SECRET_KEY，可通过参数或环境变量 VCL_ADMIN_SECRET_KEY 设置")
+            raise ValueError(
+                "必须提供管理后台 SECRET_KEY，可通过参数或环境变量 VCL_ADMIN_SECRET_KEY 设置"
+            )
         self._admin_secret = resolved_secret
 
         # 创建Flask应用
@@ -78,7 +82,9 @@ class AdminAPI:
 
         def _auth_guard():
             """简单的共享密钥校验，保护敏感API"""
-            header = request.headers.get("X-Admin-Secret") or request.headers.get("Authorization", "")
+            header = request.headers.get("X-Admin-Secret") or request.headers.get(
+                "Authorization", ""
+            )
             token = header.removeprefix("Bearer ").strip() if header else ""
             if not token:
                 logger.warning("管理后台请求缺少密钥头")
@@ -172,7 +178,9 @@ class AdminAPI:
                 success = self.license_manager.revoke_license(license_key)
 
                 if success:
-                    return jsonify({"message": "许可证已撤销", "license_key": license_key})
+                    return jsonify(
+                        {"message": "许可证已撤销", "license_key": license_key}
+                    )
                 else:
                     return jsonify({"error": "撤销失败"}), 500
 
@@ -203,7 +211,9 @@ class AdminAPI:
                             "last_seen": record.get("timestamp"),
                             "total_attempts": 0,
                             "licenses": set(),
-                            "is_blocked": self.device_auth_manager._is_device_blocked(device_id),
+                            "is_blocked": self.device_auth_manager._is_device_blocked(
+                                device_id
+                            ),
                         }
 
                     devices[device_id]["last_seen"] = record.get("timestamp")
@@ -244,10 +254,18 @@ class AdminAPI:
                     "first_seen": device_records[0].get("timestamp"),
                     "last_seen": device_records[-1].get("timestamp"),
                     "total_attempts": len(device_records),
-                    "successful_attempts": sum(1 for r in device_records if r.get("success")),
-                    "failed_attempts": sum(1 for r in device_records if not r.get("success")),
-                    "licenses_used": list({r.get("license_key") for r in device_records}),
-                    "is_blocked": self.device_auth_manager._is_device_blocked(device_id),
+                    "successful_attempts": sum(
+                        1 for r in device_records if r.get("success")
+                    ),
+                    "failed_attempts": sum(
+                        1 for r in device_records if not r.get("success")
+                    ),
+                    "licenses_used": list(
+                        {r.get("license_key") for r in device_records}
+                    ),
+                    "is_blocked": self.device_auth_manager._is_device_blocked(
+                        device_id
+                    ),
                     "recent_activities": device_records[-20:],  # 最近20条活动
                 }
 
@@ -294,7 +312,9 @@ class AdminAPI:
                 success = self.device_auth_manager.unblock_device(device_id)
 
                 if success:
-                    return jsonify({"message": "设备已解除封控", "device_id": device_id})
+                    return jsonify(
+                        {"message": "设备已解除封控", "device_id": device_id}
+                    )
                 else:
                     return jsonify({"error": "该设备未被封控"}), 400
 
@@ -355,16 +375,22 @@ class AdminAPI:
                 history = self.device_auth_manager._load_auth_history()
 
                 devices = {r.get("device_id") for r in history if r.get("device_id")}
-                licenses = {r.get("license_key") for r in history if r.get("license_key")}
+                licenses = {
+                    r.get("license_key") for r in history if r.get("license_key")
+                }
 
-                blocked_devices = [d for d in devices if self.device_auth_manager._is_device_blocked(d)]
+                blocked_devices = [
+                    d for d in devices if self.device_auth_manager._is_device_blocked(d)
+                ]
 
                 # 统计最近24小时的活动
                 from datetime import timedelta
 
                 now = datetime.now()
                 recent_cutoff = (now - timedelta(hours=24)).isoformat()
-                recent_activities = [r for r in history if r.get("timestamp", "") > recent_cutoff]
+                recent_activities = [
+                    r for r in history if r.get("timestamp", "") > recent_cutoff
+                ]
 
                 stats = {
                     "total_licenses": len(licenses),
@@ -397,7 +423,9 @@ class AdminAPI:
 
                 # 过滤
                 if license_key:
-                    history = [r for r in history if r.get("license_key") == license_key]
+                    history = [
+                        r for r in history if r.get("license_key") == license_key
+                    ]
                 if device_id:
                     history = [r for r in history if r.get("device_id") == device_id]
 

@@ -44,7 +44,9 @@ logger = get_logger(__name__)
 class MetricCard(QWidget):
     """指标卡片"""
 
-    def __init__(self, title: str, value: str, change: str = "", parent: QWidget | None = None):
+    def __init__(
+        self, title: str, value: str, change: str = "", parent: QWidget | None = None
+    ):
         super().__init__(parent)
 
         self.init_ui(title, value, change)
@@ -104,7 +106,9 @@ class InsightWidget(QWidget):
         header_layout = QHBoxLayout()
 
         # 类型图标
-        icon_label = QLabel(self._get_type_icon(self.insight.get("insight_type", "trend")))
+        icon_label = QLabel(
+            self._get_type_icon(self.insight.get("insight_type", "trend"))
+        )
         icon_label.setStyleSheet("font-size: 20px;")
         header_layout.addWidget(icon_label)
 
@@ -354,7 +358,9 @@ class FeedbackAnalyticsDashboard(QWidget):
         filter_layout.addWidget(QLabel("筛选:"))
 
         self.insight_type_filter = QComboBox()
-        self.insight_type_filter.addItems(["全部", "积极", "消极", "机会", "风险", "趋势"])
+        self.insight_type_filter.addItems(
+            ["全部", "积极", "消极", "机会", "风险", "趋势"]
+        )
         self.insight_type_filter.currentTextChanged.connect(self.filter_insights)
         filter_layout.addWidget(self.insight_type_filter)
 
@@ -621,7 +627,9 @@ NPS分数: {nps.nps_score:.1f}
         # 添加新洞察
         for insight in insights:
             insight_widget = InsightWidget(self.analytics._insight_to_dict(insight))
-            self.insights_layout.insertWidget(self.insights_layout.count() - 1, insight_widget)
+            self.insights_layout.insertWidget(
+                self.insights_layout.count() - 1, insight_widget
+            )
 
     def on_time_range_changed(self, text: str):
         """时间范围变化"""
@@ -693,7 +701,10 @@ NPS分数: {nps.nps_score:.1f}
             if item and item.widget():
                 widget = item.widget()
                 if isinstance(widget, InsightWidget):
-                    if filter_text == "全部" or widget.insight.get("insight_type") == filter_type:
+                    if (
+                        filter_text == "全部"
+                        or widget.insight.get("insight_type") == filter_type
+                    ):
                         widget.show()
                     else:
                         widget.hide()

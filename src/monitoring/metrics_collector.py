@@ -43,7 +43,12 @@ class MetricsCollector:
             self.counters[name] = 0
         self.counters[name] += value
 
-        metric = Metric(name=name, value=self.counters[name], tags=tags or {}, timestamp=datetime.now())
+        metric = Metric(
+            name=name,
+            value=self.counters[name],
+            tags=tags or {},
+            timestamp=datetime.now(),
+        )
         self.metrics.append(metric)
 
     def gauge(self, name: str, value: float, tags: dict | None = None) -> None:
@@ -57,10 +62,14 @@ class MetricsCollector:
         """
         self.gauges[name] = value
 
-        metric = Metric(name=name, value=value, tags=tags or {}, timestamp=datetime.now())
+        metric = Metric(
+            name=name, value=value, tags=tags or {}, timestamp=datetime.now()
+        )
         self.metrics.append(metric)
 
-    def get_metrics(self, name: str | None = None, since: datetime | None = None) -> list[Metric]:
+    def get_metrics(
+        self, name: str | None = None, since: datetime | None = None
+    ) -> list[Metric]:
         """
         获取指标
 

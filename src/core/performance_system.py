@@ -101,7 +101,9 @@ class MemoryPool:
                 "total_allocated": self._total_allocated,
                 "total_freed": self._total_freed,
                 "usage_rate": (
-                    (self._total_allocated - len(self.pool)) / self._total_allocated if self._total_allocated > 0 else 0
+                    (self._total_allocated - len(self.pool)) / self._total_allocated
+                    if self._total_allocated > 0
+                    else 0
                 ),
             }
 
@@ -157,7 +159,9 @@ class PerformanceMonitor:
 
                             # 限制样本数量
                             if len(self.metrics[metric]) > self.max_samples:
-                                self.metrics[metric] = self.metrics[metric][-self.max_samples :]
+                                self.metrics[metric] = self.metrics[metric][
+                                    -self.max_samples :
+                                ]
 
                 # 发送事件
                 if self.event_bus:
@@ -180,11 +184,15 @@ class PerformanceMonitor:
             # 内存使用率
             process = psutil.Process()
             memory_info = process.memory_info()
-            metrics[PerformanceMetric.MEMORY_USAGE] = memory_info.rss / 1024 / 1024  # MB
+            metrics[PerformanceMetric.MEMORY_USAGE] = (
+                memory_info.rss / 1024 / 1024
+            )  # MB
 
             # 磁盘使用率
             disk_usage = psutil.disk_usage("/")
-            metrics[PerformanceMetric.DISK_USAGE] = (disk_usage.used / disk_usage.total) * 100
+            metrics[PerformanceMetric.DISK_USAGE] = (
+                disk_usage.used / disk_usage.total
+            ) * 100
 
             # 网络使用率（简化）
             metrics[PerformanceMetric.NETWORK_USAGE] = 0.0  # 需要更复杂的实现
@@ -194,7 +202,9 @@ class PerformanceMonitor:
 
         return metrics
 
-    def get_metrics(self, metric: PerformanceMetric, limit: int | None = None) -> list[float]:
+    def get_metrics(
+        self, metric: PerformanceMetric, limit: int | None = None
+    ) -> list[float]:
         """获取指标数据"""
         with self._lock:
             data = self.metrics.get(metric, [])
@@ -213,7 +223,9 @@ class PerformanceMonitor:
         with self._lock:
             for metric, values in self.metrics.items():
                 if values:
-                    recent_values = values[-window:] if len(values) >= window else values
+                    recent_values = (
+                        values[-window:] if len(values) >= window else values
+                    )
                     averages[metric] = sum(recent_values) / len(recent_values)
                 else:
                     averages[metric] = 0.0
@@ -235,7 +247,9 @@ class MemoryManager:
         # 启动清理线程
         self._start_cleanup()
 
-    def create_pool(self, name: str, initial_size: int = 1000, max_size: int = 10000) -> MemoryPool:
+    def create_pool(
+        self, name: str, initial_size: int = 1000, max_size: int = 10000
+    ) -> MemoryPool:
         """创建内存池"""
         pool = MemoryPool(initial_size, max_size)
         self.memory_pools[name] = pool
@@ -248,7 +262,12 @@ class MemoryManager:
 
     def cleanup_memory(self) -> dict[str, Any]:
         """清理内存"""
-        cleanup_stats = {"before_gc": self._get_memory_usage(), "gc_collections": 0, "after_gc": 0, "freed_objects": 0}
+        cleanup_stats = {
+            "before_gc": self._get_memory_usage(),
+            "gc_collections": 0,
+            "after_gc": 0,
+            "freed_objects": 0,
+        }
 
         try:
             # 强制垃圾回收
@@ -316,13 +335,17 @@ class PerformanceOptimizer:
     def __init__(self, monitor: PerformanceMonitor, memory_manager: MemoryManager):
         self.monitor = monitor
         self.memory_manager = memory_manager
-        self.optimization_rules: list[Callable[[dict[PerformanceMetric, float]], bool]] = []
+        self.optimization_rules: list[
+            Callable[[dict[PerformanceMetric, float]], bool]
+        ] = []
         self.optimization_actions: list[Callable[[], None]] = []
 
         # 注册默认优化规则
         self._register_default_rules()
 
-    def add_optimization_rule(self, rule: Callable[[dict[PerformanceMetric, float]], bool]) -> None:
+    def add_optimization_rule(
+        self, rule: Callable[[dict[PerformanceMetric, float]], bool]
+    ) -> None:
         """添加优化规则"""
         self.optimization_rules.append(rule)
 
@@ -451,7 +474,9 @@ class CacheOptimizer:
             return
 
         self.optimization_running = True
-        self.optimization_thread = threading.Thread(target=self._optimization_loop, daemon=True)
+        self.optimization_thread = threading.Thread(
+            target=self._optimization_loop, daemon=True
+        )
         self.optimization_thread.start()
 
         logger.info("缓存优化已启动")
@@ -480,7 +505,10 @@ class CacheOptimizer:
             # 获取默认缓存
             default_cache = self.cache_manager.get_cache("default")
 
-            if isinstance(default_cache, MemoryCache) and default_cache.size() > default_cache.max_size * 0.8:
+            if (
+                isinstance(default_cache, MemoryCache)
+                and default_cache.size() > default_cache.max_size * 0.8
+            ):
                 # 清理过期缓存
                 default_cache.clear()
                 logger.info("缓存已清理")

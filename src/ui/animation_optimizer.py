@@ -155,9 +155,13 @@ class AnimationOptimizer(QObject):
 
             # 设置回调
             if on_finished:
-                self.animation_finished.connect(lambda anim_name: on_finished() if anim_name == name else None)
+                self.animation_finished.connect(
+                    lambda anim_name: on_finished() if anim_name == name else None
+                )
             if on_cancelled:
-                self.animation_cancelled.connect(lambda anim_name: on_cancelled() if anim_name == name else None)
+                self.animation_cancelled.connect(
+                    lambda anim_name: on_cancelled() if anim_name == name else None
+                )
 
             self._animation_stats["total_animations"] += 1
             logger.info(f"动画 {name} 已启动")
@@ -228,7 +232,10 @@ class AnimationOptimizer(QObject):
 
     def _process_next_animation(self) -> None:
         """处理队列中的下一个动画"""
-        if not self._animation_queue or len(self._active_animations) >= self.max_concurrent_animations:
+        if (
+            not self._animation_queue
+            or len(self._active_animations) >= self.max_concurrent_animations
+        ):
             return
 
         try:
@@ -299,7 +306,9 @@ class SmoothScroller:
     def scroll_to(self, position: int, duration_ms: int = 300) -> None:
         """滚动到指定位置"""
         self._target_position = position
-        self._scroll_speed = abs(position - self._current_position) / (duration_ms / 16.67)  # 60 FPS
+        self._scroll_speed = abs(position - self._current_position) / (
+            duration_ms / 16.67
+        )  # 60 FPS
 
         if not self._is_scrolling:
             self._is_scrolling = True
@@ -331,37 +340,49 @@ class AnimationPresets:
     """动画预设"""
 
     @staticmethod
-    def fade_in(target: QWidget | QGraphicsItem, duration_ms: int = 300) -> QPropertyAnimation:
+    def fade_in(
+        target: QWidget | QGraphicsItem, duration_ms: int = 300
+    ) -> QPropertyAnimation:
         """淡入动画"""
         optimizer = AnimationOptimizer()
         return optimizer.create_fade_animation(target, duration_ms, 0.0, 1.0)
 
     @staticmethod
-    def fade_out(target: QWidget | QGraphicsItem, duration_ms: int = 300) -> QPropertyAnimation:
+    def fade_out(
+        target: QWidget | QGraphicsItem, duration_ms: int = 300
+    ) -> QPropertyAnimation:
         """淡出动画"""
         optimizer = AnimationOptimizer()
         return optimizer.create_fade_animation(target, duration_ms, 1.0, 0.0)
 
     @staticmethod
-    def scale_in(target: QWidget | QGraphicsItem, duration_ms: int = 300) -> QPropertyAnimation:
+    def scale_in(
+        target: QWidget | QGraphicsItem, duration_ms: int = 300
+    ) -> QPropertyAnimation:
         """缩放进入动画"""
         optimizer = AnimationOptimizer()
         return optimizer.create_scale_animation(target, duration_ms, 0.0, 1.0)
 
     @staticmethod
-    def scale_out(target: QWidget | QGraphicsItem, duration_ms: int = 300) -> QPropertyAnimation:
+    def scale_out(
+        target: QWidget | QGraphicsItem, duration_ms: int = 300
+    ) -> QPropertyAnimation:
         """缩放退出动画"""
         optimizer = AnimationOptimizer()
         return optimizer.create_scale_animation(target, duration_ms, 1.0, 0.0)
 
     @staticmethod
-    def slide_in(target: QWidget | QGraphicsItem, duration_ms: int = 300) -> QPropertyAnimation:
+    def slide_in(
+        target: QWidget | QGraphicsItem, duration_ms: int = 300
+    ) -> QPropertyAnimation:
         """滑入动画"""
         optimizer = AnimationOptimizer()
         return optimizer.create_position_animation(target, duration_ms)
 
     @staticmethod
-    def bounce_in(target: QWidget | QGraphicsItem, duration_ms: int = 500) -> QPropertyAnimation:
+    def bounce_in(
+        target: QWidget | QGraphicsItem, duration_ms: int = 500
+    ) -> QPropertyAnimation:
         """弹跳进入动画"""
         optimizer = AnimationOptimizer()
         animation = optimizer.create_scale_animation(target, duration_ms, 0.0, 1.0)
@@ -380,7 +401,9 @@ def get_animation_optimizer() -> AnimationOptimizer:
         from PySide6.QtWidgets import QApplication
 
         app = QApplication.instance()
-        _global_animation_optimizer = AnimationOptimizer(app) if app else AnimationOptimizer()
+        _global_animation_optimizer = (
+            AnimationOptimizer(app) if app else AnimationOptimizer()
+        )
     return _global_animation_optimizer
 
 

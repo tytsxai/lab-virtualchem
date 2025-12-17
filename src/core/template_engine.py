@@ -20,7 +20,12 @@ logger = logging.getLogger(__name__)
 class TemplateLoadError(Exception):
     """模板加载错误"""
 
-    def __init__(self, message: str, template_path: Path | None = None, details: dict[str, Any] | None = None):
+    def __init__(
+        self,
+        message: str,
+        template_path: Path | None = None,
+        details: dict[str, Any] | None = None,
+    ):
         """初始化模板加载错误
 
         Args:
@@ -91,7 +96,9 @@ class TemplateEngine:
         # 验证文件大小(防止加载过大文件)
         max_size = 10 * 1024 * 1024  # 10MB
         if template_path.stat().st_size > max_size:
-            raise TemplateLoadError(f"模板文件过大: {template_path.stat().st_size} bytes")
+            raise TemplateLoadError(
+                f"模板文件过大: {template_path.stat().st_size} bytes"
+            )
 
         try:
             # 读取YAML文件
@@ -102,11 +109,17 @@ class TemplateEngine:
                 raise TemplateLoadError("模板文件为空或内容无效", template_path)
 
             if not isinstance(data, dict):
-                raise TemplateLoadError(f"模板根节点必须是字典类型，当前类型: {type(data).__name__}", template_path)
+                raise TemplateLoadError(
+                    f"模板根节点必须是字典类型，当前类型: {type(data).__name__}",
+                    template_path,
+                )
 
             if "experiment" not in data:
                 available_keys = ", ".join(data.keys()) if data else "无"
-                raise TemplateLoadError(f"模板缺少 'experiment' 根节点，可用键: {available_keys}", template_path)
+                raise TemplateLoadError(
+                    f"模板缺少 'experiment' 根节点，可用键: {available_keys}",
+                    template_path,
+                )
 
             # 验证并创建模板对象
             experiment_data = data["experiment"]
@@ -125,7 +138,9 @@ class TemplateEngine:
 
             # 验证必需字段
             required_fields = ["id", "title", "steps"]
-            missing_fields = [field for field in required_fields if field not in experiment_data]
+            missing_fields = [
+                field for field in required_fields if field not in experiment_data
+            ]
             if missing_fields:
                 raise TemplateLoadError(
                     f"模板缺少必需字段: {', '.join(missing_fields)}",
@@ -152,7 +167,12 @@ class TemplateEngine:
                         inputs = step_data.get("inputs") or []
 
                         # 仅处理最常见的简单场景：单个数值输入 + 单个 range 规则
-                        if isinstance(validation_rules, list) and validation_rules and isinstance(inputs, list) and inputs:
+                        if (
+                            isinstance(validation_rules, list)
+                            and validation_rules
+                            and isinstance(inputs, list)
+                            and inputs
+                        ):
                             first_rule = validation_rules[0]
                             first_input = inputs[0]
 
@@ -173,7 +193,10 @@ class TemplateEngine:
                                         max_val = first_rule.get("max")
                                         range_spec: list[float] | None = None
                                         if min_val is not None and max_val is not None:
-                                            range_spec = [float(min_val), float(max_val)]
+                                            range_spec = [
+                                                float(min_val),
+                                                float(max_val),
+                                            ]
 
                                         input_spec: dict[str, Any] = {
                                             "key": key,
@@ -186,8 +209,12 @@ class TemplateEngine:
                                         step_data["check"] = {
                                             "type": "input",
                                             "input": input_spec,
-                                            "correct_value": step_data.get("correct_value"),
-                                            "fail_hint": first_rule.get("error_message", "输入值超出允许范围"),
+                                            "correct_value": step_data.get(
+                                                "correct_value"
+                                            ),
+                                            "fail_hint": first_rule.get(
+                                                "error_message", "输入值超出允许范围"
+                                            ),
                                         }
                             except Exception as e:  # noqa: BLE001
                                 # 不影响其它模板加载，只记录日志
@@ -226,19 +253,25 @@ class TemplateEngine:
             if str(template_path) in self._load_errors:
                 del self._load_errors[str(template_path)]
 
-            logger.info(f"成功加载模板: {template.id} - {template.title} (文件: {template_path.name})")
+            logger.info(
+                f"成功加载模板: {template.id} - {template.title} (文件: {template_path.name})"
+            )
             return template
 
         except yaml.YAMLError as e:
             error_msg = f"YAML解析错误: {e}"
             self._load_errors[str(template_path)] = error_msg
-            raise TemplateLoadError(error_msg, template_path, {"yaml_error": str(e)}) from e
+            raise TemplateLoadError(
+                error_msg, template_path, {"yaml_error": str(e)}
+            ) from e
         except ValidationError as e:
             error_msg = f"模板格式验证失败: {len(e.errors())} 个错误"
             self._load_errors[str(template_path)] = error_msg
             logger.error(f"模板验证失败 {template_path.name}: {e}")
             raise TemplateLoadError(
-                error_msg, template_path, {"validation_errors": [err["msg"] for err in e.errors()]}
+                error_msg,
+                template_path,
+                {"validation_errors": [err["msg"] for err in e.errors()]},
             ) from e
         except TemplateLoadError:
             # 已经是我们的错误类型，直接抛出
@@ -247,7 +280,9 @@ class TemplateEngine:
             error_msg = f"加载失败: {type(e).__name__}: {e}"
             self._load_errors[str(template_path)] = error_msg
             logger.error(f"加载模板时发生未知错误: {e}", exc_info=True)
-            raise TemplateLoadError(error_msg, template_path, {"exception_type": type(e).__name__}) from e
+            raise TemplateLoadError(
+                error_msg, template_path, {"exception_type": type(e).__name__}
+            ) from e
 
     def load_experiment_by_id(self, experiment_id: str) -> ExperimentTemplate:
         """根据ID加载实验模板
@@ -298,16 +333,24 @@ class TemplateEngine:
                         try:
                             with open(yaml_file, encoding="utf-8") as f:
                                 data = yaml.safe_load(f)
-                            if data and "experiment" in data and data["experiment"].get("id") == experiment_id:
+                            if (
+                                data
+                                and "experiment" in data
+                                and data["experiment"].get("id") == experiment_id
+                            ):
                                 template_path = yaml_file
                                 found = True
-                                logger.debug(f"通过ID匹配找到模板文件: {yaml_file.name}")
+                                logger.debug(
+                                    f"通过ID匹配找到模板文件: {yaml_file.name}"
+                                )
                                 break
                         except Exception:
                             continue
 
                 if not found:
-                    raise TemplateLoadError(f"找不到实验模板: {experiment_id} (搜索路径: {self.templates_dir})")
+                    raise TemplateLoadError(
+                        f"找不到实验模板: {experiment_id} (搜索路径: {self.templates_dir})"
+                    )
 
         return self.load_experiment(template_path)
 
@@ -321,7 +364,9 @@ class TemplateEngine:
             return []
 
         # 先尝试从智能缓存获取
-        cached_experiments = experiment_cache.get_experiment_list(namespace=self._cache_namespace)
+        cached_experiments = experiment_cache.get_experiment_list(
+            namespace=self._cache_namespace
+        )
         if cached_experiments is not None:
             logger.debug("从智能缓存加载实验列表")
             return cached_experiments
@@ -351,7 +396,9 @@ class TemplateEngine:
         sorted_experiments = sorted(experiments, key=lambda x: x["level"])
 
         # 缓存实验结果
-        experiment_cache.set_experiment_list(sorted_experiments, namespace=self._cache_namespace)
+        experiment_cache.set_experiment_list(
+            sorted_experiments, namespace=self._cache_namespace
+        )
 
         return sorted_experiments
 
@@ -410,7 +457,9 @@ class TemplateEngine:
 
         # 写入YAML文件
         with open(output_path, "w", encoding="utf-8") as f:
-            yaml.dump(yaml_data, f, default_flow_style=False, allow_unicode=True, indent=2)
+            yaml.dump(
+                yaml_data, f, default_flow_style=False, allow_unicode=True, indent=2
+            )
 
         logger.info(f"模板已保存: {output_path}")
 
@@ -511,7 +560,9 @@ class TemplateEngine:
                     result["errors"].append(f"{template_file.name}: {str(e)}")
 
             if result["invalid_templates"] > 0:
-                result["status"] = "degraded" if result["valid_templates"] > 0 else "unhealthy"
+                result["status"] = (
+                    "degraded" if result["valid_templates"] > 0 else "unhealthy"
+                )
 
         return result
 
@@ -524,7 +575,13 @@ class TemplateEngine:
         Returns:
             修复结果报告
         """
-        report = {"checked": 0, "repairable": 0, "repaired": 0, "failed": 0, "issues": []}
+        report = {
+            "checked": 0,
+            "repairable": 0,
+            "repaired": 0,
+            "failed": 0,
+            "issues": [],
+        }
 
         if not self.templates_dir.exists():
             report["issues"].append("模板目录不存在")
@@ -576,7 +633,9 @@ class TemplateEngine:
         """
         return self._load_errors.copy()
 
-    def _repair_template(self, template_file: Path, _missing_fields: dict[str, Any]) -> bool:
+    def _repair_template(
+        self, template_file: Path, _missing_fields: dict[str, Any]
+    ) -> bool:
         """自动修复模板文件
 
         Args:
@@ -619,7 +678,9 @@ class TemplateEngine:
                 logger.info(f"补充标题字段: {template_data['title']}")
 
             if "description" not in template_data:
-                template_data["description"] = f"{template_data.get('title', '实验')}的详细说明"
+                template_data["description"] = (
+                    f"{template_data.get('title', '实验')}的详细说明"
+                )
                 repaired = True
 
             if "level" not in template_data:
@@ -672,7 +733,11 @@ class TemplateEngine:
 
             # 5. 添加学习目标
             if "objectives" not in template_data:
-                template_data["objectives"] = ["理解实验原理", "掌握实验操作", "学会数据分析"]
+                template_data["objectives"] = [
+                    "理解实验原理",
+                    "掌握实验操作",
+                    "学会数据分析",
+                ]
                 repaired = True
 
             # 如果有修复，保存文件

@@ -79,7 +79,9 @@ class ObjectPool(Generic[T]):
             obj = self._create_object()
             self.available.append(obj)
 
-        logger.info(f"对象池已创建: {type(factory()).__name__}, 初始大小={initial_size}, 最大大小={max_size}")
+        logger.info(
+            f"对象池已创建: {type(factory()).__name__}, 初始大小={initial_size}, 最大大小={max_size}"
+        )
 
     def _create_object(self) -> T:
         """创建新对象"""
@@ -169,7 +171,8 @@ class ObjectPool(Generic[T]):
             "current_available": len(self.available),
             "current_in_use": self.current_in_use,
             "pool_utilization": self.current_in_use / max(1, self.total_created),
-            "hit_rate": (self.total_acquired - self.total_created) / max(1, self.total_acquired),
+            "hit_rate": (self.total_acquired - self.total_created)
+            / max(1, self.total_acquired),
         }
 
     def print_stats(self) -> None:
@@ -291,7 +294,9 @@ class ParticlePool:
         print("\n各类型详情:")
         for particle_type, pool in self.pools.items():
             stats = pool.get_stats()
-            print(f"  {particle_type.value:12s}: 创建{stats['total_created']:4d} / 使用中{stats['current_in_use']:3d}")
+            print(
+                f"  {particle_type.value:12s}: 创建{stats['total_created']:4d} / 使用中{stats['current_in_use']:3d}"
+            )
 
         print("=" * 50)
 
@@ -408,7 +413,12 @@ def benchmark_pool_performance():
 
     # 测试2：使用对象池
     print("\n📊 测试2：使用对象池")
-    pool = ObjectPool(factory=DummyObject, reset_func=lambda obj: obj.reset(), max_size=100, initial_size=50)
+    pool = ObjectPool(
+        factory=DummyObject,
+        reset_func=lambda obj: obj.reset(),
+        max_size=100,
+        initial_size=50,
+    )
 
     start = time.perf_counter()
     for _ in range(10000):

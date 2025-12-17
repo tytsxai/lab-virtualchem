@@ -7,8 +7,7 @@
 import logging
 from collections.abc import Callable
 
-from src.core.config import CompositeConfig, EnvironmentConfig, JsonConfig
-from src.core.config_loader import Config, get_config
+from src.core.config_loader import Config, ConfigAdapter, get_config
 from src.core.di_container import DIContainer
 from src.core.event_bus import EventBus, get_event_bus
 from src.interfaces.storage import IConfig, ILogger
@@ -68,18 +67,16 @@ class ApplicationBuilder:
             self
         """
         if use_new_config:
-            # 使用新的统一配置加载器
+            # 使用新的统一配置加载器，并通过适配器兼容旧 IConfig 接口
             new_config = get_config()
             self.container.register_singleton(Config, instance=new_config)
 
-            # 同时兼容旧的IConfig接口
-            configs = [JsonConfig(config_file)]
-            if use_environment:
-                configs.append(EnvironmentConfig())
-            self.config = CompositeConfig(*configs)
+            self.config = ConfigAdapter(new_config)
             self.container.register_singleton(IConfig, instance=self.config)
         else:
-            # 使用旧的配置系统
+            # 兼容旧配置系统：仅在显式请求时启用
+            from src.core.config import CompositeConfig, EnvironmentConfig, JsonConfig
+
             configs = [JsonConfig(config_file)]
             if use_environment:
                 configs.append(EnvironmentConfig())
@@ -105,7 +102,9 @@ class ApplicationBuilder:
 
         return self
 
-    def configure_event_bus(self, event_bus: EventBus | None = None) -> "ApplicationBuilder":
+    def configure_event_bus(
+        self, event_bus: EventBus | None = None
+    ) -> "ApplicationBuilder":
         """
         配置事件总线
 
@@ -122,7 +121,9 @@ class ApplicationBuilder:
 
         return self
 
-    def configure_services(self, configurator: Callable[[DIContainer], None]) -> "ApplicationBuilder":
+    def configure_services(
+        self, configurator: Callable[[DIContainer], None]
+    ) -> "ApplicationBuilder":
         """
         配置服务
 
@@ -178,7 +179,9 @@ class ApplicationBuilder:
         return self.container
 
 
-def create_app(_config_file: str = "config.json", configure_services: Callable | None = None) -> DIContainer:
+def create_app(
+    _config_file: str = "config.json", configure_services: Callable | None = None
+) -> DIContainer:
     """
     快速创建应用（向后兼容函数）
 

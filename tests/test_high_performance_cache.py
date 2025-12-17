@@ -23,24 +23,24 @@ def test_basic_operations():
     cache = HighPerformanceLRUCache(max_size=100)
 
     # 设置和获取
-    cache.set('key1', 'value1')
-    assert cache.get('key1') == 'value1'
+    cache.set("key1", "value1")
+    assert cache.get("key1") == "value1"
     print("[OK] 设置和获取")
 
     # 不存在的键
-    assert cache.get('nonexistent') is None
-    assert cache.get('nonexistent', 'default') == 'default'
+    assert cache.get("nonexistent") is None
+    assert cache.get("nonexistent", "default") == "default"
     print("[OK] 默认值")
 
     # 删除
-    assert cache.delete('key1')
-    assert cache.get('key1') is None
+    assert cache.delete("key1")
+    assert cache.get("key1") is None
     print("[OK] 删除")
 
     # 存在性检查
-    cache.set('key2', 'value2')
-    assert cache.exists('key2')
-    assert not cache.exists('nonexistent')
+    cache.set("key2", "value2")
+    assert cache.exists("key2")
+    assert not cache.exists("nonexistent")
     print("[OK] 存在性检查")
 
     # 清空
@@ -56,13 +56,13 @@ def test_ttl():
     cache = HighPerformanceLRUCache()
 
     # 设置短TTL
-    cache.set('temp_key', 'temp_value', ttl=1)
-    assert cache.get('temp_key') == 'temp_value'
+    cache.set("temp_key", "temp_value", ttl=1)
+    assert cache.get("temp_key") == "temp_value"
     print("[OK] 设置TTL")
 
     # 等待过期
     time.sleep(1.1)
-    assert cache.get('temp_key') is None
+    assert cache.get("temp_key") is None
     print("[OK] TTL过期")
 
 
@@ -73,21 +73,21 @@ def test_lru_eviction():
     cache = HighPerformanceLRUCache(max_size=3)
 
     # 填满缓存
-    cache.set('key1', 'value1')
-    cache.set('key2', 'value2')
-    cache.set('key3', 'value3')
+    cache.set("key1", "value1")
+    cache.set("key2", "value2")
+    cache.set("key3", "value3")
     assert cache.size() == 3
     print("[OK] 填满缓存")
 
     # 访问key1，使其成为最近使用
-    cache.get('key1')
+    cache.get("key1")
 
     # 添加新键，应该驱逐key2（最旧的未访问）
-    cache.set('key4', 'value4')
-    assert cache.exists('key1')
-    assert not cache.exists('key2')  # 被驱逐
-    assert cache.exists('key3')
-    assert cache.exists('key4')
+    cache.set("key4", "value4")
+    assert cache.exists("key1")
+    assert not cache.exists("key2")  # 被驱逐
+    assert cache.exists("key3")
+    assert cache.exists("key4")
     print("[OK] LRU驱逐策略")
 
 
@@ -98,16 +98,16 @@ def test_batch_operations():
     cache = HighPerformanceLRUCache()
 
     # 批量设置
-    items = {f'key{i}': f'value{i}' for i in range(10)}
+    items = {f"key{i}": f"value{i}" for i in range(10)}
     cache.set_many(items)
     assert cache.size() == 10
     print("[OK] 批量设置")
 
     # 批量获取
-    keys = [f'key{i}' for i in range(5)]
+    keys = [f"key{i}" for i in range(5)]
     result = cache.get_many(keys)
     assert len(result) == 5
-    assert result['key0'] == 'value0'
+    assert result["key0"] == "value0"
     print("[OK] 批量获取")
 
     # 批量删除
@@ -125,17 +125,17 @@ def test_statistics():
     cache.reset_stats()
 
     # 执行操作
-    cache.set('key1', 'value1')
-    cache.set('key2', 'value2')
-    cache.get('key1')  # 命中
-    cache.get('key1')  # 命中
-    cache.get('nonexistent')  # 未命中
+    cache.set("key1", "value1")
+    cache.set("key2", "value2")
+    cache.get("key1")  # 命中
+    cache.get("key1")  # 命中
+    cache.get("nonexistent")  # 未命中
 
     stats = cache.get_stats()
-    assert stats['hits'] == 2
-    assert stats['misses'] == 1
-    assert stats['sets'] == 2
-    assert stats['hit_rate'] > 0
+    assert stats["hits"] == 2
+    assert stats["misses"] == 1
+    assert stats["sets"] == 2
+    assert stats["hit_rate"] > 0
     print(f"[OK] 统计: {stats['hit_rate']:.1f}% 命中率")
 
     # 最高访问
@@ -153,14 +153,14 @@ def test_memory_limit():
     cache = HighPerformanceLRUCache(max_size=1000, max_memory_mb=1)
 
     # 填充大量数据
-    large_value = 'x' * 10000  # 10KB
+    large_value = "x" * 10000  # 10KB
     for i in range(150):  # 尝试存储1.5MB
-        cache.set(f'key{i}', large_value)
+        cache.set(f"key{i}", large_value)
 
     # 应该因为内存限制而驱逐一些条目
     assert cache.size() < 150
     stats = cache.get_stats()
-    assert stats['evictions'] > 0
+    assert stats["evictions"] > 0
     print(f"[OK] 内存限制工作，驱逐了 {stats['evictions']} 个条目")
 
 
@@ -175,11 +175,11 @@ def test_cache_warmup():
         return f"loaded_{key}"
 
     # 预热
-    keys = [f'key{i}' for i in range(10)]
+    keys = [f"key{i}" for i in range(10)]
     count = cache.warmup(loader, keys)
     assert count == 10
     assert cache.size() == 10
-    assert cache.get('key0') == 'loaded_key0'
+    assert cache.get("key0") == "loaded_key0"
     print(f"[OK] 预热了 {count} 个条目")
 
 
@@ -193,7 +193,7 @@ def benchmark_performance():
     num_operations = 10000
     start_time = time.time()
     for i in range(num_operations):
-        cache.set(f'key{i}', f'value{i}')
+        cache.set(f"key{i}", f"value{i}")
     write_time = time.time() - start_time
     write_ops_per_sec = num_operations / write_time
     print(f"  写入: {write_ops_per_sec:.0f} ops/s ({write_time:.3f}秒)")
@@ -201,7 +201,7 @@ def benchmark_performance():
     # 测试读取性能
     start_time = time.time()
     for i in range(num_operations):
-        cache.get(f'key{i}')
+        cache.get(f"key{i}")
     read_time = time.time() - start_time
     read_ops_per_sec = num_operations / read_time
     print(f"  读取: {read_ops_per_sec:.0f} ops/s ({read_time:.3f}秒)")
@@ -211,9 +211,9 @@ def benchmark_performance():
     start_time = time.time()
     for i in range(num_operations):
         if random.random() < 0.7:  # 70% 读取
-            cache.get(f'key{random.randint(0, num_operations-1)}')
+            cache.get(f"key{random.randint(0, num_operations - 1)}")
         else:  # 30% 写入
-            cache.set(f'key{random.randint(0, num_operations-1)}', f'value{i}')
+            cache.set(f"key{random.randint(0, num_operations - 1)}", f"value{i}")
     mixed_time = time.time() - start_time
     mixed_ops_per_sec = num_operations / mixed_time
     print(f"  混合: {mixed_ops_per_sec:.0f} ops/s ({mixed_time:.3f}秒)")
@@ -229,8 +229,8 @@ def benchmark_performance():
     assert write_ops_per_sec > 10000, f"写入性能不足: {write_ops_per_sec:.0f} ops/s"
     assert read_ops_per_sec > 30000, f"读取性能不足: {read_ops_per_sec:.0f} ops/s"
     print("\n[EXCELLENT] 性能测试通过！")
-    print(f"  写入: {write_ops_per_sec/1000:.1f}K ops/s")
-    print(f"  读取: {read_ops_per_sec/1000:.1f}K ops/s")
+    print(f"  写入: {write_ops_per_sec / 1000:.1f}K ops/s")
+    print(f"  读取: {read_ops_per_sec / 1000:.1f}K ops/s")
 
 
 def test_thread_safety():
@@ -245,10 +245,10 @@ def test_thread_safety():
     def worker(thread_id: int, num_ops: int):
         try:
             for i in range(num_ops):
-                key = f'thread{thread_id}_key{i}'
-                cache.set(key, f'value{i}')
+                key = f"thread{thread_id}_key{i}"
+                cache.set(key, f"value{i}")
                 value = cache.get(key)
-                assert value == f'value{i}'
+                assert value == f"value{i}"
         except Exception as e:
             errors.append(e)
 
@@ -300,5 +300,5 @@ def main():
         raise
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

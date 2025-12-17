@@ -94,7 +94,11 @@ class GuideOverlay(QWidget):
         self.message = message
 
         # 设置窗口属性
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.Tool
+            | Qt.WindowType.WindowStaysOnTopHint
+        )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         self._setup_ui()
@@ -128,7 +132,11 @@ class GuideOverlay(QWidget):
 
             for action in self.message.actions:
                 btn = QPushButton(action.get("label", "确定"))
-                btn.clicked.connect(lambda _checked=False, aid=action.get("id", ""): self._on_action(aid))
+                btn.clicked.connect(
+                    lambda _checked=False, aid=action.get("id", ""): self._on_action(
+                        aid
+                    )
+                )
                 actions_layout.addWidget(btn)
 
             layout.addLayout(actions_layout)
@@ -238,7 +246,10 @@ class SmartGuideSystem(QObject):
                 priority=GuidePriority.HIGH,
                 title="欢迎使用虚拟化学实验室",
                 content="这是您的第一个实验。我们将引导您完成每个步骤。点击'开始'继续。",
-                actions=[{"id": "start", "label": "开始"}, {"id": "skip", "label": "跳过引导"}],
+                actions=[
+                    {"id": "start", "label": "开始"},
+                    {"id": "skip", "label": "跳过引导"},
+                ],
             ),
         )
 
@@ -254,7 +265,10 @@ class SmartGuideSystem(QObject):
                 priority=GuidePriority.NORMAL,
                 title="需要帮助吗？",
                 content="看起来您遇到了一些困难。要查看详细提示吗？",
-                actions=[{"id": "show_hint", "label": "查看提示"}, {"id": "continue", "label": "继续尝试"}],
+                actions=[
+                    {"id": "show_hint", "label": "查看提示"},
+                    {"id": "continue", "label": "继续尝试"},
+                ],
             ),
         )
 
@@ -315,7 +329,9 @@ class SmartGuideSystem(QObject):
                 ),
             )
 
-    def add_rule(self, rule_id: str, conditions: dict[str, Any], guide: GuideMessage) -> None:
+    def add_rule(
+        self, rule_id: str, conditions: dict[str, Any], guide: GuideMessage
+    ) -> None:
         """添加引导规则"""
         self.guide_rules[rule_id] = {"conditions": conditions, "guide": guide}
         logger.debug(f"添加引导规则: {rule_id}")
@@ -334,7 +350,10 @@ class SmartGuideSystem(QObject):
         for _rule_id, rule in self.guide_rules.items():
             # 已显示过的引导不再显示（除非是高优先级）
             guide = rule["guide"]
-            if guide.id in self.shown_guides and guide.priority != GuidePriority.CRITICAL:
+            if (
+                guide.id in self.shown_guides
+                and guide.priority != GuidePriority.CRITICAL
+            ):
                 continue
 
             # 检查条件
@@ -359,7 +378,9 @@ class SmartGuideSystem(QObject):
 
         return True
 
-    def show_guide(self, guide: GuideMessage, parent_widget: QWidget | None = None) -> None:
+    def show_guide(
+        self, guide: GuideMessage, parent_widget: QWidget | None = None
+    ) -> None:
         """显示引导"""
         # 如果已经显示，先关闭
         if guide.id in self.active_guides:
@@ -382,11 +403,16 @@ class SmartGuideSystem(QObject):
         elif guide.target_widget:
             # 定位到目标组件附近
             target_rect = guide.target_widget.geometry()
-            pos = parent_widget.mapToGlobal(QPoint(target_rect.x(), target_rect.y() + target_rect.height() + 5))
+            pos = parent_widget.mapToGlobal(
+                QPoint(target_rect.x(), target_rect.y() + target_rect.height() + 5)
+            )
             overlay.move(pos)
         else:
             # 默认居中显示
-            overlay.move(parent_widget.x() + (parent_widget.width() - overlay.width()) // 2, parent_widget.y() + 100)
+            overlay.move(
+                parent_widget.x() + (parent_widget.width() - overlay.width()) // 2,
+                parent_widget.y() + 100,
+            )
 
         # 连接信号
         overlay.action_clicked.connect(lambda aid: self._on_guide_action(guide.id, aid))
@@ -445,7 +471,9 @@ class SmartGuideSystem(QObject):
         if len(self.context.previous_actions) > 20:
             self.context.previous_actions = self.context.previous_actions[-20:]
 
-    def show_context_help(self, context_key: str, target_widget: QWidget | None = None) -> None:
+    def show_context_help(
+        self, context_key: str, target_widget: QWidget | None = None
+    ) -> None:
         """显示上下文帮助"""
         help_messages = {
             "equipment_selection": GuideMessage(
@@ -515,11 +543,15 @@ class SmartGuideSystem(QObject):
         # 计算平均响应时间
         response_times = []
         for i in range(1, len(self.interaction_history)):
-            prev_time = datetime.fromisoformat(self.interaction_history[i - 1]["timestamp"])
+            prev_time = datetime.fromisoformat(
+                self.interaction_history[i - 1]["timestamp"]
+            )
             curr_time = datetime.fromisoformat(self.interaction_history[i]["timestamp"])
             response_times.append((curr_time - prev_time).total_seconds())
 
-        avg_response_time = sum(response_times) / len(response_times) if response_times else 0
+        avg_response_time = (
+            sum(response_times) / len(response_times) if response_times else 0
+        )
 
         return {
             "total_actions": total_actions,

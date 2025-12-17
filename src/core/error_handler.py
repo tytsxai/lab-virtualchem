@@ -98,12 +98,18 @@ class ErrorHandler:
 
     def __init__(self):
         # 新版错误处理所需结构（VirtualChemLabError）
-        self._error_callbacks: dict[CoreErrorCategory, list[Callable[[VirtualChemLabError], None]]] = {}
+        self._error_callbacks: dict[
+            CoreErrorCategory, list[Callable[[VirtualChemLabError], None]]
+        ] = {}
         self._error_stats: dict[str, int] = {}
-        self._recovery_strategies: dict[type[VirtualChemLabError], Callable[[VirtualChemLabError], Any]] = {}
+        self._recovery_strategies: dict[
+            type[VirtualChemLabError], Callable[[VirtualChemLabError], Any]
+        ] = {}
 
         # 兼容测试要求的接口
-        self.error_handlers: dict[type[Exception], Callable[[Exception, ErrorContext], Any]] = {}
+        self.error_handlers: dict[
+            type[Exception], Callable[[Exception, ErrorContext], Any]
+        ] = {}
         self.error_records: list[ErrorRecord] = []
         self.max_error_records: int = 1000
 
@@ -130,7 +136,11 @@ class ErrorHandler:
 
     # -------- 新版 VirtualChemLabError 处理逻辑 --------
 
-    def handle_error(self, error: VirtualChemLabError | Exception, context: ErrorContext | None = None) -> Any:
+    def handle_error(
+        self,
+        error: VirtualChemLabError | Exception,
+        context: ErrorContext | None = None,
+    ) -> Any:
         """
         处理错误
 
@@ -203,14 +213,18 @@ class ErrorHandler:
             timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             snapshot_path = base_dir / f"state_{timestamp}.json"
 
-            recent_records = [self._serialize_error_record(r) for r in self.error_records[-20:]]
+            recent_records = [
+                self._serialize_error_record(r) for r in self.error_records[-20:]
+            ]
             payload = {
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "error_stats": self._error_stats.copy(),
                 "recent_errors": recent_records,
             }
 
-            snapshot_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            snapshot_path.write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
             logger.info("Emergency state save completed: %s", snapshot_path)
         except Exception as e:  # pragma: no cover - 防御性日志
             logger.error(f"Emergency save failed: {e}")
@@ -241,7 +255,9 @@ class ErrorHandler:
             logger.debug("DI container restart skipped (not available)")
 
         if restarted:
-            logger.info("Critical components restart completed: %s", ", ".join(restarted))
+            logger.info(
+                "Critical components restart completed: %s", ", ".join(restarted)
+            )
         if errors:
             for message in errors:
                 logger.error(message)
@@ -277,10 +293,16 @@ class ErrorHandler:
 
     def _default_legacy_handler(self, error: Exception, context: ErrorContext) -> bool:
         """默认错误处理器：记录并认为已处理"""
-        logger.error(f"Handled error: {error} (component={context.component}, operation={context.operation})")
+        logger.error(
+            f"Handled error: {error} (component={context.component}, operation={context.operation})"
+        )
         return True
 
-    def register_handler(self, error_type: type[Exception], handler: Callable[[Exception, ErrorContext], Any]) -> None:
+    def register_handler(
+        self,
+        error_type: type[Exception],
+        handler: Callable[[Exception, ErrorContext], Any],
+    ) -> None:
         """注册基于异常类型的处理器（测试使用）"""
         self.error_handlers[error_type] = handler
 
@@ -345,7 +367,9 @@ class ErrorHandler:
 
     def _handle_legacy_error(self, error: Exception, context: ErrorContext) -> bool:
         """测试/旧版路径：按异常类型调用处理器并记录"""
-        handler = self.error_handlers.get(type(error)) or self.error_handlers.get(Exception)
+        handler = self.error_handlers.get(type(error)) or self.error_handlers.get(
+            Exception
+        )
 
         handled = True
         try:
@@ -459,7 +483,7 @@ def safe_execute(
 def log_and_continue(
     error: Exception,
     message: str = "Error occurred but continuing",
-    level: int = logging.WARNING
+    level: int = logging.WARNING,
 ) -> None:
     """记录错误但继续执行"""
     logger.log(level, f"{message}: {error}")
@@ -477,16 +501,14 @@ def log_and_raise(
     logger.error(traceback.format_exc())
 
     raise error_class(
-        message=str(error),
-        category=category,
-        severity=severity,
-        cause=error
+        message=str(error), category=category, severity=severity, cause=error
     )
 
 
 # 预定义的错误处理策略
 def create_ui_error_handler() -> Callable[[VirtualChemLabError], None]:
     """创建UI错误处理器"""
+
     def handler(error: VirtualChemLabError) -> None:
         try:
             from PySide6.QtWidgets import QMessageBox
@@ -507,6 +529,7 @@ def create_ui_error_handler() -> Callable[[VirtualChemLabError], None]:
 
 def create_logging_error_handler() -> Callable[[VirtualChemLabError], None]:
     """创建日志错误处理器"""
+
     def handler(error: VirtualChemLabError) -> None:
         log_level = {
             CoreErrorSeverity.LOW: logging.DEBUG,
@@ -554,7 +577,9 @@ class ErrorContextManager:
         self.component = component
         self.operation = operation
         self.metadata = metadata
-        self.context = ErrorContext(component=component, operation=operation, metadata=dict(metadata))
+        self.context = ErrorContext(
+            component=component, operation=operation, metadata=dict(metadata)
+        )
 
     def __enter__(self) -> ErrorContext:
         return self.context
@@ -575,7 +600,9 @@ def handle_error_func(error: Exception, context: ErrorContext) -> bool:
     return bool(handler.handle_error(error, context))
 
 
-def safe_execute_with_default(default_value: Any, func: Callable, *args, **kwargs) -> Any:
+def safe_execute_with_default(
+    default_value: Any, func: Callable, *args, **kwargs
+) -> Any:
     """
     兼容测试签名的 safe_execute_with_default
 

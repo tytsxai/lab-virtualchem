@@ -119,7 +119,10 @@ class DataEncryption:
         # 生成AES密钥
         aes_key = secrets.token_bytes(32)
         self.encryption_keys["default_aes"] = EncryptionKey(
-            key_id="default_aes", algorithm=EncryptionAlgorithm.AES256, key_data=aes_key, created_at=datetime.now()
+            key_id="default_aes",
+            algorithm=EncryptionAlgorithm.AES256,
+            key_data=aes_key,
+            created_at=datetime.now(),
         )
 
         logger.info("默认加密密钥已初始化")
@@ -147,7 +150,9 @@ class DataEncryption:
             else:
                 raise ValueError(f"不支持的加密算法: {key.algorithm}")
 
-    def decrypt_data(self, encrypted_data: bytes, key_id: str = "default_fernet") -> bytes:
+    def decrypt_data(
+        self, encrypted_data: bytes, key_id: str = "default_fernet"
+    ) -> bytes:
         """解密数据
 
         Args:
@@ -267,7 +272,9 @@ class DataEncryption:
             raise ValueError("AES-CBC 填充无效")
         return decrypted[:-padding_length]
 
-    def generate_key(self, algorithm: EncryptionAlgorithm, key_id: str | None = None) -> str:
+    def generate_key(
+        self, algorithm: EncryptionAlgorithm, key_id: str | None = None
+    ) -> str:
         """生成新密钥
 
         Args:
@@ -289,7 +296,10 @@ class DataEncryption:
                 raise ValueError(f"不支持的算法: {algorithm}")
 
             self.encryption_keys[key_id] = EncryptionKey(
-                key_id=key_id, algorithm=algorithm, key_data=key_data, created_at=datetime.now()
+                key_id=key_id,
+                algorithm=algorithm,
+                key_data=key_data,
+                created_at=datetime.now(),
             )
 
             logger.info(f"新密钥已生成: {key_id}")
@@ -323,7 +333,10 @@ class DataEncryption:
                 raise ValueError(f"不支持的算法: {old_key.algorithm}")
 
             self.encryption_keys[new_key_id] = EncryptionKey(
-                key_id=new_key_id, algorithm=old_key.algorithm, key_data=key_data, created_at=datetime.now()
+                key_id=new_key_id,
+                algorithm=old_key.algorithm,
+                key_data=key_data,
+                created_at=datetime.now(),
             )
 
             # 标记旧密钥为非活跃
@@ -370,7 +383,11 @@ class DataMasking:
                 "replacement": r"\1***@\2***.\3",
                 "description": "邮箱脱敏",
             },
-            "phone": {"pattern": r"(\d{3})\d{4}(\d{4})", "replacement": r"\1****\2", "description": "手机号脱敏"},
+            "phone": {
+                "pattern": r"(\d{3})\d{4}(\d{4})",
+                "replacement": r"\1****\2",
+                "description": "手机号脱敏",
+            },
             "id_card": {
                 "pattern": r"(\d{6})\d{8}(\d{4})",
                 "replacement": r"\1********\2",
@@ -381,7 +398,11 @@ class DataMasking:
                 "replacement": r"\1********\2",
                 "description": "信用卡号脱敏",
             },
-            "name": {"pattern": r"(\w{1})\w*", "replacement": r"\1***", "description": "姓名脱敏"},
+            "name": {
+                "pattern": r"(\w{1})\w*",
+                "replacement": r"\1***",
+                "description": "姓名脱敏",
+            },
         }
 
     def mask_data(self, data: str, data_type: str) -> str:
@@ -408,7 +429,9 @@ class DataMasking:
         logger.debug(f"数据已脱敏: {data_type}")
         return masked_data
 
-    def add_masking_rule(self, data_type: str, pattern: str, replacement: str, description: str) -> None:
+    def add_masking_rule(
+        self, data_type: str, pattern: str, replacement: str, description: str
+    ) -> None:
         """添加脱敏规则
 
         Args:
@@ -417,7 +440,11 @@ class DataMasking:
             replacement: 替换模式
             description: 描述
         """
-        self.masking_rules[data_type] = {"pattern": pattern, "replacement": replacement, "description": description}
+        self.masking_rules[data_type] = {
+            "pattern": pattern,
+            "replacement": replacement,
+            "description": description,
+        }
 
         logger.info(f"脱敏规则已添加: {data_type}")
 
@@ -538,7 +565,9 @@ class DataBackup:
             logger.error(f"创建备份失败: {e}")
             raise
 
-    def restore_backup(self, backup_path: str, target_path: str, decrypt: bool = True) -> bool:
+    def restore_backup(
+        self, backup_path: str, target_path: str, decrypt: bool = True
+    ) -> bool:
         """恢复备份
 
         Args:
@@ -656,7 +685,9 @@ class DataProtection:
 
         logger.info("数据保护管理器已初始化")
 
-    def classify_data(self, data_id: str, classification: DataClassification, _owner: str) -> None:
+    def classify_data(
+        self, data_id: str, classification: DataClassification, _owner: str
+    ) -> None:
         """分类数据
 
         Args:
@@ -668,7 +699,9 @@ class DataProtection:
 
         logger.info(f"数据已分类: {data_id} -> {classification.value}")
 
-    def protect_data(self, data: Any, data_id: str, encrypt: bool = True, mask: bool = False) -> Any:
+    def protect_data(
+        self, data: Any, data_id: str, encrypt: bool = True, mask: bool = False
+    ) -> Any:
         """保护数据
 
         Args:
@@ -684,8 +717,13 @@ class DataProtection:
 
         # 脱敏
         if mask and isinstance(data, dict):
-            classification = self.data_classifications.get(data_id, DataClassification.INTERNAL)
-            if classification in [DataClassification.CONFIDENTIAL, DataClassification.SECRET]:
+            classification = self.data_classifications.get(
+                data_id, DataClassification.INTERNAL
+            )
+            if classification in [
+                DataClassification.CONFIDENTIAL,
+                DataClassification.SECRET,
+            ]:
                 protected_data = self.masking.mask_dict(data, list(data.keys()))
 
         # 加密
@@ -698,7 +736,9 @@ class DataProtection:
 
         return protected_data
 
-    def unprotect_data(self, protected_data: Any, _data_id: str, decrypt: bool = True) -> Any:
+    def unprotect_data(
+        self, protected_data: Any, _data_id: str, decrypt: bool = True
+    ) -> Any:
         """解除数据保护
 
         Args:
@@ -750,7 +790,9 @@ class DataProtection:
         encrypted_data = self.encryption.encrypt_data(data_str)
 
         # 保存备份
-        backup_path = os.path.join(self.backup.backup_dir, f"{backup_name}.backup.encrypted")
+        backup_path = os.path.join(
+            self.backup.backup_dir, f"{backup_name}.backup.encrypted"
+        )
         with open(backup_path, "wb") as f:
             f.write(encrypted_data)
 
@@ -796,7 +838,9 @@ class DataProtection:
             "data_classifications": len(self.data_classifications),
             "backups": len(self.backup.list_backups()),
             "classification_distribution": {
-                classification.value: sum(1 for c in self.data_classifications.values() if c == classification)
+                classification.value: sum(
+                    1 for c in self.data_classifications.values() if c == classification
+                )
                 for classification in DataClassification
             },
         }

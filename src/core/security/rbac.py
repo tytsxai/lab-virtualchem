@@ -103,7 +103,9 @@ class RBACManager:
 
         logger.info("RBAC管理器已初始化")
 
-    def create_user(self, user_id: str, username: str, role: Role, metadata: dict | None = None) -> User:
+    def create_user(
+        self, user_id: str, username: str, role: Role, metadata: dict | None = None
+    ) -> User:
         """创建用户
 
         Args:
@@ -213,7 +215,9 @@ class RBACManager:
         user.role = new_role
         user.permissions = self.role_permissions.get(new_role, set())
 
-        logger.info(f"用户 {user.username} 角色从 {old_role.value} 更改为 {new_role.value}")
+        logger.info(
+            f"用户 {user.username} 角色从 {old_role.value} 更改为 {new_role.value}"
+        )
         return True
 
     def create_session(self, user: User, session_id: str) -> bool:
@@ -247,7 +251,10 @@ class RBACManager:
         user = self.active_sessions.get(session_id)
         if user and user.is_active:
             # 检查会话是否过期
-            if user.last_login and datetime.now() - user.last_login > self.session_timeout:
+            if (
+                user.last_login
+                and datetime.now() - user.last_login > self.session_timeout
+            ):
                 self.remove_session(session_id)
                 return None
             return user
@@ -300,7 +307,9 @@ class RBACManager:
         """
         return list(user.permissions)
 
-    def check_resource_access(self, user: User, resource_type: str, _resource_id: str, action: str) -> bool:
+    def check_resource_access(
+        self, user: User, resource_type: str, _resource_id: str, action: str
+    ) -> bool:
         """检查资源访问权限
 
         Args:
@@ -400,7 +409,9 @@ def require_any_permission(permissions: list[Permission]):
                 raise PermissionError("权限检查失败: 未找到用户信息")
 
             if not rbac_manager.has_any_permission(user, permissions):
-                logger.warning(f"用户 {user.username} 缺少权限: {[p.value for p in permissions]}")
+                logger.warning(
+                    f"用户 {user.username} 缺少权限: {[p.value for p in permissions]}"
+                )
                 raise PermissionError(f"缺少权限: {[p.value for p in permissions]}")
 
             return func(*args, **kwargs)
@@ -431,7 +442,9 @@ def require_role(role: Role):
                 raise PermissionError("角色检查失败: 未找到用户信息")
 
             if user.role != role and user.role != Role.ADMIN:
-                logger.warning(f"用户 {user.username} 角色不匹配: 需要 {role.value}, 实际 {user.role.value}")
+                logger.warning(
+                    f"用户 {user.username} 角色不匹配: 需要 {role.value}, 实际 {user.role.value}"
+                )
                 raise PermissionError(f"需要角色: {role.value}")
 
             return func(*args, **kwargs)

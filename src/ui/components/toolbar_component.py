@@ -49,19 +49,25 @@ class ToolbarComponent(BaseWindowComponent):
         # 新建实验
         new_action = QAction("新建实验", self)
         new_action.setShortcut("Ctrl+N")
-        new_action.triggered.connect(lambda: self.action_triggered.emit("new_experiment"))
+        new_action.triggered.connect(
+            lambda: self.action_triggered.emit("new_experiment")
+        )
         self._add_action("new_experiment", new_action)
 
         # 打开实验
         open_action = QAction("打开实验", self)
         open_action.setShortcut("Ctrl+O")
-        open_action.triggered.connect(lambda: self.action_triggered.emit("open_experiment"))
+        open_action.triggered.connect(
+            lambda: self.action_triggered.emit("open_experiment")
+        )
         self._add_action("open_experiment", open_action)
 
         # 保存实验
         save_action = QAction("保存实验", self)
         save_action.setShortcut("Ctrl+S")
-        save_action.triggered.connect(lambda: self.action_triggered.emit("save_experiment"))
+        save_action.triggered.connect(
+            lambda: self.action_triggered.emit("save_experiment")
+        )
         self._add_action("save_experiment", save_action)
 
         # 分隔符
@@ -70,13 +76,17 @@ class ToolbarComponent(BaseWindowComponent):
         # 运行实验
         run_action = QAction("运行实验", self)
         run_action.setShortcut("F5")
-        run_action.triggered.connect(lambda: self.action_triggered.emit("run_experiment"))
+        run_action.triggered.connect(
+            lambda: self.action_triggered.emit("run_experiment")
+        )
         self._add_action("run_experiment", run_action)
 
         # 停止实验
         stop_action = QAction("停止实验", self)
         stop_action.setShortcut("F6")
-        stop_action.triggered.connect(lambda: self.action_triggered.emit("stop_experiment"))
+        stop_action.triggered.connect(
+            lambda: self.action_triggered.emit("stop_experiment")
+        )
         self._add_action("stop_experiment", stop_action)
 
         # 分隔符
@@ -84,7 +94,9 @@ class ToolbarComponent(BaseWindowComponent):
 
         # 设置
         settings_action = QAction("设置", self)
-        settings_action.triggered.connect(lambda: self.action_triggered.emit("settings"))
+        settings_action.triggered.connect(
+            lambda: self.action_triggered.emit("settings")
+        )
         self._add_action("settings", settings_action)
 
         # 帮助
@@ -96,7 +108,11 @@ class ToolbarComponent(BaseWindowComponent):
     def _add_action(self, name: str, action: QAction) -> None:
         """添加动作"""
         if self._toolbar is None:
-            raise UIError("Toolbar not initialized", widget="ToolbarComponent", action="add_action")
+            raise UIError(
+                "Toolbar not initialized",
+                widget="ToolbarComponent",
+                action="add_action",
+            )
 
         self._actions[name] = action
         self._toolbar.addAction(action)

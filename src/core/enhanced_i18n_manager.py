@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 class LanguageCode(Enum):
     """语言代码"""
+
     EN = "en"  # 英语
     ZH_CN = "zh-cn"  # 简体中文
     ZH_TW = "zh-tw"  # 繁体中文
@@ -38,6 +39,7 @@ class LanguageCode(Enum):
 @dataclass
 class LanguageInfo:
     """语言信息"""
+
     code: LanguageCode
     name: str
     native_name: str
@@ -55,13 +57,14 @@ class LanguageInfo:
             "region": self.region,
             "script": self.script,
             "direction": self.direction,
-            "plural_forms": self.plural_forms
+            "plural_forms": self.plural_forms,
         }
 
 
 @dataclass
 class TranslationEntry:
     """翻译条目"""
+
     key: str
     value: str
     context: str = ""
@@ -75,13 +78,14 @@ class TranslationEntry:
             "value": self.value,
             "context": self.context,
             "plural_key": self.plural_key,
-            "tags": self.tags
+            "tags": self.tags,
         }
 
 
 @dataclass
 class LocalizationResource:
     """本地化资源"""
+
     language: LanguageCode
     namespace: str
     entries: dict[str, TranslationEntry] = field(default_factory=dict)
@@ -95,7 +99,7 @@ class LocalizationResource:
             "namespace": self.namespace,
             "entries": {k: v.to_dict() for k, v in self.entries.items()},
             "last_modified": self.last_modified,
-            "version": self.version
+            "version": self.version,
         }
 
 
@@ -127,7 +131,7 @@ class EnhancedI18nManager:
             "cache_hits": 0,
             "cache_misses": 0,
             "language_switches": 0,
-            "resource_loads": 0
+            "resource_loads": 0,
         }
 
         # 线程安全
@@ -156,7 +160,7 @@ class EnhancedI18nManager:
                 region="US",
                 script="Latn",
                 direction="ltr",
-                plural_forms=["one", "other"]
+                plural_forms=["one", "other"],
             ),
             LanguageCode.ZH_CN: LanguageInfo(
                 code=LanguageCode.ZH_CN,
@@ -165,7 +169,7 @@ class EnhancedI18nManager:
                 region="CN",
                 script="Hans",
                 direction="ltr",
-                plural_forms=["other"]
+                plural_forms=["other"],
             ),
             LanguageCode.ZH_TW: LanguageInfo(
                 code=LanguageCode.ZH_TW,
@@ -174,7 +178,7 @@ class EnhancedI18nManager:
                 region="TW",
                 script="Hant",
                 direction="ltr",
-                plural_forms=["other"]
+                plural_forms=["other"],
             ),
             LanguageCode.JA: LanguageInfo(
                 code=LanguageCode.JA,
@@ -183,7 +187,7 @@ class EnhancedI18nManager:
                 region="JP",
                 script="Hira",
                 direction="ltr",
-                plural_forms=["other"]
+                plural_forms=["other"],
             ),
             LanguageCode.KO: LanguageInfo(
                 code=LanguageCode.KO,
@@ -192,7 +196,7 @@ class EnhancedI18nManager:
                 region="KR",
                 script="Hang",
                 direction="ltr",
-                plural_forms=["other"]
+                plural_forms=["other"],
             ),
             LanguageCode.FR: LanguageInfo(
                 code=LanguageCode.FR,
@@ -201,7 +205,7 @@ class EnhancedI18nManager:
                 region="FR",
                 script="Latn",
                 direction="ltr",
-                plural_forms=["one", "other"]
+                plural_forms=["one", "other"],
             ),
             LanguageCode.DE: LanguageInfo(
                 code=LanguageCode.DE,
@@ -210,7 +214,7 @@ class EnhancedI18nManager:
                 region="DE",
                 script="Latn",
                 direction="ltr",
-                plural_forms=["one", "other"]
+                plural_forms=["one", "other"],
             ),
             LanguageCode.ES: LanguageInfo(
                 code=LanguageCode.ES,
@@ -219,7 +223,7 @@ class EnhancedI18nManager:
                 region="ES",
                 script="Latn",
                 direction="ltr",
-                plural_forms=["one", "other"]
+                plural_forms=["one", "other"],
             ),
             LanguageCode.RU: LanguageInfo(
                 code=LanguageCode.RU,
@@ -228,7 +232,7 @@ class EnhancedI18nManager:
                 region="RU",
                 script="Cyrl",
                 direction="ltr",
-                plural_forms=["one", "few", "many", "other"]
+                plural_forms=["one", "few", "many", "other"],
             ),
             LanguageCode.AR: LanguageInfo(
                 code=LanguageCode.AR,
@@ -237,45 +241,38 @@ class EnhancedI18nManager:
                 region="SA",
                 script="Arab",
                 direction="rtl",
-                plural_forms=["zero", "one", "two", "few", "many", "other"]
-            )
+                plural_forms=["zero", "one", "two", "few", "many", "other"],
+            ),
         }
 
     def _load_default_resources(self) -> None:
         """加载默认资源"""
         # 加载默认的英文资源
         self._load_resource_from_file(
-            Path("assets/i18n/en.json"),
-            LanguageCode.EN,
-            "default"
+            Path("assets/i18n/en.json"), LanguageCode.EN, "default"
         )
 
         # 加载默认的中文资源
         self._load_resource_from_file(
-            Path("assets/i18n/zh-cn.json"),
-            LanguageCode.ZH_CN,
-            "default"
+            Path("assets/i18n/zh-cn.json"), LanguageCode.ZH_CN, "default"
         )
 
     def _load_resource_from_file(
-        self,
-        file_path: Path,
-        language: LanguageCode,
-        namespace: str
+        self, file_path: Path, language: LanguageCode, namespace: str
     ) -> bool:
         """从文件加载资源"""
         if not file_path.exists():
             return False
 
         try:
-            with open(file_path, encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
 
             resource = LocalizationResource(
                 language=language,
                 namespace=namespace,
                 last_modified=file_path.stat().st_mtime,
-                version=data.get("version", "1.0.0")
+                version=data.get("version", "1.0.0"),
             )
 
             # 解析翻译条目
@@ -286,7 +283,7 @@ class EnhancedI18nManager:
                         value=value.get("value", ""),
                         context=value.get("context", ""),
                         plural_key=value.get("plural_key", ""),
-                        tags=value.get("tags", {})
+                        tags=value.get("tags", {}),
                     )
                 else:
                     entry = TranslationEntry(key=key, value=str(value))
@@ -309,7 +306,7 @@ class EnhancedI18nManager:
                 LogLevel.INFO,
                 f"Loaded resource: {resource_key}",
                 module="EnhancedI18nManager",
-                function="_load_resource_from_file"
+                function="_load_resource_from_file",
             )
 
             return True
@@ -359,11 +356,8 @@ class EnhancedI18nManager:
             # 发布语言变更事件
             publish_event(
                 "language_changed",
-                {
-                    "old_language": old_language.value,
-                    "new_language": language.value
-                },
-                priority=EventPriority.HIGH
+                {"old_language": old_language.value, "new_language": language.value},
+                priority=EventPriority.HIGH,
             )
 
             # 记录日志
@@ -371,7 +365,7 @@ class EnhancedI18nManager:
                 LogLevel.INFO,
                 f"Language changed: {old_language.value} -> {language.value}",
                 module="EnhancedI18nManager",
-                function="set_current_language"
+                function="set_current_language",
             )
 
             return True
@@ -393,7 +387,7 @@ class EnhancedI18nManager:
         key: str,
         namespace: str = "default",
         language: LanguageCode | None = None,
-        **kwargs
+        **kwargs,
     ) -> str:
         """翻译文本"""
         if language is None:
@@ -412,7 +406,9 @@ class EnhancedI18nManager:
 
         # 如果未找到，尝试回退语言
         if not translation and language != self._fallback_language:
-            translation = self._find_translation(key, namespace, self._fallback_language)
+            translation = self._find_translation(
+                key, namespace, self._fallback_language
+            )
 
         # 如果仍未找到，返回键名
         if not translation:
@@ -424,7 +420,7 @@ class EnhancedI18nManager:
                 LogLevel.WARNING,
                 f"Translation not found: {key}",
                 module="EnhancedI18nManager",
-                function="translate"
+                function="translate",
             )
         else:
             self._stats["cache_misses"] += 1
@@ -443,10 +439,7 @@ class EnhancedI18nManager:
         return translation
 
     def _find_translation(
-        self,
-        key: str,
-        namespace: str,
-        language: LanguageCode
+        self, key: str, namespace: str, language: LanguageCode
     ) -> str | None:
         """查找翻译"""
         resource_key = f"{language.value}:{namespace}"
@@ -463,7 +456,7 @@ class EnhancedI18nManager:
         count: int,
         namespace: str = "default",
         language: LanguageCode | None = None,
-        **kwargs
+        **kwargs,
     ) -> str:
         """翻译复数形式"""
         if language is None:
@@ -527,23 +520,17 @@ class EnhancedI18nManager:
         language: LanguageCode,
         namespace: str = "default",
         context: str = "",
-        **tags
+        **tags,
     ) -> None:
         """添加翻译"""
         resource_key = f"{language.value}:{namespace}"
 
         if resource_key not in self._resources:
             self._resources[resource_key] = LocalizationResource(
-                language=language,
-                namespace=namespace
+                language=language, namespace=namespace
             )
 
-        entry = TranslationEntry(
-            key=key,
-            value=value,
-            context=context,
-            tags=tags
-        )
+        entry = TranslationEntry(key=key, value=value, context=context, tags=tags)
 
         self._resources[resource_key].entries[key] = entry
         self._stats["total_translations"] += 1
@@ -555,10 +542,7 @@ class EnhancedI18nManager:
                 del self._translation_cache[cache_key]
 
     def remove_translation(
-        self,
-        key: str,
-        language: LanguageCode,
-        namespace: str = "default"
+        self, key: str, language: LanguageCode, namespace: str = "default"
     ) -> bool:
         """删除翻译"""
         resource_key = f"{language.value}:{namespace}"
@@ -578,9 +562,7 @@ class EnhancedI18nManager:
         return False
 
     def get_translations(
-        self,
-        language: LanguageCode,
-        namespace: str = "default"
+        self, language: LanguageCode, namespace: str = "default"
     ) -> dict[str, str]:
         """获取所有翻译"""
         resource_key = f"{language.value}:{namespace}"
@@ -598,7 +580,7 @@ class EnhancedI18nManager:
             "current_language": self._current_language.value,
             "supported_languages": len(self._languages),
             "loaded_resources": len(self._resources),
-            "cache_size": len(self._translation_cache)
+            "cache_size": len(self._translation_cache),
         }
 
     def _handle_language_change(self, event: Event) -> None:
@@ -631,7 +613,7 @@ class EnhancedI18nManager:
             publish_event(
                 "translation_result",
                 {"key": key, "translation": translation},
-                priority=EventPriority.NORMAL
+                priority=EventPriority.NORMAL,
             )
 
     def _handle_resource_reload(self, event: Event) -> None:
@@ -649,12 +631,12 @@ class EnhancedI18nManager:
             filename = f"{resource.language.value}_{resource.namespace}.json"
             file_path = output_dir / filename
 
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(resource.to_dict(), f, indent=2, ensure_ascii=False)
 
         # 导出统计信息
         stats_file = output_dir / "i18n_stats.json"
-        with open(stats_file, 'w', encoding='utf-8') as f:
+        with open(stats_file, "w", encoding="utf-8") as f:
             json.dump(self.get_stats(), f, indent=2, ensure_ascii=False)
 
 

@@ -88,12 +88,16 @@ class ExperimentServiceImpl(ExperimentService):
             )
         except Exception as exc:  # noqa: BLE001
             logger.error("创建实验失败: %s", exc)
-            return ExperimentResponse(success=False, experiment_id="", message=f"创建实验失败: {exc}")
+            return ExperimentResponse(
+                success=False, experiment_id="", message=f"创建实验失败: {exc}"
+            )
 
     def start_experiment(self, experiment_id: str) -> ExperimentResponse:
         ctx = self._active_experiments.get(experiment_id)
         if not ctx:
-            return ExperimentResponse(success=False, experiment_id=experiment_id, message="实验不存在")
+            return ExperimentResponse(
+                success=False, experiment_id=experiment_id, message="实验不存在"
+            )
 
         try:
             engine = ctx["engine"]
@@ -108,12 +112,18 @@ class ExperimentServiceImpl(ExperimentService):
             )
         except Exception as exc:  # noqa: BLE001
             logger.error("启动实验失败: %s", exc)
-            return ExperimentResponse(success=False, experiment_id=experiment_id, message=f"启动实验失败: {exc}")
+            return ExperimentResponse(
+                success=False,
+                experiment_id=experiment_id,
+                message=f"启动实验失败: {exc}",
+            )
 
     def submit_step(self, request: StepSubmissionRequest) -> StepSubmissionResponse:
         ctx = self._active_experiments.get(request.experiment_id)
         if not ctx:
-            return StepSubmissionResponse(success=False, passed=False, message="实验不存在")
+            return StepSubmissionResponse(
+                success=False, passed=False, message="实验不存在"
+            )
 
         engine: IExperimentEngine = ctx["engine"]
 
@@ -133,7 +143,9 @@ class ExperimentServiceImpl(ExperimentService):
             )
         except Exception as exc:  # noqa: BLE001
             logger.error("步骤提交失败: %s", exc)
-            return StepSubmissionResponse(success=False, passed=False, message=f"提交失败: {exc}")
+            return StepSubmissionResponse(
+                success=False, passed=False, message=f"提交失败: {exc}"
+            )
 
     def get_current_step(self, experiment_id: str) -> dict[str, Any] | None:
         ctx = self._active_experiments.get(experiment_id)
@@ -148,7 +160,9 @@ class ExperimentServiceImpl(ExperimentService):
         return {
             "id": getattr(step, "id", None),
             "content": getattr(step, "content", None),
-            "type": step.type.value if hasattr(step.type, "value") else getattr(step, "type", None),
+            "type": step.type.value
+            if hasattr(step.type, "value")
+            else getattr(step, "type", None),
             "options": getattr(step, "options", {}) or {},
         }
 
@@ -174,7 +188,9 @@ class ExperimentServiceImpl(ExperimentService):
     def complete_experiment(self, experiment_id: str) -> ExperimentResponse:
         ctx = self._active_experiments.get(experiment_id)
         if not ctx:
-            return ExperimentResponse(success=False, experiment_id=experiment_id, message="实验不存在")
+            return ExperimentResponse(
+                success=False, experiment_id=experiment_id, message="实验不存在"
+            )
 
         engine: IExperimentEngine = ctx["engine"]
         try:
@@ -192,12 +208,18 @@ class ExperimentServiceImpl(ExperimentService):
             )
         except Exception as exc:  # noqa: BLE001
             logger.error("完成实验失败: %s", exc)
-            return ExperimentResponse(success=False, experiment_id=experiment_id, message=f"完成实验失败: {exc}")
+            return ExperimentResponse(
+                success=False,
+                experiment_id=experiment_id,
+                message=f"完成实验失败: {exc}",
+            )
 
     def pause_experiment(self, experiment_id: str) -> ExperimentResponse:
         ctx = self._active_experiments.get(experiment_id)
         if not ctx:
-            return ExperimentResponse(success=False, experiment_id=experiment_id, message="实验不存在")
+            return ExperimentResponse(
+                success=False, experiment_id=experiment_id, message="实验不存在"
+            )
 
         ctx["status"] = ExperimentStatus.PAUSED
         return ExperimentResponse(
@@ -210,7 +232,9 @@ class ExperimentServiceImpl(ExperimentService):
     def resume_experiment(self, experiment_id: str) -> ExperimentResponse:
         ctx = self._active_experiments.get(experiment_id)
         if not ctx:
-            return ExperimentResponse(success=False, experiment_id=experiment_id, message="实验不存在")
+            return ExperimentResponse(
+                success=False, experiment_id=experiment_id, message="实验不存在"
+            )
 
         ctx["status"] = ExperimentStatus.IN_PROGRESS
         return ExperimentResponse(
@@ -228,7 +252,9 @@ class ExperimentServiceImpl(ExperimentService):
         engine: IExperimentEngine = ctx["engine"]
         return engine.get_record()
 
-    def validate_experiment(self, template: ExperimentTemplate) -> tuple[bool, list[str]]:
+    def validate_experiment(
+        self, template: ExperimentTemplate
+    ) -> tuple[bool, list[str]]:
         errors = []
         if not template.id:
             errors.append("模板ID不能为空")
@@ -253,7 +279,9 @@ class ExperimentServiceImpl(ExperimentService):
         template = self.storage.load(key)
         if template is None and self.template_engine:
             try:
-                template_path = self.template_engine.templates_dir / f"{template_id}.yaml"
+                template_path = (
+                    self.template_engine.templates_dir / f"{template_id}.yaml"
+                )
                 template = self.template_engine.load_experiment(template_path)
             except Exception as exc:  # noqa: BLE001
                 logger.warning("模板引擎加载失败: %s", exc)

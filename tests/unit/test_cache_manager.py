@@ -21,9 +21,7 @@ class TestCacheManager:
     def setup_method(self):
         """测试前准备"""
         self.cache_manager = CacheManager(
-            max_size=10,
-            strategy=CacheStrategy.LRU,
-            ttl=300
+            max_size=10, strategy=CacheStrategy.LRU, ttl=300
         )
 
     def teardown_method(self):
@@ -89,10 +87,7 @@ class TestCacheManager:
 
     def test_lfu_eviction(self):
         """测试LFU淘汰策略"""
-        cache_manager = CacheManager(
-            max_size=3,
-            strategy=CacheStrategy.LFU
-        )
+        cache_manager = CacheManager(max_size=3, strategy=CacheStrategy.LFU)
 
         try:
             # 设置缓存
@@ -116,10 +111,7 @@ class TestCacheManager:
 
     def test_fifo_eviction(self):
         """测试FIFO淘汰策略"""
-        cache_manager = CacheManager(
-            max_size=3,
-            strategy=CacheStrategy.FIFO
-        )
+        cache_manager = CacheManager(max_size=3, strategy=CacheStrategy.FIFO)
 
         try:
             # 按顺序设置缓存
@@ -139,10 +131,7 @@ class TestCacheManager:
 
     def test_ttl_eviction(self):
         """测试TTL淘汰策略"""
-        cache_manager = CacheManager(
-            max_size=10,
-            strategy=CacheStrategy.TTL
-        )
+        cache_manager = CacheManager(max_size=10, strategy=CacheStrategy.TTL)
 
         try:
             # 设置不同TTL的缓存
@@ -280,7 +269,7 @@ class TestCacheManager:
             key="test_key",
             value="test_value",
             created_at=now,
-            expires_at=now + timedelta(seconds=300)
+            expires_at=now + timedelta(seconds=300),
         )
 
         assert entry.key == "test_key"
@@ -293,14 +282,13 @@ class TestCacheManager:
 
     def test_redis_integration(self):
         """测试Redis集成"""
-        with patch('redis.Redis') as mock_redis:
+        with patch("redis.Redis") as mock_redis:
             mock_client = Mock()
             mock_redis.return_value = mock_client
 
             # 测试Redis连接
             cache_manager = CacheManager(
-                use_redis=True,
-                redis_url="redis://localhost:6379"
+                use_redis=True, redis_url="redis://localhost:6379"
             )
 
             try:

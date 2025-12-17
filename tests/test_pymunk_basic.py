@@ -4,7 +4,6 @@ PyMunk基础功能测试
 测试PyMunk物理引擎的基本功能是否正常工作
 """
 
-
 import pymunk
 import pytest
 
@@ -164,11 +163,13 @@ def test_constraint_system():
 
     # 创建距离约束（类似弹簧）
     joint = pymunk.DampedSpring(
-        body1, body2,
-        (0, 0), (0, 0),  # 锚点
+        body1,
+        body2,
+        (0, 0),
+        (0, 0),  # 锚点
         50,  # 静止长度
         10,  # 刚度
-        0.5  # 阻尼
+        0.5,  # 阻尼
     )
     space.add(joint)
 
@@ -274,10 +275,10 @@ def test_shape_types():
     print("✓ 支持多种形状类型: 圆形、矩形、线段、多边形")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("=" * 60)
     print("PyMunk 物理引擎基础测试")
     print("=" * 60)
 
     # 运行所有测试
-    pytest.main([__file__, '-v', '--tb=short'])
+    pytest.main([__file__, "-v", "--tb=short"])

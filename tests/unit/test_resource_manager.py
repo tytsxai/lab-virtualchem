@@ -142,6 +142,7 @@ class TestResourceManager:
         def create_cleanup(name):
             def cleanup(resource):
                 cleanup_order.append(name)
+
             return cleanup
 
         register_resource("resource1", Mock(), create_cleanup("resource1"))
@@ -211,6 +212,7 @@ class TestResourceManager:
 
     def test_resource_registration_during_cleanup(self):
         """测试清理期间注册资源"""
+
         # 注册一个会在清理时注册新资源的资源
         def cleanup_with_registration(resource):
             # 在清理时注册新资源
@@ -257,6 +259,7 @@ class TestResourceManager:
 
     def test_resource_cleanup_with_context_manager(self):
         """测试资源清理的上下文管理器"""
+
         # 模拟支持上下文管理器的资源
         class ContextResource:
             def __init__(self):
@@ -271,7 +274,7 @@ class TestResourceManager:
         resource = ContextResource()
 
         def cleanup(resource):
-            if hasattr(resource, '__exit__'):
+            if hasattr(resource, "__exit__"):
                 resource.__exit__(None, None, None)
 
         register_resource("context_resource", resource, cleanup)
@@ -335,26 +338,34 @@ class TestResourceManager:
 
         # 1. 注册数据库连接
         db_connection = Mock()
+
         def db_cleanup(conn):
             conn.close()
+
         register_resource("database", db_connection, db_cleanup)
 
         # 2. 注册缓存管理器
         cache_manager = Mock()
+
         def cache_cleanup(cache):
             cache.close()
+
         register_resource("cache", cache_manager, cache_cleanup)
 
         # 3. 注册事件总线
         event_bus = Mock()
+
         def event_cleanup(bus):
             bus.close()
+
         register_resource("event_bus", event_bus, event_cleanup)
 
         # 4. 注册日志系统
         logger = Mock()
+
         def logger_cleanup(log):
             log.shutdown()
+
         register_resource("logger", logger, logger_cleanup)
 
         # 检查所有资源都已注册

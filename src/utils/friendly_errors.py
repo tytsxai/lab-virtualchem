@@ -35,7 +35,11 @@ class FriendlyErrorHandler:
         "FileNotFoundError": {
             "title": "找不到文件",
             "message": "程序需要的文件不存在",
-            "solutions": ["检查文件路径是否正确", "确保没有移动或删除重要文件", "尝试重新安装程序"],
+            "solutions": [
+                "检查文件路径是否正确",
+                "确保没有移动或删除重要文件",
+                "尝试重新安装程序",
+            ],
         },
         "PermissionError": {
             "title": "没有访问权限",
@@ -94,7 +98,9 @@ class FriendlyErrorHandler:
     }
 
     @classmethod
-    def get_friendly_message(cls, error: Exception, context: str | None = None) -> dict[str, str | list[str]]:
+    def get_friendly_message(
+        cls, error: Exception, context: str | None = None
+    ) -> dict[str, str | list[str]]:
         """将异常转换为友好的错误信息
 
         Args:
@@ -169,7 +175,9 @@ class FriendlyErrorHandler:
         return friendly_info
 
     @classmethod
-    def format_error_dialog(cls, error: Exception, context: str | None = None) -> tuple[str, str]:
+    def format_error_dialog(
+        cls, error: Exception, context: str | None = None
+    ) -> tuple[str, str]:
         """格式化错误信息用于对话框显示
 
         Args:

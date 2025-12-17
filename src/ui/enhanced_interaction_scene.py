@@ -28,7 +28,9 @@ logger = get_logger(__name__)
 class ParticleEffect(QGraphicsEllipseItem):
     """粒子效果"""
 
-    def __init__(self, x: float, y: float, color: QColor, parent: QGraphicsItem | None = None):
+    def __init__(
+        self, x: float, y: float, color: QColor, parent: QGraphicsItem | None = None
+    ):
         super().__init__(-5, -5, 10, 10, parent)
         self.setPos(x, y)
 
@@ -172,7 +174,9 @@ class EnhancedInteractiveScene(InteractiveExperimentScene):
     zone_activated = Signal(str)  # 区域ID
     interaction_hint = Signal(str)  # 交互提示文本
 
-    def __init__(self, scene_config: dict[str, Any] | None = None, parent: QWidget | None = None):
+    def __init__(
+        self, scene_config: dict[str, Any] | None = None, parent: QWidget | None = None
+    ):
         super().__init__(scene_config, parent)
 
         # 反馈系统
@@ -323,7 +327,9 @@ class EnhancedInteractiveScene(InteractiveExperimentScene):
 
         return False
 
-    def add_connection_line(self, item1_id: str, item2_id: str, color: QColor = QColor(100, 150, 255)):
+    def add_connection_line(
+        self, item1_id: str, item2_id: str, color: QColor = QColor(100, 150, 255)
+    ):
         """在两个物品之间添加连接线"""
         if item1_id not in self.draggable_items or item2_id not in self.draggable_items:
             return
@@ -333,7 +339,9 @@ class EnhancedInteractiveScene(InteractiveExperimentScene):
 
         from PySide6.QtWidgets import QGraphicsLineItem
 
-        line = QGraphicsLineItem(item1.pos().x(), item1.pos().y(), item2.pos().x(), item2.pos().y())
+        line = QGraphicsLineItem(
+            item1.pos().x(), item1.pos().y(), item2.pos().x(), item2.pos().y()
+        )
         line.setPen(QPen(color, 3, Qt.PenStyle.DashLine))
         self.addItem(line)
 
@@ -414,7 +422,13 @@ ENHANCED_PRESET_SCENES = {
         "height": 700,
         "background_color": "#f9f9f9",
         "draggable_items": [
-            {"id": "burette", "type": "burette", "position": [150, 120], "size": [60, 200], "image": "burette.png"},
+            {
+                "id": "burette",
+                "type": "burette",
+                "position": [150, 120],
+                "size": [60, 200],
+                "image": "burette.png",
+            },
             {
                 "id": "erlenmeyer_flask",
                 "type": "flask",
@@ -447,8 +461,16 @@ ENHANCED_PRESET_SCENES = {
             },
         ],
         "drop_zones": [
-            {"id": "titration_stand", "rect": [120, 200, 120, 280], "accepted_types": ["burette"]},
-            {"id": "workspace", "rect": [300, 380, 180, 200], "accepted_types": ["flask"]},
+            {
+                "id": "titration_stand",
+                "rect": [120, 200, 120, 280],
+                "accepted_types": ["burette"],
+            },
+            {
+                "id": "workspace",
+                "rect": [300, 380, 180, 200],
+                "accepted_types": ["flask"],
+            },
         ],
     },
 }

@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 class IntegrationLevel(Enum):
     """集成级别"""
+
     BASIC = "basic"
     STANDARD = "standard"
     ENHANCED = "enhanced"
@@ -33,6 +34,7 @@ class IntegrationLevel(Enum):
 @dataclass
 class RobustnessSettings:
     """健壮性设置"""
+
     integration_level: IntegrationLevel = IntegrationLevel.STANDARD
     enable_error_recovery: bool = True
     enable_validation: bool = True
@@ -63,7 +65,9 @@ class RobustnessIntegrationManager:
         # 配置集成级别
         self._configure_integration_level()
 
-        logger.info(f"健壮性集成管理器初始化完成，级别: {self.settings.integration_level.value}")
+        logger.info(
+            f"健壮性集成管理器初始化完成，级别: {self.settings.integration_level.value}"
+        )
 
     def _configure_integration_level(self) -> None:
         """配置集成级别"""
@@ -123,23 +127,32 @@ class RobustnessIntegrationManager:
         security_level: str = "medium",
         enable_caching: bool = False,
         enable_retry: bool = True,
-        timeout: float | None = None
+        timeout: float | None = None,
     ) -> Callable:
         """增强函数健壮性"""
 
         # 使用健壮性增强器
         enhanced_func = self.robustness_enhancer.enhance_function(
-            func, operation_name, validation_rules, security_level,
-            enable_caching, enable_retry, timeout
+            func,
+            operation_name,
+            validation_rules,
+            security_level,
+            enable_caching,
+            enable_retry,
+            timeout,
         )
 
         # 添加错误恢复
         if self.settings.enable_error_recovery:
-            enhanced_func = self._add_error_recovery(enhanced_func, operation_name or func.__name__)
+            enhanced_func = self._add_error_recovery(
+                enhanced_func, operation_name or func.__name__
+            )
 
         # 添加性能监控
         if self.settings.enable_performance_monitoring:
-            enhanced_func = self._add_performance_monitoring(enhanced_func, operation_name or func.__name__)
+            enhanced_func = self._add_performance_monitoring(
+                enhanced_func, operation_name or func.__name__
+            )
 
         # 添加安全保护
         if self.settings.enable_security:
@@ -147,31 +160,44 @@ class RobustnessIntegrationManager:
 
         # 添加日志记录
         if self.settings.enable_logging:
-            enhanced_func = self._add_logging(enhanced_func, operation_name or func.__name__)
+            enhanced_func = self._add_logging(
+                enhanced_func, operation_name or func.__name__
+            )
 
         return enhanced_func
 
     def _add_error_recovery(self, func: Callable, operation_name: str) -> Callable:
         """添加错误恢复"""
+
         def wrapper(*args, **kwargs):
             return self.error_recovery.recover(operation_name, func, *args, **kwargs)
+
         return wrapper
 
-    def _add_performance_monitoring(self, func: Callable, operation_name: str) -> Callable:
+    def _add_performance_monitoring(
+        self, func: Callable, operation_name: str
+    ) -> Callable:
         """添加性能监控"""
+
         def wrapper(*args, **kwargs):
             start_time = self.performance_manager.start_operation_timer(operation_name)
             try:
                 result = func(*args, **kwargs)
-                self.performance_manager.end_operation_timer(operation_name, start_time, success=True)
+                self.performance_manager.end_operation_timer(
+                    operation_name, start_time, success=True
+                )
                 return result
             except Exception:
-                self.performance_manager.end_operation_timer(operation_name, start_time, success=False)
+                self.performance_manager.end_operation_timer(
+                    operation_name, start_time, success=False
+                )
                 raise
+
         return wrapper
 
     def _add_security_protection(self, func: Callable) -> Callable:
         """添加安全保护"""
+
         def wrapper(*args, **kwargs):
             # 检查所有字符串参数
             for arg in args:
@@ -185,10 +211,12 @@ class RobustnessIntegrationManager:
                         raise ValueError(f"输入包含威胁: {value[:50]}...")
 
             return func(*args, **kwargs)
+
         return wrapper
 
     def _add_logging(self, func: Callable, operation_name: str) -> Callable:
         """添加日志记录"""
+
         def wrapper(*args, **kwargs):
             with self.logger.context(operation=operation_name):
                 try:
@@ -198,9 +226,12 @@ class RobustnessIntegrationManager:
                 except Exception as e:
                     self.logger.error(f"操作失败: {operation_name} - {e}")
                     raise
+
         return wrapper
 
-    def validate_data(self, data: Any, validation_rules: dict[str, Any] | None = None) -> bool:
+    def validate_data(
+        self, data: Any, validation_rules: dict[str, Any] | None = None
+    ) -> bool:
         """验证数据"""
         if not self.settings.enable_validation:
             return True
@@ -226,7 +257,10 @@ class RobustnessIntegrationManager:
         if not self.settings.enable_performance_monitoring:
             return {}
 
-        return {"operation": operation_name, "report": self.performance_manager.get_performance_report()}
+        return {
+            "operation": operation_name,
+            "report": self.performance_manager.get_performance_report(),
+        }
 
     def check_security(self, input_data: str) -> bool:
         """检查安全性"""
@@ -258,7 +292,12 @@ class RobustnessIntegrationManager:
         vulnerabilities = []
 
         # 检查常见安全问题
-        if self.security_manager.security_auditor.get_security_summary()["total_threat_detections"] > 0:
+        if (
+            self.security_manager.security_auditor.get_security_summary()[
+                "total_threat_detections"
+            ]
+            > 0
+        ):
             vulnerabilities.append("检测到潜在安全威胁")
 
         return vulnerabilities
@@ -309,7 +348,9 @@ class RobustnessIntegrationManager:
             if optimizations:
                 report.append("## 自动优化")
                 for opt in optimizations:
-                    report.append(f"- {opt.get('strategy', 'unknown')}: {opt.get('actions_taken', [])}")
+                    report.append(
+                        f"- {opt.get('strategy', 'unknown')}: {opt.get('actions_taken', [])}"
+                    )
                 report.append("")
 
         # 安全扫描结果
@@ -341,19 +382,27 @@ def enhance_robustness(
     security_level: str = "medium",
     enable_caching: bool = False,
     enable_retry: bool = True,
-    timeout: float | None = None
+    timeout: float | None = None,
 ):
     """健壮性增强装饰器"""
+
     def decorator(func: Callable) -> Callable:
         return robustness_integration.enhance_function(
-            func, operation_name, validation_rules, security_level,
-            enable_caching, enable_retry, timeout
+            func,
+            operation_name,
+            validation_rules,
+            security_level,
+            enable_caching,
+            enable_retry,
+            timeout,
         )
+
     return decorator
 
 
 def validate_input(validation_rules: dict[str, Any] | None = None):
     """输入验证装饰器"""
+
     def decorator(func: Callable) -> Callable:
         def wrapper(*args, **kwargs):
             # 验证所有参数
@@ -366,12 +415,15 @@ def validate_input(validation_rules: dict[str, Any] | None = None):
                     raise ValueError(f"参数验证失败: {_key}={value}")
 
             return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
 def secure_operation(security_level: str = "medium"):
     """安全操作装饰器"""
+
     def decorator(func: Callable) -> Callable:
         def wrapper(*args, **kwargs):
             logger.debug(f"执行安全操作: {func.__name__} (级别: {security_level})")
@@ -387,12 +439,15 @@ def secure_operation(security_level: str = "medium"):
                         raise ValueError(f"安全检查失败: {_key}={value[:50]}...")
 
             return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
 def log_operation(operation_name: str | None = None):
     """操作日志装饰器"""
+
     def decorator(func: Callable) -> Callable:
         name = operation_name or func.__name__
 
@@ -400,12 +455,18 @@ def log_operation(operation_name: str | None = None):
             robustness_integration.log_event("operation_start", f"开始操作: {name}")
             try:
                 result = func(*args, **kwargs)
-                robustness_integration.log_event("operation_success", f"操作成功: {name}")
+                robustness_integration.log_event(
+                    "operation_success", f"操作成功: {name}"
+                )
                 return result
             except Exception as e:
-                robustness_integration.log_event("operation_error", f"操作失败: {name} - {e}")
+                robustness_integration.log_event(
+                    "operation_error", f"操作失败: {name} - {e}"
+                )
                 raise
+
         return wrapper
+
     return decorator
 
 

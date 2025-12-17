@@ -210,11 +210,15 @@ class L1Cache:
             del self._cache[oldest_key]
         elif self.policy == CachePolicy.LFU:
             # 淘汰使用次数最少的
-            least_used_key = min(self._cache.keys(), key=lambda k: self._cache[k].access_count)
+            least_used_key = min(
+                self._cache.keys(), key=lambda k: self._cache[k].access_count
+            )
             del self._cache[least_used_key]
         elif self.policy == CachePolicy.FIFO:
             # 淘汰最早创建的
-            oldest_key = min(self._cache.keys(), key=lambda k: self._cache[k].created_at)
+            oldest_key = min(
+                self._cache.keys(), key=lambda k: self._cache[k].created_at
+            )
             del self._cache[oldest_key]
 
         self.stats.evictions += 1
@@ -513,8 +517,19 @@ class AdvancedCache:
             "total_misses": l1_stats["misses"] + l2_stats["misses"],
             "total_hit_rate": (
                 (l1_stats["hits"] + l2_stats["hits"])
-                / (l1_stats["hits"] + l2_stats["hits"] + l1_stats["misses"] + l2_stats["misses"])
-                if (l1_stats["hits"] + l2_stats["hits"] + l1_stats["misses"] + l2_stats["misses"]) > 0
+                / (
+                    l1_stats["hits"]
+                    + l2_stats["hits"]
+                    + l1_stats["misses"]
+                    + l2_stats["misses"]
+                )
+                if (
+                    l1_stats["hits"]
+                    + l2_stats["hits"]
+                    + l1_stats["misses"]
+                    + l2_stats["misses"]
+                )
+                > 0
                 else 0.0
             ),
         }
@@ -598,5 +613,9 @@ class AdvancedCache:
 
         # 如果L2命中率高，增加L2缓存大小
         if l2_stats["hit_rate"] > 0.8:
-            self.l2_cache.max_size_bytes = min(500 * 1024 * 1024, self.l2_cache.max_size_bytes + 50 * 1024 * 1024)
-            logger.info(f"L2缓存大小调整为: {self.l2_cache.max_size_bytes // (1024 * 1024)}MB")
+            self.l2_cache.max_size_bytes = min(
+                500 * 1024 * 1024, self.l2_cache.max_size_bytes + 50 * 1024 * 1024
+            )
+            logger.info(
+                f"L2缓存大小调整为: {self.l2_cache.max_size_bytes // (1024 * 1024)}MB"
+            )

@@ -179,7 +179,9 @@ def main():
     # install 命令
     install_parser = subparsers.add_parser("install", help="安装插件")
     install_parser.add_argument("plugins", nargs="*", help="要安装的插件名称")
-    install_parser.add_argument("--recommended", action="store_true", help="安装推荐插件")
+    install_parser.add_argument(
+        "--recommended", action="store_true", help="安装推荐插件"
+    )
     install_parser.add_argument("--all", action="store_true", help="安装所有插件")
     install_parser.add_argument("--conda", action="store_true", help="使用 conda 安装")
 

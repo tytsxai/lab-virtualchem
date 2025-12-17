@@ -87,7 +87,9 @@ class EnhancedExperimentManager:
 
         logger.info(f"实验管理器已初始化: {self.templates_dir}")
 
-    def load_experiment(self, experiment_id: str, force_reload: bool = False) -> ExperimentTemplate:
+    def load_experiment(
+        self, experiment_id: str, force_reload: bool = False
+    ) -> ExperimentTemplate:
         """加载实验模板
 
         Args:
@@ -135,7 +137,9 @@ class EnhancedExperimentManager:
 
         try:
             # 编译实验
-            result = compile_experiment(source, format_type=format_type, ai_assistant=self.compiler.ai_assistant)
+            result = compile_experiment(
+                source, format_type=format_type, ai_assistant=self.compiler.ai_assistant
+            )
 
             if not result.success:
                 if result.errors:
@@ -183,7 +187,9 @@ class EnhancedExperimentManager:
             logger.error(f"添加实验失败: {e}", exc_info=True)
             return False, None, messages
 
-    def update_experiment(self, experiment_id: str, updates: dict[str, Any]) -> tuple[bool, list[str]]:
+    def update_experiment(
+        self, experiment_id: str, updates: dict[str, Any]
+    ) -> tuple[bool, list[str]]:
         """更新实验
 
         Args:
@@ -229,7 +235,9 @@ class EnhancedExperimentManager:
             logger.error(f"更新实验失败: {e}", exc_info=True)
             return False, messages
 
-    def delete_experiment(self, experiment_id: str, force: bool = False) -> tuple[bool, list[str]]:
+    def delete_experiment(
+        self, experiment_id: str, force: bool = False
+    ) -> tuple[bool, list[str]]:
         """删除实验
 
         Args:
@@ -250,7 +258,9 @@ class EnhancedExperimentManager:
             # 检查依赖
             dependent_experiments = self._get_dependent_experiments(experiment_id)
             if dependent_experiments and not force:
-                messages.append(f"以下实验依赖于 {experiment_id}: {', '.join(dependent_experiments)}")
+                messages.append(
+                    f"以下实验依赖于 {experiment_id}: {', '.join(dependent_experiments)}"
+                )
                 messages.append("使用 force=True 强制删除")
                 return False, messages
 
@@ -293,7 +303,9 @@ class EnhancedExperimentManager:
 
         # 应用筛选
         if category:
-            experiments = [exp for exp in experiments if exp.get("category") == category]
+            experiments = [
+                exp for exp in experiments if exp.get("category") == category
+            ]
 
         if level:
             experiments = [exp for exp in experiments if exp.get("level") == level]
@@ -332,7 +344,9 @@ class EnhancedExperimentManager:
             logger.error(f"获取实验信息失败: {e}")
             return {}
 
-    def start_experiment_session(self, experiment_id: str, user_id: str) -> tuple[str, ExperimentController]:
+    def start_experiment_session(
+        self, experiment_id: str, user_id: str
+    ) -> tuple[str, ExperimentController]:
         """开始实验会话
 
         Args:
@@ -379,7 +393,9 @@ class EnhancedExperimentManager:
         with self._sessions_lock:
             return self._active_sessions.get(session_id)
 
-    def end_experiment_session(self, session_id: str, save_record: bool = True) -> UserRecord | None:
+    def end_experiment_session(
+        self, session_id: str, save_record: bool = True
+    ) -> UserRecord | None:
         """结束实验会话
 
         Args:
@@ -443,7 +459,9 @@ class EnhancedExperimentManager:
 
         return sessions
 
-    def check_prerequisites(self, experiment_id: str, user_id: str) -> tuple[bool, list[str]]:
+    def check_prerequisites(
+        self, experiment_id: str, user_id: str
+    ) -> tuple[bool, list[str]]:
         """检查用户是否满足实验前置条件
 
         Args:
@@ -463,7 +481,11 @@ class EnhancedExperimentManager:
             completed_experiments = self._get_user_completed_experiments(user_id)
 
             # 检查前置实验
-            missing = [prereq for prereq in template.prerequisites if prereq not in completed_experiments]
+            missing = [
+                prereq
+                for prereq in template.prerequisites
+                if prereq not in completed_experiments
+            ]
 
             return len(missing) == 0, missing
 
@@ -592,7 +614,9 @@ class EnhancedExperimentManager:
             record_file = user_dir / f"{record.record_id}.json"
 
             with open(record_file, "w", encoding="utf-8") as f:
-                json.dump(record.model_dump(), f, ensure_ascii=False, indent=2, default=str)
+                json.dump(
+                    record.model_dump(), f, ensure_ascii=False, indent=2, default=str
+                )
 
             logger.info(f"记录已保存: {record_file}")
             return True

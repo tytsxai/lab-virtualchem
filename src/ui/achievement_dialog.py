@@ -25,7 +25,14 @@ logger = get_logger(__name__)
 class Achievement:
     """成就数据类"""
 
-    def __init__(self, id: str, name: str, description: str, icon_path: str = "", rarity: str = "common"):
+    def __init__(
+        self,
+        id: str,
+        name: str,
+        description: str,
+        icon_path: str = "",
+        rarity: str = "common",
+    ):
         self.id = id
         self.name = name
         self.description = description
@@ -51,7 +58,9 @@ class AchievementItem(QWidget):
             pixmap = QPixmap(self.achievement.icon_path)
             if not pixmap.isNull():
                 # 缩放图标
-                scaled_pixmap = pixmap.scaled(64, 64, Qt.AspectRatioMode.KeepAspectRatio)
+                scaled_pixmap = pixmap.scaled(
+                    64, 64, Qt.AspectRatioMode.KeepAspectRatio
+                )
                 icon_label.setPixmap(scaled_pixmap)
         else:
             # 默认图标

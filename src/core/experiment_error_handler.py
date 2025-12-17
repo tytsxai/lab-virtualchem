@@ -193,11 +193,15 @@ class ExperimentErrorHandler:
         for error in self.error_history:
             # 按严重程度统计
             severity_key = error.severity.value
-            summary["by_severity"][severity_key] = summary["by_severity"].get(severity_key, 0) + 1
+            summary["by_severity"][severity_key] = (
+                summary["by_severity"].get(severity_key, 0) + 1
+            )
 
             # 按分类统计
             category_key = error.category.value
-            summary["by_category"][category_key] = summary["by_category"].get(category_key, 0) + 1
+            summary["by_category"][category_key] = (
+                summary["by_category"].get(category_key, 0) + 1
+            )
 
             # 统计可恢复和严重错误
             if error.recoverable:
@@ -220,10 +224,14 @@ def get_error_handler() -> ExperimentErrorHandler:
 # 便捷函数
 def handle_validation_error(message: str, step_id: str | None = None, **kwargs):
     """处理验证错误"""
-    return _global_error_handler.handle_error(ErrorCategory.VALIDATION, ErrorSeverity.WARNING, message, step_id, kwargs)
+    return _global_error_handler.handle_error(
+        ErrorCategory.VALIDATION, ErrorSeverity.WARNING, message, step_id, kwargs
+    )
 
 
-def handle_template_error(message: str, severity: ErrorSeverity = ErrorSeverity.ERROR, **kwargs):
+def handle_template_error(
+    message: str, severity: ErrorSeverity = ErrorSeverity.ERROR, **kwargs
+):
     """处理模板错误"""
     return _global_error_handler.handle_error(
         ErrorCategory.TEMPLATE, severity, message, None, kwargs, recoverable=False
@@ -232,10 +240,14 @@ def handle_template_error(message: str, severity: ErrorSeverity = ErrorSeverity.
 
 def handle_runtime_error(message: str, step_id: str | None = None, **kwargs):
     """处理运行时错误"""
-    return _global_error_handler.handle_error(ErrorCategory.RUNTIME, ErrorSeverity.ERROR, message, step_id, kwargs)
+    return _global_error_handler.handle_error(
+        ErrorCategory.RUNTIME, ErrorSeverity.ERROR, message, step_id, kwargs
+    )
 
 
-def handle_critical_error(message: str, category: ErrorCategory = ErrorCategory.SYSTEM, **kwargs):
+def handle_critical_error(
+    message: str, category: ErrorCategory = ErrorCategory.SYSTEM, **kwargs
+):
     """处理严重错误"""
     return _global_error_handler.handle_error(
         category, ErrorSeverity.CRITICAL, message, None, kwargs, recoverable=False

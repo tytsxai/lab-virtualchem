@@ -32,14 +32,18 @@ class QueryOptimizer:
     """查询优化器"""
 
     def __init__(self):
-        self.query_cache: dict[str, tuple[Any, float]] = {}  # query -> (result, timestamp)
+        self.query_cache: dict[
+            str, tuple[Any, float]
+        ] = {}  # query -> (result, timestamp)
         self.query_metrics: list[QueryMetrics] = []
         self.cache_ttl = 300  # 5分钟
         self.slow_query_threshold = 1.0  # 1秒
 
         logger.info("查询优化器初始化完成")
 
-    def execute_query(self, query: str, params: tuple = (), use_cache: bool = True) -> tuple[Any, QueryMetrics]:
+    def execute_query(
+        self, query: str, params: tuple = (), use_cache: bool = True
+    ) -> tuple[Any, QueryMetrics]:
         """执行查询（带缓存和性能追踪）"""
         cache_key = self._make_cache_key(query, params)
         start_time = time.time()
@@ -55,13 +59,17 @@ class QueryOptimizer:
                 metrics = QueryMetrics(
                     query_text=query,
                     execution_time=execution_time,
-                    result_count=len(result) if isinstance(result, (list, tuple)) else 1,
+                    result_count=len(result)
+                    if isinstance(result, (list, tuple))
+                    else 1,
                     timestamp=time.time(),
                     cache_hit=True,
                 )
 
                 self.query_metrics.append(metrics)
-                logger.debug(f"缓存命中: {query[:50]}... ({execution_time * 1000:.2f}ms)")
+                logger.debug(
+                    f"缓存命中: {query[:50]}... ({execution_time * 1000:.2f}ms)"
+                )
 
                 return result, metrics
 
@@ -120,7 +128,9 @@ class QueryOptimizer:
             "cache_hit_rate": cache_hits / total_queries if total_queries > 0 else 0,
             "cache_size": len(self.query_cache),
             "avg_execution_time": (
-                sum(m.execution_time for m in self.query_metrics) / total_queries if total_queries > 0 else 0
+                sum(m.execution_time for m in self.query_metrics) / total_queries
+                if total_queries > 0
+                else 0
             ),
         }
 
@@ -175,7 +185,9 @@ class BatchProcessor:
                 results.append(None)
 
         execution_time = time.time() - start_time
-        logger.info(f"批处理完成: {len(self.pending_operations)} 个操作 ({execution_time:.2f}s)")
+        logger.info(
+            f"批处理完成: {len(self.pending_operations)} 个操作 ({execution_time:.2f}s)"
+        )
 
         self.pending_operations.clear()
         return results
@@ -297,7 +309,9 @@ class DataPrefetcher:
 class ConnectionPool:
     """连接池管理器"""
 
-    def __init__(self, creator: Callable, min_connections: int = 2, max_connections: int = 10):
+    def __init__(
+        self, creator: Callable, min_connections: int = 2, max_connections: int = 10
+    ):
         self.creator = creator
         self.min_connections = min_connections
         self.max_connections = max_connections
@@ -309,7 +323,9 @@ class ConnectionPool:
             conn = creator()
             self.available.append(conn)
 
-        logger.info(f"连接池初始化完成 (最小: {min_connections}, 最大: {max_connections})")
+        logger.info(
+            f"连接池初始化完成 (最小: {min_connections}, 最大: {max_connections})"
+        )
 
     def acquire(self) -> Any:
         """获取连接"""

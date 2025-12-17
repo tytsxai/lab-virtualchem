@@ -150,7 +150,11 @@ class UserPreferences:
 
         # 其他属性
         for key, value in data.items():
-            if hasattr(prefs, key) and key not in ["theme", "animation_speed", "language"]:
+            if hasattr(prefs, key) and key not in [
+                "theme",
+                "animation_speed",
+                "language",
+            ]:
                 setattr(prefs, key, value)
 
         return prefs
@@ -451,9 +455,13 @@ class PreferencesDialog(QDialog):
         layout.addWidget(input_group)
 
         # 说明
-        note = QLabel("辅助功能设置可以帮助有特殊需求的用户更好地使用应用程序。\n某些功能可能需要重启应用才能生效。")
+        note = QLabel(
+            "辅助功能设置可以帮助有特殊需求的用户更好地使用应用程序。\n某些功能可能需要重启应用才能生效。"
+        )
         note.setWordWrap(True)
-        note.setStyleSheet("color: #666; padding: 10px; background-color: #f0f0f0; border-radius: 6px;")
+        note.setStyleSheet(
+            "color: #666; padding: 10px; background-color: #f0f0f0; border-radius: 6px;"
+        )
         layout.addWidget(note)
 
         layout.addStretch()
@@ -465,14 +473,26 @@ class PreferencesDialog(QDialog):
         theme_map = {Theme.SYSTEM: 0, Theme.LIGHT: 1, Theme.DARK: 2}
         self.theme_combo.setCurrentIndex(theme_map[self.preferences.theme])
 
-        speed_map = {AnimationSpeed.NONE: 0, AnimationSpeed.SLOW: 1, AnimationSpeed.NORMAL: 2, AnimationSpeed.FAST: 3}
-        self.animation_speed_combo.setCurrentIndex(speed_map[self.preferences.animation_speed])
+        speed_map = {
+            AnimationSpeed.NONE: 0,
+            AnimationSpeed.SLOW: 1,
+            AnimationSpeed.NORMAL: 2,
+            AnimationSpeed.FAST: 3,
+        }
+        self.animation_speed_combo.setCurrentIndex(
+            speed_map[self.preferences.animation_speed]
+        )
 
         self.show_animations_check.setChecked(self.preferences.show_animations)
         self.reduce_motion_check.setChecked(self.preferences.reduce_motion)
         self.font_size_spin.setValue(self.preferences.font_size)
 
-        lang_map = {Language.SYSTEM: 0, Language.ZH_CN: 1, Language.EN_US: 2, Language.JA_JP: 3}
+        lang_map = {
+            Language.SYSTEM: 0,
+            Language.ZH_CN: 1,
+            Language.EN_US: 2,
+            Language.JA_JP: 3,
+        }
         self.language_combo.setCurrentIndex(lang_map[self.preferences.language])
 
         # 行为
@@ -480,7 +500,9 @@ class PreferencesDialog(QDialog):
         self.auto_save_interval_spin.setValue(self.preferences.auto_save_interval)
         self.confirm_exit_check.setChecked(self.preferences.confirm_on_exit)
         self.remember_window_check.setChecked(self.preferences.remember_window_size)
-        self.remember_experiment_check.setChecked(self.preferences.remember_last_experiment)
+        self.remember_experiment_check.setChecked(
+            self.preferences.remember_last_experiment
+        )
 
         # 实验
         self.show_hints_check.setChecked(self.preferences.show_hints)
@@ -494,13 +516,17 @@ class PreferencesDialog(QDialog):
         self.vsync_check.setChecked(self.preferences.enable_vsync)
 
         quality_map = {"low": 0, "medium": 1, "high": 2, "ultra": 3}
-        self.render_quality_combo.setCurrentIndex(quality_map.get(self.preferences.render_quality, 2))
+        self.render_quality_combo.setCurrentIndex(
+            quality_map.get(self.preferences.render_quality, 2)
+        )
 
         # 反馈
         self.sound_check.setChecked(self.preferences.enable_sound)
         self.visual_feedback_check.setChecked(self.preferences.enable_visual_feedback)
         self.haptic_check.setChecked(self.preferences.enable_haptic_feedback)
-        self.feedback_intensity_slider.setValue(int(self.preferences.feedback_intensity * 100))
+        self.feedback_intensity_slider.setValue(
+            int(self.preferences.feedback_intensity * 100)
+        )
 
         # 辅助功能
         self.high_contrast_check.setChecked(self.preferences.high_contrast)
@@ -514,8 +540,15 @@ class PreferencesDialog(QDialog):
         theme_map = [Theme.SYSTEM, Theme.LIGHT, Theme.DARK]
         self.preferences.theme = theme_map[self.theme_combo.currentIndex()]
 
-        speed_map = [AnimationSpeed.NONE, AnimationSpeed.SLOW, AnimationSpeed.NORMAL, AnimationSpeed.FAST]
-        self.preferences.animation_speed = speed_map[self.animation_speed_combo.currentIndex()]
+        speed_map = [
+            AnimationSpeed.NONE,
+            AnimationSpeed.SLOW,
+            AnimationSpeed.NORMAL,
+            AnimationSpeed.FAST,
+        ]
+        self.preferences.animation_speed = speed_map[
+            self.animation_speed_combo.currentIndex()
+        ]
 
         self.preferences.show_animations = self.show_animations_check.isChecked()
         self.preferences.reduce_motion = self.reduce_motion_check.isChecked()
@@ -529,13 +562,17 @@ class PreferencesDialog(QDialog):
         self.preferences.auto_save_interval = self.auto_save_interval_spin.value()
         self.preferences.confirm_on_exit = self.confirm_exit_check.isChecked()
         self.preferences.remember_window_size = self.remember_window_check.isChecked()
-        self.preferences.remember_last_experiment = self.remember_experiment_check.isChecked()
+        self.preferences.remember_last_experiment = (
+            self.remember_experiment_check.isChecked()
+        )
 
         # 实验
         self.preferences.show_hints = self.show_hints_check.isChecked()
         self.preferences.auto_advance_steps = self.auto_advance_check.isChecked()
         self.preferences.show_safety_warnings = self.show_safety_check.isChecked()
-        self.preferences.enable_achievements = self.enable_achievements_check.isChecked()
+        self.preferences.enable_achievements = (
+            self.enable_achievements_check.isChecked()
+        )
 
         # 性能
         self.preferences.enable_hardware_acceleration = self.hw_accel_check.isChecked()
@@ -543,13 +580,17 @@ class PreferencesDialog(QDialog):
         self.preferences.enable_vsync = self.vsync_check.isChecked()
 
         quality_map = ["low", "medium", "high", "ultra"]
-        self.preferences.render_quality = quality_map[self.render_quality_combo.currentIndex()]
+        self.preferences.render_quality = quality_map[
+            self.render_quality_combo.currentIndex()
+        ]
 
         # 反馈
         self.preferences.enable_sound = self.sound_check.isChecked()
         self.preferences.enable_visual_feedback = self.visual_feedback_check.isChecked()
         self.preferences.enable_haptic_feedback = self.haptic_check.isChecked()
-        self.preferences.feedback_intensity = self.feedback_intensity_slider.value() / 100.0
+        self.preferences.feedback_intensity = (
+            self.feedback_intensity_slider.value() / 100.0
+        )
 
         # 辅助功能
         self.preferences.high_contrast = self.high_contrast_check.isChecked()

@@ -32,7 +32,9 @@ class CurveGenerator:
         """初始化曲线生成器"""
         pass
 
-    def generate(self, curve_type: str, params: dict[str, Any], num_points: int = 100) -> tuple[np.ndarray, np.ndarray]:
+    def generate(
+        self, curve_type: str, params: dict[str, Any], num_points: int = 100
+    ) -> tuple[np.ndarray, np.ndarray]:
         """生成曲线数据
 
         Args:
@@ -104,11 +106,15 @@ class CurveGenerator:
 
         if acid_type == "strong":
             # 强酸-强碱滴定
-            pH = self._strong_acid_strong_base_titration(V, acid_M, acid_V_ml, base_M, V_eq)
+            pH = self._strong_acid_strong_base_titration(
+                V, acid_M, acid_V_ml, base_M, V_eq
+            )
         else:
             # 弱酸-强碱滴定
             pKa = self.PKA_VALUES.get(acid_type, 4.76)  # 默认使用醋酸pKa
-            pH = self._weak_acid_strong_base_titration(V, acid_M, acid_V_ml, base_M, V_eq, pKa)
+            pH = self._weak_acid_strong_base_titration(
+                V, acid_M, acid_V_ml, base_M, V_eq, pKa
+            )
 
         # 添加随机噪声(±0.05 pH)
         noise = np.random.normal(0, 0.05, size=pH.shape)

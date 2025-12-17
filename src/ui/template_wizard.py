@@ -79,7 +79,10 @@ class TemplateWizard(QDialog):
         self.tab_widget.addTab(self.scoring_tab, "评分规则")
 
         # 按钮
-        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Save
+            | QDialogButtonBox.StandardButton.Cancel
+        )
         layout.addWidget(button_box)
 
         button_box.accepted.connect(self.save_template)
@@ -117,7 +120,15 @@ class TemplateWizard(QDialog):
 
         self.category_combo = QComboBox()
         self.category_combo.addItems(
-            ["titration", "precipitation", "distillation", "recrystallization", "esterification", "buffer", "other"]
+            [
+                "titration",
+                "precipitation",
+                "distillation",
+                "recrystallization",
+                "esterification",
+                "buffer",
+                "other",
+            ]
         )
         category_layout.addRow("实验分类:", self.category_combo)
 
@@ -285,7 +296,9 @@ class TemplateWizard(QDialog):
         dialog = ReagentDialog(self)
         if dialog.exec() == QDialog.Accepted:
             reagent_data = dialog.get_reagent_data()
-            item = QListWidgetItem(f"{reagent_data['name']} ({reagent_data['formula']})")
+            item = QListWidgetItem(
+                f"{reagent_data['name']} ({reagent_data['formula']})"
+            )
             item.setData(Qt.ItemDataRole.UserRole, reagent_data)
             self.reagents_list.addItem(item)
 
@@ -313,7 +326,9 @@ class TemplateWizard(QDialog):
         dialog = StepDialog(self)
         if dialog.exec() == QDialog.Accepted:
             step_data = dialog.get_step_data()
-            item = QListWidgetItem(f"步骤 {self.steps_list.count() + 1}: {step_data['title']}")
+            item = QListWidgetItem(
+                f"步骤 {self.steps_list.count() + 1}: {step_data['title']}"
+            )
             item.setData(Qt.ItemDataRole.UserRole, step_data)
             self.steps_list.addItem(item)
 
@@ -327,7 +342,9 @@ class TemplateWizard(QDialog):
         dialog = StepDialog(self, step_data)
         if dialog.exec() == QDialog.Accepted:
             new_data = dialog.get_step_data()
-            current_item.setText(f"步骤 {self.steps_list.currentRow() + 1}: {new_data['title']}")
+            current_item.setText(
+                f"步骤 {self.steps_list.currentRow() + 1}: {new_data['title']}"
+            )
             current_item.setData(Qt.ItemDataRole.UserRole, new_data)
 
     def remove_step(self):
@@ -418,7 +435,9 @@ class TemplateWizard(QDialog):
 
             # 保存到文件
             if self.template_engine:
-                template_path = self.template_engine.templates_dir / f"{template.id}.yaml"
+                template_path = (
+                    self.template_engine.templates_dir / f"{template.id}.yaml"
+                )
                 self.template_engine.save_template(template, template_path)
 
             QMessageBox.information(self, "成功", f"模板已保存: {template.id}")
@@ -507,12 +526,16 @@ class ReagentDialog(QDialog):
 
         self.hazard_level_combo = QComboBox()
         self.hazard_level_combo.addItems(["info", "warning", "danger", "severe"])
-        self.hazard_level_combo.setCurrentText(self.reagent_data.get("hazard_level", "info"))
+        self.hazard_level_combo.setCurrentText(
+            self.reagent_data.get("hazard_level", "info")
+        )
         form_layout.addRow("危害等级:", self.hazard_level_combo)
 
         layout.addLayout(form_layout)
 
-        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
         layout.addWidget(button_box)
 
         button_box.accepted.connect(self.accept)
@@ -555,13 +578,19 @@ class StepDialog(QDialog):
         form_layout.addRow("步骤描述:", self.description_edit)
 
         self.check_type_combo = QComboBox()
-        self.check_type_combo.addItems(["no_check", "confirm", "input", "select", "sequence"])
-        self.check_type_combo.setCurrentText(self.step_data.get("check_type", "no_check"))
+        self.check_type_combo.addItems(
+            ["no_check", "confirm", "input", "select", "sequence"]
+        )
+        self.check_type_combo.setCurrentText(
+            self.step_data.get("check_type", "no_check")
+        )
         form_layout.addRow("检查类型:", self.check_type_combo)
 
         layout.addLayout(form_layout)
 
-        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
         layout.addWidget(button_box)
 
         button_box.accepted.connect(self.accept)
@@ -610,7 +639,9 @@ class ScoringRuleDialog(QDialog):
 
         layout.addLayout(form_layout)
 
-        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
         layout.addWidget(button_box)
 
         button_box.accepted.connect(self.accept)

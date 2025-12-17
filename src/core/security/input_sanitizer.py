@@ -11,19 +11,19 @@ class InputSanitizer:
 
     # 危险模式
     DANGEROUS_PATTERNS = [
-        r'<script[^>]*>.*?</script>',  # JavaScript
-        r'javascript:',  # JavaScript协议
-        r'vbscript:',   # VBScript协议
-        r'on\w+\s*=',   # 事件处理器
-        r'<iframe[^>]*>',  # iframe
-        r'<object[^>]*>',  # object
-        r'<embed[^>]*>',   # embed
-        r'<link[^>]*>',    # link
-        r'<meta[^>]*>',    # meta
-        r'<style[^>]*>',   # style
-        r'expression\s*\(',  # CSS表达式
-        r'url\s*\(',       # CSS URL
-        r'@import',        # CSS导入
+        r"<script[^>]*>.*?</script>",  # JavaScript
+        r"javascript:",  # JavaScript协议
+        r"vbscript:",  # VBScript协议
+        r"on\w+\s*=",  # 事件处理器
+        r"<iframe[^>]*>",  # iframe
+        r"<object[^>]*>",  # object
+        r"<embed[^>]*>",  # embed
+        r"<link[^>]*>",  # link
+        r"<meta[^>]*>",  # meta
+        r"<style[^>]*>",  # style
+        r"expression\s*\(",  # CSS表达式
+        r"url\s*\(",  # CSS URL
+        r"@import",  # CSS导入
     ]
 
     # SQL注入模式
@@ -37,17 +37,25 @@ class InputSanitizer:
 
     # 路径遍历模式
     PATH_TRAVERSAL_PATTERNS = [
-        r'\.\./',  # 相对路径
-        r'\.\.\\',  # Windows相对路径
-        r'%2e%2e%2f',  # URL编码
-        r'%2e%2e%5c',  # URL编码
+        r"\.\./",  # 相对路径
+        r"\.\.\\",  # Windows相对路径
+        r"%2e%2e%2f",  # URL编码
+        r"%2e%2e%5c",  # URL编码
     ]
 
     def __init__(self):
         """初始化清理器"""
-        self.dangerous_regex = [re.compile(pattern, re.IGNORECASE) for pattern in self.DANGEROUS_PATTERNS]
-        self.sql_regex = [re.compile(pattern, re.IGNORECASE) for pattern in self.SQL_INJECTION_PATTERNS]
-        self.path_regex = [re.compile(pattern, re.IGNORECASE) for pattern in self.PATH_TRAVERSAL_PATTERNS]
+        self.dangerous_regex = [
+            re.compile(pattern, re.IGNORECASE) for pattern in self.DANGEROUS_PATTERNS
+        ]
+        self.sql_regex = [
+            re.compile(pattern, re.IGNORECASE)
+            for pattern in self.SQL_INJECTION_PATTERNS
+        ]
+        self.path_regex = [
+            re.compile(pattern, re.IGNORECASE)
+            for pattern in self.PATH_TRAVERSAL_PATTERNS
+        ]
 
     def sanitize_html(self, text: str) -> str:
         """清理HTML内容"""
@@ -59,7 +67,7 @@ class InputSanitizer:
 
         # 移除危险模式
         for regex in self.dangerous_regex:
-            text = regex.sub('', text)
+            text = regex.sub("", text)
 
         return text
 
@@ -118,7 +126,7 @@ class InputSanitizer:
         if not isinstance(email, str):
             raise ValueError("邮箱必须是字符串")
 
-        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         if not re.match(pattern, email):
             raise ValueError(f"无效的邮箱格式: {email}")
 
@@ -130,7 +138,7 @@ class InputSanitizer:
             raise ValueError("电话号码必须是字符串")
 
         # 移除所有非数字字符
-        phone = re.sub(r'[^\d]', '', phone)
+        phone = re.sub(r"[^\d]", "", phone)
 
         # 检查长度
         if len(phone) < 10 or len(phone) > 15:
@@ -143,7 +151,7 @@ class InputSanitizer:
         if not isinstance(url, str):
             raise ValueError("URL必须是字符串")
 
-        pattern = r'^https?://[^\s/$.?#].[^\s]*$'
+        pattern = r"^https?://[^\s/$.?#].[^\s]*$"
         if not re.match(pattern, url):
             raise ValueError(f"无效的URL格式: {url}")
 

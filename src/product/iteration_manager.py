@@ -188,9 +188,13 @@ class IterationManager(QObject):
                 title=top_request["title"],
                 description=top_request["description"],
                 source="user_feedback",
-                priority=self._calculate_priority(len(feedbacks), top_request.get("urgency", 50)),
+                priority=self._calculate_priority(
+                    len(feedbacks), top_request.get("urgency", 50)
+                ),
                 impact_level=self._determine_impact_level(len(feedbacks)),
-                effort_estimate=self._estimate_effort(top_request["title"], top_request["description"]),
+                effort_estimate=self._estimate_effort(
+                    top_request["title"], top_request["description"]
+                ),
                 user_votes=len(feedbacks),
                 feedback_count=len(feedbacks),
                 related_feedbacks=[f.get("feedback_id", "") for f in feedbacks],
@@ -207,7 +211,9 @@ class IterationManager(QObject):
             self.save_feature(feature)
             self.feature_proposed.emit(feature_id)
 
-            logger.info(f"从 {len(feedbacks)} 条反馈中提议功能: {feature_id} - {feature.title}")
+            logger.info(
+                f"从 {len(feedbacks)} 条反馈中提议功能: {feature_id} - {feature.title}"
+            )
 
             return feature_id
 
@@ -215,7 +221,9 @@ class IterationManager(QObject):
             logger.error(f"从反馈提议功能失败: {e}")
             return ""
 
-    def _analyze_common_requests(self, feedbacks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _analyze_common_requests(
+        self, feedbacks: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """分析共同需求"""
         # 简化实现：基于关键词聚类
         keyword_clusters = defaultdict(list)
@@ -242,7 +250,8 @@ class IterationManager(QObject):
             "title": f"增强{keyword}功能",
             "description": self._generate_description(cluster_feedbacks),
             "urgency": (
-                sum(f.get("urgency_score", 50) for f in cluster_feedbacks) / len(cluster_feedbacks)
+                sum(f.get("urgency_score", 50) for f in cluster_feedbacks)
+                / len(cluster_feedbacks)
                 if cluster_feedbacks
                 else 50
             ),
@@ -334,7 +343,9 @@ class IterationManager(QObject):
                 description=feedback.get("content", ""),
                 severity=self._determine_severity(feedback),
                 affected_users=1,  # 初始值
-                reproduction_steps=self._extract_reproduction_steps(feedback.get("content", "")),
+                reproduction_steps=self._extract_reproduction_steps(
+                    feedback.get("content", "")
+                ),
                 related_feedbacks=[feedback.get("feedback_id", "")],
             )
 
@@ -378,7 +389,9 @@ class IterationManager(QObject):
         # 查找编号列表
         import re
 
-        numbered_steps = re.findall(r"(?:第?\s*\d+\s*[、.)]|步骤\s*\d+[:：])\s*([^。\n]+)", content)
+        numbered_steps = re.findall(
+            r"(?:第?\s*\d+\s*[、.)]|步骤\s*\d+[:：])\s*([^。\n]+)", content
+        )
         if numbered_steps:
             steps = numbered_steps
 
@@ -388,7 +401,9 @@ class IterationManager(QObject):
 
         return steps[:5]  # 最多5步
 
-    def create_improvement_from_insights(self, insights: list[dict[str, Any]]) -> list[str]:
+    def create_improvement_from_insights(
+        self, insights: list[dict[str, Any]]
+    ) -> list[str]:
         """从洞察创建改进项"""
         improvement_ids = []
 
@@ -443,7 +458,13 @@ class IterationManager(QObject):
         else:
             return "general"
 
-    def plan_iteration(self, version: str, name: str, duration_weeks: int = 2, goals: list[str] | None = None) -> str:
+    def plan_iteration(
+        self,
+        version: str,
+        name: str,
+        duration_weeks: int = 2,
+        goals: list[str] | None = None,
+    ) -> str:
         """规划迭代"""
         try:
             iteration_id = f"iter_{int(datetime.now().timestamp() * 1000)}"
@@ -478,13 +499,18 @@ class IterationManager(QObject):
     def _auto_select_items(self, iteration: ProductIteration) -> None:
         """自动选择迭代项目"""
         # 选择高优先级功能
-        sorted_features = sorted(self.feature_requests.values(), key=lambda f: f.priority, reverse=True)
+        sorted_features = sorted(
+            self.feature_requests.values(), key=lambda f: f.priority, reverse=True
+        )
 
         total_effort = 0
         capacity = 40  # 假设2周40个工作日
 
         for feature in sorted_features:
-            if feature.status == FeatureStatus.APPROVED and total_effort + feature.effort_estimate <= capacity:
+            if (
+                feature.status == FeatureStatus.APPROVED
+                and total_effort + feature.effort_estimate <= capacity
+            ):
                 iteration.feature_requests.append(feature.request_id)
                 total_effort += feature.effort_estimate
 
@@ -492,7 +518,11 @@ class IterationManager(QObject):
                     iteration.feedback_driven_changes += 1
 
         # 选择关键Bug
-        critical_bugs = [b for b in self.bug_fixes.values() if b.severity == "critical" and b.status == "open"]
+        critical_bugs = [
+            b
+            for b in self.bug_fixes.values()
+            if b.severity == "critical" and b.status == "open"
+        ]
         for bug in critical_bugs[:5]:  # 最多5个关键Bug
             iteration.bug_fixes.append(bug.bug_id)
 
@@ -500,7 +530,9 @@ class IterationManager(QObject):
                 iteration.feedback_driven_changes += 1
 
         # 选择高优先级改进
-        sorted_improvements = sorted(self.improvements.values(), key=lambda i: i.priority, reverse=True)
+        sorted_improvements = sorted(
+            self.improvements.values(), key=lambda i: i.priority, reverse=True
+        )
         for improvement in sorted_improvements[:10]:  # 最多10个改进
             if improvement.status == "proposed":
                 iteration.improvements.append(improvement.improvement_id)
@@ -513,7 +545,9 @@ class IterationManager(QObject):
             f"{len(iteration.bug_fixes)} Bug, {len(iteration.improvements)} 改进"
         )
 
-    def update_priority_from_feedback(self, item_id: str, new_feedback_count: int, new_votes: int) -> bool:
+    def update_priority_from_feedback(
+        self, item_id: str, new_feedback_count: int, new_votes: int
+    ) -> bool:
         """根据反馈更新优先级"""
         try:
             if item_id in self.feature_requests:
@@ -529,7 +563,9 @@ class IterationManager(QObject):
                 self.save_feature(feature)
                 self.priority_changed.emit(item_id, old_priority, feature.priority)
 
-                logger.info(f"功能 {item_id} 优先级从 {old_priority} 更新为 {feature.priority}")
+                logger.info(
+                    f"功能 {item_id} 优先级从 {old_priority} 更新为 {feature.priority}"
+                )
 
                 return True
 
@@ -559,7 +595,9 @@ class IterationManager(QObject):
 
         return min(100, max(1, total))
 
-    def complete_iteration(self, iteration_id: str, actual_metrics: dict[str, Any] | None = None) -> dict[str, Any]:
+    def complete_iteration(
+        self, iteration_id: str, actual_metrics: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """完成迭代"""
         try:
             if iteration_id not in self.iterations:
@@ -647,10 +685,17 @@ class IterationManager(QObject):
             roadmap["top_features"] = top_features_list
 
             # 关键改进
-            key_improvements = sorted(self.improvements.values(), key=lambda i: i.priority, reverse=True)[:10]
+            key_improvements = sorted(
+                self.improvements.values(), key=lambda i: i.priority, reverse=True
+            )[:10]
 
             key_improvements_list: list[dict[str, Any]] = [
-                {"title": i.title, "category": i.category, "priority": i.priority, "status": i.status}
+                {
+                    "title": i.title,
+                    "category": i.category,
+                    "priority": i.priority,
+                    "status": i.status,
+                }
                 for i in key_improvements
             ]
             roadmap["key_improvements"] = key_improvements_list
@@ -722,7 +767,9 @@ class IterationManager(QObject):
     def save_improvement(self, improvement: Improvement) -> None:
         """保存改进项"""
         try:
-            file_path = self.data_dir / "improvements" / f"{improvement.improvement_id}.json"
+            file_path = (
+                self.data_dir / "improvements" / f"{improvement.improvement_id}.json"
+            )
             file_path.parent.mkdir(exist_ok=True)
 
             data = {

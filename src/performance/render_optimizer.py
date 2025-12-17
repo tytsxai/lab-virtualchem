@@ -133,7 +133,7 @@ class RenderOptimizer(QObject):
             frame_time=frame_time,
             draw_calls=100,
             triangles=5000,
-            timestamp=time.time()
+            timestamp=time.time(),
         )
 
         # 保存帧时间历史

@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MigrationStep:
     """迁移步骤"""
+
     from_version: str
     to_version: str
     description: str
@@ -35,6 +36,7 @@ class MigrationStep:
 @dataclass
 class ConfigVersion:
     """配置版本"""
+
     version: str
     schema: dict[str, Any]
     migration_steps: list[MigrationStep] = field(default_factory=list)
@@ -56,7 +58,7 @@ class ConfigMigrationManager:
             "migrations_performed": 0,
             "migrations_failed": 0,
             "rollbacks_performed": 0,
-            "rollbacks_failed": 0
+            "rollbacks_failed": 0,
         }
 
         # 初始化默认版本
@@ -73,18 +75,15 @@ class ConfigMigrationManager:
                     "properties": {
                         "name": {"type": "string"},
                         "version": {"type": "string"},
-                        "environment": {"type": "string"}
+                        "environment": {"type": "string"},
                     },
-                    "required": ["name", "version", "environment"]
+                    "required": ["name", "version", "environment"],
                 }
             },
-            "required": ["app"]
+            "required": ["app"],
         }
 
-        self._versions["1.0.0"] = ConfigVersion(
-            version="1.0.0",
-            schema=v1_schema
-        )
+        self._versions["1.0.0"] = ConfigVersion(version="1.0.0", schema=v1_schema)
 
         # 版本 2.0.0 - 增强版本
         v2_schema = {
@@ -97,27 +96,27 @@ class ConfigMigrationManager:
                         "version": {"type": "string"},
                         "environment": {"type": "string"},
                         "debug": {"type": "boolean"},
-                        "log_level": {"type": "string"}
+                        "log_level": {"type": "string"},
                     },
-                    "required": ["name", "version", "environment"]
+                    "required": ["name", "version", "environment"],
                 },
                 "ui": {
                     "type": "object",
                     "properties": {
                         "theme": {"type": "string"},
                         "language": {"type": "string"},
-                        "font_size": {"type": "integer"}
-                    }
+                        "font_size": {"type": "integer"},
+                    },
                 },
                 "performance": {
                     "type": "object",
                     "properties": {
                         "enable_caching": {"type": "boolean"},
-                        "cache_size": {"type": "integer"}
-                    }
-                }
+                        "cache_size": {"type": "integer"},
+                    },
+                },
             },
-            "required": ["app"]
+            "required": ["app"],
         }
 
         # 迁移步骤：1.0.0 -> 2.0.0
@@ -126,14 +125,14 @@ class ConfigMigrationManager:
             to_version="2.0.0",
             description="添加UI和性能配置",
             migration_function=self._migrate_1_0_to_2_0,
-            rollback_function=self._rollback_2_0_to_1_0
+            rollback_function=self._rollback_2_0_to_1_0,
         )
 
         self._versions["2.0.0"] = ConfigVersion(
             version="2.0.0",
             schema=v2_schema,
             migration_steps=[migration_step],
-            new_keys=["ui", "performance"]
+            new_keys=["ui", "performance"],
         )
 
         if APP_VERSION != "2.0.0":
@@ -158,18 +157,11 @@ class ConfigMigrationManager:
 
         # 添加默认UI配置
         if "ui" not in config_data:
-            config_data["ui"] = {
-                "theme": "auto",
-                "language": "zh_CN",
-                "font_size": 12
-            }
+            config_data["ui"] = {"theme": "auto", "language": "zh_CN", "font_size": 12}
 
         # 添加默认性能配置
         if "performance" not in config_data:
-            config_data["performance"] = {
-                "enable_caching": True,
-                "cache_size": 1000
-            }
+            config_data["performance"] = {"enable_caching": True, "cache_size": 1000}
 
         # 添加调试配置
         if "app" in config_data and "debug" not in config_data["app"]:
@@ -241,9 +233,7 @@ class ConfigMigrationManager:
             return "1.0.0"
 
     def migrate_config(
-        self,
-        config_data: dict[str, Any],
-        target_version: str | None = None
+        self, config_data: dict[str, Any], target_version: str | None = None
     ) -> dict[str, Any]:
         """迁移配置"""
         if target_version is None:
@@ -261,7 +251,9 @@ class ConfigMigrationManager:
         migration_path = self._get_migration_path(current_version, target_version)
 
         if not migration_path:
-            raise ConfigurationError(f"No migration path from {current_version} to {target_version}")
+            raise ConfigurationError(
+                f"No migration path from {current_version} to {target_version}"
+            )
 
         # 执行迁移步骤
         migrated_data = config_data.copy()
@@ -281,14 +273,16 @@ class ConfigMigrationManager:
 
         return migrated_data
 
-    def _get_migration_path(self, from_version: str, to_version: str) -> list[MigrationStep]:
+    def _get_migration_path(
+        self, from_version: str, to_version: str
+    ) -> list[MigrationStep]:
         """获取迁移路径"""
         if from_version == to_version:
             return []
 
         # 简单的版本比较（假设版本号递增）
-        from_ver = tuple(map(int, from_version.split('.')))
-        to_ver = tuple(map(int, to_version.split('.')))
+        from_ver = tuple(map(int, from_version.split(".")))
+        to_ver = tuple(map(int, to_version.split(".")))
 
         if from_ver >= to_ver:
             # 需要回滚
@@ -297,7 +291,9 @@ class ConfigMigrationManager:
             # 需要升级
             return self._get_upgrade_path(from_version, to_version)
 
-    def _get_upgrade_path(self, from_version: str, to_version: str) -> list[MigrationStep]:
+    def _get_upgrade_path(
+        self, from_version: str, to_version: str
+    ) -> list[MigrationStep]:
         """获取升级路径"""
         path = []
         current_version = from_version
@@ -320,7 +316,9 @@ class ConfigMigrationManager:
 
         return path
 
-    def _get_rollback_path(self, from_version: str, to_version: str) -> list[MigrationStep]:
+    def _get_rollback_path(
+        self, from_version: str, to_version: str
+    ) -> list[MigrationStep]:
         """获取回滚路径"""
         path = []
         current_version = from_version
@@ -375,6 +373,7 @@ class ConfigMigrationManager:
 
         try:
             import jsonschema
+
             jsonschema.validate(config_data, version_info.schema)
             return True
         except Exception as e:
@@ -384,7 +383,7 @@ class ConfigMigrationManager:
     def backup_config(self, config_data: dict[str, Any], backup_path: Path) -> None:
         """备份配置"""
         try:
-            with open(backup_path, 'w', encoding='utf-8') as f:
+            with open(backup_path, "w", encoding="utf-8") as f:
                 json.dump(config_data, f, indent=2, ensure_ascii=False)
             logger.info(f"Config backed up to {backup_path}")
         except Exception as e:
@@ -394,7 +393,7 @@ class ConfigMigrationManager:
     def restore_config(self, backup_path: Path) -> dict[str, Any]:
         """恢复配置"""
         try:
-            with open(backup_path, encoding='utf-8') as f:
+            with open(backup_path, encoding="utf-8") as f:
                 config_data = json.load(f)
             logger.info(f"Config restored from {backup_path}")
             return config_data
@@ -412,7 +411,7 @@ class ConfigMigrationManager:
             "migrations_performed": 0,
             "migrations_failed": 0,
             "rollbacks_performed": 0,
-            "rollbacks_failed": 0
+            "rollbacks_failed": 0,
         }
 
     def get_version_history(self) -> list[str]:
@@ -428,12 +427,9 @@ class ConfigMigrationManager:
             "to_version": to_version,
             "steps_count": len(path),
             "steps": [
-                {
-                    "description": step.description,
-                    "required": step.required
-                }
+                {"description": step.description, "required": step.required}
                 for step in path
-            ]
+            ],
         }
 
 
@@ -446,12 +442,15 @@ def get_config_migration_manager() -> ConfigMigrationManager:
     global _global_config_migration
     if _global_config_migration is None:
         from .unified_config_manager import get_config_manager
+
         config_manager = get_config_manager()
         _global_config_migration = ConfigMigrationManager(config_manager)
     return _global_config_migration
 
 
-def migrate_config(config_data: dict[str, Any], target_version: str | None = None) -> dict[str, Any]:
+def migrate_config(
+    config_data: dict[str, Any], target_version: str | None = None
+) -> dict[str, Any]:
     """迁移配置"""
     migration_manager = get_config_migration_manager()
     return migration_manager.migrate_config(config_data, target_version)

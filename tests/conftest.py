@@ -101,7 +101,9 @@ class SimpleQtBot:
     def waitSignal(self, signal, timeout: int = 1000) -> _SignalBlocker:
         return _SignalBlocker(signal, timeout)
 
-    def waitUntil(self, condition: Callable[[], bool], timeout: int = 1000, interval: int = 10) -> None:
+    def waitUntil(
+        self, condition: Callable[[], bool], timeout: int = 1000, interval: int = 10
+    ) -> None:
         end_time = time.monotonic() + timeout / 1000
         while time.monotonic() < end_time:
             self._app.processEvents()
@@ -137,7 +139,12 @@ def temp_dir(tmp_path):
 def sample_config():
     """示例配置fixture"""
     return {
-        "app": {"name": "TestApp", "version": "1.0.0", "language": "zh_CN", "theme": "dark"},
+        "app": {
+            "name": "TestApp",
+            "version": "1.0.0",
+            "language": "zh_CN",
+            "theme": "dark",
+        },
         "ui": {"font_size": 12, "font_family": "Arial", "animation_enabled": True},
         "game": {"physics_enabled": True, "gravity_strength": 0.5, "friction": 0.9},
     }

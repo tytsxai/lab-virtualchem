@@ -36,7 +36,9 @@ class WelcomeWizard(QDialog):
 
     def init_ui(self):
         """初始化UI"""
-        self.setWindowTitle(self.i18n.t("wizard.welcome_title", default="欢迎使用 VirtualChemLab"))
+        self.setWindowTitle(
+            self.i18n.t("wizard.welcome_title", default="欢迎使用 VirtualChemLab")
+        )
         self.setModal(True)
         self.resize(750, 550)
 
@@ -83,7 +85,9 @@ class WelcomeWizard(QDialog):
         self.skip_btn.clicked.connect(self.skip_wizard)
         self.skip_btn.setStyleSheet("color: #666;")
 
-        self.prev_btn = QPushButton("← " + self.i18n.t("wizard.previous", default="上一步"))
+        self.prev_btn = QPushButton(
+            "← " + self.i18n.t("wizard.previous", default="上一步")
+        )
         self.prev_btn.clicked.connect(self.previous_page)
         self.prev_btn.setEnabled(False)
 
@@ -171,7 +175,11 @@ class WelcomeWizard(QDialog):
 
         # 功能列表
         features = [
-            ("🧪", "丰富的实验模板", "涵盖酸碱滴定、缓冲溶液、结晶、蒸馏等多种实验类型"),
+            (
+                "🧪",
+                "丰富的实验模板",
+                "涵盖酸碱滴定、缓冲溶液、结晶、蒸馏等多种实验类型",
+            ),
             ("📊", "实时数据分析", "自动生成实验曲线和数据图表，直观展示实验过程"),
             ("💯", "智能评分系统", "根据操作准确度和安全规范自动评分，即时反馈"),
             ("📝", "实验报告生成", "一键生成专业的实验报告，包含数据、图表和分析"),

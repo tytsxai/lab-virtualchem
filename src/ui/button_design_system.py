@@ -32,7 +32,9 @@ class ButtonSize(Enum):
     LARGE = ("large", 48, 16, 32, "11pt")  # 大号按钮
     XLARGE = ("xlarge", 56, 20, 40, "12pt")  # 超大按钮（触屏优化）
 
-    def __init__(self, name: str, height: int, padding_v: int, padding_h: int, font_size: str):
+    def __init__(
+        self, name: str, height: int, padding_v: int, padding_h: int, font_size: str
+    ):
         self.display_name = name
         self.height = height
         self.padding_v = padding_v
@@ -191,7 +193,11 @@ class ModernButton(QPushButton):
             self.setIconSize(QRect(0, 0, icon_size, icon_size).size())
 
         # 添加阴影效果（仅用于primary按钮）
-        if self.button_variant in [ButtonVariant.PRIMARY, ButtonVariant.DANGER, ButtonVariant.SUCCESS]:
+        if self.button_variant in [
+            ButtonVariant.PRIMARY,
+            ButtonVariant.DANGER,
+            ButtonVariant.SUCCESS,
+        ]:
             self._shadow_effect = QGraphicsDropShadowEffect(self)
             self._shadow_effect.setBlurRadius(8)
             self._shadow_effect.setOffset(0, 2)
@@ -367,7 +373,11 @@ class ModernButton(QPushButton):
 
             # 涟漪颜色（白色或黑色，取决于按钮背景）
             ripple_color = QColor(255, 255, 255, self._ripple_opacity)
-            if self.button_variant in [ButtonVariant.OUTLINE, ButtonVariant.GHOST, ButtonVariant.TEXT]:
+            if self.button_variant in [
+                ButtonVariant.OUTLINE,
+                ButtonVariant.GHOST,
+                ButtonVariant.TEXT,
+            ]:
                 ripple_color = QColor(0, 0, 0, self._ripple_opacity // 3)
 
             painter.setPen(Qt.PenStyle.NoPen)
@@ -518,17 +528,23 @@ class ToggleButton(ModernButton):
 
 
 # 便捷创建函数
-def create_primary_button(text: str, size: ButtonSize = ButtonSize.MEDIUM) -> ModernButton:
+def create_primary_button(
+    text: str, size: ButtonSize = ButtonSize.MEDIUM
+) -> ModernButton:
     """创建主要按钮"""
     return ModernButton(text, size=size, variant=ButtonVariant.PRIMARY)
 
 
-def create_secondary_button(text: str, size: ButtonSize = ButtonSize.MEDIUM) -> ModernButton:
+def create_secondary_button(
+    text: str, size: ButtonSize = ButtonSize.MEDIUM
+) -> ModernButton:
     """创建次要按钮"""
     return ModernButton(text, size=size, variant=ButtonVariant.SECONDARY)
 
 
-def create_outline_button(text: str, size: ButtonSize = ButtonSize.MEDIUM) -> ModernButton:
+def create_outline_button(
+    text: str, size: ButtonSize = ButtonSize.MEDIUM
+) -> ModernButton:
     """创建轮廓按钮"""
     return ModernButton(text, size=size, variant=ButtonVariant.OUTLINE)
 
@@ -538,11 +554,15 @@ def create_text_button(text: str, size: ButtonSize = ButtonSize.MEDIUM) -> Moder
     return ModernButton(text, size=size, variant=ButtonVariant.TEXT)
 
 
-def create_danger_button(text: str, size: ButtonSize = ButtonSize.MEDIUM) -> ModernButton:
+def create_danger_button(
+    text: str, size: ButtonSize = ButtonSize.MEDIUM
+) -> ModernButton:
     """创建危险按钮"""
     return ModernButton(text, size=size, variant=ButtonVariant.DANGER)
 
 
-def create_success_button(text: str, size: ButtonSize = ButtonSize.MEDIUM) -> ModernButton:
+def create_success_button(
+    text: str, size: ButtonSize = ButtonSize.MEDIUM
+) -> ModernButton:
     """创建成功按钮"""
     return ModernButton(text, size=size, variant=ButtonVariant.SUCCESS)

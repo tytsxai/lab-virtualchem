@@ -27,7 +27,9 @@ class TestTemperatureSafety:
 
         from src.models.experiment import ExperimentTemplate
 
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="synthesis")
+        experiment = ExperimentTemplate(
+            id="test_exp", title="测试实验", experiment_type="synthesis"
+        )
         experiment.prepare()
         experiment.start()
 
@@ -98,7 +100,9 @@ class TestReagentSafety:
 
         from src.models.experiment import ExperimentTemplate
 
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="general")
+        experiment = ExperimentTemplate(
+            id="test_exp", title="测试实验", experiment_type="general"
+        )
         experiment.prepare()
         experiment.start()
 
@@ -158,7 +162,9 @@ class TestOperationSafety:
 
         from src.models.experiment import ExperimentTemplate
 
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="synthesis")
+        experiment = ExperimentTemplate(
+            id="test_exp", title="测试实验", experiment_type="synthesis"
+        )
         experiment.prepare()
 
         # 检查是否提示防护装备
@@ -173,7 +179,9 @@ class TestOperationSafety:
 
         from src.models.experiment import ExperimentTemplate
 
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="synthesis")
+        experiment = ExperimentTemplate(
+            id="test_exp", title="测试实验", experiment_type="synthesis"
+        )
         experiment.prepare()
         experiment.start()
 
@@ -190,7 +198,9 @@ class TestOperationSafety:
 
         from src.models.experiment import ExperimentTemplate
 
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="synthesis")
+        experiment = ExperimentTemplate(
+            id="test_exp", title="测试实验", experiment_type="synthesis"
+        )
         experiment.prepare()
         experiment.start()
 
@@ -212,7 +222,9 @@ class TestOperationSafety:
 
         from src.models.experiment import ExperimentTemplate
 
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="general")
+        experiment = ExperimentTemplate(
+            id="test_exp", title="测试实验", experiment_type="general"
+        )
         experiment.prepare()
         experiment.start()
 
@@ -247,7 +259,9 @@ class TestComplianceChecks:
 
         from src.models.experiment import ExperimentTemplate
 
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="general")
+        experiment = ExperimentTemplate(
+            id="test_exp", title="测试实验", experiment_type="general"
+        )
         experiment.prepare()
         experiment.start()
 
@@ -289,7 +303,9 @@ class TestSafetyLogger:
 
         from src.models.experiment import ExperimentTemplate
 
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="synthesis")
+        experiment = ExperimentTemplate(
+            id="test_exp", title="测试实验", experiment_type="synthesis"
+        )
         experiment.prepare()
         experiment.start()
 
@@ -308,7 +324,9 @@ class TestSafetyLogger:
 
         from src.models.experiment import ExperimentTemplate
 
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="general")
+        experiment = ExperimentTemplate(
+            id="test_exp", title="测试实验", experiment_type="general"
+        )
         experiment.prepare()
         experiment.start()
 
@@ -351,7 +369,9 @@ class TestEmergencyProcedures:
 
         from src.models.experiment import ExperimentTemplate
 
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="synthesis")
+        experiment = ExperimentTemplate(
+            id="test_exp", title="测试实验", experiment_type="synthesis"
+        )
         experiment.prepare()
         experiment.start()
         experiment.heat(temperature=100, duration=60)
@@ -367,7 +387,9 @@ class TestEmergencyProcedures:
 
         from src.models.experiment import ExperimentTemplate
 
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="general")
+        experiment = ExperimentTemplate(
+            id="test_exp", title="测试实验", experiment_type="general"
+        )
         experiment.prepare()
         experiment.start()
 
@@ -382,7 +404,9 @@ class TestEmergencyProcedures:
 
         from src.models.experiment import ExperimentTemplate
 
-        experiment = ExperimentTemplate(id="test_exp", title="测试实验", experiment_type="synthesis")
+        experiment = ExperimentTemplate(
+            id="test_exp", title="测试实验", experiment_type="synthesis"
+        )
         experiment.prepare()
         experiment.start()
 

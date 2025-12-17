@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class TestType(Enum):
     """测试类型"""
+
     UNIT = "unit"
     INTEGRATION = "integration"
     FUNCTIONAL = "functional"
@@ -29,6 +30,7 @@ class TestType(Enum):
 
 class TestStatus(Enum):
     """测试状态"""
+
     PENDING = "pending"
     RUNNING = "running"
     PASSED = "passed"
@@ -39,6 +41,7 @@ class TestStatus(Enum):
 
 class TestSeverity(Enum):
     """测试严重性"""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -48,6 +51,7 @@ class TestSeverity(Enum):
 @dataclass
 class TestResult:
     """测试结果"""
+
     test_name: str
     test_type: TestType
     status: TestStatus
@@ -67,6 +71,7 @@ class TestResult:
 @dataclass
 class TestSuite:
     """测试套件"""
+
     name: str
     tests: list[Callable]
     setup_func: Callable | None = None
@@ -119,14 +124,20 @@ class TestAssertion:
     def assert_is_instance(obj: Any, cls: type, message: str = "类型不匹配") -> None:
         """断言类型"""
         if not isinstance(obj, cls):
-            raise AssertionError(f"{message}: 期望 {cls.__name__}, 实际 {type(obj).__name__}")
+            raise AssertionError(
+                f"{message}: 期望 {cls.__name__}, 实际 {type(obj).__name__}"
+            )
 
     @staticmethod
-    def assert_raises(expected_exception: Exception, func: Callable, *args, **kwargs) -> None:
+    def assert_raises(
+        expected_exception: Exception, func: Callable, *args, **kwargs
+    ) -> None:
         """断言抛出异常"""
         try:
             func(*args, **kwargs)
-            raise AssertionError(f"期望抛出 {expected_exception.__class__.__name__} 异常")
+            raise AssertionError(
+                f"期望抛出 {expected_exception.__class__.__name__} 异常"
+            )
         except expected_exception.__class__:
             pass
         except Exception as e:
@@ -162,7 +173,7 @@ class TestRunner:
             status=TestStatus.RUNNING,
             duration=0.0,
             start_time=time.time(),
-            end_time=0.0
+            end_time=0.0,
         )
 
         self.running_tests[name] = result
@@ -277,10 +288,16 @@ class TestRunner:
     def get_test_summary(self) -> dict[str, Any]:
         """获取测试摘要"""
         total_tests = len(self.test_results)
-        passed_tests = sum(1 for r in self.test_results if r.status == TestStatus.PASSED)
-        failed_tests = sum(1 for r in self.test_results if r.status == TestStatus.FAILED)
+        passed_tests = sum(
+            1 for r in self.test_results if r.status == TestStatus.PASSED
+        )
+        failed_tests = sum(
+            1 for r in self.test_results if r.status == TestStatus.FAILED
+        )
         error_tests = sum(1 for r in self.test_results if r.status == TestStatus.ERROR)
-        skipped_tests = sum(1 for r in self.test_results if r.status == TestStatus.SKIPPED)
+        skipped_tests = sum(
+            1 for r in self.test_results if r.status == TestStatus.SKIPPED
+        )
 
         total_duration = sum(r.duration for r in self.test_results)
         average_duration = total_duration / total_tests if total_tests > 0 else 0
@@ -293,7 +310,7 @@ class TestRunner:
             "skipped_tests": skipped_tests,
             "success_rate": passed_tests / total_tests if total_tests > 0 else 0,
             "total_duration": total_duration,
-            "average_duration": average_duration
+            "average_duration": average_duration,
         }
 
 
@@ -314,7 +331,7 @@ class CoverageAnalyzer:
             "lines_total": 0,
             "branches_executed": set(),
             "branches_total": 0,
-            "start_time": time.time()
+            "start_time": time.time(),
         }
 
     def record_line_execution(self, module_name: str, line_number: int) -> None:
@@ -342,18 +359,24 @@ class CoverageAnalyzer:
         # 计算分支覆盖率
         branches_executed = len(data["branches_executed"])
         branches_total = data["branches_total"]
-        branch_coverage = branches_executed / branches_total if branches_total > 0 else 0.0
+        branch_coverage = (
+            branches_executed / branches_total if branches_total > 0 else 0.0
+        )
 
         return {
             "line_coverage": line_coverage,
             "branch_coverage": branch_coverage,
-            "overall_coverage": (line_coverage + branch_coverage) / 2
+            "overall_coverage": (line_coverage + branch_coverage) / 2,
         }
 
     def get_overall_coverage(self) -> dict[str, float]:
         """获取总体覆盖率"""
         if not self.coverage_data:
-            return {"line_coverage": 0.0, "branch_coverage": 0.0, "overall_coverage": 0.0}
+            return {
+                "line_coverage": 0.0,
+                "branch_coverage": 0.0,
+                "overall_coverage": 0.0,
+            }
 
         total_line_coverage = 0.0
         total_branch_coverage = 0.0
@@ -367,7 +390,8 @@ class CoverageAnalyzer:
         return {
             "line_coverage": total_line_coverage / module_count,
             "branch_coverage": total_branch_coverage / module_count,
-            "overall_coverage": (total_line_coverage + total_branch_coverage) / (2 * module_count)
+            "overall_coverage": (total_line_coverage + total_branch_coverage)
+            / (2 * module_count),
         }
 
 
@@ -379,7 +403,9 @@ class PerformanceTester:
 
         logger.info("性能测试器初始化完成")
 
-    def benchmark_function(self, func: Callable, iterations: int = 1000, *args, **kwargs) -> dict[str, Any]:
+    def benchmark_function(
+        self, func: Callable, iterations: int = 1000, *args, **kwargs
+    ) -> dict[str, Any]:
         """基准测试函数"""
         times = []
 
@@ -422,7 +448,7 @@ class PerformanceTester:
             "median_time": median_time,
             "p95_time": p95_time,
             "p99_time": p99_time,
-            "operations_per_second": 1.0 / average_time if average_time > 0 else 0
+            "operations_per_second": 1.0 / average_time if average_time > 0 else 0,
         }
 
         # 存储结果
@@ -432,7 +458,9 @@ class PerformanceTester:
 
         return result
 
-    def stress_test(self, func: Callable, duration: float = 60.0, *args, **kwargs) -> dict[str, Any]:
+    def stress_test(
+        self, func: Callable, duration: float = 60.0, *args, **kwargs
+    ) -> dict[str, Any]:
         """压力测试"""
         start_time = time.time()
         end_time = start_time + duration
@@ -460,7 +488,7 @@ class PerformanceTester:
             "errors": errors,
             "operations_per_second": operations / total_time if total_time > 0 else 0,
             "error_rate": errors / operations if operations > 0 else 0,
-            "average_time": sum(times) / len(times) if times else 0
+            "average_time": sum(times) / len(times) if times else 0,
         }
 
         return result
@@ -483,7 +511,7 @@ class SecurityTester:
             "'; DROP TABLE users; --",
             "' OR '1'='1",
             "' UNION SELECT * FROM users --",
-            "'; INSERT INTO users VALUES ('hacker', 'password'); --"
+            "'; INSERT INTO users VALUES ('hacker', 'password'); --",
         ]
 
         for payload in sql_payloads:
@@ -506,7 +534,7 @@ class SecurityTester:
             "<script>alert('XSS')</script>",
             "<img src=x onerror=alert('XSS')>",
             "javascript:alert('XSS')",
-            "<iframe src=javascript:alert('XSS')></iframe>"
+            "<iframe src=javascript:alert('XSS')></iframe>",
         ]
 
         for payload in xss_payloads:
@@ -532,7 +560,7 @@ class SecurityTester:
             "A" * 10000,  # 超长输入
             "null",
             "undefined",
-            "NaN"
+            "NaN",
         ]
 
         for malicious_input in malicious_inputs:
@@ -564,7 +592,7 @@ class EnhancedTestingFramework:
             "performance_tests": [],
             "security_tests": [],
             "coverage": {},
-            "summary": {}
+            "summary": {},
         }
 
         logger.info("开始综合测试")
@@ -619,7 +647,9 @@ class EnhancedTestingFramework:
         report.append("")
 
         # 失败测试详情
-        failed_tests = [r for r in self.test_runner.test_results if r.status == TestStatus.FAILED]
+        failed_tests = [
+            r for r in self.test_runner.test_results if r.status == TestStatus.FAILED
+        ]
         if failed_tests:
             report.append("## 失败测试详情")
             for test in failed_tests:
@@ -636,32 +666,45 @@ testing_framework = EnhancedTestingFramework()
 
 def test_case(_test_type: TestType = TestType.UNIT):
     """测试用例装饰器"""
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*_args: Any, **_kwargs: Any):
             return testing_framework.test_runner.run_test(func)
+
         return wrapper
+
     return decorator
 
 
 def benchmark(iterations: int = 1000):
     """基准测试装饰器"""
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            return testing_framework.performance_tester.benchmark_function(func, iterations, *args, **kwargs)
+            return testing_framework.performance_tester.benchmark_function(
+                func, iterations, *args, **kwargs
+            )
+
         return wrapper
+
     return decorator
 
 
 def security_test(func: Callable) -> Callable:
     """安全测试装饰器"""
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         # 运行安全测试
-        sql_vulns = testing_framework.security_tester.test_sql_injection(func, *args, **kwargs)
+        sql_vulns = testing_framework.security_tester.test_sql_injection(
+            func, *args, **kwargs
+        )
         xss_vulns = testing_framework.security_tester.test_xss(func, *args, **kwargs)
-        input_vulns = testing_framework.security_tester.test_input_validation(func, *args, **kwargs)
+        input_vulns = testing_framework.security_tester.test_input_validation(
+            func, *args, **kwargs
+        )
 
         # 记录漏洞
         all_vulns = sql_vulns + xss_vulns + input_vulns
@@ -669,6 +712,7 @@ def security_test(func: Callable) -> Callable:
             logger.warning(f"安全测试发现漏洞: {func.__name__} - {all_vulns}")
 
         return func(*args, **kwargs)
+
     return wrapper
 
 

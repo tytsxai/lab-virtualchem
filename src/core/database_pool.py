@@ -106,7 +106,9 @@ class DatabasePool:
         # 初始化连接池
         self._initialize_pool()
 
-        logger.info(f"数据库连接池已初始化 ({db_type}, 最小: {min_connections}, 最大: {max_connections})")
+        logger.info(
+            f"数据库连接池已初始化 ({db_type}, 最小: {min_connections}, 最大: {max_connections})"
+        )
 
     def _initialize_pool(self) -> None:
         """初始化连接池"""
@@ -139,11 +141,16 @@ class DatabasePool:
             if connection:
                 with self._lock:
                     self._connection_counter += 1
-                    connection_id = f"conn_{self._connection_counter}_{int(time.time())}"
+                    connection_id = (
+                        f"conn_{self._connection_counter}_{int(time.time())}"
+                    )
 
                     self.all_connections[connection_id] = connection
                     self.connection_info[connection_id] = ConnectionInfo(
-                        connection_id=connection_id, created_at=datetime.now(), last_used=datetime.now(), use_count=0
+                        connection_id=connection_id,
+                        created_at=datetime.now(),
+                        last_used=datetime.now(),
+                        use_count=0,
                     )
 
                     self.available_connections.put(connection_id)
@@ -162,7 +169,9 @@ class DatabasePool:
         """创建SQLite连接"""
         try:
             db_path = self.config.get("database", ":memory:")
-            connection = sqlite3.connect(db_path, timeout=self.connection_timeout, check_same_thread=False)
+            connection = sqlite3.connect(
+                db_path, timeout=self.connection_timeout, check_same_thread=False
+            )
             connection.row_factory = sqlite3.Row
             return connection
         except Exception as e:
@@ -453,7 +462,10 @@ class DatabaseManager:
                         return [dict(row) for row in cursor.fetchall()]
                     else:
                         columns = [desc[0] for desc in cursor.description]
-                        return [dict(zip(columns, row, strict=False)) for row in cursor.fetchall()]
+                        return [
+                            dict(zip(columns, row, strict=False))
+                            for row in cursor.fetchall()
+                        ]
                 else:
                     # 非查询操作
                     connection.commit()
@@ -489,7 +501,12 @@ class DatabaseManager:
                             results.append([dict(row) for row in cursor.fetchall()])
                         else:
                             columns = [desc[0] for desc in cursor.description]
-                            results.append([dict(zip(columns, row, strict=False)) for row in cursor.fetchall()])
+                            results.append(
+                                [
+                                    dict(zip(columns, row, strict=False))
+                                    for row in cursor.fetchall()
+                                ]
+                            )
                     else:
                         results.append(cursor.rowcount)
 

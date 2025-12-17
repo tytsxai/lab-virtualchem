@@ -60,7 +60,9 @@ class HazardChecker:
             },
         }
 
-    def check_temperature(self, temperature: float, reagent_ids: list[str]) -> HazardAlert | None:
+    def check_temperature(
+        self, temperature: float, reagent_ids: list[str]
+    ) -> HazardAlert | None:
         """检查温度是否安全
 
         Args:
@@ -76,7 +78,10 @@ class HazardChecker:
                 continue
 
             # 检查是否超过沸点
-            if reagent.properties.boiling_point and temperature > reagent.properties.boiling_point + 20:
+            if (
+                reagent.properties.boiling_point
+                and temperature > reagent.properties.boiling_point + 20
+            ):
                 return HazardAlert(
                     level=HazardLevel.SEVERE,
                     title="温度过高",
@@ -107,7 +112,12 @@ class HazardChecker:
             危险警报或None
         """
         # 浓硫酸与水
-        if reagent1_id == "h2so4_conc" and reagent2_id == "h2o" or reagent1_id == "h2o" and reagent2_id == "h2so4_conc":
+        if (
+            reagent1_id == "h2so4_conc"
+            and reagent2_id == "h2o"
+            or reagent1_id == "h2o"
+            and reagent2_id == "h2so4_conc"
+        ):
             return HazardAlert(
                 level=HazardLevel.CRITICAL,
                 title="严重警告:浓硫酸与水混合",
@@ -157,7 +167,9 @@ class HazardChecker:
 
         return highest_level, hints
 
-    def check_protection_equipment(self, reagent_ids: list[str], equipment: list[str]) -> HazardAlert | None:
+    def check_protection_equipment(
+        self, reagent_ids: list[str], equipment: list[str]
+    ) -> HazardAlert | None:
         """检查防护装备是否充分
 
         Args:

@@ -129,8 +129,30 @@ class UserFeedbackSystem(QObject):
 
         # 分析数据
         self.sentiment_keywords = {
-            "positive": ["好", "棒", "优秀", "满意", "喜欢", "推荐", "完美", "流畅", "快速", "稳定"],
-            "negative": ["差", "慢", "卡", "错误", "崩溃", "问题", "困难", "复杂", "bug", "失败"],
+            "positive": [
+                "好",
+                "棒",
+                "优秀",
+                "满意",
+                "喜欢",
+                "推荐",
+                "完美",
+                "流畅",
+                "快速",
+                "稳定",
+            ],
+            "negative": [
+                "差",
+                "慢",
+                "卡",
+                "错误",
+                "崩溃",
+                "问题",
+                "困难",
+                "复杂",
+                "bug",
+                "失败",
+            ],
             "neutral": ["一般", "普通", "还行", "可以", "正常", "标准", "中等"],
         }
 
@@ -178,7 +200,9 @@ class UserFeedbackSystem(QObject):
             sentiment_analysis = self._analyze_sentiment(content)
 
             # 确定优先级
-            priority = self._determine_priority(feedback_type, rating, sentiment_analysis)
+            priority = self._determine_priority(
+                feedback_type, rating, sentiment_analysis
+            )
 
             # 创建反馈对象
             feedback = UserFeedback(
@@ -311,7 +335,10 @@ class UserFeedbackSystem(QObject):
             )
 
     def _determine_priority(
-        self, feedback_type: FeedbackType, rating: int, sentiment_analysis: SentimentAnalysis
+        self,
+        feedback_type: FeedbackType,
+        rating: int,
+        sentiment_analysis: SentimentAnalysis,
     ) -> PriorityLevel:
         """确定优先级"""
         try:
@@ -379,7 +406,10 @@ class UserFeedbackSystem(QObject):
             trends.append(self._analyze_period_trend("30d", timedelta(days=30)))
 
             # 发送趋势更新信号
-            trend_data = {"trends": [trend.__dict__ for trend in trends], "analysis_time": datetime.now().isoformat()}
+            trend_data = {
+                "trends": [trend.__dict__ for trend in trends],
+                "analysis_time": datetime.now().isoformat(),
+            }
 
             self.trend_updated.emit(trend_data)
 
@@ -392,11 +422,17 @@ class UserFeedbackSystem(QObject):
         except Exception as e:
             logger.error(f"分析反馈趋势失败: {e}")
 
-    def _analyze_period_trend(self, period: str, time_delta: timedelta) -> FeedbackTrend:
+    def _analyze_period_trend(
+        self, period: str, time_delta: timedelta
+    ) -> FeedbackTrend:
         """分析特定时间段的趋势"""
         try:
             cutoff_time = datetime.now() - time_delta
-            period_feedbacks = [feedback for feedback in self.feedback_history if feedback.timestamp >= cutoff_time]
+            period_feedbacks = [
+                feedback
+                for feedback in self.feedback_history
+                if feedback.timestamp >= cutoff_time
+            ]
 
             if not period_feedbacks:
                 return FeedbackTrend(
@@ -410,8 +446,12 @@ class UserFeedbackSystem(QObject):
                 )
 
             # 统计情感
-            positive_count = sum(1 for f in period_feedbacks if f.sentiment == SentimentType.POSITIVE)
-            negative_count = sum(1 for f in period_feedbacks if f.sentiment == SentimentType.NEGATIVE)
+            positive_count = sum(
+                1 for f in period_feedbacks if f.sentiment == SentimentType.POSITIVE
+            )
+            negative_count = sum(
+                1 for f in period_feedbacks if f.sentiment == SentimentType.NEGATIVE
+            )
 
             # 计算平均评分
             avg_rating = sum(f.rating for f in period_feedbacks) / len(period_feedbacks)
@@ -422,7 +462,9 @@ class UserFeedbackSystem(QObject):
                 for tag in feedback.tags:
                     issue_counts[tag] += 1
 
-            common_issues = sorted(issue_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+            common_issues = sorted(
+                issue_counts.items(), key=lambda x: x[1], reverse=True
+            )[:5]
 
             # 计算情感趋势
             sentiment_trend = (positive_count - negative_count) / len(period_feedbacks)
@@ -466,14 +508,19 @@ class UserFeedbackSystem(QObject):
             # 分析常见问题
             for issue, count in recent_trend.common_issues:
                 if count > 3:  # 问题出现频率较高
-                    suggestions.append((issue, f"问题 '{issue}' 出现频率较高，需要优先解决"))
+                    suggestions.append(
+                        (issue, f"问题 '{issue}' 出现频率较高，需要优先解决")
+                    )
 
             # 分析反馈类型分布
             feedback_types = defaultdict(int)
             for feedback in self.feedback_history:
                 feedback_types[feedback.feedback_type] += 1
 
-            if feedback_types[FeedbackType.BUG_REPORT] > feedback_types[FeedbackType.FEATURE_REQUEST]:
+            if (
+                feedback_types[FeedbackType.BUG_REPORT]
+                > feedback_types[FeedbackType.FEATURE_REQUEST]
+            ):
                 suggestions.append(("system", "Bug报告较多，需要加强测试"))
 
             # 发送建议
@@ -487,7 +534,9 @@ class UserFeedbackSystem(QObject):
         """获取反馈摘要"""
         try:
             if user_id:
-                user_feedbacks = [f for f in self.feedback_history if f.user_id == user_id]
+                user_feedbacks = [
+                    f for f in self.feedback_history if f.user_id == user_id
+                ]
             else:
                 user_feedbacks = list(self.feedback_history)
 
@@ -504,7 +553,8 @@ class UserFeedbackSystem(QObject):
                 sentiment_counts[feedback.sentiment] += 1
 
             sentiment_distribution = {
-                sentiment.value: count / total_feedback for sentiment, count in sentiment_counts.items()
+                sentiment.value: count / total_feedback
+                for sentiment, count in sentiment_counts.items()
             }
 
             # 反馈类型分布
@@ -513,7 +563,8 @@ class UserFeedbackSystem(QObject):
                 type_counts[feedback.feedback_type] += 1
 
             type_distribution = {
-                feedback_type.value: count / total_feedback for feedback_type, count in type_counts.items()
+                feedback_type.value: count / total_feedback
+                for feedback_type, count in type_counts.items()
             }
 
             # 优先级分布
@@ -522,7 +573,8 @@ class UserFeedbackSystem(QObject):
                 priority_counts[feedback.priority] += 1
 
             priority_distribution = {
-                priority.value: count / total_feedback for priority, count in priority_counts.items()
+                priority.value: count / total_feedback
+                for priority, count in priority_counts.items()
             }
 
             return {
@@ -594,7 +646,9 @@ class UserFeedbackSystem(QObject):
             ]
 
             # 按优先级和时间排序
-            high_priority.sort(key=lambda f: (f.priority.value, f.timestamp), reverse=True)
+            high_priority.sort(
+                key=lambda f: (f.priority.value, f.timestamp), reverse=True
+            )
 
             return high_priority
 
@@ -621,7 +675,9 @@ class UserFeedbackSystem(QObject):
                         "tags": feedback.tags,
                         "status": feedback.status,
                         "response": feedback.response,
-                        "response_time": feedback.response_time.isoformat() if feedback.response_time else None,
+                        "response_time": feedback.response_time.isoformat()
+                        if feedback.response_time
+                        else None,
                     }
                     for feedback_id, feedback in self.feedbacks.items()
                 },
@@ -726,7 +782,9 @@ class FeedbackDialog(QDialog):
 
         # 标题
         title_label = QLabel("请告诉我们您的想法")
-        title_label.setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 10px;")
+        title_label.setStyleSheet(
+            "font-size: 16px; font-weight: bold; margin-bottom: 10px;"
+        )
         layout.addWidget(title_label)
 
         # 反馈类型
@@ -734,7 +792,9 @@ class FeedbackDialog(QDialog):
         layout.addWidget(type_label)
 
         self.type_combo = QComboBox()
-        self.type_combo.addItems(["Bug报告", "功能建议", "使用问题", "性能问题", "一般反馈", "评分"])
+        self.type_combo.addItems(
+            ["Bug报告", "功能建议", "使用问题", "性能问题", "一般反馈", "评分"]
+        )
         layout.addWidget(self.type_combo)
 
         # 标题
@@ -800,16 +860,24 @@ class FeedbackDialog(QDialog):
                 "评分": FeedbackType.RATING,
             }
 
-            feedback_type_enum = type_mapping.get(feedback_type, FeedbackType.GENERAL_FEEDBACK)
+            feedback_type_enum = type_mapping.get(
+                feedback_type, FeedbackType.GENERAL_FEEDBACK
+            )
 
             # 提交反馈
             feedback_id = self.feedback_system.submit_feedback(
-                user_id=self.user_id, feedback_type=feedback_type_enum, title=title, content=content, rating=rating
+                user_id=self.user_id,
+                feedback_type=feedback_type_enum,
+                title=title,
+                content=content,
+                rating=rating,
             )
 
             if feedback_id:
                 QMessageBox.information(self, "成功", "反馈已提交，感谢您的反馈！")
-                self.feedback_submitted.emit(self.user_id, feedback_type, content, rating)
+                self.feedback_submitted.emit(
+                    self.user_id, feedback_type, content, rating
+                )
                 self.accept()
             else:
                 QMessageBox.critical(self, "错误", "提交失败，请稍后重试")

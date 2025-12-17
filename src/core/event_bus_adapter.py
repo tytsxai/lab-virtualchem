@@ -15,7 +15,12 @@ class EventBusAdapter(IEventBus):
         self._bus = event_bus or EventBus()
         self._subscriptions = {}  # 订阅ID映射
 
-    def subscribe(self, event_name: str, handler: IEventHandler, priority: EventPriority | None = None) -> str:
+    def subscribe(
+        self,
+        event_name: str,
+        handler: IEventHandler,
+        priority: EventPriority | None = None,
+    ) -> str:
         """订阅事件"""
         # 生成订阅ID
         subscription_id = str(uuid.uuid4())
@@ -29,7 +34,10 @@ class EventBusAdapter(IEventBus):
         self._bus.subscribe(event_name, wrapper, priority or EventPriority.NORMAL)
 
         # 保存订阅映射
-        self._subscriptions[subscription_id] = {"event_name": event_name, "handler": wrapper}
+        self._subscriptions[subscription_id] = {
+            "event_name": event_name,
+            "handler": wrapper,
+        }
 
         return subscription_id
 

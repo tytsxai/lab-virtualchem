@@ -57,7 +57,9 @@ class TestExperimentServiceImpl(unittest.TestCase):
     def test_create_experiment_success(self):
         """测试创建实验 - 成功"""
         # 准备
-        self.mock_storage.load.side_effect = lambda key: self.sample_template if key.startswith("templates/") else None
+        self.mock_storage.load.side_effect = (
+            lambda key: self.sample_template if key.startswith("templates/") else None
+        )
         request = ExperimentRequest(user_id="user123", template_id="template1")
 
         # 执行
@@ -85,7 +87,9 @@ class TestExperimentServiceImpl(unittest.TestCase):
     def test_submit_step_success(self):
         """测试提交步骤 - 成功"""
         # 准备
-        self.mock_storage.load.side_effect = lambda key: self.sample_template if key.startswith("templates/") else None
+        self.mock_storage.load.side_effect = (
+            lambda key: self.sample_template if key.startswith("templates/") else None
+        )
         self.mock_engine.submit_step.return_value = (True, "正确", None)
         self.mock_engine.next_step.return_value = True
         mock_step = Mock(id="step2")
@@ -95,7 +99,9 @@ class TestExperimentServiceImpl(unittest.TestCase):
             ExperimentRequest(user_id="user123", template_id="template1")
         )
         request = StepSubmissionRequest(
-            experiment_id=create_response.experiment_id, step_id="step1", user_input={"answer": "42"}
+            experiment_id=create_response.experiment_id,
+            step_id="step1",
+            user_input={"answer": "42"},
         )
 
         # 执行
@@ -196,7 +202,9 @@ class TestReportServiceImpl(unittest.TestCase):
         # 执行
         from src.contracts.report_service import ExportFormat
 
-        response = self.service.generate_experiment_report(mock_record, format=ExportFormat.HTML)
+        response = self.service.generate_experiment_report(
+            mock_record, format=ExportFormat.HTML
+        )
 
         # 断言
         self.assertTrue(response.success)
@@ -271,7 +279,8 @@ class TestReportServiceImpl(unittest.TestCase):
             tmp_dir = Path(tmp)
             template_path = tmp_dir / "alpha.yaml"
             template_path.write_text(
-                "metadata:\n  report_type: progress\nsections:\n  - {}\n", encoding="utf-8"
+                "metadata:\n  report_type: progress\nsections:\n  - {}\n",
+                encoding="utf-8",
             )
             self.service.config.template_dir = str(tmp_dir)
 

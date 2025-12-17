@@ -533,7 +533,9 @@ class TestValidateTemplate:
                 "steps": [{"id": "s1", "text": "步骤"}],
                 "reagents": [],
                 "score_rules": [],
-                "goals": [{"name": "完成实验", "metric": "completion_rate", "gte": 100.0}],
+                "goals": [
+                    {"name": "完成实验", "metric": "completion_rate", "gte": 100.0}
+                ],
                 "curves": [],
             }
         }

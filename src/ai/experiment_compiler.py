@@ -136,11 +136,15 @@ class ExperimentCompiler:
 
             # 标准化其他字段
             if "goals" in data:
-                data["goals"] = [Goal(**goal) if isinstance(goal, dict) else goal for goal in data["goals"]]
+                data["goals"] = [
+                    Goal(**goal) if isinstance(goal, dict) else goal
+                    for goal in data["goals"]
+                ]
 
             if "reagents" in data:
                 data["reagents"] = [
-                    Reagent(**reagent) if isinstance(reagent, dict) else reagent for reagent in data["reagents"]
+                    Reagent(**reagent) if isinstance(reagent, dict) else reagent
+                    for reagent in data["reagents"]
                 ]
 
             if "curves" in data:
@@ -155,7 +159,8 @@ class ExperimentCompiler:
 
             if "score_rules" in data:
                 data["score_rules"] = [
-                    ScoreRule(**rule) if isinstance(rule, dict) else rule for rule in data["score_rules"]
+                    ScoreRule(**rule) if isinstance(rule, dict) else rule
+                    for rule in data["score_rules"]
                 ]
 
             # 创建模板
@@ -518,7 +523,9 @@ class ExperimentCompiler:
             logger.error(f"AI解析失败: {e}")
             return None
 
-    def _add_suggestions(self, result: CompilationResult, template: ExperimentTemplate) -> None:
+    def _add_suggestions(
+        self, result: CompilationResult, template: ExperimentTemplate
+    ) -> None:
         """添加改进建议
 
         Args:
@@ -535,8 +542,13 @@ class ExperimentCompiler:
             result.suggestions.append("建议为更多步骤添加提示信息")
 
         # 检查安全级别
-        critical_steps = sum(1 for step in template.steps if step.safety_level == "critical")
-        if critical_steps == 0 and any(reagent.hazard_level in ["severe", "critical"] for reagent in template.reagents):
+        critical_steps = sum(
+            1 for step in template.steps if step.safety_level == "critical"
+        )
+        if critical_steps == 0 and any(
+            reagent.hazard_level in ["severe", "critical"]
+            for reagent in template.reagents
+        ):
             result.suggestions.append("使用危险试剂时，建议标记关键安全步骤")
 
         # 检查曲线配置
@@ -546,7 +558,9 @@ class ExperimentCompiler:
 
 # 便捷函数
 def compile_experiment(
-    source: str | dict[str, Any] | Path, format_type: str = "auto", ai_assistant: Any = None
+    source: str | dict[str, Any] | Path,
+    format_type: str = "auto",
+    ai_assistant: Any = None,
 ) -> CompilationResult:
     """编译实验模板的便捷函数
 
@@ -602,7 +616,9 @@ def compile_experiment(
     return result
 
 
-def save_compiled_template(result: CompilationResult, output_path: Path | str, format_type: str = "yaml") -> bool:
+def save_compiled_template(
+    result: CompilationResult, output_path: Path | str, format_type: str = "yaml"
+) -> bool:
     """保存编译后的模板
 
     Args:

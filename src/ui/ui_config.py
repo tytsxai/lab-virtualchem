@@ -224,8 +224,12 @@ class UIConfig:
         """导出样式表变量"""
         return {
             "animation_duration": f"{self.get_animation_duration()}ms",
-            "border_radius": "4px" if self.get("theme.type") != "high_contrast" else "0px",
-            "shadow_enabled": "true" if self.get("windows.enable_shadow", True) else "false",
+            "border_radius": "4px"
+            if self.get("theme.type") != "high_contrast"
+            else "0px",
+            "shadow_enabled": "true"
+            if self.get("windows.enable_shadow", True)
+            else "false",
         }
 
 

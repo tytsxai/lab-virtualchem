@@ -89,7 +89,9 @@ class ChartWidget(QWidget):
         toolbar_layout = QHBoxLayout()
 
         # 触摸友好的按钮大小
-        btn_height = TouchHelper.get_touch_target_size() if self.is_touch_enabled else 32
+        btn_height = (
+            TouchHelper.get_touch_target_size() if self.is_touch_enabled else 32
+        )
 
         self.clear_btn = QPushButton("清空")
         self.clear_btn.setMinimumHeight(btn_height)
@@ -239,7 +241,9 @@ class ChartWidget(QWidget):
             color = data.get("color", None)
 
             if color:
-                self.ax.plot(x_data, y_data, marker="o", label=label, linewidth=2, color=color)
+                self.ax.plot(
+                    x_data, y_data, marker="o", label=label, linewidth=2, color=color
+                )
             else:
                 self.ax.plot(x_data, y_data, marker="o", label=label, linewidth=2)
 
@@ -323,7 +327,9 @@ class ChartWidget(QWidget):
         self.figure.tight_layout()
         self.canvas.draw()
 
-    def plot_pie_chart(self, labels: list[str], values: list[float], title: str = "饼图"):
+    def plot_pie_chart(
+        self, labels: list[str], values: list[float], title: str = "饼图"
+    ):
         """绘制饼图"""
         if not MATPLOTLIB_AVAILABLE:
             return
@@ -338,7 +344,10 @@ class ChartWidget(QWidget):
         self.canvas.draw()
 
     def plot_titration_curve(
-        self, volumes: list[float], ph_values: list[float], equivalence_point: float | None = None
+        self,
+        volumes: list[float],
+        ph_values: list[float],
+        equivalence_point: float | None = None,
     ):
         """绘制滴定曲线"""
         if not MATPLOTLIB_AVAILABLE:
@@ -417,7 +426,9 @@ class ChartWidget(QWidget):
                 try:
                     self.figure.savefig(filename, dpi=300, bbox_inches="tight")
                     logger.info(f"图表已保存: {filename}")
-                    QMessageBox.information(self, "保存成功", f"图表已保存到:\n{filename}")
+                    QMessageBox.information(
+                        self, "保存成功", f"图表已保存到:\n{filename}"
+                    )
                 except Exception as e:
                     logger.error(f"保存图表失败: {e}", exc_info=True)
                     QMessageBox.critical(self, "保存失败", f"保存图表时发生错误:\n{e}")

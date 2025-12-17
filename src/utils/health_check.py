@@ -60,7 +60,11 @@ class HealthChecker:
             }
         except Exception as e:
             logger.error(f"磁盘空间检查失败: {e}")
-            return {"check": "disk_space", "status": "error", "message": f"检查失败: {e}"}
+            return {
+                "check": "disk_space",
+                "status": "error",
+                "message": f"检查失败: {e}",
+            }
 
     def check_memory(self) -> dict[str, Any]:
         """检查内存使用
@@ -194,7 +198,14 @@ class HealthChecker:
                 file = Path(file_path)
 
                 if not file.exists():
-                    results.append({"path": file_path, "exists": False, "readable": False, "status": "warning"})
+                    results.append(
+                        {
+                            "path": file_path,
+                            "exists": False,
+                            "readable": False,
+                            "status": "warning",
+                        }
+                    )
                     if overall_status == "healthy":
                         overall_status = "warning"
                 else:
@@ -338,7 +349,9 @@ class PerformanceMonitor:
                 "avg_duration_ms": round(sum(durations) / len(durations), 2),
                 "min_duration_ms": round(min(durations), 2),
                 "max_duration_ms": round(max(durations), 2),
-                "success_rate": round((successes.count(True) / len(successes)) * 100, 2),
+                "success_rate": round(
+                    (successes.count(True) / len(successes)) * 100, 2
+                ),
                 "total_successes": successes.count(True),
                 "total_failures": successes.count(False),
             }
@@ -351,7 +364,9 @@ class PerformanceMonitor:
         """
         with self._lock:
             return {
-                "operations": {operation: self.get_stats(operation) for operation in self._metrics},
+                "operations": {
+                    operation: self.get_stats(operation) for operation in self._metrics
+                },
                 "total_operations": len(self._metrics),
             }
 
@@ -368,7 +383,9 @@ class PerformanceMonitor:
             else:
                 self._metrics.clear()
 
-    def get_recent_metrics(self, operation: str, count: int = 10) -> list[dict[str, Any]]:
+    def get_recent_metrics(
+        self, operation: str, count: int = 10
+    ) -> list[dict[str, Any]]:
         """获取最近的指标
 
         Args:
@@ -416,7 +433,9 @@ def time_operation(operation_name: str):
             finally:
                 duration_ms = (time.time() - start_time) * 1000
                 metadata = {"error": error} if error else {}
-                performance_monitor.record_metric(operation_name, duration_ms, success, metadata)
+                performance_monitor.record_metric(
+                    operation_name, duration_ms, success, metadata
+                )
 
         wrapper.__name__ = func.__name__
         wrapper.__doc__ = func.__doc__

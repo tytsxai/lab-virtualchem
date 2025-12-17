@@ -56,7 +56,11 @@ class MistakeAnalyzer:
         mistakes = self.mistake_book.get_student_mistakes(student_id)
 
         if not mistakes:
-            return {"student_id": student_id, "total_mistakes": 0, "message": "暂无错误数据"}
+            return {
+                "student_id": student_id,
+                "total_mistakes": 0,
+                "message": "暂无错误数据",
+            }
 
         # 按类型统计
         type_counter = Counter(m.mistake_type for m in mistakes)
@@ -89,7 +93,9 @@ class MistakeAnalyzer:
             "knowledge_gaps": knowledge_weaknesses,
             "frequent_mistakes": frequent_mistakes,
             "trend": trend,
-            "recommendations": self._generate_recommendations(weakness_list, knowledge_weaknesses),
+            "recommendations": self._generate_recommendations(
+                weakness_list, knowledge_weaknesses
+            ),
         }
 
     def _identify_knowledge_gaps(self, mistakes: list) -> list[dict]:
@@ -164,7 +170,9 @@ class MistakeAnalyzer:
         second_count = len(second_half)
 
         # 计算变化率（使用三元运算符）
-        change_rate = (second_count - first_count) / first_count * 100 if first_count > 0 else 0
+        change_rate = (
+            (second_count - first_count) / first_count * 100 if first_count > 0 else 0
+        )
 
         # 判断趋势
         if change_rate < -20:
@@ -205,7 +213,9 @@ class MistakeAnalyzer:
         else:
             return "较轻"
 
-    def _generate_recommendations(self, weaknesses: list[dict], knowledge_gaps: list[dict]) -> list[str]:
+    def _generate_recommendations(
+        self, weaknesses: list[dict], knowledge_gaps: list[dict]
+    ) -> list[str]:
         """生成学习建议"""
         recommendations = []
 
@@ -248,13 +258,17 @@ class MistakeAnalyzer:
             priority = gap["priority"]
 
             recommendations.append(
-                f"📌 {knowledge}知识点薄弱（优先级：{priority}）\n" "  建议重点复习相关内容，多做针对性练习"
+                f"📌 {knowledge}知识点薄弱（优先级：{priority}）\n"
+                "  建议重点复习相关内容，多做针对性练习"
             )
 
         # 通用建议
         if len(weaknesses) > 5:
             recommendations.append(
-                "💡 错误类型较多，建议：\n" "  - 制定系统的复习计划\n" "  - 每天复习1-2个错题\n" "  - 定期进行错题回顾"
+                "💡 错误类型较多，建议：\n"
+                "  - 制定系统的复习计划\n"
+                "  - 每天复习1-2个错题\n"
+                "  - 定期进行错题回顾"
             )
 
         return recommendations
@@ -314,7 +328,10 @@ class MistakeAnalyzer:
             "percentage_difference": round(percentage_diff, 2),
             "level": level,
             "emoji": emoji,
-            "ranking": sorted(class_mistake_counts + [student_count]).index(student_count) + 1,
+            "ranking": sorted(class_mistake_counts + [student_count]).index(
+                student_count
+            )
+            + 1,
             "total_students": len(class_students),
         }
 
@@ -374,7 +391,9 @@ class MistakeAnalyzer:
         mistakes.sort(key=lambda m: m.occurred_at)
 
         # 分配到每天
-        mistakes_per_day = len(mistakes) // days + (1 if len(mistakes) % days > 0 else 0)
+        mistakes_per_day = len(mistakes) // days + (
+            1 if len(mistakes) % days > 0 else 0
+        )
 
         plan = []
         for day in range(days):
@@ -387,7 +406,9 @@ class MistakeAnalyzer:
                 plan.append(
                     {
                         "day": day + 1,
-                        "date": (datetime.now() + timedelta(days=day)).strftime("%Y-%m-%d"),
+                        "date": (datetime.now() + timedelta(days=day)).strftime(
+                            "%Y-%m-%d"
+                        ),
                         "mistake_count": len(day_mistakes),
                         "mistake_ids": [m.mistake_id for m in day_mistakes],
                         "experiments": list({m.experiment_name for m in day_mistakes}),

@@ -68,7 +68,9 @@ class ResponsiveOptimizer(QObject):
             # 设置初始布局类型
             self._update_layout_type()
 
-            logger.info(f"响应式优化器初始化完成: {self._current_layout_type}, DPI: {self._current_dpi}")
+            logger.info(
+                f"响应式优化器初始化完成: {self._current_layout_type}, DPI: {self._current_dpi}"
+            )
 
         except Exception as e:
             logger.error(f"响应式优化器初始化失败: {e}", exc_info=True)
@@ -92,7 +94,9 @@ class ResponsiveOptimizer(QObject):
 
             # 发出信号
             self.dpi_changed.emit(self._current_dpi)
-            self.screen_changed.emit(f"{self._current_screen_size.width()}x{self._current_screen_size.height()}")
+            self.screen_changed.emit(
+                f"{self._current_screen_size.width()}x{self._current_screen_size.height()}"
+            )
 
         except Exception as e:
             logger.error(f"更新屏幕信息失败: {e}", exc_info=True)
@@ -291,13 +295,19 @@ class ResponsiveOptimizer(QObject):
                 return screen_size
             elif layout_type == "tablet":
                 # 平板端：80%屏幕大小
-                return QSize(int(screen_size.width() * 0.8), int(screen_size.height() * 0.8))
+                return QSize(
+                    int(screen_size.width() * 0.8), int(screen_size.height() * 0.8)
+                )
             elif layout_type == "desktop":
                 # 桌面端：70%屏幕大小
-                return QSize(int(screen_size.width() * 0.7), int(screen_size.height() * 0.7))
+                return QSize(
+                    int(screen_size.width() * 0.7), int(screen_size.height() * 0.7)
+                )
             else:
                 # 大屏桌面端：60%屏幕大小
-                return QSize(int(screen_size.width() * 0.6), int(screen_size.height() * 0.6))
+                return QSize(
+                    int(screen_size.width() * 0.6), int(screen_size.height() * 0.6)
+                )
 
         except Exception as e:
             logger.error(f"获取最优窗口大小失败: {e}", exc_info=True)
@@ -387,7 +397,9 @@ def get_responsive_optimizer() -> ResponsiveOptimizer:
         from PySide6.QtWidgets import QApplication
 
         app = QApplication.instance()
-        _global_responsive_optimizer = ResponsiveOptimizer(app) if app else ResponsiveOptimizer()
+        _global_responsive_optimizer = (
+            ResponsiveOptimizer(app) if app else ResponsiveOptimizer()
+        )
         _global_responsive_optimizer.initialize()
     return _global_responsive_optimizer
 

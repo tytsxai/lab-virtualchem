@@ -79,10 +79,14 @@ class ErrorAnalytics:
         for error in self.error_history:
             error_counts[error["error_type"]] += 1
 
-        most_frequent_error = max(error_counts.items(), key=lambda x: x[1])[0] if error_counts else None
+        most_frequent_error = (
+            max(error_counts.items(), key=lambda x: x[1])[0] if error_counts else None
+        )
 
         # 严重错误数
-        critical_errors = sum(1 for e in self.error_history if e["severity"] == "critical")
+        critical_errors = sum(
+            1 for e in self.error_history if e["severity"] == "critical"
+        )
 
         # 可恢复错误数
         recoverable_errors = sum(1 for e in self.error_history if e["recoverable"])
@@ -102,7 +106,9 @@ class ErrorAnalytics:
         )
 
     def get_error_trends(
-        self, time_window: timedelta = timedelta(hours=24), interval: timedelta = timedelta(hours=1)
+        self,
+        time_window: timedelta = timedelta(hours=24),
+        interval: timedelta = timedelta(hours=1),
     ) -> list[dict[str, Any]]:
         """
         获取错误趋势
@@ -134,13 +140,17 @@ class ErrorAnalytics:
             next_time = current_time + interval
 
             # 统计此时间段的错误
-            period_errors = [e for e in recent_errors if current_time <= e["timestamp"] < next_time]
+            period_errors = [
+                e for e in recent_errors if current_time <= e["timestamp"] < next_time
+            ]
 
             trends.append(
                 {
                     "timestamp": current_time.isoformat(),
                     "error_count": len(period_errors),
-                    "critical_count": sum(1 for e in period_errors if e["severity"] == "critical"),
+                    "critical_count": sum(
+                        1 for e in period_errors if e["severity"] == "critical"
+                    ),
                     "unique_errors": len({e["error_code"] for e in period_errors}),
                 }
             )
@@ -170,7 +180,9 @@ class ErrorAnalytics:
             error_stats[error_code]["message"] = error["message"]
 
         # 排序
-        hot_errors = [{"error_code": code, **stats} for code, stats in error_stats.items()]
+        hot_errors = [
+            {"error_code": code, **stats} for code, stats in error_stats.items()
+        ]
         hot_errors.sort(key=lambda x: x["count"], reverse=True)
 
         return hot_errors[:top_n]
@@ -210,7 +222,9 @@ class ErrorAnalytics:
 
     def get_user_error_stats(self) -> list[dict[str, Any]]:
         """获取用户错误统计"""
-        user_stats = defaultdict(lambda: {"error_count": 0, "critical_errors": 0, "error_types": set()})
+        user_stats = defaultdict(
+            lambda: {"error_count": 0, "critical_errors": 0, "error_types": set()}
+        )
 
         for error in self.error_history:
             user_id = error.get("user_id")
@@ -354,7 +368,9 @@ class ErrorMonitor:
     def _cleanup_old_errors(self):
         """清理过期的错误记录"""
         cutoff_time = datetime.now() - timedelta(seconds=self.time_window)
-        self._recent_errors = [e for e in self._recent_errors if e["timestamp"] >= cutoff_time]
+        self._recent_errors = [
+            e for e in self._recent_errors if e["timestamp"] >= cutoff_time
+        ]
 
     def _check_alert(self):
         """检查是否需要触发告警"""
@@ -402,7 +418,8 @@ error_monitor = ErrorMonitor()
 def default_alert_handler(alert_data: dict[str, Any]):
     """默认告警处理器"""
     logger.critical(
-        f"⚠️ 错误告警: 在过去 {alert_data['time_window']} 秒内发生了 " f"{alert_data['error_count']} 个错误！"
+        f"⚠️ 错误告警: 在过去 {alert_data['time_window']} 秒内发生了 "
+        f"{alert_data['error_count']} 个错误！"
     )
     print(f"\n{'=' * 80}")
     print("⚠️  错误告警  ⚠️")
@@ -412,7 +429,9 @@ def default_alert_handler(alert_data: dict[str, Any]):
     print(f"时间窗口: {alert_data['time_window']} 秒")
     print("\n最近的错误:")
     for i, error in enumerate(alert_data["recent_errors"], 1):
-        print(f"  {i}. [{error.get('error_type', 'UNKNOWN')}] {error.get('message', '')}")
+        print(
+            f"  {i}. [{error.get('error_type', 'UNKNOWN')}] {error.get('message', '')}"
+        )
     print(f"{'=' * 80}\n")
 
 

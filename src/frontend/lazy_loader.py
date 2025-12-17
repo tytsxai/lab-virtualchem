@@ -322,7 +322,10 @@ class ViewportLoader(QObject):
             loader: 加载函数
         """
         for item in items:
-            if self.is_in_viewport(item, viewport) and id(item) not in self._visible_items:
+            if (
+                self.is_in_viewport(item, viewport)
+                and id(item) not in self._visible_items
+            ):
                 loader(item)
                 self._visible_items.add(id(item))
 

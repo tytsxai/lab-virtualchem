@@ -79,13 +79,21 @@ class RefactoredBootstrap:
             import_manager = get_import_manager()
 
             # 注册核心模块
-            import_manager.register_module("core.common_exceptions", sys.modules[__name__])
+            import_manager.register_module(
+                "core.common_exceptions", sys.modules[__name__]
+            )
             import_manager.register_module("core.error_handler", sys.modules[__name__])
-            import_manager.register_module("core.unified_config_manager", sys.modules[__name__])
-            import_manager.register_module("core.unified_performance_monitor", sys.modules[__name__])
+            import_manager.register_module(
+                "core.unified_config_manager", sys.modules[__name__]
+            )
+            import_manager.register_module(
+                "core.unified_performance_monitor", sys.modules[__name__]
+            )
 
             # 注册懒加载模块
-            register_lazy_module("ui.refactored_main_window", "src.ui.refactored_main_window")
+            register_lazy_module(
+                "ui.refactored_main_window", "src.ui.refactored_main_window"
+            )
             register_lazy_module("ui.components", "src.ui.components")
 
             logger.info("Import management initialized")
@@ -145,8 +153,7 @@ class RefactoredBootstrap:
         try:
             # 使用导入管理器获取主窗口类
             main_window_class = get_import_manager().import_class(
-                "ui.refactored_main_window",
-                "RefactoredMainWindow"
+                "ui.refactored_main_window", "RefactoredMainWindow"
             )
 
             if main_window_class is None:
@@ -166,7 +173,7 @@ class RefactoredBootstrap:
         system_error = SystemError(
             message=f"Bootstrap failed: {str(error)}",
             component="RefactoredBootstrap",
-            cause=error
+            cause=error,
         )
         self._error_handler.handle_error(system_error)
 

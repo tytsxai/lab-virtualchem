@@ -83,7 +83,9 @@ class TestSecurityConfig:
     def test_environment_variables(self, monkeypatch):
         """测试环境变量加载"""
         # SecurityConfig requires jwt_secret_key with at least 32 chars
-        config = SecurityConfig(jwt_secret_key="test-jwt-key-with-32-characters-or-more")
+        config = SecurityConfig(
+            jwt_secret_key="test-jwt-key-with-32-characters-or-more"
+        )
         assert config.jwt_secret_key == "test-jwt-key-with-32-characters-or-more"
 
     def test_production_validation(self, monkeypatch):
@@ -141,7 +143,9 @@ class TestConfig:
 
         config_module.Path(__file__)
         monkeypatch.setattr(
-            config_module.Path, "__file__", str(config_dir / "schemas" / "app_config.py")
+            config_module.Path,
+            "__file__",
+            str(config_dir / "schemas" / "app_config.py"),
         )
 
         # 加载配置
@@ -151,7 +155,10 @@ class TestConfig:
     def test_deep_merge(self):
         """测试深度合并"""
         # Test dict merging manually since _deep_merge is a private method
-        base = {"app": {"name": "App", "version": "1.0"}, "database": {"type": "sqlite"}}
+        base = {
+            "app": {"name": "App", "version": "1.0"},
+            "database": {"type": "sqlite"},
+        }
 
         override = {"app": {"version": "2.0"}, "database": {"path": "custom/db.sqlite"}}
 
@@ -160,7 +167,11 @@ class TestConfig:
 
         result = deepcopy(base)
         for key, value in override.items():
-            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            if (
+                key in result
+                and isinstance(result[key], dict)
+                and isinstance(value, dict)
+            ):
                 result[key].update(value)
             else:
                 result[key] = value

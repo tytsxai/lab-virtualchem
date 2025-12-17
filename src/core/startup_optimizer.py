@@ -92,12 +92,16 @@ class StartupOptimizer:
             # 3. 优化关键路径
             self._optimize_critical_path()
 
-            logger.info(f"启动顺序优化完成: {len(self.load_order)}个组件, {len(self.parallel_groups)}个并行组")
+            logger.info(
+                f"启动顺序优化完成: {len(self.load_order)}个组件, {len(self.parallel_groups)}个并行组"
+            )
 
         except Exception as e:
             logger.error(f"优化启动顺序失败: {e}")
             # 使用简单的优先级排序作为后备方案
-            self.load_order = sorted(self.components.keys(), key=lambda x: self.components[x].priority.value)
+            self.load_order = sorted(
+                self.components.keys(), key=lambda x: self.components[x].priority.value
+            )
             self.parallel_groups = [[comp] for comp in self.load_order]
 
     def _topological_sort(self) -> list[str]:
@@ -154,7 +158,10 @@ class StartupOptimizer:
             can_parallelize = (
                 len(current_group) < self.max_parallel_workers
                 and not any(dep in current_group for dep in component.dependencies)
-                and not any(component_name in self.components[dep].dependencies for dep in current_group)
+                and not any(
+                    component_name in self.components[dep].dependencies
+                    for dep in current_group
+                )
             )
 
             if can_parallelize and component.priority != ComponentPriority.CRITICAL:
@@ -176,7 +183,9 @@ class StartupOptimizer:
         """优化关键路径"""
         # 将关键组件移到最前面
         critical_components = [
-            name for name, comp in self.components.items() if comp.priority == ComponentPriority.CRITICAL
+            name
+            for name, comp in self.components.items()
+            if comp.priority == ComponentPriority.CRITICAL
         ]
 
         # 重新排列加载顺序
@@ -214,8 +223,12 @@ class StartupOptimizer:
             return {
                 "success": True,
                 "total_time": total_time,
-                "components_loaded": len([c for c in self.components.values() if c.loaded]),
-                "components_failed": len([c for c in self.components.values() if c.error]),
+                "components_loaded": len(
+                    [c for c in self.components.values() if c.loaded]
+                ),
+                "components_failed": len(
+                    [c for c in self.components.values() if c.error]
+                ),
                 "report": report,
                 "metrics": self.startup_metrics,
             }
@@ -227,8 +240,12 @@ class StartupOptimizer:
                 "success": False,
                 "error": str(e),
                 "total_time": self.startup_end_time - self.startup_start_time,
-                "components_loaded": len([c for c in self.components.values() if c.loaded]),
-                "components_failed": len([c for c in self.components.values() if c.error]),
+                "components_loaded": len(
+                    [c for c in self.components.values() if c.loaded]
+                ),
+                "components_failed": len(
+                    [c for c in self.components.values() if c.error]
+                ),
             }
 
     def _execute_parallel_loading(self) -> dict[str, Any]:
@@ -295,7 +312,10 @@ class StartupOptimizer:
         try:
             with ThreadPoolExecutor(max_workers=len(group)) as executor:
                 # 提交加载任务
-                future_to_component = {executor.submit(self._load_single_component, name): name for name in group}
+                future_to_component = {
+                    executor.submit(self._load_single_component, name): name
+                    for name in group
+                }
 
                 # 收集结果
                 for future in as_completed(future_to_component):
@@ -348,7 +368,9 @@ class StartupOptimizer:
 
         return validation
 
-    def _generate_startup_report(self, results: dict[str, Any], validation: dict[str, Any]) -> str:
+    def _generate_startup_report(
+        self, results: dict[str, Any], validation: dict[str, Any]
+    ) -> str:
         """生成启动报告"""
         total_time = self.startup_end_time - self.startup_start_time
 
@@ -366,7 +388,11 @@ class StartupOptimizer:
 
         # 按优先级分组显示
         for priority in ComponentPriority:
-            priority_components = [name for name, comp in self.components.items() if comp.priority == priority]
+            priority_components = [
+                name
+                for name, comp in self.components.items()
+                if comp.priority == priority
+            ]
 
             if priority_components:
                 report += f"\n### {priority.value.upper()} 优先级组件\n"
@@ -379,7 +405,9 @@ class StartupOptimizer:
         # 性能分析
         report += "\n## 性能分析\n"
         if self.component_load_times:
-            avg_load_time = sum(self.component_load_times.values()) / len(self.component_load_times)
+            avg_load_time = sum(self.component_load_times.values()) / len(
+                self.component_load_times
+            )
             max_load_time = max(self.component_load_times.values())
             min_load_time = min(self.component_load_times.values())
 
@@ -417,7 +445,11 @@ class StartupOptimizer:
 
     def get_startup_metrics(self) -> dict[str, Any]:
         """获取启动指标"""
-        total_time = self.startup_end_time - self.startup_start_time if self.startup_end_time > 0 else 0
+        total_time = (
+            self.startup_end_time - self.startup_start_time
+            if self.startup_end_time > 0
+            else 0
+        )
 
         return {
             "total_startup_time": total_time,
@@ -445,7 +477,9 @@ class StartupOptimizer:
                     return False
 
             with ThreadPoolExecutor(max_workers=4) as executor:
-                futures = [executor.submit(load_resource, path) for path in resource_paths]
+                futures = [
+                    executor.submit(load_resource, path) for path in resource_paths
+                ]
                 results = [future.result() for future in as_completed(futures)]
 
             success_count = sum(results)

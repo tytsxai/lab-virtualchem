@@ -92,7 +92,9 @@ class ErrorSampler:
         if error_code in self._whitelist:
             self._whitelist.remove(error_code)
 
-    def should_sample(self, exception: BaseAppException, context: str = "") -> tuple[bool, dict[str, Any]]:
+    def should_sample(
+        self, exception: BaseAppException, context: str = ""
+    ) -> tuple[bool, dict[str, Any]]:
         """
         判断是否应该采样此错误
 
@@ -114,7 +116,10 @@ class ErrorSampler:
             return False, {"reason": "blacklist"}
 
         # 严重错误和不可恢复错误 - 始终采样
-        if exception.error_code.severity == "critical" or not exception.error_code.recoverable:
+        if (
+            exception.error_code.severity == "critical"
+            or not exception.error_code.recoverable
+        ):
             return True, {"reason": "critical_or_unrecoverable"}
 
         # 生成错误签名
@@ -241,7 +246,9 @@ class ErrorSampler:
 
         return False
 
-    def get_stats(self, signature: str | None = None) -> dict[str, Any] | list[dict[str, Any]]:
+    def get_stats(
+        self, signature: str | None = None
+    ) -> dict[str, Any] | list[dict[str, Any]]:
         """
         获取统计信息
 
@@ -262,9 +269,13 @@ class ErrorSampler:
                 "count": stats.count,
                 "sampled_count": stats.sampled_count,
                 "suppressed": stats.count - stats.sampled_count,
-                "first_seen": stats.first_seen.isoformat() if stats.first_seen else None,
+                "first_seen": stats.first_seen.isoformat()
+                if stats.first_seen
+                else None,
                 "last_seen": stats.last_seen.isoformat() if stats.last_seen else None,
-                "last_logged": stats.last_logged.isoformat() if stats.last_logged else None,
+                "last_logged": stats.last_logged.isoformat()
+                if stats.last_logged
+                else None,
             }
 
         # 返回所有统计
@@ -276,9 +287,15 @@ class ErrorSampler:
                     "count": stats.count,
                     "sampled_count": stats.sampled_count,
                     "suppressed": stats.count - stats.sampled_count,
-                    "first_seen": stats.first_seen.isoformat() if stats.first_seen else None,
-                    "last_seen": stats.last_seen.isoformat() if stats.last_seen else None,
-                    "last_logged": stats.last_logged.isoformat() if stats.last_logged else None,
+                    "first_seen": stats.first_seen.isoformat()
+                    if stats.first_seen
+                    else None,
+                    "last_seen": stats.last_seen.isoformat()
+                    if stats.last_seen
+                    else None,
+                    "last_logged": stats.last_logged.isoformat()
+                    if stats.last_logged
+                    else None,
                 }
             )
 
@@ -296,7 +313,9 @@ class ErrorSampler:
             "total_errors": total_errors,
             "total_sampled": total_sampled,
             "total_suppressed": total_suppressed,
-            "suppression_rate": f"{(total_suppressed / total_errors * 100):.2f}%" if total_errors > 0 else "0%",
+            "suppression_rate": f"{(total_suppressed / total_errors * 100):.2f}%"
+            if total_errors > 0
+            else "0%",
             "unique_signatures": len(self._stats),
             "whitelist_size": len(self._whitelist),
             "blacklist_size": len(self._blacklist),

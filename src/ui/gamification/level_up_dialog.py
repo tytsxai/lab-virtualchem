@@ -25,7 +25,9 @@ logger = get_logger(__name__)
 class LevelUpDialog(QDialog):
     """等级提升对话框"""
 
-    def __init__(self, new_level: int, rewards: dict[str, Any] | None = None, parent=None):
+    def __init__(
+        self, new_level: int, rewards: dict[str, Any] | None = None, parent=None
+    ):
         super().__init__(parent)
         self.new_level = new_level
         self.rewards = rewards or {}
@@ -74,7 +76,9 @@ class LevelUpDialog(QDialog):
                     rewards_text += f"外观奖励: {reward_data}\n"
 
             rewards_value_label = QLabel(rewards_text.strip())
-            rewards_value_label.setStyleSheet("background-color: #f8f9fa; padding: 10px; border-radius: 5px;")
+            rewards_value_label.setStyleSheet(
+                "background-color: #f8f9fa; padding: 10px; border-radius: 5px;"
+            )
 
             layout.addWidget(rewards_label)
             layout.addWidget(rewards_value_label)

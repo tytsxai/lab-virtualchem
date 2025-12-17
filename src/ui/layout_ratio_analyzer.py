@@ -45,7 +45,11 @@ class LayoutRatioAnalyzer(QObject):
         self._preferences_file = Path("user_data/layout_preferences.json")
 
         # 性能监控数据
-        self._performance_metrics: dict[str, list[float]] = {"render_time": [], "layout_time": [], "memory_usage": []}
+        self._performance_metrics: dict[str, list[float]] = {
+            "render_time": [],
+            "layout_time": [],
+            "memory_usage": [],
+        }
 
         # 推荐的布局比例
         self._recommended_ratios = {
@@ -186,7 +190,11 @@ class LayoutRatioAnalyzer(QObject):
             # 检查比例是否合理
             if current_ratio == recommended_ratio:
                 result["recommendations"].append(
-                    {"component": "main_window", "status": "optimal", "message": "主窗口比例设置合理"}
+                    {
+                        "component": "main_window",
+                        "status": "optimal",
+                        "message": "主窗口比例设置合理",
+                    }
                 )
             else:
                 result["issues"].append(
@@ -208,7 +216,11 @@ class LayoutRatioAnalyzer(QObject):
             record_browser_ratio = {"record_list": 3, "detail_panel": 2}
             if record_browser_ratio == self._recommended_ratios["record_browser"]:
                 result["recommendations"].append(
-                    {"component": "record_browser", "status": "optimal", "message": "记录浏览器比例设置合理"}
+                    {
+                        "component": "record_browser",
+                        "status": "optimal",
+                        "message": "记录浏览器比例设置合理",
+                    }
                 )
             else:
                 result["issues"].append(
@@ -224,7 +236,11 @@ class LayoutRatioAnalyzer(QObject):
             mistake_viewer_ratio = {"mistake_list": 2, "detail_panel": 1}
             if mistake_viewer_ratio == self._recommended_ratios["mistake_viewer"]:
                 result["recommendations"].append(
-                    {"component": "mistake_viewer", "status": "optimal", "message": "错题查看器比例设置合理"}
+                    {
+                        "component": "mistake_viewer",
+                        "status": "optimal",
+                        "message": "错题查看器比例设置合理",
+                    }
                 )
             else:
                 result["issues"].append(
@@ -240,7 +256,11 @@ class LayoutRatioAnalyzer(QObject):
             knowledge_browser_ratio = {"knowledge_tree": 300, "detail_browser": 600}
             if knowledge_browser_ratio == self._recommended_ratios["knowledge_browser"]:
                 result["recommendations"].append(
-                    {"component": "knowledge_browser", "status": "optimal", "message": "知识浏览器比例设置合理"}
+                    {
+                        "component": "knowledge_browser",
+                        "status": "optimal",
+                        "message": "知识浏览器比例设置合理",
+                    }
                 )
             else:
                 result["issues"].append(
@@ -291,7 +311,11 @@ class LayoutRatioAnalyzer(QObject):
                         "suggestion": "考虑无障碍访问需求，提供更大的点击区域",
                         "priority": "medium",
                     },
-                    {"type": "performance", "suggestion": "优化布局渲染性能，减少不必要的重绘", "priority": "low"},
+                    {
+                        "type": "performance",
+                        "suggestion": "优化布局渲染性能，减少不必要的重绘",
+                        "priority": "low",
+                    },
                 ]
             )
 
@@ -303,11 +327,21 @@ class LayoutRatioAnalyzer(QObject):
         try:
             app = QApplication.instance()
             if not app:
-                return {"width": 1920, "height": 1080, "dpi": 96, "size_type": "desktop"}
+                return {
+                    "width": 1920,
+                    "height": 1080,
+                    "dpi": 96,
+                    "size_type": "desktop",
+                }
 
             screen = QApplication.primaryScreen()
             if not screen:
-                return {"width": 1920, "height": 1080, "dpi": 96, "size_type": "desktop"}
+                return {
+                    "width": 1920,
+                    "height": 1080,
+                    "dpi": 96,
+                    "size_type": "desktop",
+                }
 
             width = screen.size().width()
             height = screen.size().height()
@@ -323,7 +357,12 @@ class LayoutRatioAnalyzer(QObject):
             else:
                 size_type = "large_desktop"
 
-            return {"width": width, "height": height, "dpi": dpi, "size_type": size_type}
+            return {
+                "width": width,
+                "height": height,
+                "dpi": dpi,
+                "size_type": size_type,
+            }
 
         except Exception as e:
             logger.error(f"获取屏幕信息失败: {e}", exc_info=True)
@@ -366,7 +405,9 @@ class LayoutRatioAnalyzer(QObject):
             logger.error(f"验证比例失败: {e}", exc_info=True)
             return False
 
-    def optimize_ratio_for_screen(self, component: str, screen_type: str) -> dict[str, Any]:
+    def optimize_ratio_for_screen(
+        self, component: str, screen_type: str
+    ) -> dict[str, Any]:
         """根据屏幕类型优化比例"""
         try:
             base_ratio = self._recommended_ratios.get(component, {})
@@ -438,7 +479,9 @@ class LayoutRatioAnalyzer(QObject):
             # 保持历史记录在合理范围内
             for key in self._performance_metrics:
                 if len(self._performance_metrics[key]) > 100:
-                    self._performance_metrics[key] = self._performance_metrics[key][-100:]
+                    self._performance_metrics[key] = self._performance_metrics[key][
+                        -100:
+                    ]
 
         except Exception as e:
             logger.error(f"收集性能指标失败: {e}", exc_info=True)
@@ -457,7 +500,13 @@ class LayoutRatioAnalyzer(QObject):
                         "count": len(values),
                     }
                 else:
-                    summary[key] = {"current": 0, "average": 0, "min": 0, "max": 0, "count": 0}
+                    summary[key] = {
+                        "current": 0,
+                        "average": 0,
+                        "min": 0,
+                        "max": 0,
+                        "count": 0,
+                    }
             return summary
         except Exception as e:
             logger.error(f"获取性能摘要失败: {e}", exc_info=True)
@@ -475,7 +524,9 @@ class LayoutRatioAnalyzer(QObject):
                         accessibility_scores.append(float(score))
 
             if accessibility_scores:
-                result["accessibility_score"] = sum(accessibility_scores) / len(accessibility_scores)
+                result["accessibility_score"] = sum(accessibility_scores) / len(
+                    accessibility_scores
+                )
 
             # 计算黄金比例合规性
             golden_ratio_count = 0
@@ -487,7 +538,9 @@ class LayoutRatioAnalyzer(QObject):
                         golden_ratio_count += 1
 
             if total_components > 0:
-                result["golden_ratio_compliance"] = (golden_ratio_count / total_components) * 100
+                result["golden_ratio_compliance"] = (
+                    golden_ratio_count / total_components
+                ) * 100
 
             # 计算响应式设计评分
             screen_info = result["screen_info"]
@@ -558,7 +611,9 @@ class LayoutRatioAnalyzer(QObject):
                 },
                 "summary": {
                     "accessibility_score": analysis_result["accessibility_score"],
-                    "golden_ratio_compliance": analysis_result["golden_ratio_compliance"],
+                    "golden_ratio_compliance": analysis_result[
+                        "golden_ratio_compliance"
+                    ],
                     "responsive_score": analysis_result["responsive_score"],
                     "total_issues": len(analysis_result["issues"]),
                     "total_recommendations": len(analysis_result["recommendations"]),
@@ -594,7 +649,9 @@ class LayoutRatioOptimizer:
             screen_type = screen_info["size_type"]
 
             # 获取优化后的比例
-            optimized_ratio = self.analyzer.optimize_ratio_for_screen("main_window", screen_type)
+            optimized_ratio = self.analyzer.optimize_ratio_for_screen(
+                "main_window", screen_type
+            )
 
             if optimized_ratio:
                 # 应用优化后的比例到实际的分割器
@@ -624,7 +681,9 @@ class LayoutRatioOptimizer:
             screen_type = screen_info["size_type"]
 
             # 获取优化后的比例
-            optimized_ratio = self.analyzer.optimize_ratio_for_screen(dialog_type, screen_type)
+            optimized_ratio = self.analyzer.optimize_ratio_for_screen(
+                dialog_type, screen_type
+            )
 
             if optimized_ratio:
                 # 应用优化后的比例到实际的分割器
@@ -697,7 +756,9 @@ class LayoutRatioOptimizer:
         self._optimization_cache.clear()
         logger.info("优化缓存已清除")
 
-    def batch_optimize_layouts(self, widgets: list[tuple[QWidget, str]]) -> dict[str, bool]:
+    def batch_optimize_layouts(
+        self, widgets: list[tuple[QWidget, str]]
+    ) -> dict[str, bool]:
         """批量优化布局"""
         results = {}
         for widget, widget_type in widgets:
@@ -705,7 +766,9 @@ class LayoutRatioOptimizer:
                 if widget_type == "main_window":
                     results[widget_type] = self.optimize_main_window_layout(widget)
                 else:
-                    results[widget_type] = self.optimize_dialog_layout(widget, widget_type)
+                    results[widget_type] = self.optimize_dialog_layout(
+                        widget, widget_type
+                    )
             except Exception as e:
                 logger.error(f"批量优化失败 {widget_type}: {e}", exc_info=True)
                 results[widget_type] = False
@@ -744,7 +807,9 @@ def get_layout_analyzer() -> LayoutRatioAnalyzer:
         from PySide6.QtWidgets import QApplication
 
         app = QApplication.instance()
-        _global_layout_analyzer = LayoutRatioAnalyzer(app) if app else LayoutRatioAnalyzer()
+        _global_layout_analyzer = (
+            LayoutRatioAnalyzer(app) if app else LayoutRatioAnalyzer()
+        )
     return _global_layout_analyzer
 
 

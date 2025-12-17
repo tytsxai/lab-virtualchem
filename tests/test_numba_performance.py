@@ -18,12 +18,7 @@ from src.core.curve_generator_numba import CurveGenerator as NumbaGenerator
 
 def benchmark_titration_curve(num_points: int = 1000, iterations: int = 100):
     """测试滴定曲线生成性能"""
-    params = {
-        "acid_type": "strong",
-        "acid_M": 0.1,
-        "acid_V_ml": 25.0,
-        "base_M": 0.1
-    }
+    params = {"acid_type": "strong", "acid_M": 0.1, "acid_V_ml": 25.0, "base_M": 0.1}
 
     print("\n=== 滴定曲线生成性能测试 ===")
     print(f"数据点数: {num_points}")
@@ -40,7 +35,7 @@ def benchmark_titration_curve(num_points: int = 1000, iterations: int = 100):
             acid_M=0.1,
             acid_V_ml=25.0,
             base_M=0.1,
-            num_points=num_points
+            num_points=num_points,
         )
     original_time = time.time() - start_time
     print(f"  原始版本耗时: {original_time:.3f}秒")
@@ -50,11 +45,7 @@ def benchmark_titration_curve(num_points: int = 1000, iterations: int = 100):
     numba_gen = NumbaGenerator()
     # 预热
     x, y = numba_gen.generate_titration_curve(
-        acid_type="strong",
-        acid_M=0.1,
-        acid_V_ml=25.0,
-        base_M=0.1,
-        num_points=100
+        acid_type="strong", acid_M=0.1, acid_V_ml=25.0, base_M=0.1, num_points=100
     )
 
     start_time = time.time()
@@ -64,7 +55,7 @@ def benchmark_titration_curve(num_points: int = 1000, iterations: int = 100):
             acid_M=0.1,
             acid_V_ml=25.0,
             base_M=0.1,
-            num_points=num_points
+            num_points=num_points,
         )
     numba_time = time.time() - start_time
     print(f"  Numba版本耗时: {numba_time:.3f}秒")
@@ -86,7 +77,7 @@ def benchmark_temperature_curve(num_points: int = 1000, iterations: int = 100):
         "mass_g": 100,
         "specific_heat": 4.18,
         "boiling_point": 100,
-        "total_time_s": 600
+        "total_time_s": 600,
     }
 
     print("\n=== 温度曲线生成性能测试 ===")
@@ -100,10 +91,7 @@ def benchmark_temperature_curve(num_points: int = 1000, iterations: int = 100):
     start_time = time.time()
     for _ in range(iterations):
         x, y = original_gen.generate_temperature_curve(
-            mode="heating",
-            initial_temp=25.0,
-            params=params,
-            num_points=num_points
+            mode="heating", initial_temp=25.0, params=params, num_points=num_points
         )
     original_time = time.time() - start_time
     print(f"  原始版本耗时: {original_time:.3f}秒")
@@ -113,19 +101,13 @@ def benchmark_temperature_curve(num_points: int = 1000, iterations: int = 100):
     numba_gen = NumbaGenerator()
     # 预热
     x, y = numba_gen.generate_temperature_curve(
-        mode="heating",
-        initial_temp=25.0,
-        params=params,
-        num_points=100
+        mode="heating", initial_temp=25.0, params=params, num_points=100
     )
 
     start_time = time.time()
     for _ in range(iterations):
         x, y = numba_gen.generate_temperature_curve(
-            mode="heating",
-            initial_temp=25.0,
-            params=params,
-            num_points=num_points
+            mode="heating", initial_temp=25.0, params=params, num_points=num_points
         )
     numba_time = time.time() - start_time
     print(f"  Numba版本耗时: {numba_time:.3f}秒")
@@ -144,12 +126,7 @@ def test_correctness():
 
     print("\n=== 正确性验证测试 ===")
 
-    params = {
-        "acid_type": "strong",
-        "acid_M": 0.1,
-        "acid_V_ml": 25.0,
-        "base_M": 0.1
-    }
+    params = {"acid_type": "strong", "acid_M": 0.1, "acid_V_ml": 25.0, "base_M": 0.1}
 
     # 生成曲线
     original_gen = OriginalGenerator()
@@ -158,20 +135,12 @@ def test_correctness():
     # 为了比较，不添加噪声
     np.random.seed(42)
     x1, y1 = original_gen.generate_titration_curve(
-        acid_type="strong",
-        acid_M=0.1,
-        acid_V_ml=25.0,
-        base_M=0.1,
-        num_points=100
+        acid_type="strong", acid_M=0.1, acid_V_ml=25.0, base_M=0.1, num_points=100
     )
 
     np.random.seed(42)
     x2, y2 = numba_gen.generate_titration_curve(
-        acid_type="strong",
-        acid_M=0.1,
-        acid_V_ml=25.0,
-        base_M=0.1,
-        num_points=100
+        acid_type="strong", acid_M=0.1, acid_V_ml=25.0, base_M=0.1, num_points=100
     )
 
     # 比较结果（因为有随机噪声，所以只检查趋势是否一致）
@@ -224,10 +193,18 @@ def main():
     print("=" * 70)
     print(f"\n{'测试项目':<20} {'加速比':<15} {'结论'}")
     print("-" * 70)
-    print(f"{'小规模(100点)':<20} {speedup_small:<15.1f}x {'良好' if speedup_small > 5 else '一般'}")
-    print(f"{'中规模(1000点)':<20} {speedup_medium:<15.1f}x {'优秀' if speedup_medium > 20 else '良好'}")
-    print(f"{'大规模(10000点)':<20} {speedup_large:<15.1f}x {'优秀' if speedup_large > 50 else '良好'}")
-    print(f"{'温度曲线':<20} {speedup_temp:<15.1f}x {'优秀' if speedup_temp > 20 else '良好'}")
+    print(
+        f"{'小规模(100点)':<20} {speedup_small:<15.1f}x {'良好' if speedup_small > 5 else '一般'}"
+    )
+    print(
+        f"{'中规模(1000点)':<20} {speedup_medium:<15.1f}x {'优秀' if speedup_medium > 20 else '良好'}"
+    )
+    print(
+        f"{'大规模(10000点)':<20} {speedup_large:<15.1f}x {'优秀' if speedup_large > 50 else '良好'}"
+    )
+    print(
+        f"{'温度曲线':<20} {speedup_temp:<15.1f}x {'优秀' if speedup_temp > 20 else '良好'}"
+    )
 
     avg_speedup = (speedup_small + speedup_medium + speedup_large + speedup_temp) / 4
     print(f"\n平均加速比: {avg_speedup:.1f}x")
@@ -240,5 +217,5 @@ def main():
         print("\n[WARNING] 一般。Numba加速有效，但提升幅度可能需要进一步优化。")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -45,7 +45,7 @@ class TestLogContext:
             user_id="user123",
             session_id="session456",
             request_id="req789",
-            extra_data={"key": "value"}
+            extra_data={"key": "value"},
         )
 
         assert context.operation == "test_op"
@@ -76,7 +76,7 @@ class TestUnifiedLogger:
 
     def test_basic_logging(self):
         """测试基本日志记录"""
-        with patch('src.core.unified_logging.get_logger') as mock_get_logger:
+        with patch("src.core.unified_logging.get_logger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -96,7 +96,7 @@ class TestUnifiedLogger:
 
     def test_context_manager(self):
         """测试上下文管理器"""
-        with patch('src.core.unified_logging.get_logger') as mock_get_logger:
+        with patch("src.core.unified_logging.get_logger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -113,7 +113,7 @@ class TestUnifiedLogger:
 
     def test_log_operation_start_end(self):
         """测试操作开始和结束日志"""
-        with patch('src.core.unified_logging.get_logger') as mock_get_logger:
+        with patch("src.core.unified_logging.get_logger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -135,7 +135,7 @@ class TestUnifiedLogger:
 
     def test_log_operation_error(self):
         """测试操作错误日志"""
-        with patch('src.core.unified_logging.get_logger') as mock_get_logger:
+        with patch("src.core.unified_logging.get_logger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -151,7 +151,7 @@ class TestUnifiedLogger:
 
     def test_log_performance(self):
         """测试性能日志"""
-        with patch('src.core.unified_logging.get_logger') as mock_get_logger:
+        with patch("src.core.unified_logging.get_logger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -165,7 +165,7 @@ class TestUnifiedLogger:
 
     def test_log_user_action(self):
         """测试用户操作日志"""
-        with patch('src.core.unified_logging.get_logger') as mock_get_logger:
+        with patch("src.core.unified_logging.get_logger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -180,7 +180,7 @@ class TestUnifiedLogger:
 
     def test_log_system_event(self):
         """测试系统事件日志"""
-        with patch('src.core.unified_logging.get_logger') as mock_get_logger:
+        with patch("src.core.unified_logging.get_logger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -194,7 +194,7 @@ class TestUnifiedLogger:
 
     def test_log_security_event(self):
         """测试安全事件日志"""
-        with patch('src.core.unified_logging.get_logger') as mock_get_logger:
+        with patch("src.core.unified_logging.get_logger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -212,7 +212,7 @@ class TestDecorators:
 
     def test_log_operation_decorator(self):
         """测试操作日志装饰器"""
-        with patch('src.core.unified_logging.get_unified_logger') as mock_get_logger:
+        with patch("src.core.unified_logging.get_unified_logger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -228,7 +228,7 @@ class TestDecorators:
 
     def test_log_operation_decorator_with_error(self):
         """测试操作日志装饰器（带错误）"""
-        with patch('src.core.unified_logging.get_unified_logger') as mock_get_logger:
+        with patch("src.core.unified_logging.get_unified_logger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -244,7 +244,7 @@ class TestDecorators:
 
     def test_log_performance_decorator(self):
         """测试性能日志装饰器"""
-        with patch('src.core.unified_logging.get_unified_logger') as mock_get_logger:
+        with patch("src.core.unified_logging.get_unified_logger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -259,7 +259,7 @@ class TestDecorators:
 
     def test_log_user_action_decorator(self):
         """测试用户操作日志装饰器"""
-        with patch('src.core.unified_logging.get_unified_logger') as mock_get_logger:
+        with patch("src.core.unified_logging.get_unified_logger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -278,7 +278,7 @@ class TestConvenienceFunctions:
 
     def test_global_logging_functions(self):
         """测试全局日志函数"""
-        with patch('src.core.unified_logging._unified_logger') as mock_logger:
+        with patch("src.core.unified_logging._unified_logger") as mock_logger:
             debug("debug message")
             info("info message")
             warning("warning message")
@@ -293,7 +293,7 @@ class TestConvenienceFunctions:
 
     def test_global_operation_functions(self):
         """测试全局操作函数"""
-        with patch('src.core.unified_logging._unified_logger') as mock_logger:
+        with patch("src.core.unified_logging._unified_logger") as mock_logger:
             log_operation_start("test_op", "test_comp")
             log_operation_end("test_op", "test_comp", duration=1.0)
             log_operation_error("test_op", "test_comp", ValueError("test"))
@@ -312,7 +312,7 @@ class TestConvenienceFunctions:
 
     def test_log_context_function(self):
         """测试日志上下文函数"""
-        with patch('src.core.unified_logging._unified_logger') as mock_logger:
+        with patch("src.core.unified_logging._unified_logger") as mock_logger:
             with log_context("test_op", "test_comp", user_id="user123"):
                 pass
 
@@ -324,7 +324,7 @@ class TestPerformance:
 
     def test_logging_performance(self):
         """测试日志记录性能"""
-        with patch('src.core.unified_logging.get_logger') as mock_get_logger:
+        with patch("src.core.unified_logging.get_logger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -340,7 +340,7 @@ class TestPerformance:
 
     def test_context_performance(self):
         """测试上下文性能"""
-        with patch('src.core.unified_logging.get_logger') as mock_get_logger:
+        with patch("src.core.unified_logging.get_logger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 

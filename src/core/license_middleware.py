@@ -46,7 +46,12 @@ class LicenseNotActivatedException(LicenseException):
 class LicenseMiddleware(Middleware):
     """许可证验证中间件"""
 
-    def __init__(self, license_manager: LicenseManager, strict_mode: bool = True, trial_days: int = 7):
+    def __init__(
+        self,
+        license_manager: LicenseManager,
+        strict_mode: bool = True,
+        trial_days: int = 7,
+    ):
         """初始化
 
         Args:
@@ -60,7 +65,9 @@ class LicenseMiddleware(Middleware):
         self._current_license: License | None = None
         self._license_checked = False
 
-    async def invoke(self, context: MiddlewareContext, next_middleware: Callable) -> Any:
+    async def invoke(
+        self, context: MiddlewareContext, next_middleware: Callable
+    ) -> Any:
         """调用中间件
 
         Args:
@@ -116,7 +123,9 @@ class LicenseMiddleware(Middleware):
 
             # 验证许可证
             machine_id = get_machine_id()
-            status, error_msg = self.license_manager.validate_license(license_obj, machine_id)
+            status, error_msg = self.license_manager.validate_license(
+                license_obj, machine_id
+            )
 
             if status == LicenseStatus.VALID:
                 self._current_license = license_obj
@@ -155,7 +164,9 @@ class LicenseMiddleware(Middleware):
         if self.strict_mode:
             logger.error("❌ 未找到有效许可证")
             logger.info(f"💡 提示: 您可以使用 {self.trial_days} 天试用期")
-            raise LicenseException(f"未找到有效许可证。请购买许可证或激活试用版。\n试用天数: {self.trial_days} 天")
+            raise LicenseException(
+                f"未找到有效许可证。请购买许可证或激活试用版。\n试用天数: {self.trial_days} 天"
+            )
         else:
             logger.warning(f"⚠️ 未找到许可证,使用试用模式 ({self.trial_days} 天)")
 
@@ -172,7 +183,9 @@ class LicenseMiddleware(Middleware):
         logger.info(f"  剩余天数: {info['days_remaining']} 天")
         logger.info(f"  激活状态: {'已激活' if info['is_activated'] else '未激活'}")
         logger.info(f"  功能列表: {', '.join(info['features'])}")
-        logger.info(f"  支付信息: {info['payment']['currency']} - {info['payment']['amount']}")
+        logger.info(
+            f"  支付信息: {info['payment']['currency']} - {info['payment']['amount']}"
+        )
         logger.info("=" * 60)
 
     def get_current_license(self) -> License | None:
@@ -219,7 +232,9 @@ class LicenseGuard:
                     raise LicenseException("需要有效的许可证")
 
                 if feature not in self._current_license.features:
-                    raise LicenseException(f"当前许可证不包含 '{feature}' 功能,请升级许可证")
+                    raise LicenseException(
+                        f"当前许可证不包含 '{feature}' 功能,请升级许可证"
+                    )
 
                 return func(*args, **kwargs)
 
@@ -258,7 +273,9 @@ class LicenseUIHelper:
             return "❌ 未找到许可证\n\n请购买许可证或激活试用版"
 
         machine_id = get_machine_id()
-        status, error_msg = self.license_manager.validate_license(license_obj, machine_id)
+        status, error_msg = self.license_manager.validate_license(
+            license_obj, machine_id
+        )
 
         if status == LicenseStatus.VALID:
             info = self.license_manager.get_license_info(license_obj)
@@ -324,7 +341,9 @@ class LicenseUIHelper:
 
                     # 输入框
                     self.key_input = QLineEdit()
-                    self.key_input.setPlaceholderText("XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX")
+                    self.key_input.setPlaceholderText(
+                        "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+                    )
                     layout.addWidget(self.key_input)
 
                     # 按钮
@@ -365,7 +384,9 @@ class LicenseUIHelper:
                     else:
                         from PySide6.QtWidgets import QMessageBox
 
-                        QMessageBox.warning(None, "失败", "许可证激活失败，请检查密钥是否正确")
+                        QMessageBox.warning(
+                            None, "失败", "许可证激活失败，请检查密钥是否正确"
+                        )
                         logger.warning("许可证激活失败")
                         return False
 
@@ -387,7 +408,11 @@ class LicenseUIHelper:
 
         return {
             "supported_currencies": [
-                {"code": "BTC", "name": "比特币", "address": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"},
+                {
+                    "code": "BTC",
+                    "name": "比特币",
+                    "address": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                },
                 {
                     "code": "ETH",
                     "name": "以太坊",
@@ -398,7 +423,11 @@ class LicenseUIHelper:
                     "name": "泰达币",
                     "address": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
                 },
-                {"code": "TRX", "name": "波场", "address": "TYASr5UV6HEcXatwdFQfmLVUqQQQMUxHLS"},
+                {
+                    "code": "TRX",
+                    "name": "波场",
+                    "address": "TYASr5UV6HEcXatwdFQfmLVUqQQQMUxHLS",
+                },
             ],
             "prices": {
                 "personal": {"usd": 99, "btc": 0.0025, "eth": 0.04},
@@ -406,5 +435,8 @@ class LicenseUIHelper:
                 "commercial": {"usd": 999, "btc": 0.025, "eth": 0.40},
                 "enterprise": {"usd": 2999, "btc": 0.075, "eth": 1.20},
             },
-            "contact": {"email": "sales@virtualchemlab.com", "telegram": "@VirtualChemLabSupport"},
+            "contact": {
+                "email": "sales@virtualchemlab.com",
+                "telegram": "@VirtualChemLabSupport",
+            },
         }

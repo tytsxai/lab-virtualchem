@@ -145,7 +145,9 @@ class TutorialDialog(QDialog):
 
     def update_display(self):
         """更新显示"""
-        if not self.tutorial_steps or self.current_step_index >= len(self.tutorial_steps):
+        if not self.tutorial_steps or self.current_step_index >= len(
+            self.tutorial_steps
+        ):
             return
 
         current_step = self.tutorial_steps[self.current_step_index]
@@ -154,7 +156,9 @@ class TutorialDialog(QDialog):
         self.title_label.setText(f"🎓 {current_step.title}")
 
         # 更新进度
-        self.progress_label.setText(f"步骤 {self.current_step_index + 1} / {len(self.tutorial_steps)}")
+        self.progress_label.setText(
+            f"步骤 {self.current_step_index + 1} / {len(self.tutorial_steps)}"
+        )
 
         # 更新内容
         self.content_text.setText(current_step.content)
@@ -240,7 +244,9 @@ class TutorialProgress:
 
     def __init__(self):
         self.completed_steps: dict[str, list[str]] = {}  # tutorial_id -> step_ids
-        self.step_times: dict[str, dict[str, float]] = {}  # tutorial_id -> {step_id: time_taken}
+        self.step_times: dict[
+            str, dict[str, float]
+        ] = {}  # tutorial_id -> {step_id: time_taken}
         self.user_preferences: dict[str, Any] = {}
         self.difficulty_level: str = "medium"
         self.learning_style: str = "visual"
@@ -254,7 +260,9 @@ class TutorialProgress:
             "user_preferences": self.user_preferences,
             "difficulty_level": self.difficulty_level,
             "learning_style": self.learning_style,
-            "last_accessed": self.last_accessed.isoformat() if self.last_accessed else None,
+            "last_accessed": self.last_accessed.isoformat()
+            if self.last_accessed
+            else None,
         }
 
     @classmethod
@@ -267,7 +275,9 @@ class TutorialProgress:
         progress.difficulty_level = data.get("difficulty_level", "medium")
         progress.learning_style = data.get("learning_style", "visual")
         last_accessed = data.get("last_accessed")
-        progress.last_accessed = datetime.fromisoformat(last_accessed) if last_accessed else None
+        progress.last_accessed = (
+            datetime.fromisoformat(last_accessed) if last_accessed else None
+        )
         return progress
 
 
@@ -414,7 +424,9 @@ class TutorialManager:
 
         # 连接信号
         dialog.step_completed.connect(self._on_step_completed)
-        dialog.tutorial_completed.connect(lambda: self._on_tutorial_completed(tutorial_id))
+        dialog.tutorial_completed.connect(
+            lambda: self._on_tutorial_completed(tutorial_id)
+        )
         dialog.tutorial_skipped.connect(lambda: self._on_tutorial_skipped(tutorial_id))
 
         self.current_tutorial = tutorial_id
@@ -505,7 +517,9 @@ class TutorialManager:
     def _calculate_average_difficulty(self, steps: list[TutorialStep]) -> str:
         """计算平均难度"""
         difficulty_values = {"easy": 1, "medium": 2, "hard": 3}
-        total_difficulty = sum(difficulty_values.get(step.difficulty, 2) for step in steps)
+        total_difficulty = sum(
+            difficulty_values.get(step.difficulty, 2) for step in steps
+        )
         avg_difficulty = total_difficulty / len(steps)
 
         if avg_difficulty <= 1.5:

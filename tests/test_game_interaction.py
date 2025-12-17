@@ -162,7 +162,9 @@ class TestGamePhysicsScene:
         """测试添加物理物品"""
         pixmap = QPixmap(50, 50)
 
-        item = self.scene.add_physics_item("test_item", "test_type", pixmap, (100, 100), {"mass": 2.0, "friction": 0.8})
+        item = self.scene.add_physics_item(
+            "test_item", "test_type", pixmap, (100, 100), {"mass": 2.0, "friction": 0.8}
+        )
 
         assert item is not None
         assert item.item_id == "test_item"
@@ -282,8 +284,13 @@ class TestGamePhysicsView:
         assert self.view.viewportUpdateMode() == self.view.FullViewportUpdate
 
         # 测试滚动条策略
-        assert self.view.horizontalScrollBarPolicy() == Qt.ScrollBarPolicy.ScrollBarAsNeeded
-        assert self.view.verticalScrollBarPolicy() == Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        assert (
+            self.view.horizontalScrollBarPolicy()
+            == Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
+        assert (
+            self.view.verticalScrollBarPolicy() == Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
 
 
 class TestInteractionTypes:

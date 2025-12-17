@@ -9,7 +9,9 @@ from simpleeval import EvalWithCompoundTypes, simple_eval
 
 class SecurityError(Exception):
     """安全错误"""
+
     pass
+
 
 from src.core.validation import ValidationError
 from src.models.experiment import CheckType, Step
@@ -67,7 +69,9 @@ class RuleValidator:
         )
 
         # 编译危险模式
-        self._dangerous_regex = [re.compile(pattern) for pattern in self.DANGEROUS_PATTERNS]
+        self._dangerous_regex = [
+            re.compile(pattern) for pattern in self.DANGEROUS_PATTERNS
+        ]
 
         # 表达式长度限制
         self.max_expression_length = 500
@@ -86,7 +90,9 @@ class RuleValidator:
         """
         # 检查表达式长度
         if len(expression) > self.max_expression_length:
-            raise SecurityError(f"表达式过长: {len(expression)} > {self.max_expression_length}")
+            raise SecurityError(
+                f"表达式过长: {len(expression)} > {self.max_expression_length}"
+            )
 
         # 检查危险模式
         for regex in self._dangerous_regex:
@@ -94,14 +100,16 @@ class RuleValidator:
                 raise SecurityError(f"表达式包含危险模式: {expression}")
 
         # 检查括号匹配
-        if expression.count('(') != expression.count(')'):
+        if expression.count("(") != expression.count(")"):
             raise SecurityError("表达式括号不匹配")
 
         # 检查方括号匹配
-        if expression.count('[') != expression.count(']'):
+        if expression.count("[") != expression.count("]"):
             raise SecurityError("表达式方括号不匹配")
 
-    def check_step(self, step: Step, user_input: dict[str, Any], context: dict[str, Any]) -> tuple[bool, str]:
+    def check_step(
+        self, step: Step, user_input: dict[str, Any], context: dict[str, Any]
+    ) -> tuple[bool, str]:
         """检查步骤是否通过
 
         Args:
@@ -171,7 +179,11 @@ class RuleValidator:
                     return False, f"缺少选择: {check.input.label}"
 
                 selected_value = user_input[key]
-                is_multi_select = check.input.multi_select if hasattr(check.input, "multi_select") else False
+                is_multi_select = (
+                    check.input.multi_select
+                    if hasattr(check.input, "multi_select")
+                    else False
+                )
 
                 # 处理多选
                 if is_multi_select:
@@ -186,7 +198,11 @@ class RuleValidator:
                             return False, f"选择的选项无效: {val}"
 
                     # 检查是否选择了所有正确选项
-                    correct_options = [opt.get("value") for opt in check.input.options if opt.get("correct", False)]
+                    correct_options = [
+                        opt.get("value")
+                        for opt in check.input.options
+                        if opt.get("correct", False)
+                    ]
                     if correct_options:
                         selected_set = set(selected_value)
                         correct_set = set(correct_options)
@@ -209,7 +225,11 @@ class RuleValidator:
                         return False, "选择的选项无效"
 
                     # 检查是否为正确选项
-                    correct_options = [opt.get("value") for opt in check.input.options if opt.get("correct", False)]
+                    correct_options = [
+                        opt.get("value")
+                        for opt in check.input.options
+                        if opt.get("correct", False)
+                    ]
                     if correct_options and selected_value not in correct_options:
                         return False, check.fail_hint or "选择不正确"
 
@@ -244,7 +264,11 @@ class RuleValidator:
                     self._validate_expression_security(check.expression)
 
                     # 评估表达式 - 使用 simple_eval 而不是 evaluator.eval
-                    result = simple_eval(check.expression, functions=self.allowed_functions, names=eval_context)
+                    result = simple_eval(
+                        check.expression,
+                        functions=self.allowed_functions,
+                        names=eval_context,
+                    )
 
                     # 检查结果是否为True
                     if not result:
@@ -260,7 +284,10 @@ class RuleValidator:
                     return False, f"表达式检查失败: {str(e)}"
                 except Exception as e:
                     # 捕获其他未预期的异常，但记录类型以便后续优化
-                    logger.error(f"表达式检查出现未预期错误 ({type(e).__name__}): {e}", exc_info=True)
+                    logger.error(
+                        f"表达式检查出现未预期错误 ({type(e).__name__}): {e}",
+                        exc_info=True,
+                    )
                     return False, f"表达式检查失败: {str(e)}"
 
             else:
@@ -272,7 +299,9 @@ class RuleValidator:
             return False, f"检查过程出错: {e}"
         except Exception as e:
             # 捕获其他未预期的异常
-            logger.error(f"步骤检查出现未预期错误 ({type(e).__name__}): {e}", exc_info=True)
+            logger.error(
+                f"步骤检查出现未预期错误 ({type(e).__name__}): {e}", exc_info=True
+            )
             return False, f"检查过程出错: {e}"
 
     def evaluate_expression(self, expression: str, context: dict[str, Any]) -> bool:
@@ -313,7 +342,9 @@ class RuleValidator:
             self.evaluator.names = safe_context
 
             # 求值(自动超时保护)
-            result = simple_eval(expression, functions=self.allowed_functions, names=safe_context)
+            result = simple_eval(
+                expression, functions=self.allowed_functions, names=safe_context
+            )
 
             # 转换为布尔值
             return bool(result)
@@ -323,10 +354,15 @@ class RuleValidator:
             raise EvaluationError(f"表达式求值失败: {e}") from e
         except Exception as e:
             # 捕获其他未预期的异常
-            logger.error(f"表达式求值出现未预期错误 ({type(e).__name__}): {expression} - {e}", exc_info=True)
+            logger.error(
+                f"表达式求值出现未预期错误 ({type(e).__name__}): {expression} - {e}",
+                exc_info=True,
+            )
             raise EvaluationError(f"表达式求值失败: {e}") from e
 
-    def validate_input(self, input_spec: dict[str, Any], value: Any) -> tuple[bool, str]:
+    def validate_input(
+        self, input_spec: dict[str, Any], value: Any
+    ) -> tuple[bool, str]:
         """验证用户输入"""
         input_type = input_spec.get("input_type", "float")
 
@@ -360,10 +396,14 @@ class RuleValidator:
             logger.error(f"输入验证失败 - {type(exc).__name__}: {exc}")
             return False, f"验证失败: {exc}"
         except Exception as exc:  # noqa: BLE001 - 兜底记录日志
-            logger.error(f"输入验证出现未预期错误 ({type(exc).__name__}): {exc}", exc_info=True)
+            logger.error(
+                f"输入验证出现未预期错误 ({type(exc).__name__}): {exc}", exc_info=True
+            )
             return False, f"验证失败: {exc}"
 
-    def _validate_legacy_rules(self, rules: list[dict[str, Any]] | Any, user_input: dict[str, Any]) -> tuple[bool, str]:
+    def _validate_legacy_rules(
+        self, rules: list[dict[str, Any]] | Any, user_input: dict[str, Any]
+    ) -> tuple[bool, str]:
         """兼容旧版 YAML 模板中的简单 validation_rules 定义。
 
         当前仅支持 tests 中使用的 range 规则:
@@ -416,7 +456,9 @@ class RuleValidator:
         # 所有规则都通过
         return True, ""
 
-    def evaluate_score_rules(self, rules: list, context: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+    def evaluate_score_rules(
+        self, rules: list, context: dict[str, Any]
+    ) -> tuple[int, dict[str, Any]]:
         """计算评分
 
         Args:
@@ -454,7 +496,10 @@ class RuleValidator:
                 details[rule_id] = {"error": str(e), "score": 0}
             except Exception as e:
                 # 捕获其他未预期的异常
-                logger.error(f"评分规则 {rule_id} 出现未预期错误 ({type(e).__name__}): {e}", exc_info=True)
+                logger.error(
+                    f"评分规则 {rule_id} 出现未预期错误 ({type(e).__name__}): {e}",
+                    exc_info=True,
+                )
                 details[rule_id] = {"error": str(e), "score": 0}
 
         return total_score, details

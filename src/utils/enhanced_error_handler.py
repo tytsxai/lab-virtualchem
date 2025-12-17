@@ -112,7 +112,9 @@ class EnhancedErrorHandler:
             用户友好的错误对象
         """
         # 转换为用户友好的错误
-        friendly_error = self._convert_to_friendly_error(exception, context, user_message, hint, severity)
+        friendly_error = self._convert_to_friendly_error(
+            exception, context, user_message, hint, severity
+        )
 
         # 记录错误
         self._log_error(friendly_error, exception)
@@ -223,7 +225,9 @@ class EnhancedErrorHandler:
         }
         return titles.get(severity, "错误")
 
-    def _get_available_actions(self, exception: Exception, severity: ErrorSeverity) -> list[ErrorAction]:
+    def _get_available_actions(
+        self, exception: Exception, severity: ErrorSeverity
+    ) -> list[ErrorAction]:
         """获取可用的操作"""
         if severity == ErrorSeverity.CRITICAL:
             return [ErrorAction.RESTART, ErrorAction.CONTACT_SUPPORT]
@@ -255,7 +259,9 @@ class EnhancedErrorHandler:
         if len(self.error_history) > self.max_history:
             self.error_history.pop(0)
 
-    def _show_error_dialog(self, friendly_error: UserFriendlyError, parent: QWidget = None):
+    def _show_error_dialog(
+        self, friendly_error: UserFriendlyError, parent: QWidget = None
+    ):
         """显示错误对话框"""
         try:
             msg_box = QMessageBox(parent)
@@ -267,7 +273,9 @@ class EnhancedErrorHandler:
                 ErrorSeverity.ERROR: QMessageBox.Icon.Critical,
                 ErrorSeverity.CRITICAL: QMessageBox.Icon.Critical,
             }
-            msg_box.setIcon(icon_map.get(friendly_error.severity, QMessageBox.Icon.Critical))
+            msg_box.setIcon(
+                icon_map.get(friendly_error.severity, QMessageBox.Icon.Critical)
+            )
 
             # 设置标题和文本
             msg_box.setWindowTitle(friendly_error.title)
@@ -326,7 +334,9 @@ def handle_errors(
                 # 处理错误
                 error_handler = EnhancedErrorHandler()
                 ctx = context or f"{func.__module__}.{func.__name__}"
-                error_handler.handle_exception(e, ctx, user_message, hint, severity, show_dialog, parent)
+                error_handler.handle_exception(
+                    e, ctx, user_message, hint, severity, show_dialog, parent
+                )
 
                 if reraise:
                     raise
@@ -372,7 +382,9 @@ def safe_network_operation(
                     return func(*args, **kwargs)
                 except (TimeoutError, ConnectionError) as e:
                     last_error = e
-                    logger.warning(f"{operation_name}失败 (尝试 {attempt + 1}/{max_retries}): {e}")
+                    logger.warning(
+                        f"{operation_name}失败 (尝试 {attempt + 1}/{max_retries}): {e}"
+                    )
                     if attempt < max_retries - 1:
                         continue
 

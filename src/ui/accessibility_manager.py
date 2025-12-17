@@ -121,7 +121,9 @@ class AccessibilityManager(QObject):
             },
         }
 
-    def enable_accessibility(self, level: AccessibilityLevel = AccessibilityLevel.ENHANCED):
+    def enable_accessibility(
+        self, level: AccessibilityLevel = AccessibilityLevel.ENHANCED
+    ):
         """启用无障碍功能
 
         Args:
@@ -178,7 +180,9 @@ class AccessibilityManager(QObject):
         Returns:
             适配色盲模式的颜色
         """
-        return self.color_maps[self.color_blind_mode].get(color_name, QColor(100, 100, 100))
+        return self.color_maps[self.color_blind_mode].get(
+            color_name, QColor(100, 100, 100)
+        )
 
     def apply_high_contrast(self, app: QApplication):
         """应用高对比度模式
@@ -249,7 +253,9 @@ class AccessibilityManager(QObject):
         current_style = widget.styleSheet()
         widget.setStyleSheet(current_style + "\n" + style)
 
-    def set_accessible_name(self, widget: QWidget, name: str, description: str | None = None):
+    def set_accessible_name(
+        self, widget: QWidget, name: str, description: str | None = None
+    ):
         """设置控件的无障碍名称
 
         Args:

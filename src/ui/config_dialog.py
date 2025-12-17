@@ -100,7 +100,9 @@ class ConfigDialog(QDialog):
         button_layout.addStretch()
 
         # 标准按钮
-        self.button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        self.button_box = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
         self.button_box.accepted.connect(self.accept)
         self.button_box.rejected.connect(self.reject)
         button_layout.addWidget(self.button_box)
@@ -223,7 +225,9 @@ class ConfigDialog(QDialog):
         self.gravity_slider.setRange(0, 100)
         self.gravity_slider.setValue(50)
         self.gravity_label = QLabel("50%")
-        self.gravity_slider.valueChanged.connect(lambda v: self.gravity_label.setText(f"{v}%"))
+        self.gravity_slider.valueChanged.connect(
+            lambda v: self.gravity_label.setText(f"{v}%")
+        )
         gravity_layout.addWidget(self.gravity_slider)
         gravity_layout.addWidget(self.gravity_label)
         physics_layout.addRow("重力强度:", gravity_layout)
@@ -234,7 +238,9 @@ class ConfigDialog(QDialog):
         self.friction_slider.setRange(0, 100)
         self.friction_slider.setValue(90)
         self.friction_label = QLabel("90%")
-        self.friction_slider.valueChanged.connect(lambda v: self.friction_label.setText(f"{v}%"))
+        self.friction_slider.valueChanged.connect(
+            lambda v: self.friction_label.setText(f"{v}%")
+        )
         friction_layout.addWidget(self.friction_slider)
         friction_layout.addWidget(self.friction_label)
         physics_layout.addRow("摩擦力:", friction_layout)
@@ -245,7 +251,9 @@ class ConfigDialog(QDialog):
         self.bounce_slider.setRange(0, 100)
         self.bounce_slider.setValue(60)
         self.bounce_label = QLabel("60%")
-        self.bounce_slider.valueChanged.connect(lambda v: self.bounce_label.setText(f"{v}%"))
+        self.bounce_slider.valueChanged.connect(
+            lambda v: self.bounce_label.setText(f"{v}%")
+        )
         bounce_layout.addWidget(self.bounce_slider)
         bounce_layout.addWidget(self.bounce_label)
         physics_layout.addRow("弹跳系数:", bounce_layout)
@@ -339,7 +347,9 @@ class ConfigDialog(QDialog):
         self.experiment_path_edit.setText("experiments")
         experiment_layout.addWidget(self.experiment_path_edit)
         self.experiment_browse_button = ModernButton("浏览")
-        self.experiment_browse_button.clicked.connect(lambda: self.browse_folder(self.experiment_path_edit))
+        self.experiment_browse_button.clicked.connect(
+            lambda: self.browse_folder(self.experiment_path_edit)
+        )
         experiment_layout.addWidget(self.experiment_browse_button)
         paths_layout.addRow("实验路径:", experiment_layout)
 
@@ -349,7 +359,9 @@ class ConfigDialog(QDialog):
         self.template_path_edit.setText("templates")
         template_layout.addWidget(self.template_path_edit)
         self.template_browse_button = ModernButton("浏览")
-        self.template_browse_button.clicked.connect(lambda: self.browse_folder(self.template_path_edit))
+        self.template_browse_button.clicked.connect(
+            lambda: self.browse_folder(self.template_path_edit)
+        )
         template_layout.addWidget(self.template_browse_button)
         paths_layout.addRow("模板路径:", template_layout)
 
@@ -359,7 +371,9 @@ class ConfigDialog(QDialog):
         self.backup_path_edit.setText("backups")
         backup_layout.addWidget(self.backup_path_edit)
         self.backup_browse_button = ModernButton("浏览")
-        self.backup_browse_button.clicked.connect(lambda: self.browse_folder(self.backup_path_edit))
+        self.backup_browse_button.clicked.connect(
+            lambda: self.browse_folder(self.backup_path_edit)
+        )
         backup_layout.addWidget(self.backup_browse_button)
         paths_layout.addRow("备份路径:", backup_layout)
 
@@ -369,7 +383,9 @@ class ConfigDialog(QDialog):
         self.log_path_edit.setText("logs")
         log_layout.addWidget(self.log_path_edit)
         self.log_browse_button = ModernButton("浏览")
-        self.log_browse_button.clicked.connect(lambda: self.browse_folder(self.log_path_edit))
+        self.log_browse_button.clicked.connect(
+            lambda: self.browse_folder(self.log_path_edit)
+        )
         log_layout.addWidget(self.log_browse_button)
         paths_layout.addRow("日志路径:", log_layout)
 
@@ -448,24 +464,44 @@ class ConfigDialog(QDialog):
             # 游戏配置
             game_config = self.config_manager.get_game_config()
             self.physics_checkbox.setChecked(game_config.get("physics_enabled", True))
-            self.gravity_slider.setValue(int(game_config.get("gravity_strength", 0.5) * 100))
+            self.gravity_slider.setValue(
+                int(game_config.get("gravity_strength", 0.5) * 100)
+            )
             self.friction_slider.setValue(int(game_config.get("friction", 0.9) * 100))
-            self.bounce_slider.setValue(int(game_config.get("bounce_factor", 0.6) * 100))
-            self.collision_checkbox.setChecked(game_config.get("collision_detection", True))
+            self.bounce_slider.setValue(
+                int(game_config.get("bounce_factor", 0.6) * 100)
+            )
+            self.collision_checkbox.setChecked(
+                game_config.get("collision_detection", True)
+            )
             self.auto_save_checkbox.setChecked(game_config.get("auto_save", True))
-            self.auto_save_interval_spin.setValue(game_config.get("auto_save_interval", 300))
+            self.auto_save_interval_spin.setValue(
+                game_config.get("auto_save_interval", 300)
+            )
 
             # 实验配置
             experiment_config = self.config_manager.get_experiment_config()
-            self.auto_progression_checkbox.setChecked(experiment_config.get("auto_progression", False))
-            self.step_validation_checkbox.setChecked(experiment_config.get("step_validation", True))
-            self.real_time_feedback_checkbox.setChecked(experiment_config.get("real_time_feedback", True))
-            self.data_logging_checkbox.setChecked(experiment_config.get("data_logging", True))
-            self.backup_enabled_checkbox.setChecked(experiment_config.get("backup_enabled", True))
+            self.auto_progression_checkbox.setChecked(
+                experiment_config.get("auto_progression", False)
+            )
+            self.step_validation_checkbox.setChecked(
+                experiment_config.get("step_validation", True)
+            )
+            self.real_time_feedback_checkbox.setChecked(
+                experiment_config.get("real_time_feedback", True)
+            )
+            self.data_logging_checkbox.setChecked(
+                experiment_config.get("data_logging", True)
+            )
+            self.backup_enabled_checkbox.setChecked(
+                experiment_config.get("backup_enabled", True)
+            )
 
             # 路径配置
             paths_config = self.config_manager.get_paths_config()
-            self.experiment_path_edit.setText(paths_config.get("experiments", "experiments"))
+            self.experiment_path_edit.setText(
+                paths_config.get("experiments", "experiments")
+            )
             self.template_path_edit.setText(paths_config.get("templates", "templates"))
             self.backup_path_edit.setText(paths_config.get("backups", "backups"))
             self.log_path_edit.setText(paths_config.get("logs", "logs"))
@@ -473,9 +509,15 @@ class ConfigDialog(QDialog):
             # 日志配置
             logging_config = self.config_manager.get_logging_config()
             self.log_level_combo.setCurrentText(logging_config.get("level", "INFO"))
-            self.file_logging_checkbox.setChecked(logging_config.get("file_logging", True))
-            self.console_logging_checkbox.setChecked(logging_config.get("console_logging", True))
-            self.max_file_size_spin.setValue(logging_config.get("max_file_size", 10485760) // 1048576)
+            self.file_logging_checkbox.setChecked(
+                logging_config.get("file_logging", True)
+            )
+            self.console_logging_checkbox.setChecked(
+                logging_config.get("console_logging", True)
+            )
+            self.max_file_size_spin.setValue(
+                logging_config.get("max_file_size", 10485760) // 1048576
+            )
             self.backup_count_spin.setValue(logging_config.get("backup_count", 5))
 
             logger.info("配置加载完成")
@@ -569,7 +611,9 @@ class ConfigDialog(QDialog):
     def import_config(self) -> None:
         """导入配置"""
         try:
-            file_path, _ = QFileDialog.getOpenFileName(self, "导入配置文件", "", "JSON文件 (*.json);;所有文件 (*)")
+            file_path, _ = QFileDialog.getOpenFileName(
+                self, "导入配置文件", "", "JSON文件 (*.json);;所有文件 (*)"
+            )
 
             if file_path:
                 try:
@@ -589,13 +633,17 @@ class ConfigDialog(QDialog):
                     # 刷新界面
                     self.load_current_config()
 
-                    QMessageBox.information(self, "导入成功", f"配置文件已成功导入: {file_path}")
+                    QMessageBox.information(
+                        self, "导入成功", f"配置文件已成功导入: {file_path}"
+                    )
                     logger.info(f"配置文件导入成功: {file_path}")
 
                 except json.JSONDecodeError:
                     QMessageBox.warning(self, "导入失败", "配置文件JSON格式错误")
                 except Exception as e:
-                    QMessageBox.warning(self, "导入失败", f"导入配置文件时发生错误: {e}")
+                    QMessageBox.warning(
+                        self, "导入失败", f"导入配置文件时发生错误: {e}"
+                    )
                     logger.error(f"导入配置文件失败: {e}")
 
         except Exception as e:
@@ -612,7 +660,10 @@ class ConfigDialog(QDialog):
             default_filename = f"VirtualChemLab_config_{timestamp}.json"
 
             file_path, _ = QFileDialog.getSaveFileName(
-                self, "导出配置文件", default_filename, "JSON文件 (*.json);;所有文件 (*)"
+                self,
+                "导出配置文件",
+                default_filename,
+                "JSON文件 (*.json);;所有文件 (*)",
             )
 
             if file_path:
@@ -635,11 +686,15 @@ class ConfigDialog(QDialog):
 
                         json.dump(export_data, f, ensure_ascii=False, indent=2)
 
-                    QMessageBox.information(self, "导出成功", f"配置文件已成功导出: {file_path}")
+                    QMessageBox.information(
+                        self, "导出成功", f"配置文件已成功导出: {file_path}"
+                    )
                     logger.info(f"配置文件导出成功: {file_path}")
 
                 except Exception as e:
-                    QMessageBox.warning(self, "导出失败", f"导出配置文件时发生错误: {e}")
+                    QMessageBox.warning(
+                        self, "导出失败", f"导出配置文件时发生错误: {e}"
+                    )
                     logger.error(f"导出配置文件失败: {e}")
 
         except Exception as e:
@@ -651,7 +706,9 @@ class ConfigDialog(QDialog):
         try:
             current_path = line_edit.text() or ""
 
-            folder_path = QFileDialog.getExistingDirectory(self, "选择文件夹", current_path)
+            folder_path = QFileDialog.getExistingDirectory(
+                self, "选择文件夹", current_path
+            )
 
             if folder_path:
                 line_edit.setText(folder_path)

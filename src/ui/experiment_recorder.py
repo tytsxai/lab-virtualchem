@@ -95,7 +95,9 @@ class ExperimentRecorder(QObject):
 
         logger.info("实验录制器初始化完成")
 
-    def start_recording(self, experiment_id: str, user_id: str, title: str, description: str = "") -> None:
+    def start_recording(
+        self, experiment_id: str, user_id: str, title: str, description: str = ""
+    ) -> None:
         """开始录制"""
         if self.state == RecorderState.RECORDING:
             logger.warning("录制已在进行中")
@@ -104,7 +106,11 @@ class ExperimentRecorder(QObject):
         import uuid
 
         self.recording = ExperimentRecording(
-            id=str(uuid.uuid4()), experiment_id=experiment_id, user_id=user_id, title=title, description=description
+            id=str(uuid.uuid4()),
+            experiment_id=experiment_id,
+            user_id=user_id,
+            title=title,
+            description=description,
         )
 
         self.start_time = time.time()
@@ -165,7 +171,11 @@ class ExperimentRecorder(QObject):
         return result
 
     def record_action(
-        self, action_type: str, target_id: str, data: dict[str, Any] | None = None, user_input: Any = None
+        self,
+        action_type: str,
+        target_id: str,
+        data: dict[str, Any] | None = None,
+        user_input: Any = None,
     ) -> None:
         """记录操作"""
         if self.state != RecorderState.RECORDING or not self.recording:
@@ -341,7 +351,9 @@ class ExperimentPlayer(QObject):
 
         logger.info(f"回放速度设置为: {speed}x")
 
-    def register_action_handler(self, action_type: str, handler: Callable[[RecordedAction], None]) -> None:
+    def register_action_handler(
+        self, action_type: str, handler: Callable[[RecordedAction], None]
+    ) -> None:
         """注册动作处理器"""
         self.action_handlers[action_type] = handler
         logger.debug(f"注册动作处理器: {action_type}")
@@ -454,7 +466,9 @@ class RecorderControlWidget(QWidget):
         """录制按钮点击"""
         # 这里应该弹出对话框输入录制信息
         # 简化实现，直接开始
-        self.recorder.start_recording(experiment_id="EXP-001", user_id="user_001", title="实验录制")
+        self.recorder.start_recording(
+            experiment_id="EXP-001", user_id="user_001", title="实验录制"
+        )
 
     def _on_pause_clicked(self) -> None:
         """暂停按钮点击"""
@@ -496,7 +510,11 @@ class RecorderControlWidget(QWidget):
     def _update_time_display(self) -> None:
         """更新时间显示"""
         if self.recorder.state in [RecorderState.RECORDING, RecorderState.PAUSED]:
-            elapsed = time.time() - self.recorder.start_time - self.recorder.total_pause_duration
+            elapsed = (
+                time.time()
+                - self.recorder.start_time
+                - self.recorder.total_pause_duration
+            )
             minutes = int(elapsed // 60)
             seconds = int(elapsed % 60)
             self.time_label.setText(f"{minutes:02d}:{seconds:02d}")
@@ -563,7 +581,11 @@ class PlayerControlWidget(QWidget):
         """播放按钮点击"""
         if self.player.state == RecorderState.PLAYING:
             self.player.pause_playback()
-        elif self.player.state in [RecorderState.IDLE, RecorderState.PAUSED, RecorderState.STOPPED]:
+        elif self.player.state in [
+            RecorderState.IDLE,
+            RecorderState.PAUSED,
+            RecorderState.STOPPED,
+        ]:
             self.player.start_playback()
 
     def _on_speed_changed(self, value: int) -> None:

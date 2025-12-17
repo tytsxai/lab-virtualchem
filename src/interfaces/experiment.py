@@ -37,7 +37,9 @@ class IExperimentEngine(ABC):
         pass
 
     @abstractmethod
-    def submit_step(self, user_input: dict[str, Any]) -> tuple[bool, str, Mistake | None]:
+    def submit_step(
+        self, user_input: dict[str, Any]
+    ) -> tuple[bool, str, Mistake | None]:
         """提交步骤
 
         Args:
@@ -98,7 +100,9 @@ class IExperimentValidator(ABC):
     """实验验证器接口"""
 
     @abstractmethod
-    def check_step(self, step: Step, user_input: dict[str, Any], context: dict[str, Any]) -> tuple[bool, str]:
+    def check_step(
+        self, step: Step, user_input: dict[str, Any], context: dict[str, Any]
+    ) -> tuple[bool, str]:
         """验证步骤
 
         Args:
@@ -112,7 +116,9 @@ class IExperimentValidator(ABC):
         pass
 
     @abstractmethod
-    def evaluate_score(self, score_rules: list[dict[str, Any]], context: dict[str, Any]) -> tuple[int, dict[str, int]]:
+    def evaluate_score(
+        self, score_rules: list[dict[str, Any]], context: dict[str, Any]
+    ) -> tuple[int, dict[str, int]]:
         """评估分数
 
         Args:
@@ -142,7 +148,9 @@ class ICurveGenerator(ABC):
     """曲线生成器接口"""
 
     @abstractmethod
-    def generate(self, curve_type: str, params: dict[str, Any]) -> tuple[np.ndarray, np.ndarray]:
+    def generate(
+        self, curve_type: str, params: dict[str, Any]
+    ) -> tuple[np.ndarray, np.ndarray]:
         """生成曲线数据
 
         Args:
@@ -178,7 +186,9 @@ class ISafetyChecker(ABC):
     """安全检查器接口"""
 
     @abstractmethod
-    def check_temperature(self, temperature: float, reagents: list[str]) -> tuple[bool, str]:
+    def check_temperature(
+        self, temperature: float, reagents: list[str]
+    ) -> tuple[bool, str]:
         """检查温度安全
 
         Args:
@@ -204,7 +214,9 @@ class ISafetyChecker(ABC):
         pass
 
     @abstractmethod
-    def check_protection(self, operation: str, protection: list[str]) -> tuple[bool, str]:
+    def check_protection(
+        self, operation: str, protection: list[str]
+    ) -> tuple[bool, str]:
         """检查防护措施
 
         Args:

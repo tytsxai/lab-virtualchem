@@ -347,7 +347,11 @@ class ErrorRecoveryWizard(QDialog):
         logger.info("提示以管理员身份运行")
         from PySide6.QtWidgets import QMessageBox
 
-        QMessageBox.information(self, "管理员权限", "请关闭应用，然后右键点击应用图标，选择'以管理员身份运行'。")
+        QMessageBox.information(
+            self,
+            "管理员权限",
+            "请关闭应用，然后右键点击应用图标，选择'以管理员身份运行'。",
+        )
         return True
 
     def _recover_retry_connection(self) -> bool:
@@ -375,7 +379,9 @@ class ErrorRecoveryWizard(QDialog):
         logger.info("准备重启应用")
         from PySide6.QtWidgets import QMessageBox
 
-        QMessageBox.information(self, "重启应用", "应用将在关闭后重新启动。\n请保存您的工作后点击确定。")
+        QMessageBox.information(
+            self, "重启应用", "应用将在关闭后重新启动。\n请保存您的工作后点击确定。"
+        )
         return True
 
     def _recover_reset_config(self) -> bool:

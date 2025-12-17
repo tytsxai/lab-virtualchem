@@ -63,7 +63,9 @@ class EnhancedLicenseValidator:
         self.license_manager = license_manager
         self.device_auth_manager = device_auth_manager or get_device_auth_manager()
 
-    def validate(self, license_obj: License | None = None, enable_device_check: bool = True) -> ValidationReport:
+    def validate(
+        self, license_obj: License | None = None, enable_device_check: bool = True
+    ) -> ValidationReport:
         """验证许可证
 
         Args:
@@ -92,7 +94,9 @@ class EnhancedLicenseValidator:
         machine_id = get_machine_id()
 
         # 基础许可证验证
-        status, error_msg = self.license_manager.validate_license(license_obj, machine_id)
+        status, error_msg = self.license_manager.validate_license(
+            license_obj, machine_id
+        )
 
         # 映射许可证状态到验证结果
         result_mapping = {
@@ -114,8 +118,10 @@ class EnhancedLicenseValidator:
         # 设备授权检查
         device_fingerprint = None
         if enable_device_check:
-            authorized, auth_message, device_fingerprint = self.device_auth_manager.check_device_authorization(
-                license_obj.license_key, license_obj.max_devices
+            authorized, auth_message, device_fingerprint = (
+                self.device_auth_manager.check_device_authorization(
+                    license_obj.license_key, license_obj.max_devices
+                )
             )
 
             if not authorized:
@@ -144,10 +150,14 @@ class EnhancedLicenseValidator:
             device_fingerprint=device_fingerprint,
             message="验证成功",
             timestamp=timestamp,
-            additional_info=self.device_auth_manager.get_device_usage_stats(license_obj.license_key),
+            additional_info=self.device_auth_manager.get_device_usage_stats(
+                license_obj.license_key
+            ),
         )
 
-    def activate_license(self, license_obj: License, force: bool = False) -> tuple[bool, str, DeviceFingerprint | None]:
+    def activate_license(
+        self, license_obj: License, force: bool = False
+    ) -> tuple[bool, str, DeviceFingerprint | None]:
         """激活许可证
 
         Args:
@@ -163,8 +173,10 @@ class EnhancedLicenseValidator:
         # 设备授权检查
         device_fingerprint = None
         if not force:
-            authorized, auth_message, device_fingerprint = self.device_auth_manager.check_device_authorization(
-                license_obj.license_key, license_obj.max_devices
+            authorized, auth_message, device_fingerprint = (
+                self.device_auth_manager.check_device_authorization(
+                    license_obj.license_key, license_obj.max_devices
+                )
             )
 
             if not authorized:
@@ -172,7 +184,9 @@ class EnhancedLicenseValidator:
                 return False, auth_message, device_fingerprint
 
         # 激活许可证
-        success, message = self.license_manager.activate_license(license_obj, machine_id)
+        success, message = self.license_manager.activate_license(
+            license_obj, machine_id
+        )
 
         if success:
             # 保存许可证

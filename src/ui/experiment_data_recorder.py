@@ -70,7 +70,9 @@ class ExperimentCalculation:
         return final_volume - initial_volume
 
     @staticmethod
-    def calculate_concentration(titrant_concentration: float, titrant_volume: float, analyte_volume: float) -> float:
+    def calculate_concentration(
+        titrant_concentration: float, titrant_volume: float, analyte_volume: float
+    ) -> float:
         """计算待测物浓度"""
         if analyte_volume == 0:
             return 0.0
@@ -84,7 +86,9 @@ class ExperimentCalculation:
         return abs((experimental - theoretical) / theoretical) * 100
 
     @staticmethod
-    def calculate_ph_from_concentration(concentration: float, is_acid: bool = True) -> float:
+    def calculate_ph_from_concentration(
+        concentration: float, is_acid: bool = True
+    ) -> float:
         """从浓度计算pH"""
         if concentration <= 0:
             return 7.0
@@ -102,7 +106,9 @@ class ExperimentCalculation:
         return moles / volume_liters
 
     @staticmethod
-    def calculate_moles_from_volume_and_concentration(volume_ml: float, concentration_mol_l: float) -> float:
+    def calculate_moles_from_volume_and_concentration(
+        volume_ml: float, concentration_mol_l: float
+    ) -> float:
         """从体积和浓度计算摩尔数"""
         return (volume_ml / 1000.0) * concentration_mol_l
 
@@ -134,7 +140,11 @@ class ExperimentDataRecorder(QObject):
     def record_volume_reading(self, volume: float, unit: str = "mL") -> None:
         """记录体积读数"""
         data_point = ExperimentDataPoint(
-            timestamp=time.time(), step_id=self.current_step, data_type="volume_reading", value=volume, unit=unit
+            timestamp=time.time(),
+            step_id=self.current_step,
+            data_type="volume_reading",
+            value=volume,
+            unit=unit,
         )
         self.data_points.append(data_point)
         self.data_recorded.emit(self.current_step, "volume_reading", volume)
@@ -143,7 +153,11 @@ class ExperimentDataRecorder(QObject):
     def record_mass_reading(self, mass: float, unit: str = "g") -> None:
         """记录质量读数"""
         data_point = ExperimentDataPoint(
-            timestamp=time.time(), step_id=self.current_step, data_type="mass_reading", value=mass, unit=unit
+            timestamp=time.time(),
+            step_id=self.current_step,
+            data_type="mass_reading",
+            value=mass,
+            unit=unit,
         )
         self.data_points.append(data_point)
         self.data_recorded.emit(self.current_step, "mass_reading", mass)
@@ -152,7 +166,11 @@ class ExperimentDataRecorder(QObject):
     def record_temperature(self, temperature: float, unit: str = "°C") -> None:
         """记录温度"""
         data_point = ExperimentDataPoint(
-            timestamp=time.time(), step_id=self.current_step, data_type="temperature", value=temperature, unit=unit
+            timestamp=time.time(),
+            step_id=self.current_step,
+            data_type="temperature",
+            value=temperature,
+            unit=unit,
         )
         self.data_points.append(data_point)
         self.data_recorded.emit(self.current_step, "temperature", temperature)
@@ -161,13 +179,19 @@ class ExperimentDataRecorder(QObject):
     def record_ph_reading(self, ph: float) -> None:
         """记录pH读数"""
         data_point = ExperimentDataPoint(
-            timestamp=time.time(), step_id=self.current_step, data_type="ph_reading", value=ph, unit=""
+            timestamp=time.time(),
+            step_id=self.current_step,
+            data_type="ph_reading",
+            value=ph,
+            unit="",
         )
         self.data_points.append(data_point)
         self.data_recorded.emit(self.current_step, "ph_reading", ph)
         logger.info(f"记录pH读数: {ph}")
 
-    def record_reagent_addition(self, reagent_id: str, volume: float, unit: str = "mL") -> None:
+    def record_reagent_addition(
+        self, reagent_id: str, volume: float, unit: str = "mL"
+    ) -> None:
         """记录试剂添加"""
         data_point = ExperimentDataPoint(
             timestamp=time.time(),
@@ -177,13 +201,21 @@ class ExperimentDataRecorder(QObject):
             unit=unit,
         )
         self.data_points.append(data_point)
-        self.data_recorded.emit(self.current_step, "reagent_addition", {"reagent_id": reagent_id, "volume": volume})
+        self.data_recorded.emit(
+            self.current_step,
+            "reagent_addition",
+            {"reagent_id": reagent_id, "volume": volume},
+        )
         logger.info(f"记录试剂添加: {reagent_id} {volume} {unit}")
 
     def record_observation(self, observation: str) -> None:
         """记录观察结果"""
         data_point = ExperimentDataPoint(
-            timestamp=time.time(), step_id=self.current_step, data_type="observation", value=observation, unit=""
+            timestamp=time.time(),
+            step_id=self.current_step,
+            data_type="observation",
+            value=observation,
+            unit="",
         )
         self.data_points.append(data_point)
         self.data_recorded.emit(self.current_step, "observation", observation)
@@ -192,7 +224,9 @@ class ExperimentDataRecorder(QObject):
     def calculate_titration_results(self) -> dict[str, Any]:
         """计算滴定结果"""
         # 获取体积读数
-        volume_readings = [dp for dp in self.data_points if dp.data_type == "volume_reading"]
+        volume_readings = [
+            dp for dp in self.data_points if dp.data_type == "volume_reading"
+        ]
 
         if len(volume_readings) < 2:
             return {"error": "体积读数不足"}
@@ -200,7 +234,9 @@ class ExperimentDataRecorder(QObject):
         # 计算消耗体积
         initial_volume = volume_readings[0].value
         final_volume = volume_readings[-1].value
-        consumed_volume = ExperimentCalculation.calculate_titration_volume(initial_volume, final_volume)
+        consumed_volume = ExperimentCalculation.calculate_titration_volume(
+            initial_volume, final_volume
+        )
 
         # 计算浓度（假设已知条件）
         titrant_concentration = 0.1  # mol/L
@@ -236,7 +272,9 @@ class ExperimentDataRecorder(QObject):
         """计算pH曲线"""
         ph_readings = [dp for dp in self.data_points if dp.data_type == "ph_reading"]
 
-        volume_readings = [dp for dp in self.data_points if dp.data_type == "volume_reading"]
+        volume_readings = [
+            dp for dp in self.data_points if dp.data_type == "volume_reading"
+        ]
 
         if not ph_readings or not volume_readings:
             return {"error": "pH或体积读数不足"}
@@ -245,7 +283,9 @@ class ExperimentDataRecorder(QObject):
         curve_data = []
         for i, ph_point in enumerate(ph_readings):
             if i < len(volume_readings):
-                curve_data.append({"volume": volume_readings[i].value, "ph": ph_point.value})
+                curve_data.append(
+                    {"volume": volume_readings[i].value, "ph": ph_point.value}
+                )
 
         results = {
             "curve_data": curve_data,
@@ -321,7 +361,10 @@ class ExperimentDataRecorder(QObject):
                 import_data = json.load(f)
 
             # 导入数据点
-            self.data_points = [ExperimentDataPoint.from_dict(dp) for dp in import_data.get("data_points", [])]
+            self.data_points = [
+                ExperimentDataPoint.from_dict(dp)
+                for dp in import_data.get("data_points", [])
+            ]
 
             # 导入计算结果
             self.calculations = import_data.get("calculations", {})

@@ -149,7 +149,9 @@ class JWTManager:
         self.access_token_expire = access_token_expire
         self.refresh_token_expire = refresh_token_expire
 
-    def create_access_token(self, user_id: str, extra_claims: dict[str, Any] | None = None) -> str:
+    def create_access_token(
+        self, user_id: str, extra_claims: dict[str, Any] | None = None
+    ) -> str:
         """创建访问令牌"""
         now = datetime.utcnow()
         expires = now + timedelta(seconds=self.access_token_expire)
@@ -503,7 +505,9 @@ if __name__ == "__main__":
 
         # 5. 检查权限
         logger.info("4. 权限检查:")
-        logger.info(f"可以运行实验: {context.has_permission(Permission.EXPERIMENT_RUN)}")
+        logger.info(
+            f"可以运行实验: {context.has_permission(Permission.EXPERIMENT_RUN)}"
+        )
         logger.info(f"可以删除用户: {context.has_permission(Permission.USER_DELETE)}")
         logger.info(f"是否学生角色: {context.has_role(Role.STUDENT)}\n")
 
@@ -568,7 +572,9 @@ def create_jwt_manager_from_config(config=None) -> JWTManager:
 
     # 验证密钥
     if not secret_key:
-        raise ValueError("JWT密钥未设置！请设置环境变量 JWT_SECRET_KEY 或在配置文件中设置")
+        raise ValueError(
+            "JWT密钥未设置！请设置环境变量 JWT_SECRET_KEY 或在配置文件中设置"
+        )
 
     if secret_key == "change-this-in-production" or secret_key == "your-secret-key":
         logger.warning("⚠️ 警告：正在使用默认JWT密钥，生产环境请更换！")

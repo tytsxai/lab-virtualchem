@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from src import __version__ as APP_VERSION
+
 
 class Config:
     """配置管理器"""
@@ -14,7 +16,9 @@ class Config:
         Args:
             config_path: 配置文件路径
         """
-        self.config_path = config_path or Path.home() / ".virtualchemlab" / "config.json"
+        self.config_path = (
+            config_path or Path.home() / ".virtualchemlab" / "config.json"
+        )
         self._data: dict[str, Any] = self._load_default_config()
 
         # 如果存在用户配置,加载并合并
@@ -26,7 +30,7 @@ class Config:
         return {
             "app": {
                 "name": "VirtualChemLab",
-                "version": "1.0.0",
+                "version": APP_VERSION,
                 "language": "zh_CN",
             },
             "paths": {
@@ -128,3 +132,19 @@ class Config:
                 self._deep_merge(base[key], value)
             else:
                 base[key] = value
+
+    @property
+    def config(self) -> dict[str, Any]:
+        """兼容属性：返回当前配置字典。"""
+        return self._data
+
+    @property
+    def config_file(self) -> Path:
+        """兼容属性：返回配置文件路径。"""
+        return self.config_path
+
+    def reload(self) -> None:
+        """重新加载配置（重置为默认后再合并用户配置）。"""
+        self._data = self._load_default_config()
+        if self.config_path.exists():
+            self.load()

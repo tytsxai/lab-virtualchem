@@ -40,7 +40,11 @@ class CheckResult:
 
     def is_ok(self) -> bool:
         """是否通过检查"""
-        return self.status in [CheckStatus.PASSED, CheckStatus.WARNING, CheckStatus.SKIPPED]
+        return self.status in [
+            CheckStatus.PASSED,
+            CheckStatus.WARNING,
+            CheckStatus.SKIPPED,
+        ]
 
 
 class StartupChecker:
@@ -50,7 +54,9 @@ class StartupChecker:
         self.checks: list[tuple[str, Callable[[], CheckResult], bool]] = []
         self.results: list[CheckResult] = []
 
-    def add_check(self, name: str, check_func: Callable[[], CheckResult], critical: bool = False):
+    def add_check(
+        self, name: str, check_func: Callable[[], CheckResult], critical: bool = False
+    ):
         """添加检查项
 
         Args:
@@ -126,7 +132,9 @@ def check_python_version() -> CheckResult:
             name="Python版本",
             status=CheckStatus.FAILED,
             message=f"需要 Python {required_version[0]}.{required_version[1]}+，当前为 {current_version[0]}.{current_version[1]}",
-            suggestions=[f"请升级到 Python {required_version[0]}.{required_version[1]} 或更高版本"],
+            suggestions=[
+                f"请升级到 Python {required_version[0]}.{required_version[1]} 或更高版本"
+            ],
             critical=True,
         )
 
@@ -225,7 +233,9 @@ def check_templates() -> CheckResult:
             suggestions=["将无法加载实验模板，请添加模板文件到 assets/templates"],
         )
 
-    template_files = list(template_dir.glob("*.yaml")) + list(template_dir.glob("*.yml"))
+    template_files = list(template_dir.glob("*.yaml")) + list(
+        template_dir.glob("*.yml")
+    )
 
     if not template_files:
         return CheckResult(
@@ -373,7 +383,9 @@ def format_check_results(results: list[CheckResult]) -> str:
 
     # 总结
     total = len(results)
-    lines.append(f"总计: {len(passed)} 通过, {len(warnings)} 警告, {len(failed)} 失败 (共 {total} 项)")
+    lines.append(
+        f"总计: {len(passed)} 通过, {len(warnings)} 警告, {len(failed)} 失败 (共 {total} 项)"
+    )
     lines.append("=" * 60)
 
     return "\n".join(lines)

@@ -27,7 +27,9 @@ class DummyValidator:
 
 @pytest.fixture
 def simple_template():
-    step = Step(id="step-1", text="Add reagent", check=CheckPoint(type=CheckType.CONFIRM))
+    step = Step(
+        id="step-1", text="Add reagent", check=CheckPoint(type=CheckType.CONFIRM)
+    )
     return ExperimentTemplate(id="exp-1", title="Demo Experiment", steps=[step])
 
 

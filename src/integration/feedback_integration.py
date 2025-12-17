@@ -100,7 +100,10 @@ class FeedbackIntegration(QObject):
     def process_feedback_workflow(self, feedback: dict[str, Any]) -> dict[str, Any]:
         """处理反馈工作流"""
         try:
-            workflow_results = {"feedback_id": feedback.get("feedback_id", ""), "actions": []}
+            workflow_results = {
+                "feedback_id": feedback.get("feedback_id", ""),
+                "actions": [],
+            }
 
             # 1. 自动处理反馈
             processed = self.feedback_processor.process_feedback(feedback)
@@ -113,26 +116,46 @@ class FeedbackIntegration(QObject):
             workflow_results["priority"] = processed.auto_priority
 
             # 2. 根据类型触发不同工作流
-            if processed.auto_category == "bug_report" and self.workflows.get("feedback_to_bug"):
+            if processed.auto_category == "bug_report" and self.workflows.get(
+                "feedback_to_bug"
+            ):
                 bug_id = self.create_bug_from_feedback(feedback, processed)
                 if bug_id:
-                    workflow_results["actions"].append({"type": "bug_created", "id": bug_id})
+                    workflow_results["actions"].append(
+                        {"type": "bug_created", "id": bug_id}
+                    )
 
-            elif processed.auto_category == "feature_request" and self.workflows.get("feedback_to_feature"):
+            elif processed.auto_category == "feature_request" and self.workflows.get(
+                "feedback_to_feature"
+            ):
                 # 累积相似反馈后再创建功能需求
                 similar_feedbacks = self.find_similar_feedbacks(feedback)
-                min_feedback = self.automation_rules.get("auto_create_feature", {}).get("min_feedback_count", 5)
+                min_feedback = self.automation_rules.get("auto_create_feature", {}).get(
+                    "min_feedback_count", 5
+                )
                 if len(similar_feedbacks) >= min_feedback:
-                    feature_id = self.iteration_manager.propose_feature_from_feedback(similar_feedbacks)
+                    feature_id = self.iteration_manager.propose_feature_from_feedback(
+                        similar_feedbacks
+                    )
                     if feature_id:
-                        workflow_results["actions"].append({"type": "feature_proposed", "id": feature_id})
+                        workflow_results["actions"].append(
+                            {"type": "feature_proposed", "id": feature_id}
+                        )
 
             # 3. 检查是否需要A/B测试
-            min_impact = self.automation_rules.get("auto_create_ab_test", {}).get("min_impact_score", 70)
-            if processed.urgency_score >= min_impact and self.workflows.get("insight_to_ab_test"):
-                ab_experiment_id = self.create_ab_test_from_feedback(feedback, processed)
+            min_impact = self.automation_rules.get("auto_create_ab_test", {}).get(
+                "min_impact_score", 70
+            )
+            if processed.urgency_score >= min_impact and self.workflows.get(
+                "insight_to_ab_test"
+            ):
+                ab_experiment_id = self.create_ab_test_from_feedback(
+                    feedback, processed
+                )
                 if ab_experiment_id:
-                    workflow_results["actions"].append({"type": "ab_test_created", "id": ab_experiment_id})
+                    workflow_results["actions"].append(
+                        {"type": "ab_test_created", "id": ab_experiment_id}
+                    )
 
             self.workflow_triggered.emit("feedback_processing", workflow_results)
 
@@ -192,7 +215,9 @@ class FeedbackIntegration(QObject):
 
         return similar
 
-    def create_ab_test_from_feedback(self, feedback: dict[str, Any], processed: Any) -> str:
+    def create_ab_test_from_feedback(
+        self, feedback: dict[str, Any], processed: Any
+    ) -> str:
         """从反馈创建A/B测试"""
         try:
             ab_test_config = self.automation_rules.get("auto_create_ab_test", {})
@@ -252,23 +277,34 @@ class FeedbackIntegration(QObject):
             logger.error(f"从反馈创建A/B测试失败: {e}")
             return ""
 
-    def on_feedback_processed(self, feedback_id: str, processed_data: dict[str, Any]) -> None:
+    def on_feedback_processed(
+        self, feedback_id: str, processed_data: dict[str, Any]
+    ) -> None:
         """反馈处理完成"""
-        logger.info(f"反馈已处理: {feedback_id}, 类别: {processed_data.get('auto_category')}")
+        logger.info(
+            f"反馈已处理: {feedback_id}, 类别: {processed_data.get('auto_category')}"
+        )
 
         # 触发工作流
         if processed_data.get("requires_human_review"):
             self.workflow_triggered.emit(
-                "human_review_required", {"feedback_id": feedback_id, "reason": "需要人工审核"}
+                "human_review_required",
+                {"feedback_id": feedback_id, "reason": "需要人工审核"},
             )
 
     def on_escalation_required(self, feedback_id: str, details: dict[str, Any]) -> None:
         """需要升级处理"""
-        logger.warning(f"反馈需要升级处理: {feedback_id}, 原因: {details.get('reason')}")
+        logger.warning(
+            f"反馈需要升级处理: {feedback_id}, 原因: {details.get('reason')}"
+        )
 
         self.workflow_triggered.emit(
             "escalation",
-            {"feedback_id": feedback_id, "priority": details.get("priority"), "urgency": details.get("urgency")},
+            {
+                "feedback_id": feedback_id,
+                "priority": details.get("priority"),
+                "urgency": details.get("urgency"),
+            },
         )
 
     def on_insight_generated(self, insight: dict[str, Any]) -> None:
@@ -277,13 +313,20 @@ class FeedbackIntegration(QObject):
 
         # 创建改进项
         if self.workflows.get("insight_to_improvement"):
-            improvement_ids = self.iteration_manager.create_improvement_from_insights([insight])
+            improvement_ids = self.iteration_manager.create_improvement_from_insights(
+                [insight]
+            )
 
             if improvement_ids:
-                self.action_completed.emit("improvements_created", ",".join(improvement_ids))
+                self.action_completed.emit(
+                    "improvements_created", ",".join(improvement_ids)
+                )
 
         # 创建A/B测试
-        if self.workflows.get("insight_to_ab_test") and insight.get("impact_score", 0) >= 70:
+        if (
+            self.workflows.get("insight_to_ab_test")
+            and insight.get("impact_score", 0) >= 70
+        ):
             self.create_ab_test_from_insight(insight)
 
     def create_ab_test_from_insight(self, insight: dict[str, Any]) -> str:
@@ -302,7 +345,11 @@ class FeedbackIntegration(QObject):
 
             # 创建变体
             suggested_action = insight.get("suggested_actions", ["优化实现"])
-            action_text = suggested_action[0] if isinstance(suggested_action, list) and suggested_action else "优化实现"
+            action_text = (
+                suggested_action[0]
+                if isinstance(suggested_action, list) and suggested_action
+                else "优化实现"
+            )
 
             variants = [
                 {
@@ -327,7 +374,9 @@ class FeedbackIntegration(QObject):
                 description=str(insight.get("description", "")),
                 hypothesis="实施改进可以提升用户体验",
                 variants=variants,
-                success_criteria={"impact_threshold": insight.get("impact_score", 0) * 0.5},
+                success_criteria={
+                    "impact_threshold": insight.get("impact_score", 0) * 0.5
+                },
                 created_by="insight_integration",
             )
 
@@ -342,13 +391,17 @@ class FeedbackIntegration(QObject):
 
     def on_experiment_completed(self, experiment_id: str, results: dict[str, Any]):
         """A/B测试完成"""
-        logger.info(f"A/B测试完成: {experiment_id}, 获胜变体: {results.get('winner_variant_id')}")
+        logger.info(
+            f"A/B测试完成: {experiment_id}, 获胜变体: {results.get('winner_variant_id')}"
+        )
 
         # 自动添加到迭代
         if self.workflows.get("ab_result_to_iteration"):
             self.add_ab_result_to_iteration(experiment_id, results)
 
-    def add_ab_result_to_iteration(self, experiment_id: str, results: dict[str, Any]) -> None:
+    def add_ab_result_to_iteration(
+        self, experiment_id: str, results: dict[str, Any]
+    ) -> None:
         """将A/B测试结果添加到迭代"""
         try:
             winner_id = results.get("winner_variant_id")
@@ -409,7 +462,12 @@ class FeedbackIntegration(QObject):
         # 如果NPS过低，触发紧急改进
         if score < 0:
             self.workflow_triggered.emit(
-                "nps_alert", {"score": score, "severity": "critical", "action": "需要立即改进用户体验"}
+                "nps_alert",
+                {
+                    "score": score,
+                    "severity": "critical",
+                    "action": "需要立即改进用户体验",
+                },
             )
 
     def on_feature_proposed(self, feature_id: str) -> None:
@@ -425,7 +483,9 @@ class FeedbackIntegration(QObject):
             # 更新分析系统的反馈数据
             # 这里可以添加更多的数据同步逻辑
 
-            logger.debug(f"数据同步完成，已处理 {processor_stats.get('total_processed', 0)} 条反馈")
+            logger.debug(
+                f"数据同步完成，已处理 {processor_stats.get('total_processed', 0)} 条反馈"
+            )
 
         except Exception as e:
             logger.error(f"数据同步失败: {e}")
@@ -465,7 +525,10 @@ class FeedbackIntegration(QObject):
         """导出集成报告"""
         try:
             if not output_path:
-                output_file = self.data_dir / f"integration_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                output_file = (
+                    self.data_dir
+                    / f"integration_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                )
             else:
                 output_file = Path(output_path)
 

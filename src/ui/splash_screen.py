@@ -38,7 +38,9 @@ class ModernSplashScreen(QWidget):
         self.status_message = "正在初始化..."
         self.loading_angle = 0
         self._is_finishing = False  # 防止重复调用finish
-        self._fade_animation: QPropertyAnimation | None = None  # 保存动画引用，防止被垃圾回收
+        self._fade_animation: QPropertyAnimation | None = (
+            None  # 保存动画引用，防止被垃圾回收
+        )
         self.tips = [
             "💡 提示：使用快捷键 F1 随时查看帮助",
             "💡 提示：Ctrl+G 可以切换游戏模式，体验更有趣的实验",
@@ -58,7 +60,9 @@ class ModernSplashScreen(QWidget):
 
         # 设置窗口属性
         self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.SplashScreen
+            Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.WindowStaysOnTopHint
+            | Qt.WindowType.SplashScreen
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setFixedSize(width, height)
@@ -224,26 +228,46 @@ class ModernSplashScreen(QWidget):
         """绘制标题"""
         # 标题文字
         title_font = QFont()
-        title_font.setFamily("Microsoft YaHei UI" if hasattr(QFontDatabase, "addApplicationFont") else "Arial")
+        title_font.setFamily(
+            "Microsoft YaHei UI"
+            if hasattr(QFontDatabase, "addApplicationFont")
+            else "Arial"
+        )
         title_font.setPointSize(28)
         title_font.setBold(True)
         painter.setFont(title_font)
 
         # 标题阴影
         painter.setPen(QColor(0, 0, 0, 60))
-        painter.drawText(QRect(2, 52, self.width(), 60), Qt.AlignmentFlag.AlignCenter, "🧪 VirtualChemLab")
+        painter.drawText(
+            QRect(2, 52, self.width(), 60),
+            Qt.AlignmentFlag.AlignCenter,
+            "🧪 VirtualChemLab",
+        )
 
         # 标题文字
         painter.setPen(QColor(255, 255, 255))
-        painter.drawText(QRect(0, 50, self.width(), 60), Qt.AlignmentFlag.AlignCenter, "🧪 VirtualChemLab")
+        painter.drawText(
+            QRect(0, 50, self.width(), 60),
+            Qt.AlignmentFlag.AlignCenter,
+            "🧪 VirtualChemLab",
+        )
 
         # 副标题
         subtitle_font = QFont()
-        subtitle_font.setFamily("Microsoft YaHei UI" if hasattr(QFontDatabase, "addApplicationFont") else "Arial")
+        subtitle_font.setFamily(
+            "Microsoft YaHei UI"
+            if hasattr(QFontDatabase, "addApplicationFont")
+            else "Arial"
+        )
         subtitle_font.setPointSize(12)
         painter.setFont(subtitle_font)
         painter.setPen(QColor(200, 200, 200))
-        painter.drawText(QRect(0, 100, self.width(), 30), Qt.AlignmentFlag.AlignCenter, "虚拟化学实验室")
+        painter.drawText(
+            QRect(0, 100, self.width(), 30),
+            Qt.AlignmentFlag.AlignCenter,
+            "虚拟化学实验室",
+        )
 
     def draw_loading_animation(self, painter: QPainter) -> None:
         """绘制加载动画"""
@@ -279,7 +303,9 @@ class ModernSplashScreen(QWidget):
         # 背景
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QColor(60, 70, 90))
-        painter.drawRoundedRect(margin, bar_y, bar_width, bar_height, bar_height // 2, bar_height // 2)
+        painter.drawRoundedRect(
+            margin, bar_y, bar_width, bar_height, bar_height // 2, bar_height // 2
+        )
 
         # 进度条
         if self.progress > 0:
@@ -291,7 +317,14 @@ class ModernSplashScreen(QWidget):
             gradient.setColorAt(1, QColor(80, 227, 194))
 
             painter.setBrush(gradient)
-            painter.drawRoundedRect(margin, bar_y, progress_width, bar_height, bar_height // 2, bar_height // 2)
+            painter.drawRoundedRect(
+                margin,
+                bar_y,
+                progress_width,
+                bar_height,
+                bar_height // 2,
+                bar_height // 2,
+            )
 
         # 进度百分比
         progress_font = QFont()
@@ -299,7 +332,11 @@ class ModernSplashScreen(QWidget):
         progress_font.setBold(True)
         painter.setFont(progress_font)
         painter.setPen(QColor(200, 200, 200))
-        painter.drawText(QRect(0, bar_y + 15, self.width(), 20), Qt.AlignmentFlag.AlignCenter, f"{self.progress}%")
+        painter.drawText(
+            QRect(0, bar_y + 15, self.width(), 20),
+            Qt.AlignmentFlag.AlignCenter,
+            f"{self.progress}%",
+        )
 
     def draw_status_message(self, painter: QPainter) -> None:
         """绘制状态消息"""
@@ -308,7 +345,9 @@ class ModernSplashScreen(QWidget):
         painter.setFont(status_font)
         painter.setPen(QColor(180, 180, 180))
         painter.drawText(
-            QRect(0, self.height() - 75, self.width(), 25), Qt.AlignmentFlag.AlignCenter, self.status_message
+            QRect(0, self.height() - 75, self.width(), 25),
+            Qt.AlignmentFlag.AlignCenter,
+            self.status_message,
         )
 
     def draw_tip(self, painter: QPainter) -> None:

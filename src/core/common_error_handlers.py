@@ -24,7 +24,7 @@ class CommonErrorHandlers:
         category: ErrorCategory = ErrorCategory.SYSTEM,
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
         *args,
-        **kwargs
+        **kwargs,
     ) -> Any:
         """安全执行函数，出错时返回默认值"""
         try:
@@ -36,7 +36,7 @@ class CommonErrorHandlers:
                 message=f"Error executing {func.__name__}: {str(e)}",
                 category=category,
                 severity=severity,
-                cause=e
+                cause=e,
             )
             logger.error(f"Safe execute failed: {error}")
             return default_value
@@ -51,6 +51,7 @@ class CommonErrorHandlers:
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
     ):
         """重试装饰器"""
+
         def decorator(func: Callable) -> Callable:
             @wraps(func)
             def wrapper(*args, **kwargs):
@@ -71,12 +72,14 @@ class CommonErrorHandlers:
                                 message=f"Function {func.__name__} failed after {max_retries} retries: {str(e)}",
                                 category=category,
                                 severity=severity,
-                                cause=e
+                                cause=e,
                             )
                             logger.error(f"Retry failed: {error}")
                             raise error from e
 
-                        logger.warning(f"Attempt {attempt + 1} failed for {func.__name__}: {e}")
+                        logger.warning(
+                            f"Attempt {attempt + 1} failed for {func.__name__}: {e}"
+                        )
                         time.sleep(current_delay)
                         current_delay *= backoff_factor
 
@@ -87,6 +90,7 @@ class CommonErrorHandlers:
                     raise RuntimeError("重试失败，没有异常信息")
 
             return wrapper
+
         return decorator
 
     @staticmethod
@@ -94,7 +98,7 @@ class CommonErrorHandlers:
         error: Exception,
         message: str = "Error occurred but continuing",
         level: int = logging.WARNING,
-        category: ErrorCategory = ErrorCategory.SYSTEM
+        category: ErrorCategory = ErrorCategory.SYSTEM,
     ) -> None:
         """记录错误但继续执行"""
         logger.log(level, f"[{category.value}] {message}: {error}")
@@ -104,16 +108,13 @@ class CommonErrorHandlers:
         error: Exception,
         error_class: type[VirtualChemLabError] = VirtualChemLabError,
         category: ErrorCategory = ErrorCategory.SYSTEM,
-        severity: ErrorSeverity = ErrorSeverity.MEDIUM
+        severity: ErrorSeverity = ErrorSeverity.MEDIUM,
     ) -> None:
         """记录错误并重新抛出"""
         logger.error(f"[{category.value}] Error occurred: {error}")
 
         raise error_class(
-            message=str(error),
-            category=category,
-            severity=severity,
-            cause=error
+            message=str(error), category=category, severity=severity, cause=error
         )
 
     @staticmethod
@@ -125,6 +126,7 @@ class CommonErrorHandlers:
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
     ):
         """文件操作错误处理装饰器"""
+
         def decorator(func: Callable) -> Callable:
             @wraps(func)
             def wrapper(*args, **kwargs):
@@ -135,7 +137,7 @@ class CommonErrorHandlers:
                         message=f"File not found during {operation}: {file_path}",
                         category=category,
                         severity=severity,
-                        cause=e
+                        cause=e,
                     )
                     logger.error(f"File operation failed: {error}")
                     raise error from e
@@ -144,7 +146,7 @@ class CommonErrorHandlers:
                         message=f"Permission denied during {operation}: {file_path}",
                         category=category,
                         severity=severity,
-                        cause=e
+                        cause=e,
                     )
                     logger.error(f"File operation failed: {error}")
                     raise error from e
@@ -153,12 +155,13 @@ class CommonErrorHandlers:
                         message=f"Unexpected error during {operation}: {file_path}",
                         category=category,
                         severity=severity,
-                        cause=e
+                        cause=e,
                     )
                     logger.error(f"File operation failed: {error}")
                     raise error from e
 
             return wrapper
+
         return decorator
 
     @staticmethod
@@ -169,6 +172,7 @@ class CommonErrorHandlers:
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
     ):
         """数据库操作错误处理装饰器"""
+
         def decorator(func: Callable) -> Callable:
             @wraps(func)
             def wrapper(*args, **kwargs):
@@ -179,12 +183,13 @@ class CommonErrorHandlers:
                         message=f"Database operation failed: {operation}",
                         category=category,
                         severity=severity,
-                        cause=e
+                        cause=e,
                     )
                     logger.error(f"Database operation failed: {error}")
                     raise error from e
 
             return wrapper
+
         return decorator
 
     @staticmethod
@@ -196,6 +201,7 @@ class CommonErrorHandlers:
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
     ):
         """网络操作错误处理装饰器"""
+
         def decorator(func: Callable) -> Callable:
             @wraps(func)
             def wrapper(*args, **kwargs):
@@ -206,12 +212,13 @@ class CommonErrorHandlers:
                         message=f"Network operation failed: {operation} {url}",
                         category=category,
                         severity=severity,
-                        cause=e
+                        cause=e,
                     )
                     logger.error(f"Network operation failed: {error}")
                     raise error from e
 
             return wrapper
+
         return decorator
 
 
@@ -223,7 +230,7 @@ def safe_execute_with_default(
     category: ErrorCategory = ErrorCategory.SYSTEM,
     severity: ErrorSeverity = ErrorSeverity.MEDIUM,
     *args,
-    **kwargs
+    **kwargs,
 ) -> Any:
     """安全执行函数，出错时返回默认值"""
     return CommonErrorHandlers.safe_execute_with_default(

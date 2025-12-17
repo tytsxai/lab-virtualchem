@@ -35,7 +35,9 @@ class ProgressWorker(QThread):
     def run(self):
         """执行任务"""
         try:
-            result = self.task(*self.args, **self.kwargs, progress_callback=self.report_progress)
+            result = self.task(
+                *self.args, **self.kwargs, progress_callback=self.report_progress
+            )
             if not self._is_cancelled:
                 self.finished.emit(True, str(result) if result else "操作完成")
         except Exception as e:
@@ -235,7 +237,7 @@ class SimpleProgressDialog:
         title: str = "处理中",
         message: str = "正在处理，请稍候...",
         cancellable: bool = True,
-        **kwargs
+        **kwargs,
     ) -> tuple[bool, str]:
         """运行任务并显示进度对话框
 
@@ -255,4 +257,3 @@ class SimpleProgressDialog:
         success = dialog.run_task(task, *args, **kwargs)
 
         return success, dialog.status_label.text()
-

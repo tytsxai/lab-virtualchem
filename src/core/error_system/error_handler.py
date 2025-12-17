@@ -119,7 +119,9 @@ class GlobalErrorHandler:
 
         # 根据严重程度选择日志级别
         log_message = (
-            f"[{exception.error_code.name}] {exception.message}\n" f"上下文: {context}\n" f"详细: {exception.details}"
+            f"[{exception.error_code.name}] {exception.message}\n"
+            f"上下文: {context}\n"
+            f"详细: {exception.details}"
         )
 
         # 添加采样信息到日志
@@ -199,7 +201,9 @@ class GlobalErrorHandler:
             except Exception as e:
                 logger.error("Error callback failed: %s", e)
 
-    def add_error_callback(self, callback: Callable[[BaseAppException, str], None]) -> None:
+    def add_error_callback(
+        self, callback: Callable[[BaseAppException, str], None]
+    ) -> None:
         """
         添加错误回调
 
@@ -232,7 +236,11 @@ class GlobalErrorHandler:
             errors = [e for e in errors if e["severity"] == severity]
 
         if category:
-            errors = [e for e in errors if e["exception"].error_code.category.value == category]
+            errors = [
+                e
+                for e in errors
+                if e["exception"].error_code.category.value == category
+            ]
 
         # 返回最近的记录
         return errors[-limit:]
@@ -354,7 +362,9 @@ def safe_execute(
                 return func(*args, **kwargs)
             except Exception as e:
                 ctx = context or f"{func.__module__}.{func.__name__}"
-                error_handler.handle_exception(e, ctx, user_id, session_id, reraise=reraise)
+                error_handler.handle_exception(
+                    e, ctx, user_id, session_id, reraise=reraise
+                )
                 return default_return
 
         return wrapper
@@ -388,7 +398,9 @@ def async_safe_execute(
                 return await func(*args, **kwargs)
             except Exception as e:
                 ctx = context or f"{func.__module__}.{func.__name__}"
-                error_handler.handle_exception(e, ctx, user_id, session_id, reraise=reraise)
+                error_handler.handle_exception(
+                    e, ctx, user_id, session_id, reraise=reraise
+                )
                 return default_return
 
         return wrapper
@@ -423,7 +435,9 @@ class safe_context:
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> bool:
         if exc_val is not None:
-            error_handler.handle_exception(exc_val, self.context, self.user_id, self.session_id, self.reraise)
+            error_handler.handle_exception(
+                exc_val, self.context, self.user_id, self.session_id, self.reraise
+            )
             # 返回True表示异常已处理，不需要传播
             return not self.reraise
         return False
@@ -433,7 +447,9 @@ class safe_context:
 def install_global_exception_hook() -> None:
     """安装全局异常钩子"""
 
-    def exception_hook(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: Any) -> None:
+    def exception_hook(
+        exc_type: type[BaseException], exc_value: BaseException, exc_traceback: Any
+    ) -> None:
         """全局异常钩子"""
         if issubclass(exc_type, KeyboardInterrupt):
             sys.__excepthook__(exc_type, exc_value, exc_traceback)

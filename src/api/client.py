@@ -91,7 +91,9 @@ class VirtualChemLabClient:
         response = self._request("GET", f"/api/experiments/{experiment_id}")
         return response["experiment"]
 
-    def start_experiment(self, experiment_id: str, user_id: str = "anonymous") -> dict[str, Any]:
+    def start_experiment(
+        self, experiment_id: str, user_id: str = "anonymous"
+    ) -> dict[str, Any]:
         """开始实验
 
         Args:
@@ -101,7 +103,11 @@ class VirtualChemLabClient:
         Returns:
             会话信息
         """
-        response = self._request("POST", "/api/experiments/start", {"experiment_id": experiment_id, "user_id": user_id})
+        response = self._request(
+            "POST",
+            "/api/experiments/start",
+            {"experiment_id": experiment_id, "user_id": user_id},
+        )
 
         self.session_id = response["session_id"]
         return response
@@ -121,7 +127,11 @@ class VirtualChemLabClient:
         if not self.session_id:
             raise ValueError("No active session. Call start_experiment first.")
 
-        return self._request("POST", "/api/experiments/submit", {"session_id": self.session_id, "data": data})
+        return self._request(
+            "POST",
+            "/api/experiments/submit",
+            {"session_id": self.session_id, "data": data},
+        )
 
     def finish_experiment(self) -> dict[str, Any]:
         """完成实验
@@ -135,7 +145,9 @@ class VirtualChemLabClient:
         if not self.session_id:
             raise ValueError("No active session. Call start_experiment first.")
 
-        response = self._request("POST", "/api/experiments/finish", {"session_id": self.session_id})
+        response = self._request(
+            "POST", "/api/experiments/finish", {"session_id": self.session_id}
+        )
 
         self.session_id = None
         return response
@@ -169,7 +181,9 @@ class VirtualChemLabClient:
 
     # ============ 报告生成 ============
 
-    def generate_report(self, record_id: str, format_type: str = "html") -> dict[str, Any]:
+    def generate_report(
+        self, record_id: str, format_type: str = "html"
+    ) -> dict[str, Any]:
         """生成报告
 
         Args:
@@ -179,12 +193,19 @@ class VirtualChemLabClient:
         Returns:
             报告信息
         """
-        return self._request("POST", "/api/reports/generate", {"record_id": record_id, "format": format_type})
+        return self._request(
+            "POST",
+            "/api/reports/generate",
+            {"record_id": record_id, "format": format_type},
+        )
 
     # ============ 便捷方法 ============
 
     def run_experiment(
-        self, experiment_id: str, steps_data: list[dict[str, Any]], user_id: str = "anonymous"
+        self,
+        experiment_id: str,
+        steps_data: list[dict[str, Any]],
+        user_id: str = "anonymous",
     ) -> dict[str, Any]:
         """运行完整实验
 
@@ -203,7 +224,9 @@ class VirtualChemLabClient:
         # 提交所有步骤
         for i, data in enumerate(steps_data, 1):
             result = self.submit_step(data)
-            logger.info(f"📝 步骤 {i}: {'通过' if result['passed'] else '失败'} - {result['message']}")
+            logger.info(
+                f"📝 步骤 {i}: {'通过' if result['passed'] else '失败'} - {result['message']}"
+            )
 
             if not result["has_next_step"]:
                 break

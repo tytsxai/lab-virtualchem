@@ -10,4 +10,9 @@ from .voice_controller import (
     create_experiment_controller,
 )
 
-__all__ = ["VoiceController", "create_experiment_controller", "VOSK_AVAILABLE", "TTS_AVAILABLE"]
+__all__ = [
+    "VoiceController",
+    "create_experiment_controller",
+    "VOSK_AVAILABLE",
+    "TTS_AVAILABLE",
+]

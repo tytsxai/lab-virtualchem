@@ -25,8 +25,12 @@ class UserStats(BaseModel):
 
     # 实验统计
     experiments_completed: int = Field(default=0, ge=0, description="完成的实验总数")
-    experiments_completed_today: int = Field(default=0, ge=0, description="今日完成的实验数")
-    experiments_completed_this_week: int = Field(default=0, ge=0, description="本周完成的实验数")
+    experiments_completed_today: int = Field(
+        default=0, ge=0, description="今日完成的实验数"
+    )
+    experiments_completed_this_week: int = Field(
+        default=0, ge=0, description="本周完成的实验数"
+    )
     perfect_experiments: int = Field(default=0, ge=0, description="满分实验数")
     perfect_scores_today: int = Field(default=0, ge=0, description="今日满分数")
     zero_mistake_experiments: int = Field(default=0, ge=0, description="零失误实验数")
@@ -62,9 +66,12 @@ class GamificationData(BaseModel):
     user_id: str = Field(..., description="用户ID")
     level: UserLevel = Field(..., description="等级数据")
     stats: UserStats = Field(..., description="统计数据")
-    achievements: list[UserAchievement] = Field(default_factory=list, description="成就列表")
+    achievements: list[UserAchievement] = Field(
+        default_factory=list, description="成就列表"
+    )
     quests: list[UserQuest] = Field(default_factory=list, description="任务列表")
     rewards: list[UserReward] = Field(default_factory=list, description="奖励列表")
+
 
 class GamificationManager:
     """游戏化管理器"""
@@ -155,7 +162,9 @@ class GamificationManager:
         }
 
         # 更新统计数据
-        self._update_stats_on_experiment(data.stats, score, duration_seconds, mistake_count)
+        self._update_stats_on_experiment(
+            data.stats, score, duration_seconds, mistake_count
+        )
 
         # 计算经验值
         base_exp = int(score)  # 基础经验 = 分数
@@ -172,7 +181,9 @@ class GamificationManager:
 
         # 检查成就
         unlocked_ids = {a.achievement_id for a in data.achievements if a.completed}
-        newly_unlocked = self.achievement_manager.check_all_achievements(data.stats.dict(), unlocked_ids)
+        newly_unlocked = self.achievement_manager.check_all_achievements(
+            data.stats.dict(), unlocked_ids
+        )
 
         for achievement in newly_unlocked:
             user_achievement = UserAchievement(
@@ -255,7 +266,9 @@ class GamificationManager:
 
         stats.updated_at = datetime.now()
 
-    def _update_quest_progress(self, data: GamificationData, result: dict[str, Any]) -> None:
+    def _update_quest_progress(
+        self, data: GamificationData, result: dict[str, Any]
+    ) -> None:
         """更新任务进度"""
         for user_quest in data.quests:
             if user_quest.status != QuestStatus.ACTIVE:
@@ -271,7 +284,9 @@ class GamificationManager:
             user_quest.progress = current_value
 
             # 检查是否完成
-            if self.quest_manager.update_quest_progress(user_quest, 0):  # 使用0增量，只检查状态
+            if self.quest_manager.update_quest_progress(
+                user_quest, 0
+            ):  # 使用0增量，只检查状态
                 result["completed_quests"].append(quest)
 
     def claim_quest_reward(self, user_id: str, quest_id: str) -> dict[str, Any]:
@@ -302,7 +317,9 @@ class GamificationManager:
                 result["success"] = True
 
                 self.save_user_data(data)
-                logger.info(f"领取任务奖励: 用户={user_id}, 任务={quest_id}, 经验+{quest.exp_reward}")
+                logger.info(
+                    f"领取任务奖励: 用户={user_id}, 任务={quest_id}, 经验+{quest.exp_reward}"
+                )
 
         return result
 

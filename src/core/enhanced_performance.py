@@ -8,6 +8,7 @@ import functools
 import gc
 import logging
 import os
+import sys
 
 try:
     import psutil
@@ -25,8 +26,21 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
+def _should_start_background_threads() -> bool:
+    if os.environ.get("VCL_DISABLE_BACKGROUND_THREADS") == "1":
+        return False
+    if os.environ.get("VCL_TEST_MODE") == "1":
+        return False
+    if os.environ.get("PYTEST_CURRENT_TEST"):
+        return False
+    if "pytest" in sys.modules:
+        return False
+    return True
+
+
 class PerformanceLevel(Enum):
     """性能级别"""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -35,6 +49,7 @@ class PerformanceLevel(Enum):
 
 class OptimizationStrategy(Enum):
     """优化策略"""
+
     MEMORY = "memory"
     CPU = "cpu"
     IO = "io"
@@ -47,6 +62,7 @@ class OptimizationStrategy(Enum):
 @dataclass
 class PerformanceMetrics:
     """性能指标"""
+
     timestamp: float
     cpu_usage: float
     memory_usage: float
@@ -62,6 +78,7 @@ class PerformanceMetrics:
 @dataclass
 class OperationMetrics:
     """操作指标"""
+
     operation_name: str
     start_time: float
     end_time: float | None = None
@@ -77,6 +94,7 @@ class OperationMetrics:
 @dataclass
 class OptimizationSuggestion:
     """优化建议"""
+
     strategy: OptimizationStrategy
     description: str
     expected_improvement: str
@@ -98,10 +116,10 @@ class PerformanceMonitor:
 
         # 性能阈值
         self.thresholds = {
-            'cpu_usage': 80.0,
-            'memory_usage': 85.0,
-            'disk_usage': 90.0,
-            'operation_duration': 5.0
+            "cpu_usage": 80.0,
+            "memory_usage": 85.0,
+            "disk_usage": 90.0,
+            "operation_duration": 5.0,
         }
 
         # 启动内存追踪
@@ -117,9 +135,7 @@ class PerformanceMonitor:
 
         self.monitoring_active = True
         self.monitor_thread = threading.Thread(
-            target=self._monitoring_loop,
-            args=(interval,),
-            daemon=True
+            target=self._monitoring_loop, args=(interval,), daemon=True
         )
         self.monitor_thread.start()
         logger.info(f"性能监控已启动，间隔: {interval}秒")
@@ -155,7 +171,7 @@ class PerformanceMonitor:
                 network_io={},
                 gc_stats={},
                 thread_count=0,
-                process_count=0
+                process_count=0,
             )
 
         # CPU使用率
@@ -167,7 +183,7 @@ class PerformanceMonitor:
         memory_available = memory.available / (1024**3)  # GB
 
         # 磁盘使用情况
-        disk = psutil.disk_usage('/')
+        disk = psutil.disk_usage("/")
         disk_usage = (disk.used / disk.total) * 100
 
         # 网络IO
@@ -175,24 +191,24 @@ class PerformanceMonitor:
         try:
             net_io = psutil.net_io_counters()
             network_io = {
-                'bytes_sent': float(net_io.bytes_sent),
-                'bytes_recv': float(net_io.bytes_recv),
-                'packets_sent': float(net_io.packets_sent),
-                'packets_recv': float(net_io.packets_recv)
+                "bytes_sent": float(net_io.bytes_sent),
+                "bytes_recv": float(net_io.bytes_recv),
+                "packets_sent": float(net_io.packets_sent),
+                "packets_recv": float(net_io.packets_recv),
             }
         except Exception:
             network_io = {
-                'bytes_sent': 0.0,
-                'bytes_recv': 0.0,
-                'packets_sent': 0.0,
-                'packets_recv': 0.0
+                "bytes_sent": 0.0,
+                "bytes_recv": 0.0,
+                "packets_sent": 0.0,
+                "packets_recv": 0.0,
             }
 
         # GC统计
         gc_stats = {
-            'collections': gc.get_count()[0],
-            'collected': gc.get_count()[1],
-            'uncollectable': gc.get_count()[2]
+            "collections": gc.get_count()[0],
+            "collected": gc.get_count()[1],
+            "uncollectable": gc.get_count()[2],
         }
 
         # 线程和进程数
@@ -208,7 +224,7 @@ class PerformanceMonitor:
             network_io=network_io,
             gc_stats=gc_stats,
             thread_count=thread_count,
-            process_count=process_count
+            process_count=process_count,
         )
 
     def _store_metrics(self, metrics: PerformanceMetrics) -> None:
@@ -225,34 +241,40 @@ class PerformanceMonitor:
         suggestions = []
 
         # CPU使用率分析
-        if metrics.cpu_usage > self.thresholds['cpu_usage']:
-            suggestions.append(OptimizationSuggestion(
-                strategy=OptimizationStrategy.CPU,
-                description=f"CPU使用率过高: {metrics.cpu_usage:.1f}%",
-                expected_improvement="减少CPU密集型操作，使用异步处理",
-                implementation_cost="中等",
-                priority=1
-            ))
+        if metrics.cpu_usage > self.thresholds["cpu_usage"]:
+            suggestions.append(
+                OptimizationSuggestion(
+                    strategy=OptimizationStrategy.CPU,
+                    description=f"CPU使用率过高: {metrics.cpu_usage:.1f}%",
+                    expected_improvement="减少CPU密集型操作，使用异步处理",
+                    implementation_cost="中等",
+                    priority=1,
+                )
+            )
 
         # 内存使用率分析
-        if metrics.memory_usage > self.thresholds['memory_usage']:
-            suggestions.append(OptimizationSuggestion(
-                strategy=OptimizationStrategy.MEMORY,
-                description=f"内存使用率过高: {metrics.memory_usage:.1f}%",
-                expected_improvement="优化内存使用，清理无用对象",
-                implementation_cost="低",
-                priority=2
-            ))
+        if metrics.memory_usage > self.thresholds["memory_usage"]:
+            suggestions.append(
+                OptimizationSuggestion(
+                    strategy=OptimizationStrategy.MEMORY,
+                    description=f"内存使用率过高: {metrics.memory_usage:.1f}%",
+                    expected_improvement="优化内存使用，清理无用对象",
+                    implementation_cost="低",
+                    priority=2,
+                )
+            )
 
         # 磁盘使用率分析
-        if metrics.disk_usage > self.thresholds['disk_usage']:
-            suggestions.append(OptimizationSuggestion(
-                strategy=OptimizationStrategy.IO,
-                description=f"磁盘使用率过高: {metrics.disk_usage:.1f}%",
-                expected_improvement="清理临时文件，优化存储",
-                implementation_cost="低",
-                priority=3
-            ))
+        if metrics.disk_usage > self.thresholds["disk_usage"]:
+            suggestions.append(
+                OptimizationSuggestion(
+                    strategy=OptimizationStrategy.IO,
+                    description=f"磁盘使用率过高: {metrics.disk_usage:.1f}%",
+                    expected_improvement="清理临时文件，优化存储",
+                    implementation_cost="低",
+                    priority=3,
+                )
+            )
 
         # 更新建议
         with self.lock:
@@ -272,7 +294,9 @@ class PerformanceMonitor:
 
             # 限制操作指标数量
             if len(self.operation_metrics[operation_name]) > 100:
-                self.operation_metrics[operation_name] = self.operation_metrics[operation_name][-50:]
+                self.operation_metrics[operation_name] = self.operation_metrics[
+                    operation_name
+                ][-50:]
 
     def get_performance_summary(self) -> dict[str, Any]:
         """获取性能摘要"""
@@ -280,26 +304,33 @@ class PerformanceMonitor:
             if not self.metrics_history:
                 return {}
 
-            recent_metrics = self.metrics_history[-10:] if len(self.metrics_history) >= 10 else self.metrics_history
+            recent_metrics = (
+                self.metrics_history[-10:]
+                if len(self.metrics_history) >= 10
+                else self.metrics_history
+            )
 
             return {
                 "cpu_usage": {
                     "current": recent_metrics[-1].cpu_usage,
-                    "average": sum(m.cpu_usage for m in recent_metrics) / len(recent_metrics),
-                    "max": max(m.cpu_usage for m in recent_metrics)
+                    "average": sum(m.cpu_usage for m in recent_metrics)
+                    / len(recent_metrics),
+                    "max": max(m.cpu_usage for m in recent_metrics),
                 },
                 "memory_usage": {
                     "current": recent_metrics[-1].memory_usage,
-                    "average": sum(m.memory_usage for m in recent_metrics) / len(recent_metrics),
-                    "max": max(m.memory_usage for m in recent_metrics)
+                    "average": sum(m.memory_usage for m in recent_metrics)
+                    / len(recent_metrics),
+                    "max": max(m.memory_usage for m in recent_metrics),
                 },
                 "disk_usage": {
                     "current": recent_metrics[-1].disk_usage,
-                    "average": sum(m.disk_usage for m in recent_metrics) / len(recent_metrics),
-                    "max": max(m.disk_usage for m in recent_metrics)
+                    "average": sum(m.disk_usage for m in recent_metrics)
+                    / len(recent_metrics),
+                    "max": max(m.disk_usage for m in recent_metrics),
                 },
                 "thread_count": recent_metrics[-1].thread_count,
-                "process_count": recent_metrics[-1].process_count
+                "process_count": recent_metrics[-1].process_count,
             }
 
     def get_operation_stats(self, operation_name: str) -> dict[str, Any] | None:
@@ -321,7 +352,7 @@ class PerformanceMonitor:
                 "success_rate": success_count / len(operations) if operations else 0,
                 "average_duration": sum(durations) / len(durations) if durations else 0,
                 "max_duration": max(durations) if durations else 0,
-                "min_duration": min(durations) if durations else 0
+                "min_duration": min(durations) if durations else 0,
             }
 
     def get_optimization_suggestions(self) -> list[OptimizationSuggestion]:
@@ -347,7 +378,7 @@ class PerformanceOptimizer:
             "strategy": "memory",
             "timestamp": time.time(),
             "actions_taken": [],
-            "improvement": {}
+            "improvement": {},
         }
 
         try:
@@ -357,7 +388,9 @@ class PerformanceOptimizer:
             after_gc = gc.get_count()
 
             optimization_result["actions_taken"].append("强制垃圾回收")
-            optimization_result["improvement"]["gc_collections"] = before_gc[0] - after_gc[0]
+            optimization_result["improvement"]["gc_collections"] = (
+                before_gc[0] - after_gc[0]
+            )
 
             # 清理优化缓存
             with self.lock:
@@ -380,7 +413,7 @@ class PerformanceOptimizer:
             "strategy": "cpu",
             "timestamp": time.time(),
             "actions_taken": [],
-            "improvement": {}
+            "improvement": {},
         }
 
         try:
@@ -414,7 +447,7 @@ class PerformanceOptimizer:
             "strategy": "io",
             "timestamp": time.time(),
             "actions_taken": [],
-            "improvement": {}
+            "improvement": {},
         }
 
         try:
@@ -422,6 +455,7 @@ class PerformanceOptimizer:
             temp_dir = os.path.join(os.path.dirname(__file__), "..", "..", "temp")
             if os.path.exists(temp_dir):
                 import shutil
+
                 shutil.rmtree(temp_dir, ignore_errors=True)
                 optimization_result["actions_taken"].append("清理临时文件")
 
@@ -464,14 +498,15 @@ class PerformanceOptimizer:
 class EnhancedPerformanceManager:
     """增强性能管理器"""
 
-    def __init__(self):
+    def __init__(self, auto_start_monitoring: bool = True):
         self.monitor = PerformanceMonitor()
         self.optimizer = PerformanceOptimizer(self.monitor)
         self.operation_timers: dict[str, float] = {}
         self.lock = threading.RLock()
 
-        # 启动监控
-        self.monitor.start_monitoring()
+        # 启动监控（测试环境/显式禁用时不启动后台线程，避免影响 pytest-qt 稳定性）
+        if auto_start_monitoring and _should_start_background_threads():
+            self.monitor.start_monitoring()
 
         logger.info("增强性能管理器初始化完成")
 
@@ -482,7 +517,9 @@ class EnhancedPerformanceManager:
             self.operation_timers[operation_name] = start_time
         return start_time
 
-    def end_operation_timer(self, operation_name: str, start_time: float, success: bool = True) -> OperationMetrics:
+    def end_operation_timer(
+        self, operation_name: str, start_time: float, success: bool = True
+    ) -> OperationMetrics:
         """结束操作计时"""
         end_time = time.time()
         duration = end_time - start_time
@@ -511,7 +548,7 @@ class EnhancedPerformanceManager:
             duration=duration,
             cpu_time=cpu_time,
             memory_delta=memory_delta,
-            success=success
+            success=success,
         )
 
         # 记录到监控器
@@ -566,7 +603,9 @@ class EnhancedPerformanceManager:
         if suggestions:
             report.append("## 优化建议")
             for suggestion in suggestions[-10:]:  # 最近10个建议
-                report.append(f"- **{suggestion.strategy.value}**: {suggestion.description}")
+                report.append(
+                    f"- **{suggestion.strategy.value}**: {suggestion.description}"
+                )
                 report.append(f"  预期改进: {suggestion.expected_improvement}")
                 report.append(f"  实施成本: {suggestion.implementation_cost}")
                 report.append(f"  优先级: {suggestion.priority}")
@@ -586,6 +625,7 @@ performance_manager = EnhancedPerformanceManager()
 
 def performance_monitor(operation_name: str | None = None):
     """性能监控装饰器"""
+
     def decorator(func: Callable) -> Callable:
         name = operation_name or func.__name__
 
@@ -601,6 +641,7 @@ def performance_monitor(operation_name: str | None = None):
                 raise
 
         return wrapper
+
     return decorator
 
 
@@ -610,9 +651,13 @@ def performance_context(operation_name: str):
     start_time = performance_manager.start_operation_timer(operation_name)
     try:
         yield
-        performance_manager.end_operation_timer(operation_name, start_time, success=True)
+        performance_manager.end_operation_timer(
+            operation_name, start_time, success=True
+        )
     except Exception:
-        performance_manager.end_operation_timer(operation_name, start_time, success=False)
+        performance_manager.end_operation_timer(
+            operation_name, start_time, success=False
+        )
         raise
 
 

@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 class AchievementType(Enum):
     """成就类型"""
+
     EXPERIMENT_COMPLETION = "experiment_completion"
     ACCURACY_MASTERY = "accuracy_mastery"
     SPEED_DEMON = "speed_demon"
@@ -29,6 +30,7 @@ class AchievementType(Enum):
 
 class RewardType(Enum):
     """奖励类型"""
+
     POINTS = "points"
     BADGE = "badge"
     TITLE = "title"
@@ -40,6 +42,7 @@ class RewardType(Enum):
 
 class DifficultyLevel(Enum):
     """难度等级"""
+
     EASY = "easy"
     NORMAL = "normal"
     HARD = "hard"
@@ -50,6 +53,7 @@ class DifficultyLevel(Enum):
 @dataclass
 class Achievement:
     """成就定义"""
+
     id: str
     name: str
     description: str
@@ -66,6 +70,7 @@ class Achievement:
 @dataclass
 class UserAchievement:
     """用户成就"""
+
     achievement_id: str
     user_id: str
     unlocked_at: datetime
@@ -76,6 +81,7 @@ class UserAchievement:
 @dataclass
 class UserProfile:
     """用户档案"""
+
     user_id: str
     username: str
     level: int = 1
@@ -96,6 +102,7 @@ class UserProfile:
 @dataclass
 class LeaderboardEntry:
     """排行榜条目"""
+
     user_id: str
     username: str
     score: float
@@ -106,6 +113,7 @@ class LeaderboardEntry:
 @dataclass
 class Reward:
     """奖励"""
+
     type: RewardType
     value: Any
     name: str
@@ -141,7 +149,7 @@ class EnhancedGamificationSystem:
                 "requirements": {"experiments_completed": 1},
                 "rewards": [{"type": "points", "value": 100}],
                 "icon": "🎯",
-                "rarity": "common"
+                "rarity": "common",
             },
             {
                 "id": "accuracy_master",
@@ -149,10 +157,16 @@ class EnhancedGamificationSystem:
                 "description": "连续5次实验准确率达到90%以上",
                 "type": AchievementType.ACCURACY_MASTERY,
                 "difficulty": DifficultyLevel.HARD,
-                "requirements": {"consecutive_high_accuracy": 5, "accuracy_threshold": 0.9},
-                "rewards": [{"type": "badge", "value": "accuracy_master"}, {"type": "points", "value": 500}],
+                "requirements": {
+                    "consecutive_high_accuracy": 5,
+                    "accuracy_threshold": 0.9,
+                },
+                "rewards": [
+                    {"type": "badge", "value": "accuracy_master"},
+                    {"type": "points", "value": 500},
+                ],
                 "icon": "🎯",
-                "rarity": "rare"
+                "rarity": "rare",
             },
             {
                 "id": "speed_demon",
@@ -161,9 +175,12 @@ class EnhancedGamificationSystem:
                 "type": AchievementType.SPEED_DEMON,
                 "difficulty": DifficultyLevel.HARD,
                 "requirements": {"max_time": 30, "experiment_type": "basic"},
-                "rewards": [{"type": "title", "value": "速度恶魔"}, {"type": "points", "value": 300}],
+                "rewards": [
+                    {"type": "title", "value": "速度恶魔"},
+                    {"type": "points", "value": 300},
+                ],
                 "icon": "⚡",
-                "rarity": "epic"
+                "rarity": "epic",
             },
             {
                 "id": "safety_champion",
@@ -172,9 +189,12 @@ class EnhancedGamificationSystem:
                 "type": AchievementType.SAFETY_CHAMPION,
                 "difficulty": DifficultyLevel.EXPERT,
                 "requirements": {"consecutive_safe_experiments": 10},
-                "rewards": [{"type": "badge", "value": "safety_champion"}, {"type": "theme", "value": "safety"}],
+                "rewards": [
+                    {"type": "badge", "value": "safety_champion"},
+                    {"type": "theme", "value": "safety"},
+                ],
                 "icon": "🛡️",
-                "rarity": "legendary"
+                "rarity": "legendary",
             },
             {
                 "id": "learning_streak",
@@ -183,10 +203,13 @@ class EnhancedGamificationSystem:
                 "type": AchievementType.LEARNING_STREAK,
                 "difficulty": DifficultyLevel.NORMAL,
                 "requirements": {"consecutive_days": 7},
-                "rewards": [{"type": "points", "value": 200}, {"type": "currency", "value": 50}],
+                "rewards": [
+                    {"type": "points", "value": 200},
+                    {"type": "currency", "value": 50},
+                ],
                 "icon": "🔥",
-                "rarity": "rare"
-            }
+                "rarity": "rare",
+            },
         ]
 
         for data in achievements_data:
@@ -203,7 +226,7 @@ class EnhancedGamificationSystem:
                 "name": "100积分",
                 "description": "获得100个积分",
                 "icon": "💰",
-                "rarity": "common"
+                "rarity": "common",
             },
             {
                 "id": "badge_accuracy_master",
@@ -212,7 +235,7 @@ class EnhancedGamificationSystem:
                 "name": "精准大师徽章",
                 "description": "精准大师专属徽章",
                 "icon": "🏆",
-                "rarity": "rare"
+                "rarity": "rare",
             },
             {
                 "id": "title_speed_demon",
@@ -221,7 +244,7 @@ class EnhancedGamificationSystem:
                 "name": "速度恶魔称号",
                 "description": "速度恶魔专属称号",
                 "icon": "👑",
-                "rarity": "epic"
+                "rarity": "epic",
             },
             {
                 "id": "theme_safety",
@@ -230,8 +253,8 @@ class EnhancedGamificationSystem:
                 "name": "安全主题",
                 "description": "安全主题界面",
                 "icon": "🎨",
-                "rarity": "legendary"
-            }
+                "rarity": "legendary",
+            },
         ]
 
         for data in rewards_data:
@@ -246,18 +269,20 @@ class EnhancedGamificationSystem:
             "speed": [],
             "safety": [],
             "weekly": [],
-            "monthly": []
+            "monthly": [],
         }
 
     @enhance_robustness(
         operation_name="create_user_profile",
         security_level="medium",
-        enable_caching=True
+        enable_caching=True,
     )
-    @validate_input(validation_rules={
-        "user_id": {"type": str, "required": True},
-        "username": {"type": str, "required": True}
-    })
+    @validate_input(
+        validation_rules={
+            "user_id": {"type": str, "required": True},
+            "username": {"type": str, "required": True},
+        }
+    )
     @log_operation(operation_name="create_profile")
     def create_user_profile(self, user_id: str, username: str) -> UserProfile:
         """创建用户档案"""
@@ -273,31 +298,30 @@ class EnhancedGamificationSystem:
                 "average_accuracy": 0.0,
                 "best_accuracy": 0.0,
                 "streak_days": 0,
-                "last_experiment_date": None
-            }
+                "last_experiment_date": None,
+            },
         )
 
         self.user_profiles[user_id] = profile
         self.user_achievements[user_id] = []
 
         # 记录用户创建事件
-        self._log_gamification_event(user_id, "profile_created", {
-            "username": username,
-            "created_at": profile.created_at.isoformat()
-        })
+        self._log_gamification_event(
+            user_id,
+            "profile_created",
+            {"username": username, "created_at": profile.created_at.isoformat()},
+        )
 
         return profile
 
     @enhance_robustness(
         operation_name="update_user_progress",
         security_level="low",
-        enable_caching=False
+        enable_caching=False,
     )
     @log_operation(operation_name="update_progress")
     def update_user_progress(
-        self,
-        user_id: str,
-        experiment_data: dict[str, Any]
+        self, user_id: str, experiment_data: dict[str, Any]
     ) -> dict[str, Any]:
         """更新用户进度"""
         if user_id not in self.user_profiles:
@@ -321,22 +345,30 @@ class EnhancedGamificationSystem:
         self._update_leaderboards(user_id, profile)
 
         # 记录进度更新事件
-        self._log_gamification_event(user_id, "progress_updated", {
-            "old_level": old_level,
-            "new_level": profile.level,
-            "experience_gained": experiment_data.get("experience_gained", 0),
-            "unlocked_achievements": [a.achievement_id for a in unlocked_achievements]
-        })
+        self._log_gamification_event(
+            user_id,
+            "progress_updated",
+            {
+                "old_level": old_level,
+                "new_level": profile.level,
+                "experience_gained": experiment_data.get("experience_gained", 0),
+                "unlocked_achievements": [
+                    a.achievement_id for a in unlocked_achievements
+                ],
+            },
+        )
 
         return {
             "level_up": profile.level > old_level,
             "new_level": profile.level,
             "experience_points": profile.experience_points,
             "unlocked_achievements": unlocked_achievements,
-            "total_points": profile.total_points
+            "total_points": profile.total_points,
         }
 
-    def _update_statistics(self, profile: UserProfile, experiment_data: dict[str, Any]) -> None:
+    def _update_statistics(
+        self, profile: UserProfile, experiment_data: dict[str, Any]
+    ) -> None:
         """更新统计数据"""
         stats = profile.statistics
 
@@ -355,7 +387,9 @@ class EnhancedGamificationSystem:
         # 计算平均准确率
         total_experiments = stats["experiments_completed"]
         current_avg = stats["average_accuracy"]
-        stats["average_accuracy"] = (current_avg * (total_experiments - 1) + accuracy) / total_experiments
+        stats["average_accuracy"] = (
+            current_avg * (total_experiments - 1) + accuracy
+        ) / total_experiments
 
         # 更新连续天数
         today = datetime.now().date()
@@ -376,7 +410,9 @@ class EnhancedGamificationSystem:
 
         stats["last_experiment_date"] = today.isoformat()
 
-    def _calculate_experience_and_level(self, profile: UserProfile, experiment_data: dict[str, Any]) -> None:
+    def _calculate_experience_and_level(
+        self, profile: UserProfile, experiment_data: dict[str, Any]
+    ) -> None:
         """计算经验值和等级"""
         # 基础经验值
         base_exp = experiment_data.get("base_experience", 50)
@@ -411,9 +447,12 @@ class EnhancedGamificationSystem:
         """计算等级"""
         # 等级计算公式: level = sqrt(experience / 100) + 1
         import math
+
         return int(math.sqrt(experience_points / 100)) + 1
 
-    def _check_achievements(self, user_id: str, experiment_data: dict[str, Any]) -> list[UserAchievement]:
+    def _check_achievements(
+        self, user_id: str, experiment_data: dict[str, Any]
+    ) -> list[UserAchievement]:
         """检查成就解锁"""
         if user_id not in self.user_achievements:
             return []
@@ -424,17 +463,22 @@ class EnhancedGamificationSystem:
 
         for achievement_id, achievement in self.achievements.items():
             # 检查是否已经解锁
-            if any(ua.achievement_id == achievement_id and ua.is_unlocked for ua in user_achievements):
+            if any(
+                ua.achievement_id == achievement_id and ua.is_unlocked
+                for ua in user_achievements
+            ):
                 continue
 
             # 检查成就条件
-            if self._check_achievement_requirements(achievement, profile, experiment_data):
+            if self._check_achievement_requirements(
+                achievement, profile, experiment_data
+            ):
                 # 解锁成就
                 user_achievement = UserAchievement(
                     achievement_id=achievement_id,
                     user_id=user_id,
                     unlocked_at=datetime.now(),
-                    is_unlocked=True
+                    is_unlocked=True,
                 )
                 user_achievements.append(user_achievement)
                 unlocked_achievements.append(user_achievement)
@@ -443,11 +487,15 @@ class EnhancedGamificationSystem:
                 self._grant_rewards(user_id, achievement.rewards)
 
                 # 记录成就解锁事件
-                self._log_gamification_event(user_id, "achievement_unlocked", {
-                    "achievement_id": achievement_id,
-                    "achievement_name": achievement.name,
-                    "rewards": achievement.rewards
-                })
+                self._log_gamification_event(
+                    user_id,
+                    "achievement_unlocked",
+                    {
+                        "achievement_id": achievement_id,
+                        "achievement_name": achievement.name,
+                        "rewards": achievement.rewards,
+                    },
+                )
 
         return unlocked_achievements
 
@@ -455,7 +503,7 @@ class EnhancedGamificationSystem:
         self,
         achievement: Achievement,
         profile: UserProfile,
-        experiment_data: dict[str, Any]
+        experiment_data: dict[str, Any],
     ) -> bool:
         """检查成就要求"""
         requirements = achievement.requirements
@@ -507,35 +555,50 @@ class EnhancedGamificationSystem:
                 profile.theme = reward_value
             elif reward_type == "currency":
                 # 假设是金币
-                profile.currency["coins"] = profile.currency.get("coins", 0) + reward_value
+                profile.currency["coins"] = (
+                    profile.currency.get("coins", 0) + reward_value
+                )
 
     def _update_leaderboards(self, user_id: str, profile: UserProfile) -> None:
         """更新排行榜"""
         # 更新总积分排行榜
-        self._update_leaderboard("total_points", user_id, profile.total_points, {
-            "level": profile.level,
-            "experiments_completed": profile.statistics["experiments_completed"]
-        })
+        self._update_leaderboard(
+            "total_points",
+            user_id,
+            profile.total_points,
+            {
+                "level": profile.level,
+                "experiments_completed": profile.statistics["experiments_completed"],
+            },
+        )
 
         # 更新准确率排行榜
         accuracy = profile.statistics["average_accuracy"]
-        self._update_leaderboard("accuracy", user_id, accuracy, {
-            "best_accuracy": profile.statistics["best_accuracy"],
-            "experiments_completed": profile.statistics["experiments_completed"]
-        })
+        self._update_leaderboard(
+            "accuracy",
+            user_id,
+            accuracy,
+            {
+                "best_accuracy": profile.statistics["best_accuracy"],
+                "experiments_completed": profile.statistics["experiments_completed"],
+            },
+        )
 
         # 更新安全性排行榜
         safety_score = profile.statistics.get("safety_score", 0.0)
-        self._update_leaderboard("safety", user_id, safety_score, {
-            "streak_days": profile.statistics["streak_days"]
-        })
+        self._update_leaderboard(
+            "safety",
+            user_id,
+            safety_score,
+            {"streak_days": profile.statistics["streak_days"]},
+        )
 
     def _update_leaderboard(
         self,
         leaderboard_name: str,
         user_id: str,
         score: float,
-        additional_data: dict[str, Any]
+        additional_data: dict[str, Any],
     ) -> None:
         """更新单个排行榜"""
         if leaderboard_name not in self.leaderboards:
@@ -562,7 +625,7 @@ class EnhancedGamificationSystem:
                 username=profile.username,
                 score=score,
                 rank=0,  # 稍后计算
-                additional_data=additional_data
+                additional_data=additional_data,
             )
             leaderboard.append(entry)
 
@@ -574,9 +637,7 @@ class EnhancedGamificationSystem:
             entry.rank = i + 1
 
     @enhance_robustness(
-        operation_name="get_user_profile",
-        security_level="low",
-        enable_caching=True
+        operation_name="get_user_profile", security_level="low", enable_caching=True
     )
     def get_user_profile(self, user_id: str) -> UserProfile | None:
         """获取用户档案"""
@@ -585,18 +646,18 @@ class EnhancedGamificationSystem:
     @enhance_robustness(
         operation_name="get_user_achievements",
         security_level="low",
-        enable_caching=True
+        enable_caching=True,
     )
     def get_user_achievements(self, user_id: str) -> list[UserAchievement]:
         """获取用户成就"""
         return self.user_achievements.get(user_id, [])
 
     @enhance_robustness(
-        operation_name="get_leaderboard",
-        security_level="low",
-        enable_caching=True
+        operation_name="get_leaderboard", security_level="low", enable_caching=True
     )
-    def get_leaderboard(self, leaderboard_name: str, limit: int = 10) -> list[LeaderboardEntry]:
+    def get_leaderboard(
+        self, leaderboard_name: str, limit: int = 10
+    ) -> list[LeaderboardEntry]:
         """获取排行榜"""
         if leaderboard_name not in self.leaderboards:
             return []
@@ -606,14 +667,18 @@ class EnhancedGamificationSystem:
     @enhance_robustness(
         operation_name="get_available_achievements",
         security_level="low",
-        enable_caching=True
+        enable_caching=True,
     )
     def get_available_achievements(self, user_id: str) -> list[Achievement]:
         """获取可用成就"""
         if user_id not in self.user_achievements:
             return list(self.achievements.values())
 
-        user_achievement_ids = {ua.achievement_id for ua in self.user_achievements[user_id] if ua.is_unlocked}
+        user_achievement_ids = {
+            ua.achievement_id
+            for ua in self.user_achievements[user_id]
+            if ua.is_unlocked
+        }
         available_achievements = []
 
         for achievement in self.achievements.values():
@@ -623,9 +688,7 @@ class EnhancedGamificationSystem:
         return available_achievements
 
     @enhance_robustness(
-        operation_name="get_user_statistics",
-        security_level="low",
-        enable_caching=True
+        operation_name="get_user_statistics", security_level="low", enable_caching=True
     )
     def get_user_statistics(self, user_id: str) -> dict[str, Any]:
         """获取用户统计信息"""
@@ -648,23 +711,23 @@ class EnhancedGamificationSystem:
                 "theme": profile.theme,
                 "currency": profile.currency,
                 "created_at": profile.created_at.isoformat(),
-                "last_active": profile.last_active.isoformat()
+                "last_active": profile.last_active.isoformat(),
             },
             "statistics": profile.statistics,
             "achievements": {
                 "total_unlocked": len([a for a in achievements if a.is_unlocked]),
                 "total_available": len(self.achievements),
                 "recent_unlocked": [
-                    {
-                        "id": a.achievement_id,
-                        "unlocked_at": a.unlocked_at.isoformat()
-                    }
-                    for a in achievements if a.is_unlocked
-                ][-5:]  # 最近5个
-            }
+                    {"id": a.achievement_id, "unlocked_at": a.unlocked_at.isoformat()}
+                    for a in achievements
+                    if a.is_unlocked
+                ][-5:],  # 最近5个
+            },
         }
 
-    def _log_gamification_event(self, user_id: str, event_type: str, data: dict[str, Any]) -> None:
+    def _log_gamification_event(
+        self, user_id: str, event_type: str, data: dict[str, Any]
+    ) -> None:
         """记录游戏化事件"""
         logger.info(f"游戏化事件: {user_id} - {event_type}: {data}")
 

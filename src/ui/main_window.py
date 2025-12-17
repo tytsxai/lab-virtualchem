@@ -86,7 +86,9 @@ class MainWindow(QMainWindow):
     run_action_triggered = Signal()  # 运行入口信号
     stop_action_triggered = Signal()  # 停止入口信号
 
-    def __init__(self, container: DIContainer | None = None, workflow_manager: Any | None = None):
+    def __init__(
+        self, container: DIContainer | None = None, workflow_manager: Any | None = None
+    ):
         super().__init__()
 
         try:
@@ -118,6 +120,7 @@ class MainWindow(QMainWindow):
             # 初始化游戏化管理器
             try:
                 from ..gamification.gamification_manager import GamificationManager
+
                 self.gamification_manager = GamificationManager()
                 logger.info("游戏化管理器已初始化")
             except Exception as e:
@@ -167,7 +170,9 @@ class MainWindow(QMainWindow):
         is_first_run = self.store.get("app_first_run", True) if self.store else True
         if is_first_run:
             # 使用QTimer延迟显示，确保主窗口已完全加载
-            QTimer.singleShot(1000, lambda: show_quick_tip("first_run", duration=10000, parent=self))
+            QTimer.singleShot(
+                1000, lambda: show_quick_tip("first_run", duration=10000, parent=self)
+            )
 
     def check_first_run(self):
         """检查是否首次运行，并显示欢迎向导"""
@@ -193,10 +198,11 @@ class MainWindow(QMainWindow):
 
     def load_last_experiment(self):
         """加载上次的实验"""
-        # 从配置管理器获取设置
-        from src.core.config_manager import ConfigManager
-        config_manager = ConfigManager()
-        if config_manager.get("startup.auto_load_last_experiment", False):
+        # 从用户偏好设置获取：是否自动恢复上次实验
+        from .user_preferences import get_user_preferences
+
+        prefs = get_user_preferences()
+        if prefs.remember_last_experiment:
             last_experiment = self.store.get("last_experiment_id")
             if last_experiment:
                 logger.info(f"正在加载上次的实验: {last_experiment}")
@@ -246,6 +252,7 @@ class MainWindow(QMainWindow):
 
         # 注册懒加载组件
         from src.ui.lazy_loader import register_lazy_component
+
         register_lazy_component("knowledge_browser", load_knowledge_browser, priority=3)
         register_lazy_component("dev_console", load_dev_console, priority=5)
 
@@ -255,6 +262,7 @@ class MainWindow(QMainWindow):
 
         # 使用响应式窗口大小
         from src.ui.responsive import AdaptiveSize
+
         window_size = AdaptiveSize.window_size()
         self.resize(window_size)
         logger.info(f"窗口大小设置为: {window_size.width()}x{window_size.height()}")
@@ -264,6 +272,7 @@ class MainWindow(QMainWindow):
 
         # 优化主题
         from src.ui.visual_polish import optimize_widget_theme
+
         optimize_widget_theme(self)
 
         # 设置中央控件
@@ -425,7 +434,9 @@ class MainWindow(QMainWindow):
                 self.user_preferences["theme"] = theme_type.value
                 if len(self.user_preferences) > self.max_user_preferences:
                     # 保留最新的偏好设置
-                    keys_to_remove = list(self.user_preferences.keys())[:-self.max_user_preferences]
+                    keys_to_remove = list(self.user_preferences.keys())[
+                        : -self.max_user_preferences
+                    ]
                     for key in keys_to_remove:
                         del self.user_preferences[key]
                 self.store.set("user_preferences", self.user_preferences)
@@ -433,17 +444,28 @@ class MainWindow(QMainWindow):
                 logger.error(f"设置主题失败: {e}")
                 QMessageBox.warning(self, "主题错误", f"无法应用主题: {e}")
 
-    def handle_exception(self, exc_type: type[BaseException], exc_value: BaseException, exc_traceback: Any) -> None:
+    def handle_exception(
+        self,
+        exc_type: type[BaseException],
+        exc_value: BaseException,
+        exc_traceback: Any,
+    ) -> None:
         """全局异常处理器"""
         if issubclass(exc_type, KeyboardInterrupt):
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
             return
 
-        error_msg = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+        error_msg = "".join(
+            traceback.format_exception(exc_type, exc_value, exc_traceback)
+        )
         logger.error(f"未捕获的异常:\n{error_msg}")
 
         # 显示错误对话框
-        QMessageBox.critical(self, "程序错误", f"发生未预期的错误:\n{exc_value}\n\n详细信息已记录到日志文件。")
+        QMessageBox.critical(
+            self,
+            "程序错误",
+            f"发生未预期的错误:\n{exc_value}\n\n详细信息已记录到日志文件。",
+        )
 
     def _get_experiment_icon(self, exp_id: str) -> str:
         """根据实验ID返回专业图标
@@ -532,7 +554,9 @@ class MainWindow(QMainWindow):
                     "intermediate": "中级",
                     "advanced": "高级",
                 }
-                level_text = level_map.get(template.get("level", "basic"), template.get("level", "N/A"))
+                level_text = level_map.get(
+                    template.get("level", "basic"), template.get("level", "N/A")
+                )
 
                 # 添加时长信息(如果有)
                 duration = template.get("duration_min")
@@ -587,7 +611,9 @@ class MainWindow(QMainWindow):
             if 0 <= index < len(templates):
                 template_dict = templates[index]
                 # 根据ID加载完整的模板对象
-                template = self.template_engine.load_experiment_by_id(template_dict["id"])
+                template = self.template_engine.load_experiment_by_id(
+                    template_dict["id"]
+                )
                 self.show_experiment(template)
 
         except Exception as e:
@@ -637,8 +663,12 @@ class MainWindow(QMainWindow):
                 )
 
                 # 连接信号
-                self.current_game_view.experiment_completed.connect(self.on_experiment_finished)
-                self.current_game_view.interaction_logged.connect(self.on_interaction_logged)
+                self.current_game_view.experiment_completed.connect(
+                    self.on_experiment_finished
+                )
+                self.current_game_view.interaction_logged.connect(
+                    self.on_interaction_logged
+                )
 
                 # 添加到堆栈并显示
                 self.content_stack.addWidget(self.current_game_view)
@@ -653,14 +683,18 @@ class MainWindow(QMainWindow):
                 )
 
                 # 连接信号
-                self.current_experiment_view.experiment_finished.connect(self.on_experiment_finished)
+                self.current_experiment_view.experiment_finished.connect(
+                    self.on_experiment_finished
+                )
                 self.current_experiment_view.exp_gained.connect(self.on_exp_gained)
 
                 # 添加到堆栈并显示
                 self.content_stack.addWidget(self.current_experiment_view)
                 self.content_stack.setCurrentWidget(self.current_experiment_view)
 
-            self.status_bar.showMessage(self.i18n.t("status.experiment_loaded", title=template.title))
+            self.status_bar.showMessage(
+                self.i18n.t("status.experiment_loaded", title=template.title)
+            )
             logger.info("实验界面加载完成")
 
         except Exception as e:
@@ -690,7 +724,9 @@ class MainWindow(QMainWindow):
             from .experience_system import get_experience_system
 
             exp_system = get_experience_system()
-            leveled_up, level_info = exp_system.add_experience(self.current_user_id, exp_points, "实验完成")
+            leveled_up, level_info = exp_system.add_experience(
+                self.current_user_id, exp_points, "实验完成"
+            )
             # 显示经验获得动画
             if (
                 self.current_experiment_view
@@ -748,14 +784,17 @@ class MainWindow(QMainWindow):
         msg.setIcon(QMessageBox.Icon.Information)
         msg.setWindowTitle(self.i18n.t("ui.experiment_complete"))
         msg.setText(
-            self.i18n.t("ui.final_score_message", score=record.final_score) + f"\n\n{self.i18n.t('ui.record_saved')}"
+            self.i18n.t("ui.final_score_message", score=record.final_score)
+            + f"\n\n{self.i18n.t('ui.record_saved')}"
         )
         msg.setStandardButtons(QMessageBox.StandardButton.Ok)
         msg.exec()
 
         logger.info(f"实验完成,最终得分: {record.final_score}")
 
-    def on_interaction_logged(self, user_id: str, interaction_type: str, data: dict) -> None:
+    def on_interaction_logged(
+        self, user_id: str, interaction_type: str, data: dict
+    ) -> None:
         """处理交互日志
 
         Args:
@@ -799,7 +838,9 @@ class MainWindow(QMainWindow):
             self.status_bar.showMessage(f"已切换到: {mode_text}")
 
             # 显示提示
-            QMessageBox.information(self, "模式切换", f"已切换到{mode_text}。\n重新加载实验以应用更改。")
+            QMessageBox.information(
+                self, "模式切换", f"已切换到{mode_text}。\n重新加载实验以应用更改。"
+            )
 
             logger.info(f"游戏模式切换: {mode_text}")
 
@@ -875,7 +916,9 @@ class MainWindow(QMainWindow):
 
             if dialog.exec() == QDialog.Accepted:
                 # 应用设置
-                if self.current_game_view and hasattr(self.current_game_view, "game_scene"):
+                if self.current_game_view and hasattr(
+                    self.current_game_view, "game_scene"
+                ):
                     scene = self.current_game_view.game_scene
                     if scene:
                         scene.enable_gravity(physics_checkbox.isChecked())
@@ -885,7 +928,9 @@ class MainWindow(QMainWindow):
                         for item in scene.physics_items.values():
                             item.friction = friction_slider.value() / 100.0
                             item.bounce_factor = bounce_slider.value() / 100.0
-                            item.gravity = item.gravity.__class__(0, 0.5 * gravity_slider.value() / 100.0)
+                            item.gravity = item.gravity.__class__(
+                                0, 0.5 * gravity_slider.value() / 100.0
+                            )
 
                 self.status_bar.showMessage("物理设置已应用")
                 logger.info("物理设置已更新")
@@ -950,7 +995,9 @@ class MainWindow(QMainWindow):
             type_layout = QHBoxLayout()
             type_layout.addWidget(QLabel("粒子类型:"))
             type_combo = QComboBox()
-            type_combo.addItems(["闪烁", "发光", "爆炸", "轨迹", "气泡", "烟雾", "火焰", "水花"])
+            type_combo.addItems(
+                ["闪烁", "发光", "爆炸", "轨迹", "气泡", "烟雾", "火焰", "水花"]
+            )
             type_layout.addWidget(type_combo)
             layout.addLayout(type_layout)
 
@@ -966,7 +1013,9 @@ class MainWindow(QMainWindow):
 
             if dialog.exec() == QDialog.Accepted:
                 # 应用设置
-                if self.current_game_view and hasattr(self.current_game_view, "game_scene"):
+                if self.current_game_view and hasattr(
+                    self.current_game_view, "game_scene"
+                ):
                     scene = self.current_game_view.game_scene
                     if scene:
                         # 更新粒子系统配置
@@ -985,10 +1034,14 @@ class MainWindow(QMainWindow):
                             "水花": ParticleType.WATER,
                         }
 
-                        selected_type = particle_type_map.get(type_combo.currentText(), ParticleType.SPARKLE)
+                        selected_type = particle_type_map.get(
+                            type_combo.currentText(), ParticleType.SPARKLE
+                        )
 
                         # 更新配置
-                        particle_manager.get_particle_system(scene).update_particle_config(
+                        particle_manager.get_particle_system(
+                            scene
+                        ).update_particle_config(
                             selected_type,
                             {
                                 "lifetime": lifetime_slider.value(),
@@ -1055,7 +1108,9 @@ class MainWindow(QMainWindow):
             if template:
                 self.show_experiment(template)
             else:
-                QMessageBox.warning(self, self.i18n.t("ui.warning"), f"未找到实验: {experiment_id}")
+                QMessageBox.warning(
+                    self, self.i18n.t("ui.warning"), f"未找到实验: {experiment_id}"
+                )
         except Exception as e:
             logger.error(f"重做实验失败: {e}")
             QMessageBox.critical(self, self.i18n.t("error.title"), f"重做实验失败: {e}")
@@ -1087,7 +1142,9 @@ class MainWindow(QMainWindow):
             if not file_path:
                 return
 
-            def _task(record, template, output_path, progress_emit=None, message_emit=None):
+            def _task(
+                record, template, output_path, progress_emit=None, message_emit=None
+            ):
                 from ..reporter.html_generator import HTMLGenerator
 
                 if message_emit:
@@ -1107,8 +1164,11 @@ class MainWindow(QMainWindow):
                 return output_path
 
             from src.ui.task_worker import TaskWorker
+
             worker = TaskWorker(_task, record, template, file_path)
-            worker.progress.connect(lambda v: self.status_bar.showMessage(f"生成报告: {v}%"))
+            worker.progress.connect(
+                lambda v: self.status_bar.showMessage(f"生成报告: {v}%")
+            )
             worker.message.connect(lambda m: self.status_bar.showMessage(m))
 
             def _on_done(path: str) -> None:
@@ -1129,7 +1189,9 @@ class MainWindow(QMainWindow):
 
             def _on_error(msg: str) -> None:
                 logger.error(f"生成报告失败: {msg}")
-                QMessageBox.critical(self, self.i18n.t("ui.error"), f"生成报告失败: {msg}")
+                QMessageBox.critical(
+                    self, self.i18n.t("ui.error"), f"生成报告失败: {msg}"
+                )
                 self._cleanup_worker(worker)
 
             worker.finished_with_result.connect(_on_done)
@@ -1146,16 +1208,27 @@ class MainWindow(QMainWindow):
         """打开知识库"""
         try:
             from src.ui.knowledge_browser import KnowledgeBrowser
-            browser = KnowledgeBrowser(knowledge_dir="assets/knowledge", i18n_dir=str(self.i18n.i18n_dir), parent=self)
+
+            browser = KnowledgeBrowser(
+                knowledge_dir="assets/knowledge",
+                i18n_dir=str(self.i18n.i18n_dir),
+                parent=self,
+            )
             browser.exec()
         except Exception as e:
             logger.error(f"打开知识库失败: {e}")
-            QMessageBox.critical(self, self.i18n.t("error.title"), f"打开知识库失败: {e}")
+            QMessageBox.critical(
+                self, self.i18n.t("error.title"), f"打开知识库失败: {e}"
+            )
 
     def on_open_settings(self) -> None:
         """打开设置"""
         try:
-            dialog = SettingsDialog(i18n_dir=str(self.i18n.i18n_dir), settings_file="config/settings.json", parent=self)
+            dialog = SettingsDialog(
+                i18n_dir=str(self.i18n.i18n_dir),
+                settings_file="config/settings.json",
+                parent=self,
+            )
             dialog.settings_changed.connect(self.on_settings_changed)
             dialog.exec()
         except Exception as e:
@@ -1190,6 +1263,7 @@ class MainWindow(QMainWindow):
         except Exception as e:
             logger.error(f"显示用户引导失败: {e}")
             from src.ui.error_dialog import show_error
+
             show_error("引导失败", f"无法显示用户引导: {e}")
 
     def show_help(self) -> None:
@@ -1199,6 +1273,7 @@ class MainWindow(QMainWindow):
         except Exception as e:
             logger.error(f"显示帮助失败: {e}")
             from src.ui.error_dialog import show_error
+
             show_error("帮助失败", f"无法显示帮助文档: {e}")
 
     def on_settings_changed(self, settings: dict[str, Any]) -> None:
@@ -1220,8 +1295,13 @@ class MainWindow(QMainWindow):
             # 处理完整设置保存
             self.apply_settings(settings)
             # 如果语言改变，提示重启
-            if "language" in settings and settings["language"] != self.i18n.current_language:
-                QMessageBox.information(self, self.i18n.t("ui.info"), "某些设置需要重启应用后生效。")
+            if (
+                "language" in settings
+                and settings["language"] != self.i18n.current_language
+            ):
+                QMessageBox.information(
+                    self, self.i18n.t("ui.info"), "某些设置需要重启应用后生效。"
+                )
 
     def apply_settings(self, settings: dict[str, Any]) -> None:
         """应用设置"""
@@ -1276,7 +1356,9 @@ class MainWindow(QMainWindow):
 
         # 应用通知设置
         if "experiment_complete_notifications" in settings:
-            self.apply_experiment_complete_notifications(settings["experiment_complete_notifications"])
+            self.apply_experiment_complete_notifications(
+                settings["experiment_complete_notifications"]
+            )
 
         if "error_notifications" in settings:
             self.apply_error_notifications(settings["error_notifications"])
@@ -1534,15 +1616,20 @@ class MainWindow(QMainWindow):
 
     def on_show_manual(self) -> None:
         """显示用户手册"""
-        QMessageBox.information(self, self.i18n.t("ui.user_manual"), self.i18n.t("ui.manual_content"))
+        QMessageBox.information(
+            self, self.i18n.t("ui.user_manual"), self.i18n.t("ui.manual_content")
+        )
 
     def on_show_about(self) -> None:
         """显示关于对话框"""
-        QMessageBox.about(self, self.i18n.t("ui.about"), self.i18n.t("ui.about_content"))
+        QMessageBox.about(
+            self, self.i18n.t("ui.about"), self.i18n.t("ui.about_content")
+        )
 
     def center_on_screen(self) -> None:
         """窗口在屏幕中央显示"""
         from src.ui.responsive import ResponsiveHelper
+
         screen_info = ResponsiveHelper.get_screen_info()
         if screen_info.get("screen"):
             screen = screen_info["screen"]
@@ -1601,14 +1688,19 @@ class MainWindow(QMainWindow):
     def on_dev_authenticate(self) -> None:
         """开发者认证对话框"""
         dev_key, ok = QInputDialog.getText(
-            self, "开发者认证", "请输入开发者密钥:", echo=QInputDialog.InputMode.Password
+            self,
+            "开发者认证",
+            "请输入开发者密钥:",
+            echo=QInputDialog.InputMode.Password,
         )
 
         if ok and dev_key:
             if self.dev_auth.authenticate(dev_key):
                 self._activate_dev_mode()
             elif self.dev_auth.is_locked_out():
-                QMessageBox.warning(self, "认证失败", "尝试次数过多，开发者模式已被锁定。\n请稍后再试。")
+                QMessageBox.warning(
+                    self, "认证失败", "尝试次数过多，开发者模式已被锁定。\n请稍后再试。"
+                )
             else:
                 QMessageBox.warning(self, "认证失败", "开发者密钥不正确！")
 
@@ -1699,7 +1791,9 @@ class MainWindow(QMainWindow):
         """导入数据"""
         import json
 
-        file_path, _ = QFileDialog.getOpenFileName(self, "导入数据", "", "JSON Files (*.json);;All Files (*)")
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "导入数据", "", "JSON Files (*.json);;All Files (*)"
+        )
 
         if file_path:
             try:
@@ -1852,15 +1946,21 @@ class MainWindow(QMainWindow):
             use_regex = regex_check.isChecked()
 
             # 执行查找
-            results = self._perform_search(query, scope, case_sensitive, whole_word, use_regex)
+            results = self._perform_search(
+                query, scope, case_sensitive, whole_word, use_regex
+            )
 
             # 显示结果
             if results:
                 results_html = f"<h3>找到 {len(results)} 个结果：</h3><ul>"
                 for result in results[:50]:  # 限制显示50个结果
-                    results_html += f"<li><b>{result['source']}</b>: {result['text'][:100]}...</li>"
+                    results_html += (
+                        f"<li><b>{result['source']}</b>: {result['text'][:100]}...</li>"
+                    )
                 if len(results) > 50:
-                    results_html += f"<li><i>...还有 {len(results) - 50} 个结果</i></li>"
+                    results_html += (
+                        f"<li><i>...还有 {len(results) - 50} 个结果</i></li>"
+                    )
                 results_html += "</ul>"
                 results_text.setHtml(results_html)
             else:
@@ -1870,7 +1970,9 @@ class MainWindow(QMainWindow):
         button_layout.addWidget(find_button)
 
         replace_button = QPushButton("🔄 替换...")
-        replace_button.clicked.connect(lambda: self._show_replace_dialog(find_input.text()))
+        replace_button.clicked.connect(
+            lambda: self._show_replace_dialog(find_input.text())
+        )
         button_layout.addWidget(replace_button)
 
         close_button = QPushButton("❌ 关闭")
@@ -1885,7 +1987,12 @@ class MainWindow(QMainWindow):
         dialog.exec()
 
     def _perform_search(
-        self, query: str, scope: str, case_sensitive: bool, whole_word: bool, use_regex: bool
+        self,
+        query: str,
+        scope: str,
+        case_sensitive: bool,
+        whole_word: bool,
+        use_regex: bool,
     ) -> list[dict]:
         """执行查找
 
@@ -1912,7 +2019,10 @@ class MainWindow(QMainWindow):
                 return []
         else:
             if whole_word:
-                pattern = re.compile(r"\b" + re.escape(query) + r"\b", 0 if case_sensitive else re.IGNORECASE)
+                pattern = re.compile(
+                    r"\b" + re.escape(query) + r"\b",
+                    0 if case_sensitive else re.IGNORECASE,
+                )
             else:
                 if case_sensitive:
                     pattern = re.compile(re.escape(query))
@@ -1926,9 +2036,14 @@ class MainWindow(QMainWindow):
             for exp in experiments:
                 # 如果是当前实验模式且不是当前实验，跳过
                 if scope == "当前实验":
-                    if not hasattr(self, "current_experiment_view") or not self.current_experiment_view:
+                    if (
+                        not hasattr(self, "current_experiment_view")
+                        or not self.current_experiment_view
+                    ):
                         continue
-                    current_exp_id = getattr(self.current_experiment_view, "experiment_id", None)
+                    current_exp_id = getattr(
+                        self.current_experiment_view, "experiment_id", None
+                    )
                     if exp["id"] != current_exp_id:
                         continue
 
@@ -1973,7 +2088,11 @@ class MainWindow(QMainWindow):
                         )
 
                     # 在试剂描述中查找
-                    if hasattr(reagent, "description") and reagent.description and pattern.search(reagent.description):
+                    if (
+                        hasattr(reagent, "description")
+                        and reagent.description
+                        and pattern.search(reagent.description)
+                    ):
                         results.append(
                             {
                                 "source": f"试剂描述: {reagent.name}",
@@ -2087,7 +2206,9 @@ class MainWindow(QMainWindow):
                 if self.current_experiment_view:
                     # 获取实验视图中的所有文本控件
                     text_widgets = self.current_experiment_view.findChildren(QTextEdit)
-                    text_widgets.extend(self.current_experiment_view.findChildren(QLineEdit))
+                    text_widgets.extend(
+                        self.current_experiment_view.findChildren(QLineEdit)
+                    )
 
                     for widget in text_widgets:
                         if isinstance(widget, QTextEdit):
@@ -2113,7 +2234,9 @@ class MainWindow(QMainWindow):
                             import re
 
                             flags = 0 if case_sensitive else re.IGNORECASE
-                            pattern = re.compile(r"\b" + re.escape(find_query) + r"\b", flags)
+                            pattern = re.compile(
+                                r"\b" + re.escape(find_query) + r"\b", flags
+                            )
                             new_content = pattern.sub(replace_text, content)
                             occurrences = len(pattern.findall(content))
 
@@ -2127,7 +2250,9 @@ class MainWindow(QMainWindow):
 
                 if count > 0:
                     QMessageBox.information(dialog, "替换完成", f"成功替换 {count} 处")
-                    logger.info(f"全部替换: '{find_query}' -> '{replace_text}', 共 {count} 处")
+                    logger.info(
+                        f"全部替换: '{find_query}' -> '{replace_text}', 共 {count} 处"
+                    )
                 else:
                     QMessageBox.information(dialog, "未找到", f"未找到 '{find_query}'")
 
@@ -2172,7 +2297,11 @@ class MainWindow(QMainWindow):
                 return
 
             def _batch_task(
-                user_id: str, records: list[dict], out_dir: str, progress_emit=None, message_emit=None
+                user_id: str,
+                records: list[dict],
+                out_dir: str,
+                progress_emit=None,
+                message_emit=None,
             ) -> int:
                 from ..reporter.html_generator import HTMLGenerator
 
@@ -2185,13 +2314,17 @@ class MainWindow(QMainWindow):
                         rec = self.store.load_record(user_id, record_dict["record_id"])  # type: ignore[index]
                         if not rec:
                             continue
-                        template = self.template_engine.load_experiment_by_id(rec.experiment_id)
+                        template = self.template_engine.load_experiment_by_id(
+                            rec.experiment_id
+                        )
                         file_name = f"{rec.experiment_id}_{rec.record_id}.html"
                         file_path = str(Path(out_dir) / file_name)
                         HTMLGenerator().generate(rec, template, file_path)
                         export_count += 1
                     except Exception as ex:
-                        logger.warning(f"导出记录 {record_dict.get('record_id', 'unknown')} 失败: {ex}")
+                        logger.warning(
+                            f"导出记录 {record_dict.get('record_id', 'unknown')} 失败: {ex}"
+                        )
                         continue
                     finally:
                         if progress_emit:
@@ -2199,12 +2332,17 @@ class MainWindow(QMainWindow):
                 return export_count
 
             from src.ui.task_worker import TaskWorker
+
             worker = TaskWorker(_batch_task, self.user_id, record_list, directory)
-            worker.progress.connect(lambda v: self.status_bar.showMessage(f"批量导出: {v}%"))
+            worker.progress.connect(
+                lambda v: self.status_bar.showMessage(f"批量导出: {v}%")
+            )
             worker.message.connect(lambda m: self.status_bar.showMessage(m))
 
             def _on_done(count: int) -> None:
-                QMessageBox.information(self, "成功", f"成功导出 {count} 份报告到:\n{directory}")
+                QMessageBox.information(
+                    self, "成功", f"成功导出 {count} 份报告到:\n{directory}"
+                )
                 logger.info(f"批量导出 {count} 份报告")
                 self._cleanup_worker(worker)
 
@@ -2254,7 +2392,9 @@ class MainWindow(QMainWindow):
                 if total_steps == 0:
                     validation_errors.append("实验步骤为空")
                 elif current_step < total_steps:
-                    validation_warnings.append(f"实验未完成，当前进度: {current_step}/{total_steps}")
+                    validation_warnings.append(
+                        f"实验未完成，当前进度: {current_step}/{total_steps}"
+                    )
 
                 # 3. 验证记录数据
                 try:
@@ -2279,13 +2419,19 @@ class MainWindow(QMainWindow):
 
             # 4. 显示验证结果
             if validation_errors:
-                error_msg = "❌ 数据验证失败:\n\n" + "\n".join(f"• {err}" for err in validation_errors)
+                error_msg = "❌ 数据验证失败:\n\n" + "\n".join(
+                    f"• {err}" for err in validation_errors
+                )
                 if validation_warnings:
-                    error_msg += "\n\n⚠️ 警告:\n" + "\n".join(f"• {warn}" for warn in validation_warnings)
+                    error_msg += "\n\n⚠️ 警告:\n" + "\n".join(
+                        f"• {warn}" for warn in validation_warnings
+                    )
                 QMessageBox.critical(self, "验证失败", error_msg)
                 logger.warning(f"数据验证失败: {validation_errors}")
             elif validation_warnings:
-                warn_msg = "⚠️ 验证通过（有警告）:\n\n" + "\n".join(f"• {warn}" for warn in validation_warnings)
+                warn_msg = "⚠️ 验证通过（有警告）:\n\n" + "\n".join(
+                    f"• {warn}" for warn in validation_warnings
+                )
                 QMessageBox.warning(self, "验证警告", warn_msg)
                 logger.info(f"数据验证有警告: {validation_warnings}")
             else:
@@ -2329,8 +2475,9 @@ class MainWindow(QMainWindow):
         """切换布局"""
         try:
             # 初始化布局管理器（如果还没有）
-            if not hasattr(self, 'layout_manager'):
+            if not hasattr(self, "layout_manager"):
                 from .layout_manager import LayoutManager
+
                 self.layout_manager = LayoutManager(self)
 
             # 切换布局
@@ -2340,17 +2487,16 @@ class MainWindow(QMainWindow):
                 logger.info(f"切换布局成功: {layout_type}")
 
                 # 显示友好提示
-                if hasattr(self, 'status_bar'):
+                if hasattr(self, "status_bar"):
                     # 在状态栏显示消息
                     layout_names = {
                         "classic": "经典布局",
                         "modern": "现代布局",
                         "compact": "紧凑布局",
-                        "wide": "宽屏布局"
+                        "wide": "宽屏布局",
                     }
                     self.status_bar.showMessage(
-                        f"✓ 已切换到{layout_names.get(layout_type, layout_type)}",
-                        3000
+                        f"✓ 已切换到{layout_names.get(layout_type, layout_type)}", 3000
                     )
             else:
                 QMessageBox.warning(self, "警告", f"切换到{layout_type}布局失败")
@@ -2506,7 +2652,9 @@ class MainWindow(QMainWindow):
             valid_count = len(templates)
 
             QMessageBox.information(
-                self, "验证结果", f"✓ 模板验证完成\n✓ 有效模板数: {valid_count}\n✓ 所有模板格式正确"
+                self,
+                "验证结果",
+                f"✓ 模板验证完成\n✓ 有效模板数: {valid_count}\n✓ 所有模板格式正确",
             )
             logger.info(f"模板验证完成，有效模板数: {valid_count}")
         except Exception as e:
@@ -2595,7 +2743,9 @@ class MainWindow(QMainWindow):
                 if cleared_items:
                     total_mb = total_size_before / (1024 * 1024)
                     result_msg = "✓ 缓存清理完成\n\n"
-                    result_msg += "清理项目:\n" + "\n".join(f"• {item}" for item in cleared_items)
+                    result_msg += "清理项目:\n" + "\n".join(
+                        f"• {item}" for item in cleared_items
+                    )
                     result_msg += f"\n\n总共释放空间: {total_mb:.2f} MB"
                     QMessageBox.information(self, "清理完成", result_msg)
                     logger.info(f"缓存已清除，释放空间 {total_mb:.2f} MB")
@@ -2619,7 +2769,11 @@ class MainWindow(QMainWindow):
             # 计算统计数据（使用字典数据）
             len(record_list)
             sum(1 for r in record_list if r.get("is_completed", False))
-            scores = [r.get("final_score", 0) for r in record_list if r.get("final_score") is not None]
+            scores = [
+                r.get("final_score", 0)
+                for r in record_list
+                if r.get("final_score") is not None
+            ]
             sum(scores) / len(scores) if scores else 0
 
             stats_text = """
@@ -2785,9 +2939,13 @@ class MainWindow(QMainWindow):
                 if doc_path.exists():
                     import os
 
-                    os.startfile(str(doc_path)) if os.name == "nt" else webbrowser.open(f"file://{doc_path.absolute()}")
+                    os.startfile(str(doc_path)) if os.name == "nt" else webbrowser.open(
+                        f"file://{doc_path.absolute()}"
+                    )
                 else:
-                    QMessageBox.warning(self, "提示", "本地文档尚未创建，请访问在线教程")
+                    QMessageBox.warning(
+                        self, "提示", "本地文档尚未创建，请访问在线教程"
+                    )
                     return
             else:
                 # 打开在线链接
@@ -2820,7 +2978,9 @@ class MainWindow(QMainWindow):
 
     def on_send_feedback(self) -> None:
         """发送反馈"""
-        text, ok = QInputDialog.getMultiLineText(self, "反馈问题", "请描述您遇到的问题或建议:")
+        text, ok = QInputDialog.getMultiLineText(
+            self, "反馈问题", "请描述您遇到的问题或建议:"
+        )
 
         if ok and text:
             # 使用反馈系统
@@ -2901,7 +3061,9 @@ class MainWindow(QMainWindow):
             self.user_preferences.update(prefs)
             if len(self.user_preferences) > self.max_user_preferences:
                 # 保留最新的偏好设置
-                keys_to_remove = list(self.user_preferences.keys())[:-self.max_user_preferences]
+                keys_to_remove = list(self.user_preferences.keys())[
+                    : -self.max_user_preferences
+                ]
                 for key in keys_to_remove:
                     del self.user_preferences[key]
 
@@ -2943,7 +3105,9 @@ class MainWindow(QMainWindow):
             session_data = {
                 "timestamp": datetime.now().isoformat(),
                 "user_id": self.user_id,
-                "current_experiment": getattr(self.current_experiment_view, "experiment_id", None),
+                "current_experiment": getattr(
+                    self.current_experiment_view, "experiment_id", None
+                ),
                 "window_geometry": self.saveGeometry().data().hex(),
                 "window_state": self.saveState().data().hex(),
                 "preferences": self.user_preferences,
@@ -3001,7 +3165,9 @@ class MainWindow(QMainWindow):
                     self.user_preferences.update(session_data["preferences"])
                     if len(self.user_preferences) > self.max_user_preferences:
                         # 保留最新的偏好设置
-                        keys_to_remove = list(self.user_preferences.keys())[:-self.max_user_preferences]
+                        keys_to_remove = list(self.user_preferences.keys())[
+                            : -self.max_user_preferences
+                        ]
                         for key in keys_to_remove:
                             del self.user_preferences[key]
                     self._setup_user_preferences()
@@ -3023,7 +3189,9 @@ class MainWindow(QMainWindow):
             "accessibility_enabled": self.accessibility_enabled,
             "offline_mode": self.is_offline_mode,
             "game_mode_enabled": self.game_mode_enabled,
-            "current_experiment": getattr(self.current_experiment_view, "experiment_id", None),
+            "current_experiment": getattr(
+                self.current_experiment_view, "experiment_id", None
+            ),
             "session_duration": getattr(self, "_session_start_time", None),
             "preferences": self.user_preferences,
         }
@@ -3041,13 +3209,19 @@ class MainWindow(QMainWindow):
 
             # 更新等级卡片
             user_data = self.gamification_manager.get_or_create_user_data(self.user_id)
-            self.gamification_panel.update_level_card(user_data.level, progress["exp"], progress["next_level_exp"])
+            self.gamification_panel.update_level_card(
+                user_data.level, progress["exp"], progress["next_level_exp"]
+            )
 
             # 更新任务列表
             self.gamification_panel.clear_quests()
-            active_quests = [q for q in user_data.quests if q.status.value in ["active", "completed"]]
+            active_quests = [
+                q for q in user_data.quests if q.status.value in ["active", "completed"]
+            ]
             for user_quest in active_quests[:5]:  # 只显示前5个
-                quest = self.gamification_manager.quest_manager.get_quest(user_quest.quest_id)
+                quest = self.gamification_manager.quest_manager.get_quest(
+                    user_quest.quest_id
+                )
                 if quest:
                     card = self.gamification_panel.add_quest_card(quest, user_quest)
                     card.claim_clicked.connect(self._on_claim_quest_reward)
@@ -3055,14 +3229,20 @@ class MainWindow(QMainWindow):
             # 更新成就显示（显示最近解锁的）
             self.gamification_panel.clear_achievements()
             completed_achievements = [a for a in user_data.achievements if a.completed]
-            recent_achievements = sorted(completed_achievements, key=lambda x: x.unlocked_at, reverse=True)[:6]
+            recent_achievements = sorted(
+                completed_achievements, key=lambda x: x.unlocked_at, reverse=True
+            )[:6]
 
             for user_achievement in recent_achievements:
-                achievement = self.gamification_manager.achievement_manager.get_achievement(
-                    user_achievement.achievement_id
+                achievement = (
+                    self.gamification_manager.achievement_manager.get_achievement(
+                        user_achievement.achievement_id
+                    )
                 )
                 if achievement:
-                    self.gamification_panel.add_achievement_card(achievement, unlocked=True)
+                    self.gamification_panel.add_achievement_card(
+                        achievement, unlocked=True
+                    )
 
         except Exception as e:
             logger.error(f"更新游戏化面板失败: {e}", exc_info=True)
@@ -3108,16 +3288,22 @@ class MainWindow(QMainWindow):
     def _on_claim_quest_reward(self, quest_id: str) -> None:
         """领取任务奖励"""
         try:
-            result = self.gamification_manager.claim_quest_reward(self.user_id, quest_id)
+            result = self.gamification_manager.claim_quest_reward(
+                self.user_id, quest_id
+            )
 
             if result["success"]:
                 exp_gained = result["exp_gained"]
-                QMessageBox.information(self, "奖励领取", f"成功领取任务奖励！\n获得 {exp_gained} 经验值")
+                QMessageBox.information(
+                    self, "奖励领取", f"成功领取任务奖励！\n获得 {exp_gained} 经验值"
+                )
 
                 # 刷新面板
                 self._update_gamification_panel()
             else:
-                QMessageBox.warning(self, "领取失败", "无法领取该任务奖励，请稍后再试。")
+                QMessageBox.warning(
+                    self, "领取失败", "无法领取该任务奖励，请稍后再试。"
+                )
 
         except Exception as e:
             logger.error(f"领取任务奖励失败: {e}", exc_info=True)
@@ -3143,7 +3329,11 @@ class MainWindow(QMainWindow):
             self.load_experiments()
 
             # 显示成功消息
-            QMessageBox.information(self, "成功", f"模板 '{template_id}' 创建成功！\n\n现在可以在实验列表中找到它。")
+            QMessageBox.information(
+                self,
+                "成功",
+                f"模板 '{template_id}' 创建成功！\n\n现在可以在实验列表中找到它。",
+            )
 
         except Exception as e:
             logger.error(f"处理模板创建完成事件失败: {e}", exc_info=True)
@@ -3229,7 +3419,9 @@ class MainWindow(QMainWindow):
 
             # 更新状态栏
             if hasattr(self, "statusBar") and self.statusBar():
-                self.statusBar().showMessage(f"用户: {session.display_name} | 角色: {session.role.value}", 5000)
+                self.statusBar().showMessage(
+                    f"用户: {session.display_name} | 角色: {session.role.value}", 5000
+                )
 
         except Exception as e:
             logger.error(f"处理会话开始失败: {e}", exc_info=True)
@@ -3310,7 +3502,7 @@ class MainWindow(QMainWindow):
     def _filter_experiments(self, text: str) -> None:
         """过滤实验列表"""
         try:
-            if not hasattr(self, 'exp_list_widget'):
+            if not hasattr(self, "exp_list_widget"):
                 return
 
             # 获取所有实验项

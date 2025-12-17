@@ -122,7 +122,9 @@ class InteractiveExperimentController(QObject):
             return False
 
         # 添加到反应模拟器
-        success = self.reaction_simulator.add_reagent_to_container(container_id, reagent_id, volume)
+        success = self.reaction_simulator.add_reagent_to_container(
+            container_id, reagent_id, volume
+        )
 
         if success:
             # 记录数据
@@ -140,7 +142,9 @@ class InteractiveExperimentController(QObject):
         if not self.experiment_active:
             return False
 
-        success = self.reaction_simulator.add_indicator_to_container(container_id, indicator_id)
+        success = self.reaction_simulator.add_indicator_to_container(
+            container_id, indicator_id
+        )
 
         if success:
             logger.info(f"添加指示剂: {indicator_id} 到 {container_id}")
@@ -168,26 +172,38 @@ class InteractiveExperimentController(QObject):
             self.data_recorder.record_observation(observation)
 
     def validate_drop_action(
-        self, item_id: str, zone_id: str, expected_item_id: str | None = None, expected_zone_id: str | None = None
+        self,
+        item_id: str,
+        zone_id: str,
+        expected_item_id: str | None = None,
+        expected_zone_id: str | None = None,
     ) -> bool:
         """验证拖放动作"""
         if not self.experiment_active:
             return False
 
-        result = self.validator.validate_drop_action(item_id, zone_id, expected_item_id, expected_zone_id)
+        result = self.validator.validate_drop_action(
+            item_id, zone_id, expected_item_id, expected_zone_id
+        )
 
         return result.passed
 
-    def validate_click_action(self, item_id: str, expected_item_id: str | None = None, required_times: int = 1) -> bool:
+    def validate_click_action(
+        self, item_id: str, expected_item_id: str | None = None, required_times: int = 1
+    ) -> bool:
         """验证点击动作"""
         if not self.experiment_active:
             return False
 
-        result = self.validator.validate_click_action(item_id, expected_item_id, required_times)
+        result = self.validator.validate_click_action(
+            item_id, expected_item_id, required_times
+        )
 
         return result.passed
 
-    def validate_input_value(self, value: float, expected_value: float | None = None, tolerance: float = 0.1) -> bool:
+    def validate_input_value(
+        self, value: float, expected_value: float | None = None, tolerance: float = 0.1
+    ) -> bool:
         """验证输入值"""
         if not self.experiment_active:
             return False
@@ -232,7 +248,10 @@ class InteractiveExperimentController(QObject):
         final_report = self.data_recorder.complete_experiment()
 
         # 添加验证结果
-        final_report["validation_summary"] = {"total_steps": len(self.step_history), "step_history": self.step_history}
+        final_report["validation_summary"] = {
+            "total_steps": len(self.step_history),
+            "step_history": self.step_history,
+        }
 
         self.experiment_completed.emit(self.experiment_id, final_report)
         logger.info(f"实验完成: {self.experiment_id}")
@@ -274,7 +293,9 @@ class InteractiveExperimentController(QObject):
         """获取指示剂信息"""
         return self.reaction_simulator.get_indicator_info(indicator_id)
 
-    def create_visual_effect(self, effect_type: str, x: float, y: float, **kwargs: Any) -> None:
+    def create_visual_effect(
+        self, effect_type: str, x: float, y: float, **kwargs: Any
+    ) -> None:
         """创建视觉效果"""
         if effect_type == "bubble":
             count = kwargs.get("count", 10)
@@ -292,13 +313,17 @@ class InteractiveExperimentController(QObject):
             duration = kwargs.get("duration", 1.0)
 
             if start_color and end_color:
-                self.animation.start_color_transition(animation_id, start_color, end_color, duration)
+                self.animation.start_color_transition(
+                    animation_id, start_color, end_color, duration
+                )
 
     def _on_data_recorded(self, step_id: str, data_type: str, value: Any) -> None:
         """处理数据记录信号"""
         self.data_recorded.emit(step_id, data_type, value)
 
-    def _on_calculation_completed(self, calculation_type: str, _result: dict[str, Any]) -> None:
+    def _on_calculation_completed(
+        self, calculation_type: str, _result: dict[str, Any]
+    ) -> None:
         """处理计算完成信号"""
         logger.info(f"计算完成: {calculation_type}")
 
@@ -360,7 +385,9 @@ class InteractiveExperimentManager(QObject):
 
         return controller
 
-    def get_experiment(self, experiment_id: str) -> InteractiveExperimentController | None:
+    def get_experiment(
+        self, experiment_id: str
+    ) -> InteractiveExperimentController | None:
         """获取实验实例"""
         return self.experiments.get(experiment_id)
 

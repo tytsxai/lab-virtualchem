@@ -91,7 +91,13 @@ class I18n:
             logger.error(f"加载语言文件失败 {lang_file}: {e}")
             return False
 
-    def translate(self, key: str, language: str | None = None, count: int | None = None, **kwargs: Any) -> str:
+    def translate(
+        self,
+        key: str,
+        language: str | None = None,
+        count: int | None = None,
+        **kwargs: Any,
+    ) -> str:
         """翻译文本
 
         Args:
@@ -116,7 +122,9 @@ class I18n:
 
         # 如果在当前语言中找不到，尝试回退语言
         if translation is None and lang != self.fallback_language:
-            translation = self._get_nested_value(self._translations.get(self.fallback_language, {}), key)
+            translation = self._get_nested_value(
+                self._translations.get(self.fallback_language, {}), key
+            )
             if translation is None:
                 self._missing_keys.add(key)
                 logger.warning(f"翻译缺失: {key} (language: {lang})")

@@ -97,14 +97,26 @@ class APIDocumentationGenerator:
                 "title": self.title,
                 "version": self.version,
                 "description": "VirtualChemLab 虚拟化学实验室API文档",
-                "contact": {"name": "VirtualChemLab Team", "email": "support@virtualchemlab.com"},
-                "license": {"name": "MIT", "url": "https://opensource.org/licenses/MIT"},
+                "contact": {
+                    "name": "VirtualChemLab Team",
+                    "email": "support@virtualchemlab.com",
+                },
+                "license": {
+                    "name": "MIT",
+                    "url": "https://opensource.org/licenses/MIT",
+                },
             },
             "servers": [{"url": self.base_url, "description": "开发服务器"}],
             "paths": {},
             "components": {
                 "schemas": {},
-                "securitySchemes": {"BearerAuth": {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"}},
+                "securitySchemes": {
+                    "BearerAuth": {
+                        "type": "http",
+                        "scheme": "bearer",
+                        "bearerFormat": "JWT",
+                    }
+                },
             },
             "security": [{"BearerAuth": []}],
             "tags": [
@@ -131,7 +143,9 @@ class APIDocumentationGenerator:
             }
 
             if endpoint.request_body:
-                openapi_spec["paths"][endpoint.path][endpoint.method.lower()]["requestBody"] = endpoint.request_body
+                openapi_spec["paths"][endpoint.path][endpoint.method.lower()][
+                    "requestBody"
+                ] = endpoint.request_body
 
         # 添加模式
         for name, schema in self.schemas.items():
@@ -214,14 +228,19 @@ Authorization: Bearer <your-jwt-token>
                     md_content += "**请求体**:\n\n"
                     md_content += "```json\n"
                     md_content += json.dumps(
-                        endpoint.request_body.get("content", {}).get("application/json", {}).get("schema", {}), indent=2
+                        endpoint.request_body.get("content", {})
+                        .get("application/json", {})
+                        .get("schema", {}),
+                        indent=2,
                     )
                     md_content += "\n```\n\n"
 
                 if endpoint.responses:
                     md_content += "**响应**:\n\n"
                     for status_code, response in endpoint.responses.items():
-                        md_content += f"- **{status_code}**: {response.get('description', '')}\n"
+                        md_content += (
+                            f"- **{status_code}**: {response.get('description', '')}\n"
+                        )
 
                     md_content += "\n"
 
@@ -472,7 +491,9 @@ curl -X GET "http://localhost:8000/api/experiments" \\
                 </div>
                 """
 
-        return html_template.format(title=self.title, version=self.version, content=content)
+        return html_template.format(
+            title=self.title, version=self.version, content=content
+        )
 
     def save_html_docs(self, file_path: str) -> None:
         """保存HTML文档到文件
@@ -513,20 +534,34 @@ class APIDocBuilder:
                 summary="获取实验列表",
                 description="获取所有实验的列表，支持分页和过滤",
                 parameters=[
-                    {"name": "page", "in": "query", "schema": {"type": "integer", "default": 1}, "description": "页码"},
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {"type": "integer", "default": 1},
+                        "description": "页码",
+                    },
                     {
                         "name": "size",
                         "in": "query",
                         "schema": {"type": "integer", "default": 10},
                         "description": "每页大小",
                     },
-                    {"name": "level", "in": "query", "schema": {"type": "string"}, "description": "难度等级过滤"},
+                    {
+                        "name": "level",
+                        "in": "query",
+                        "schema": {"type": "string"},
+                        "description": "难度等级过滤",
+                    },
                 ],
                 responses={
                     "200": {
                         "description": "成功获取实验列表",
                         "content": {
-                            "application/json": {"schema": {"$ref": "#/components/schemas/ExperimentListResponse"}}
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ExperimentListResponse"
+                                }
+                            }
                         },
                     }
                 },
@@ -542,14 +577,22 @@ class APIDocBuilder:
                 description="创建一个新的实验",
                 request_body={
                     "content": {
-                        "application/json": {"schema": {"$ref": "#/components/schemas/CreateExperimentRequest"}}
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateExperimentRequest"
+                            }
+                        }
                     }
                 },
                 responses={
                     "201": {
                         "description": "实验创建成功",
                         "content": {
-                            "application/json": {"schema": {"$ref": "#/components/schemas/ExperimentResponse"}}
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ExperimentResponse"
+                                }
+                            }
                         },
                     },
                     "400": {"description": "请求参数错误"},
@@ -578,7 +621,11 @@ class APIDocBuilder:
                     "200": {
                         "description": "成功获取实验详情",
                         "content": {
-                            "application/json": {"schema": {"$ref": "#/components/schemas/ExperimentResponse"}}
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ExperimentResponse"
+                                }
+                            }
                         },
                     },
                     "404": {"description": "实验未找到"},
@@ -597,7 +644,13 @@ class APIDocBuilder:
                 responses={
                     "200": {
                         "description": "成功获取用户列表",
-                        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/UserListResponse"}}},
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserListResponse"
+                                }
+                            }
+                        },
                     }
                 },
                 tags=["users"],
@@ -614,7 +667,13 @@ class APIDocBuilder:
                 responses={
                     "200": {
                         "description": "系统健康",
-                        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/HealthResponse"}}},
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HealthResponse"
+                                }
+                            }
+                        },
                     }
                 },
                 tags=["system"],
@@ -636,8 +695,16 @@ class APIDocBuilder:
                     "description": {"type": "string", "description": "实验描述"},
                     "level": {"type": "string", "description": "难度等级"},
                     "status": {"type": "string", "description": "实验状态"},
-                    "created_at": {"type": "string", "format": "date-time", "description": "创建时间"},
-                    "updated_at": {"type": "string", "format": "date-time", "description": "更新时间"},
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "创建时间",
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "更新时间",
+                    },
                 },
                 required=["id", "name", "level"],
                 example={
@@ -709,9 +776,17 @@ class APIDocBuilder:
                 properties={
                     "id": {"type": "string", "description": "用户ID"},
                     "username": {"type": "string", "description": "用户名"},
-                    "email": {"type": "string", "format": "email", "description": "邮箱"},
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "description": "邮箱",
+                    },
                     "role": {"type": "string", "description": "用户角色"},
-                    "created_at": {"type": "string", "format": "date-time", "description": "创建时间"},
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "创建时间",
+                    },
                 },
                 required=["id", "username", "email"],
                 example={
@@ -733,7 +808,11 @@ class APIDocBuilder:
                 description="健康检查响应",
                 properties={
                     "status": {"type": "string", "description": "系统状态"},
-                    "timestamp": {"type": "string", "format": "date-time", "description": "检查时间"},
+                    "timestamp": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "检查时间",
+                    },
                     "version": {"type": "string", "description": "系统版本"},
                     "services": {"type": "object", "description": "服务状态"},
                 },
@@ -741,7 +820,11 @@ class APIDocBuilder:
                     "status": "healthy",
                     "timestamp": "2024-01-01T00:00:00Z",
                     "version": APP_VERSION,
-                    "services": {"database": "healthy", "cache": "healthy", "queue": "healthy"},
+                    "services": {
+                        "database": "healthy",
+                        "cache": "healthy",
+                        "queue": "healthy",
+                    },
                 },
             ),
         )

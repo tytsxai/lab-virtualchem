@@ -316,7 +316,9 @@ class Molecule3DViewer:
         self.viewer.show()
         logger.debug("渲染完成")
 
-    def export_png(self, output_path: Path, _width: int = 1200, _height: int = 900) -> bool:
+    def export_png(
+        self, output_path: Path, _width: int = 1200, _height: int = 900
+    ) -> bool:
         """导出PNG图像
 
         Args:
@@ -357,7 +359,10 @@ class Molecule3DViewer:
 
 # 便捷函数
 def quick_view(
-    compound_name: str, style: str = "ball_stick", spin: bool = True, surface: bool = False
+    compound_name: str,
+    style: str = "ball_stick",
+    spin: bool = True,
+    surface: bool = False,
 ) -> Molecule3DViewer:
     """快速查看分子
 
@@ -391,7 +396,9 @@ def quick_view(
     return viewer
 
 
-def compare_molecules(molecules: list[str], style: str = "ball_stick") -> list[Molecule3DViewer]:
+def compare_molecules(
+    molecules: list[str], style: str = "ball_stick"
+) -> list[Molecule3DViewer]:
     """对比查看多个分子
 
     Args:

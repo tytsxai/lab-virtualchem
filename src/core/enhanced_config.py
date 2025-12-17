@@ -145,23 +145,37 @@ class EnhancedConfig:
         if "performance" in data:
             perf_data = data["performance"]
             config.performance.enabled = perf_data.get("enabled", True)
-            config.performance.update_interval_ms = perf_data.get("update_interval_ms", 1000)
+            config.performance.update_interval_ms = perf_data.get(
+                "update_interval_ms", 1000
+            )
             config.performance.max_history_size = perf_data.get("max_history_size", 300)
-            config.performance.adaptive_sampling = perf_data.get("adaptive_sampling", True)
+            config.performance.adaptive_sampling = perf_data.get(
+                "adaptive_sampling", True
+            )
             config.performance.gpu_monitoring = perf_data.get("gpu_monitoring", True)
-            config.performance.network_monitoring = perf_data.get("network_monitoring", True)
+            config.performance.network_monitoring = perf_data.get(
+                "network_monitoring", True
+            )
             config.performance.disk_monitoring = perf_data.get("disk_monitoring", True)
-            config.performance.thresholds = perf_data.get("thresholds", config.performance.thresholds)
+            config.performance.thresholds = perf_data.get(
+                "thresholds", config.performance.thresholds
+            )
 
         # 错误处理配置
         if "error_handling" in data:
             error_data = data["error_handling"]
             config.error_handling.enabled = error_data.get("enabled", True)
-            config.error_handling.global_handler = error_data.get("global_handler", True)
+            config.error_handling.global_handler = error_data.get(
+                "global_handler", True
+            )
             config.error_handling.log_errors = error_data.get("log_errors", True)
-            config.error_handling.show_user_notifications = error_data.get("show_user_notifications", True)
+            config.error_handling.show_user_notifications = error_data.get(
+                "show_user_notifications", True
+            )
             config.error_handling.auto_recovery = error_data.get("auto_recovery", True)
-            config.error_handling.thresholds = error_data.get("thresholds", config.error_handling.thresholds)
+            config.error_handling.thresholds = error_data.get(
+                "thresholds", config.error_handling.thresholds
+            )
 
         # 教程配置
         if "tutorial" in data:
@@ -169,11 +183,21 @@ class EnhancedConfig:
             config.tutorial.enabled = tutorial_data.get("enabled", True)
             config.tutorial.auto_start = tutorial_data.get("auto_start", False)
             config.tutorial.progress_saving = tutorial_data.get("progress_saving", True)
-            config.tutorial.personalized_content = tutorial_data.get("personalized_content", True)
-            config.tutorial.difficulty_adaptation = tutorial_data.get("difficulty_adaptation", True)
-            config.tutorial.progress_file = tutorial_data.get("progress_file", "data/tutorial_progress.json")
-            config.tutorial.default_difficulty = tutorial_data.get("default_difficulty", "medium")
-            config.tutorial.default_learning_style = tutorial_data.get("default_learning_style", "visual")
+            config.tutorial.personalized_content = tutorial_data.get(
+                "personalized_content", True
+            )
+            config.tutorial.difficulty_adaptation = tutorial_data.get(
+                "difficulty_adaptation", True
+            )
+            config.tutorial.progress_file = tutorial_data.get(
+                "progress_file", "data/tutorial_progress.json"
+            )
+            config.tutorial.default_difficulty = tutorial_data.get(
+                "default_difficulty", "medium"
+            )
+            config.tutorial.default_learning_style = tutorial_data.get(
+                "default_learning_style", "visual"
+            )
 
         # 帮助系统配置
         if "help_system" in data:
@@ -181,7 +205,9 @@ class EnhancedConfig:
             config.help_system.enabled = help_data.get("enabled", True)
             config.help_system.search_enabled = help_data.get("search_enabled", True)
             config.help_system.fuzzy_search = help_data.get("fuzzy_search", True)
-            config.help_system.multimedia_support = help_data.get("multimedia_support", True)
+            config.help_system.multimedia_support = help_data.get(
+                "multimedia_support", True
+            )
             config.help_system.offline_mode = help_data.get("offline_mode", True)
             config.help_system.cache_enabled = help_data.get("cache_enabled", True)
             config.help_system.cache_size_mb = help_data.get("cache_size_mb", 50)

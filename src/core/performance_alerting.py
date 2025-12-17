@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class AlertSeverity(Enum):
     """告警严重程度"""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -30,6 +31,7 @@ class AlertSeverity(Enum):
 
 class AlertState(Enum):
     """告警状态"""
+
     ACTIVE = "active"
     ACKNOWLEDGED = "acknowledged"
     RESOLVED = "resolved"
@@ -39,6 +41,7 @@ class AlertState(Enum):
 @dataclass
 class AlertRule:
     """告警规则"""
+
     name: str
     metric_name: str
     threshold: float
@@ -54,6 +57,7 @@ class AlertRule:
 @dataclass
 class Alert:
     """告警对象"""
+
     rule_name: str
     metric_name: str
     current_value: float
@@ -81,13 +85,14 @@ class Alert:
             "acknowledged_at": self.acknowledged_at,
             "resolved_at": self.resolved_at,
             "description": self.description,
-            "tags": self.tags
+            "tags": self.tags,
         }
 
 
 @dataclass
 class AlertAction:
     """告警动作"""
+
     name: str
     action_type: str  # "notification", "auto_fix", "escalation"
     action_function: Callable[[Alert], None]
@@ -113,7 +118,7 @@ class PerformanceAlerting:
             "active_alerts": 0,
             "resolved_alerts": 0,
             "suppressed_alerts": 0,
-            "actions_triggered": 0
+            "actions_triggered": 0,
         }
 
         # 初始化默认规则
@@ -125,74 +130,91 @@ class PerformanceAlerting:
     def _setup_default_rules(self) -> None:
         """设置默认告警规则"""
         # CPU使用率告警
-        self.add_rule(AlertRule(
-            name="high_cpu_usage",
-            metric_name=MetricType.CPU_USAGE.value,
-            threshold=80.0,
-            comparison="gt",
-            severity=AlertSeverity.WARNING,
-            duration=30.0,
-            description="CPU使用率过高"
-        ))
+        self.add_rule(
+            AlertRule(
+                name="high_cpu_usage",
+                metric_name=MetricType.CPU_USAGE.value,
+                threshold=80.0,
+                comparison="gt",
+                severity=AlertSeverity.WARNING,
+                duration=30.0,
+                description="CPU使用率过高",
+            )
+        )
 
         # 内存使用率告警
-        self.add_rule(AlertRule(
-            name="high_memory_usage",
-            metric_name=MetricType.MEMORY_USAGE.value,
-            threshold=85.0,
-            comparison="gt",
-            severity=AlertSeverity.WARNING,
-            duration=60.0,
-            description="内存使用率过高"
-        ))
+        self.add_rule(
+            AlertRule(
+                name="high_memory_usage",
+                metric_name=MetricType.MEMORY_USAGE.value,
+                threshold=85.0,
+                comparison="gt",
+                severity=AlertSeverity.WARNING,
+                duration=60.0,
+                description="内存使用率过高",
+            )
+        )
 
         # 帧率告警
-        self.add_rule(AlertRule(
-            name="low_fps",
-            metric_name=MetricType.FPS.value,
-            threshold=30.0,
-            comparison="lt",
-            severity=AlertSeverity.ERROR,
-            duration=10.0,
-            description="帧率过低"
-        ))
+        self.add_rule(
+            AlertRule(
+                name="low_fps",
+                metric_name=MetricType.FPS.value,
+                threshold=30.0,
+                comparison="lt",
+                severity=AlertSeverity.ERROR,
+                duration=10.0,
+                description="帧率过低",
+            )
+        )
 
         # 磁盘使用率告警
-        self.add_rule(AlertRule(
-            name="high_disk_usage",
-            metric_name=MetricType.DISK_USAGE.value,
-            threshold=90.0,
-            comparison="gt",
-            severity=AlertSeverity.CRITICAL,
-            duration=0.0,
-            description="磁盘使用率过高"
-        ))
+        self.add_rule(
+            AlertRule(
+                name="high_disk_usage",
+                metric_name=MetricType.DISK_USAGE.value,
+                threshold=90.0,
+                comparison="gt",
+                severity=AlertSeverity.CRITICAL,
+                duration=0.0,
+                description="磁盘使用率过高",
+            )
+        )
 
     def _setup_default_actions(self) -> None:
         """设置默认告警动作"""
         # 通知动作
-        self.add_action(AlertAction(
-            name="notify_user",
-            action_type="notification",
-            action_function=self._notify_user,
-            conditions={"severity": ["warning", "error", "critical"]}
-        ))
+        self.add_action(
+            AlertAction(
+                name="notify_user",
+                action_type="notification",
+                action_function=self._notify_user,
+                conditions={"severity": ["warning", "error", "critical"]},
+            )
+        )
 
         # 自动修复动作
-        self.add_action(AlertAction(
-            name="auto_optimize",
-            action_type="auto_fix",
-            action_function=self._auto_optimize,
-            conditions={"severity": ["warning"], "metric_name": ["cpu_usage", "memory_usage"]}
-        ))
+        self.add_action(
+            AlertAction(
+                name="auto_optimize",
+                action_type="auto_fix",
+                action_function=self._auto_optimize,
+                conditions={
+                    "severity": ["warning"],
+                    "metric_name": ["cpu_usage", "memory_usage"],
+                },
+            )
+        )
 
         # 升级动作
-        self.add_action(AlertAction(
-            name="escalate_critical",
-            action_type="escalation",
-            action_function=self._escalate_critical,
-            conditions={"severity": ["critical"]}
-        ))
+        self.add_action(
+            AlertAction(
+                name="escalate_critical",
+                action_type="escalation",
+                action_function=self._escalate_critical,
+                conditions={"severity": ["critical"]},
+            )
+        )
 
     def add_rule(self, rule: AlertRule) -> None:
         """添加告警规则"""
@@ -251,7 +273,7 @@ class PerformanceAlerting:
                         threshold=rule.threshold,
                         severity=rule.severity,
                         description=rule.description,
-                        tags=rule.tags
+                        tags=rule.tags,
                     )
 
                     # 检查是否已存在相同告警
@@ -298,9 +320,13 @@ class PerformanceAlerting:
         self._trigger_actions(alert)
 
         # 发布事件
-        publish_event("performance_alert_activated", alert.to_dict(), priority=EventPriority.HIGH)
+        publish_event(
+            "performance_alert_activated", alert.to_dict(), priority=EventPriority.HIGH
+        )
 
-        logger.warning(f"Performance alert activated: {alert.rule_name} - {alert.description}")
+        logger.warning(
+            f"Performance alert activated: {alert.rule_name} - {alert.description}"
+        )
 
     def _resolve_alert(self, alert: Alert) -> None:
         """解决告警"""
@@ -311,7 +337,9 @@ class PerformanceAlerting:
         self._stats["resolved_alerts"] += 1
 
         # 发布事件
-        publish_event("performance_alert_resolved", alert.to_dict(), priority=EventPriority.NORMAL)
+        publish_event(
+            "performance_alert_resolved", alert.to_dict(), priority=EventPriority.NORMAL
+        )
 
         logger.info(f"Performance alert resolved: {alert.rule_name}")
 
@@ -430,12 +458,14 @@ class PerformanceAlerting:
             if alert.metric_name == MetricType.CPU_USAGE.value:
                 # CPU优化
                 import gc
+
                 gc.collect()
                 logger.info("Performed CPU optimization")
 
             elif alert.metric_name == MetricType.MEMORY_USAGE.value:
                 # 内存优化
                 import gc
+
                 gc.collect()
                 logger.info("Performed memory optimization")
 
@@ -446,7 +476,11 @@ class PerformanceAlerting:
         """升级严重告警"""
         try:
             # 发布严重告警事件
-            publish_event("critical_performance_alert", alert.to_dict(), priority=EventPriority.CRITICAL)
+            publish_event(
+                "critical_performance_alert",
+                alert.to_dict(),
+                priority=EventPriority.CRITICAL,
+            )
 
             # 记录到日志
             logger.critical(f"Critical performance alert escalated: {alert.rule_name}")
@@ -457,8 +491,11 @@ class PerformanceAlerting:
     def get_active_alerts(self) -> dict[str, Alert]:
         """获取活跃告警"""
         with self._lock:
-            return {name: alert for name, alert in self._active_alerts.items()
-                   if alert.state == AlertState.ACTIVE}
+            return {
+                name: alert
+                for name, alert in self._active_alerts.items()
+                if alert.state == AlertState.ACTIVE
+            }
 
     def get_alert_history(self, limit: int | None = None) -> list[Alert]:
         """获取告警历史"""
@@ -480,7 +517,7 @@ class PerformanceAlerting:
                 "active_alerts": 0,
                 "resolved_alerts": 0,
                 "suppressed_alerts": 0,
-                "actions_triggered": 0
+                "actions_triggered": 0,
             }
 
     def get_rule_count(self) -> int:

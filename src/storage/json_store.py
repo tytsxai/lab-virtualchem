@@ -110,7 +110,9 @@ class JSONStore:
             "backup_operations": 0,
         }
 
-        logger.info(f"JSON存储系统初始化完成，目录: {self.base_dir}, 模式: {storage_mode.value}")
+        logger.info(
+            f"JSON存储系统初始化完成，目录: {self.base_dir}, 模式: {storage_mode.value}"
+        )
 
     # ------------------------------------------------------------------
     # IStorage 兼容接口
@@ -121,7 +123,11 @@ class JSONStore:
         try:
             filepath = self._resolve_key_path(key)
             serialized = self._serialize_value(value)
-            payload = {"data": serialized, "metadata": metadata or {}, "saved_at": datetime.utcnow().isoformat()}
+            payload = {
+                "data": serialized,
+                "metadata": metadata or {},
+                "saved_at": datetime.utcnow().isoformat(),
+            }
 
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(payload, f, ensure_ascii=False, indent=2)
@@ -151,7 +157,11 @@ class JSONStore:
             with open(filepath, encoding="utf-8") as f:
                 payload = json.load(f)
 
-            data = payload["data"] if isinstance(payload, dict) and "data" in payload else payload
+            data = (
+                payload["data"]
+                if isinstance(payload, dict) and "data" in payload
+                else payload
+            )
             self._cache_data(cache_key, data)
             return data
         except Exception as e:  # noqa: BLE001
@@ -224,7 +234,9 @@ class JSONStore:
         if not self._cache_access_times:
             return
 
-        oldest_key = min(self._cache_access_times.keys(), key=lambda k: self._cache_access_times[k])
+        oldest_key = min(
+            self._cache_access_times.keys(), key=lambda k: self._cache_access_times[k]
+        )
 
         if oldest_key in self._cache:
             del self._cache[oldest_key]
@@ -281,7 +293,9 @@ class JSONStore:
             filepath.parent.mkdir(parents=True, exist_ok=True)
         return filepath
 
-    def _collect_keys(self, base_dir: Path, prefix: str | None, key_prefix: str = "") -> list[str]:
+    def _collect_keys(
+        self, base_dir: Path, prefix: str | None, key_prefix: str = ""
+    ) -> list[str]:
         trimmed_prefix = (prefix or "").strip().strip("/")
         keys: list[str] = []
         if not base_dir.exists():
@@ -289,10 +303,16 @@ class JSONStore:
 
         for file_path in self._iter_json_files(base_dir):
             relative = file_path.relative_to(base_dir).as_posix()
-            key_without_suffix = relative[:-5] if relative.endswith(".json") else relative
+            key_without_suffix = (
+                relative[:-5] if relative.endswith(".json") else relative
+            )
             if trimmed_prefix and not key_without_suffix.startswith(trimmed_prefix):
                 continue
-            keys.append(f"{key_prefix}{key_without_suffix}" if key_prefix else key_without_suffix)
+            keys.append(
+                f"{key_prefix}{key_without_suffix}"
+                if key_prefix
+                else key_without_suffix
+            )
 
         keys.sort()
         return keys
@@ -320,7 +340,9 @@ class JSONStore:
             return self._serialize_value(value.__dict__)
         raise TypeError(f"无法序列化的类型: {type(value).__name__}")
 
-    def _verify_data_integrity(self, data: dict[str, Any], record_info: dict[str, Any]) -> bool:
+    def _verify_data_integrity(
+        self, data: dict[str, Any], record_info: dict[str, Any]
+    ) -> bool:
         """验证数据完整性"""
         if self.integrity_level == DataIntegrityLevel.NONE:
             return True
@@ -330,13 +352,23 @@ class JSONStore:
         try:
             if self.integrity_level == DataIntegrityLevel.BASIC:
                 # 基础检查：验证必要字段
-                required_fields = ["record_id", "user_id", "experiment_id", "started_at"]
+                required_fields = [
+                    "record_id",
+                    "user_id",
+                    "experiment_id",
+                    "started_at",
+                ]
                 return all(field in data for field in required_fields)
 
             elif self.integrity_level == DataIntegrityLevel.STRONG:
                 # 强检查：验证字段类型和值
                 # 基础字段检查
-                required_fields = ["record_id", "user_id", "experiment_id", "started_at"]
+                required_fields = [
+                    "record_id",
+                    "user_id",
+                    "experiment_id",
+                    "started_at",
+                ]
                 if not all(field in data for field in required_fields):
                     return False
 
@@ -425,7 +457,9 @@ class JSONStore:
 
                 for record in index_data.get("records", []):
                     try:
-                        started_at = datetime.fromisoformat(record.get("started_at", ""))
+                        started_at = datetime.fromisoformat(
+                            record.get("started_at", "")
+                        )
                         if started_at < cutoff_date:
                             records_to_clean.append(record)
                         else:
@@ -440,7 +474,9 @@ class JSONStore:
                         filepath = user_dir / record["filename"]
                         if filepath.exists():
                             # 移动到归档目录
-                            archive_path = self.archive_dir / f"{user_id}_{record['filename']}"
+                            archive_path = (
+                                self.archive_dir / f"{user_id}_{record['filename']}"
+                            )
                             shutil.move(str(filepath), str(archive_path))
                             cleaned_count += 1
                     except Exception as e:
@@ -572,7 +608,9 @@ class JSONStore:
             # 先写入临时文件
             try:
                 with open(temp_filepath, "w", encoding="utf-8") as f:
-                    json.dump(record.model_dump(mode="json"), f, ensure_ascii=False, indent=2)
+                    json.dump(
+                        record.model_dump(mode="json"), f, ensure_ascii=False, indent=2
+                    )
             except Exception as e:
                 logger.error(f"写入临时文件失败: {e}")
                 if temp_filepath.exists():
@@ -581,7 +619,10 @@ class JSONStore:
 
             # 备份旧文件(如果存在)
             if filepath.exists():
-                backup_path = self.backup_dir / f"{filepath.stem}_{datetime.now().strftime('%Y%m%d%H%M%S')}.json"
+                backup_path = (
+                    self.backup_dir
+                    / f"{filepath.stem}_{datetime.now().strftime('%Y%m%d%H%M%S')}.json"
+                )
                 try:
                     shutil.copy2(filepath, backup_path)
                     logger.debug(f"已备份旧文件: {backup_path}")
@@ -611,9 +652,13 @@ class JSONStore:
             index_entry = {
                 "record_id": record.record_id,
                 "experiment_id": record.experiment_id,
-                "experiment_title": getattr(record, "experiment_title", record.experiment_id),
+                "experiment_title": getattr(
+                    record, "experiment_title", record.experiment_id
+                ),
                 "started_at": record.started_at.isoformat(),
-                "finished_at": record.completed_at.isoformat() if record.completed_at else None,
+                "finished_at": record.completed_at.isoformat()
+                if record.completed_at
+                else None,
                 "final_score": record.score.total,
                 "status": record.status,
                 "filename": filename,
@@ -627,12 +672,16 @@ class JSONStore:
                 index_data["records"].append(index_entry)
 
             # 按时间倒序排序
-            index_data["records"].sort(key=lambda x: x.get("started_at", ""), reverse=True)
+            index_data["records"].sort(
+                key=lambda x: x.get("started_at", ""), reverse=True
+            )
 
             # 保存索引
             self._save_index(record.user_id, index_data)
 
-            logger.info(f"记录保存成功: {record.record_id} (用户: {record.user_id}, 状态: {record.status})")
+            logger.info(
+                f"记录保存成功: {record.record_id} (用户: {record.user_id}, 状态: {record.status})"
+            )
             return True
 
     def load_record(self, user_id: str, record_id: str) -> UserRecord | None:
@@ -679,7 +728,10 @@ class JSONStore:
             return None
 
     def list_records(
-        self, user_id: str | None = None, experiment_id: str | None = None, limit: int | None = None
+        self,
+        user_id: str | None = None,
+        experiment_id: str | None = None,
+        limit: int | None = None,
     ) -> list[dict[str, Any]]:
         """列出记录
 
@@ -714,7 +766,9 @@ class JSONStore:
 
             # 筛选实验
             if experiment_id:
-                all_records = [r for r in all_records if r.get("experiment_id") == experiment_id]
+                all_records = [
+                    r for r in all_records if r.get("experiment_id") == experiment_id
+                ]
 
             # 按时间排序
             all_records.sort(key=lambda x: x.get("started_at", ""), reverse=True)
@@ -743,7 +797,9 @@ class JSONStore:
         Returns:
             记录索引条目列表
         """
-        return self.list_records(user_id=user_id, experiment_id=experiment_id, limit=limit)
+        return self.list_records(
+            user_id=user_id, experiment_id=experiment_id, limit=limit
+        )
 
     def delete_record(self, user_id: str, record_id: str) -> bool:
         """删除记录
@@ -787,7 +843,9 @@ class JSONStore:
             logger.error(f"删除记录失败: {e}")
             return False
 
-    def search_records(self, query: str, user_id: str | None = None) -> list[dict[str, Any]]:
+    def search_records(
+        self, query: str, user_id: str | None = None
+    ) -> list[dict[str, Any]]:
         """搜索记录
 
         Args:
@@ -875,7 +933,7 @@ class JSONStore:
             # 尝试从用户数据目录读取配置
             config_file = Path(self.base_dir) / "config.json"
             if config_file.exists():
-                with open(config_file, encoding='utf-8') as f:
+                with open(config_file, encoding="utf-8") as f:
                     config = json.load(f)
                     return config.get(key, default)
         except Exception as e:
@@ -898,14 +956,14 @@ class JSONStore:
             # 读取现有配置
             config = {}
             if config_file.exists():
-                with open(config_file, encoding='utf-8') as f:
+                with open(config_file, encoding="utf-8") as f:
                     config = json.load(f)
 
             # 更新配置
             config[key] = value
 
             # 保存配置
-            with open(config_file, 'w', encoding='utf-8') as f:
+            with open(config_file, "w", encoding="utf-8") as f:
                 json.dump(config, f, ensure_ascii=False, indent=2)
 
         except Exception as e:

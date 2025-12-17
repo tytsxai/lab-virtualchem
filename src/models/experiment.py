@@ -39,10 +39,14 @@ class InputSpec(BaseModel):
 
     key: str = Field(..., description="变量名")
     label: str = Field(..., description="显示标签")
-    input_type: str = Field(default="float", description="输入类型: int/float/string/list")
+    input_type: str = Field(
+        default="float", description="输入类型: int/float/string/list"
+    )
     range: list[float] | None = Field(default=None, description="有效范围 [min, max]")
     unit: str | None = Field(default=None, description="单位")
-    options: list[dict[str, Any]] | None = Field(default=None, description="选项列表(用于select)")
+    options: list[dict[str, Any]] | None = Field(
+        default=None, description="选项列表(用于select)"
+    )
     multi_select: bool = Field(default=False, description="是否允许多选(用于select)")
 
     @field_validator("input_type")
@@ -60,15 +64,25 @@ class CheckPoint(BaseModel):
 
     type: CheckType = Field(..., description="检查点类型")
     fail_hint: str = Field(default="", description="失败提示")
-    input: InputSpec | None = Field(default=None, description="输入规范(用于input/select)")
-    require: list[str] | None = Field(default=None, description="前置步骤ID列表(用于sequence)")
+    input: InputSpec | None = Field(
+        default=None, description="输入规范(用于input/select)"
+    )
+    require: list[str] | None = Field(
+        default=None, description="前置步骤ID列表(用于sequence)"
+    )
     correct_value: Any | None = Field(default=None, description="正确答案(用于验证)")
-    expression: str | None = Field(default=None, description="表达式(用于expression类型)")
-    interactive_check: dict[str, Any] | None = Field(default=None, description="交互式检查配置")
+    expression: str | None = Field(
+        default=None, description="表达式(用于expression类型)"
+    )
+    interactive_check: dict[str, Any] | None = Field(
+        default=None, description="交互式检查配置"
+    )
 
     @field_validator("input")
     @classmethod
-    def validate_input_for_type(cls, v: InputSpec | None, info: Any) -> InputSpec | None:
+    def validate_input_for_type(
+        cls, v: InputSpec | None, info: Any
+    ) -> InputSpec | None:
         """验证输入规范与类型匹配"""
         check_type = info.data.get("type")
         if check_type in [CheckType.INPUT, CheckType.SELECT] and v is None:
@@ -77,7 +91,9 @@ class CheckPoint(BaseModel):
 
     @field_validator("require")
     @classmethod
-    def validate_require_for_sequence(cls, v: list[str] | None, info: Any) -> list[str] | None:
+    def validate_require_for_sequence(
+        cls, v: list[str] | None, info: Any
+    ) -> list[str] | None:
         """验证依赖关系"""
         check_type = info.data.get("type")
         if check_type == CheckType.SEQUENCE and (v is None or len(v) == 0):
@@ -97,10 +113,14 @@ class Step(BaseModel):
 
     id: str = Field(..., description="步骤唯一标识符")
     text: str = Field(..., description="步骤描述")
-    media: dict[str, str] | None = Field(default=None, description="媒体资源: image/video路径")
+    media: dict[str, str] | None = Field(
+        default=None, description="媒体资源: image/video路径"
+    )
     check: CheckPoint | None = Field(default=None, description="检查点")
     hints: list[Hint] = Field(default_factory=list, description="提示列表")
-    safety_level: str = Field(default="info", description="安全等级: info/warning/severe/critical")
+    safety_level: str = Field(
+        default="info", description="安全等级: info/warning/severe/critical"
+    )
 
     @field_validator("id")
     @classmethod
@@ -163,25 +183,33 @@ class ExperimentTemplate(BaseModel):
     model_config = ConfigDict(validate_assignment=True, extra="allow")
     allow_empty_steps: ClassVar[bool] = False
 
-    id: str = Field(default_factory=lambda: f"exp_{uuid4().hex[:8]}", description="实验唯一标识符")
+    id: str = Field(
+        default_factory=lambda: f"exp_{uuid4().hex[:8]}", description="实验唯一标识符"
+    )
     title: str = Field(default="实验", description="实验名称")
     title_en: str | None = Field(default=None, description="英文名称")
     description: str = Field(default="", description="实验描述")
     category: str = Field(default="", description="实验分类")
     experiment_type: str = Field(default="general", description="实验类型")
-    level: str = Field(default="basic", description="难度等级: basic/intermediate/advanced")
+    level: str = Field(
+        default="basic", description="难度等级: basic/intermediate/advanced"
+    )
     difficulty: str | None = Field(default=None, description="难度等级(兼容字段)")
     duration_min: int = Field(default=45, description="预计时长(分钟)", gt=0)
     duration_minutes: int | None = Field(default=None, description="预计时长(兼容字段)")
     goals: list[Goal] = Field(default_factory=list, description="实验目标")
     prerequisites: list[str] = Field(default_factory=list, description="前置实验ID")
     reagents: list[Reagent] = Field(default_factory=list, description="试剂列表")
-    steps: list[Step] = Field(default_factory=list, description="实验步骤", min_length=0)
+    steps: list[Step] = Field(
+        default_factory=list, description="实验步骤", min_length=0
+    )
     curves: list[Curve] = Field(default_factory=list, description="曲线配置")
     score_rules: list[ScoreRule] = Field(default_factory=list, description="评分规则")
     version: str = Field(default="1.0.0", description="模板版本")
     # 运行态字段
-    data_points: dict[str, Any] = Field(default_factory=dict, description="实验数据记录")
+    data_points: dict[str, Any] = Field(
+        default_factory=dict, description="实验数据记录"
+    )
     observations: list[str] = Field(default_factory=list, description="观察记录")
     titration_curve: dict[str, list[float]] = Field(
         default_factory=lambda: {"volume": [], "ph": []}, description="滴定曲线数据"
@@ -190,10 +218,16 @@ class ExperimentTemplate(BaseModel):
     start_time: datetime | None = Field(default=None, description="实验开始时间")
     end_time: datetime | None = Field(default=None, description="实验结束时间")
     equipment_checked: bool = Field(default=True, description="是否已完成设备检查")
-    required_protection: set[str] = Field(default_factory=lambda: {"goggles", "gloves", "lab_coat"})
-    protection_worn: set[str] = Field(default_factory=set, description="已佩戴的防护装备")
+    required_protection: set[str] = Field(
+        default_factory=lambda: {"goggles", "gloves", "lab_coat"}
+    )
+    protection_worn: set[str] = Field(
+        default_factory=set, description="已佩戴的防护装备"
+    )
     safety_alerts: list[str] = Field(default_factory=list, description="安全警报")
-    safety_log: list[dict[str, Any]] = Field(default_factory=list, description="安全事件记录")
+    safety_log: list[dict[str, Any]] = Field(
+        default_factory=list, description="安全事件记录"
+    )
     warnings_log: list[str] = Field(default_factory=list, description="警告记录")
     current_temperature: float | None = Field(default=None, description="当前温度")
     heating: bool = Field(default=False, description="是否正在加热")
@@ -268,7 +302,11 @@ class ExperimentTemplate(BaseModel):
         step_ids = {step.id for step in self.steps}
 
         for step in self.steps:
-            if step.check and step.check.type == CheckType.SEQUENCE and step.check.require:
+            if (
+                step.check
+                and step.check.type == CheckType.SEQUENCE
+                and step.check.require
+            ):
                 for required_id in step.check.require:
                     if required_id not in step_ids:
                         errors.append(f"步骤 {step.id} 依赖的步骤 {required_id} 不存在")
@@ -324,7 +362,9 @@ class ExperimentTemplate(BaseModel):
 
     def get_chart_data(self) -> dict[str, list[Any]]:
         """获取图表数据"""
-        numeric_items = [(k, v) for k, v in self.data_points.items() if isinstance(v, (int, float))]
+        numeric_items = [
+            (k, v) for k, v in self.data_points.items() if isinstance(v, (int, float))
+        ]
         labels = [k for k, _ in numeric_items]
         values = [v for _, v in numeric_items]
         return {"labels": labels, "values": values}
@@ -338,7 +378,11 @@ class ExperimentTemplate(BaseModel):
 
     def _calculate_average_volume(self) -> float | None:
         """计算平均体积"""
-        values = [v for k, v in self.data_points.items() if k.lower().startswith("v") and isinstance(v, (int, float))]
+        values = [
+            v
+            for k, v in self.data_points.items()
+            if k.lower().startswith("v") and isinstance(v, (int, float))
+        ]
         if values:
             return statistics.mean(values)
         return None
@@ -351,7 +395,9 @@ class ExperimentTemplate(BaseModel):
             calculations["average_volume"] = avg
         return calculations
 
-    def _filtered_data(self, include_fields: list[str] | None, anonymous: bool) -> dict[str, Any]:
+    def _filtered_data(
+        self, include_fields: list[str] | None, anonymous: bool
+    ) -> dict[str, Any]:
         data = dict(self.data_points)
         if include_fields is not None:
             data = {k: v for k, v in data.items() if k in include_fields}
@@ -396,7 +442,9 @@ class ExperimentTemplate(BaseModel):
                 "conclusion": "实验完成" if self.state == "completed" else "进行中",
             }
             for name in sections_order:
-                sections.append({"name": name, "content": section_content.get(name, {})})
+                sections.append(
+                    {"name": name, "content": section_content.get(name, {})}
+                )
             report["sections"] = sections
 
         if options:
@@ -431,14 +479,17 @@ class ExperimentTemplate(BaseModel):
 
     def _to_html_report(self, report: dict[str, Any]) -> str:
         rows = "".join(
-            f"<tr><td>{k}</td><td>{v}</td></tr>" for k, v in report.get("data", {}).items()
+            f"<tr><td>{k}</td><td>{v}</td></tr>"
+            for k, v in report.get("data", {}).items()
         )
-        observations = "".join(f"<li>{obs}</li>" for obs in report.get("observations", []))
+        observations = "".join(
+            f"<li>{obs}</li>" for obs in report.get("observations", [])
+        )
         return f"""
 <html>
   <body>
-    <h1>{report.get('title', '')} - 实验报告</h1>
-    <p>状态: {report.get('state', '')}</p>
+    <h1>{report.get("title", "")} - 实验报告</h1>
+    <p>状态: {report.get("state", "")}</p>
     <table><thead><tr><th>字段</th><th>值</th></tr></thead><tbody>{rows}</tbody></table>
     <h2>观察</h2>
     <ul>{observations}</ul>
@@ -469,7 +520,9 @@ class ExperimentTemplate(BaseModel):
         # 默认返回JSON
         return json.dumps(report, ensure_ascii=False)
 
-    def save_report(self, output_path: Path | str, format: str = "json", version: int | None = None) -> Path:
+    def save_report(
+        self, output_path: Path | str, format: str = "json", version: int | None = None
+    ) -> Path:
         """保存报告到文件"""
         report = self.generate_report()
         if version is not None:
@@ -477,7 +530,9 @@ class ExperimentTemplate(BaseModel):
         path = Path(output_path)
         path.parent.mkdir(parents=True, exist_ok=True)
         if format.lower() == "json":
-            path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+            path.write_text(
+                json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
         else:
             formatter = {
                 "text": self._to_text_report,
@@ -503,7 +558,9 @@ class ExperimentTemplate(BaseModel):
         return (len(errors) == 0, errors)
 
     # --------- 安全相关方法 ---------
-    def heat(self, temperature: float, duration: int = 0, ventilation: bool = True) -> bool:
+    def heat(
+        self, temperature: float, duration: int = 0, ventilation: bool = True
+    ) -> bool:
         """加热操作"""
         if temperature > 200:
             self._log_safety("温度超出安全阈值", level="error")
@@ -538,7 +595,9 @@ class ExperimentTemplate(BaseModel):
         self.cooling_required = False
         self._log_safety("冷却完成，温度恢复安全范围", level="info")
 
-    def add_reagent(self, name: str, amount: float | None = None, protection: bool = True) -> bool:
+    def add_reagent(
+        self, name: str, amount: float | None = None, protection: bool = True
+    ) -> bool:
         """添加试剂，带简单安全检查"""
         if self.cooling_required:
             self._add_warning("冷却尚未完成，请注意潜在风险")
@@ -546,10 +605,16 @@ class ExperimentTemplate(BaseModel):
         if amount is not None and amount > 300:
             self._log_safety("试剂用量超出安全范围", level="error")
             raise ValueError("试剂用量超出安全范围")
-        incompatible_pairs = {("concentrated_hcl", "concentrated_naoh"), ("hcl", "naoh")}
+        incompatible_pairs = {
+            ("concentrated_hcl", "concentrated_naoh"),
+            ("hcl", "naoh"),
+        }
         normalized = name.lower()
         for added in self.reagents_used:
-            if (normalized, added.lower()) in incompatible_pairs or (added.lower(), normalized) in incompatible_pairs:
+            if (normalized, added.lower()) in incompatible_pairs or (
+                added.lower(),
+                normalized,
+            ) in incompatible_pairs:
                 self._add_warning("试剂兼容性存在风险，请确认操作顺序")
                 warnings.warn("试剂可能不兼容", UserWarning)
         if "h2so4" in (r.lower() for r in self.reagents_used) and normalized == "kmno4":
@@ -711,7 +776,11 @@ class ExperimentTemplate(BaseModel):
     def _log_safety(self, message: str, level: str = "info") -> None:
         """记录安全日志"""
         self.safety_log.append(
-            {"message": message, "level": level, "timestamp": datetime.now().isoformat(timespec="seconds")}
+            {
+                "message": message,
+                "level": level,
+                "timestamp": datetime.now().isoformat(timespec="seconds"),
+            }
         )
 
     def _add_warning(self, message: str) -> None:

@@ -26,7 +26,9 @@ class HazardLevel(str, Enum):
 class Hazard(BaseModel):
     """危害信息"""
 
-    type: str = Field(..., description="危害类型: corrosive/toxic/flammable/reactive/...")
+    type: str = Field(
+        ..., description="危害类型: corrosive/toxic/flammable/reactive/..."
+    )
     level: HazardLevel = Field(..., description="危害等级")
     hint: str = Field(..., description="安全提示")
     emergency: str | None = Field(default=None, description="应急处理")

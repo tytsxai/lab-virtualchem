@@ -87,7 +87,9 @@ class ChemistryAI:
 
 诊断:"""
 
-    def __init__(self, model_name: str = "qwen:7b", knowledge_base_path: Path | None = None):
+    def __init__(
+        self, model_name: str = "qwen:7b", knowledge_base_path: Path | None = None
+    ):
         """初始化AI助手
 
         Args:
@@ -129,14 +131,19 @@ class ChemistryAI:
 
         try:
             # 使用本地嵌入模型
-            embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+            embeddings = HuggingFaceEmbeddings(
+                model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+            )
 
             # 加载或创建向量数据库
             persist_directory = self.knowledge_base_path / "chroma"
 
             if persist_directory.exists():
                 # 加载现有知识库
-                self.vectorstore = Chroma(persist_directory=str(persist_directory), embedding_function=embeddings)
+                self.vectorstore = Chroma(
+                    persist_directory=str(persist_directory),
+                    embedding_function=embeddings,
+                )
                 logger.info("成功加载化学知识库")
             else:
                 logger.info("知识库不存在，将创建新的知识库")
@@ -144,7 +151,10 @@ class ChemistryAI:
 
             # 创建检索问答链
             if self.vectorstore:
-                prompt = PromptTemplate(template=self.CHEMISTRY_PROMPT, input_variables=["context", "question"])
+                prompt = PromptTemplate(
+                    template=self.CHEMISTRY_PROMPT,
+                    input_variables=["context", "question"],
+                )
 
                 self.qa_chain = RetrievalQA.from_chain_type(
                     llm=self.llm,
@@ -168,7 +178,9 @@ class ChemistryAI:
         """
         try:
             # 使用三元运算符简化if-else
-            result = self.qa_chain.run(question) if self.qa_chain else self.llm(question)
+            result = (
+                self.qa_chain.run(question) if self.qa_chain else self.llm(question)
+            )
 
             logger.info(f"问答成功: {question[:50]}...")
             return result
@@ -188,7 +200,9 @@ class ChemistryAI:
             实验指导
         """
         try:
-            prompt = self.EXPERIMENT_PROMPT.format(experiment_name=experiment_name, question=question)
+            prompt = self.EXPERIMENT_PROMPT.format(
+                experiment_name=experiment_name, question=question
+            )
 
             result = self.llm(prompt)
             logger.info(f"实验指导成功: {experiment_name}")
@@ -198,7 +212,9 @@ class ChemistryAI:
             logger.error(f"实验指导失败: {e}")
             return f"抱歉，生成实验指导时出错: {str(e)}"
 
-    def diagnose_error(self, experiment_data: dict[str, Any], problem_description: str) -> str:
+    def diagnose_error(
+        self, experiment_data: dict[str, Any], problem_description: str
+    ) -> str:
         """错误诊断
 
         Args:
@@ -224,7 +240,9 @@ class ChemistryAI:
             logger.error(f"错误诊断失败: {e}")
             return f"抱歉，诊断错误时出错: {str(e)}"
 
-    def suggest_learning_path(self, _student_level: str, _completed_experiments: list[str]) -> str:
+    def suggest_learning_path(
+        self, _student_level: str, _completed_experiments: list[str]
+    ) -> str:
         """学习路径建议
 
         Args:
@@ -285,7 +303,9 @@ class ChemistryAI:
             logger.error(f"概念解释失败: {e}")
             return f"抱歉，解释概念时出错: {str(e)}"
 
-    def add_to_knowledge_base(self, documents: list[str], metadata: list[dict] | None = None) -> bool:
+    def add_to_knowledge_base(
+        self, documents: list[str], metadata: list[dict] | None = None
+    ) -> bool:
         """添加文档到知识库
 
         Args:
@@ -319,7 +339,9 @@ class ChemistryAI:
                 persist_directory.parent.mkdir(parents=True, exist_ok=True)
 
                 self.vectorstore = Chroma.from_documents(
-                    documents=docs, embedding=embeddings, persist_directory=str(persist_directory)
+                    documents=docs,
+                    embedding=embeddings,
+                    persist_directory=str(persist_directory),
                 )
             else:
                 # 添加到现有数据库
@@ -398,7 +420,9 @@ if __name__ == "__main__":
     print("\n" + "=" * 60)
     logger.info("测试2: 实验指导")
     print("=" * 60)
-    guidance = ai.guide_experiment(experiment_name="酸碱滴定", question="滴定时如何准确判断终点?")
+    guidance = ai.guide_experiment(
+        experiment_name="酸碱滴定", question="滴定时如何准确判断终点?"
+    )
     logger.info(f"\n指导:\n{guidance}")
 
     # 测试概念解释

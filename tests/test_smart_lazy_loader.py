@@ -21,18 +21,18 @@ def test_basic_loading():
     loader = SmartLazyLoader(enable_background_loading=False)
 
     # 注册模块
-    loader.register('json')
-    loader.register('time')
-    loader.register('os')
+    loader.register("json")
+    loader.register("time")
+    loader.register("os")
 
     # 加载模块
-    json_module = loader.load('json')
+    json_module = loader.load("json")
     assert json_module is not None
-    assert hasattr(json_module, 'loads')
+    assert hasattr(json_module, "loads")
     print("[OK] 模块加载")
 
     # 检查缓存
-    assert 'json' in loader.get_loaded_modules()
+    assert "json" in loader.get_loaded_modules()
     print("[OK] 模块缓存")
 
 
@@ -43,15 +43,15 @@ def test_dependency_loading():
     loader = SmartLazyLoader(enable_background_loading=False)
 
     # 注册有依赖的模块
-    loader.register('json', priority=1)
-    loader.register('pathlib', priority=2, dependencies=['os'])
+    loader.register("json", priority=1)
+    loader.register("pathlib", priority=2, dependencies=["os"])
 
     # 加载带依赖的模块
-    pathlib_module = loader.load('pathlib')
+    pathlib_module = loader.load("pathlib")
     assert pathlib_module is not None
 
     # 依赖应该也被加载了
-    assert 'os' in loader.get_loaded_modules()
+    assert "os" in loader.get_loaded_modules()
     print("[OK] 依赖自动加载")
 
 
@@ -62,11 +62,11 @@ def test_batch_loading():
     loader = SmartLazyLoader(enable_background_loading=False)
 
     # 注册模块
-    for module_name in ['json', 'time', 'os', 'sys']:
+    for module_name in ["json", "time", "os", "sys"]:
         loader.register(module_name)
 
     # 批量加载
-    modules = loader.load_many(['json', 'time', 'os'])
+    modules = loader.load_many(["json", "time", "os"])
     assert len(modules) == 3
     assert all(m is not None for m in modules.values())
     print("[OK] 批量加载")
@@ -79,10 +79,10 @@ def test_background_loading():
     loader = SmartLazyLoader(enable_background_loading=True)
 
     # 注册模块
-    loader.register('json', priority=10)
-    loader.register('time', priority=9)
-    loader.register('os', priority=8)
-    loader.register('sys', priority=7)
+    loader.register("json", priority=10)
+    loader.register("time", priority=9)
+    loader.register("os", priority=8)
+    loader.register("sys", priority=7)
 
     # 启动后台加载
     loader.start_background_loading()
@@ -107,25 +107,25 @@ def test_statistics():
     loader = SmartLazyLoader(enable_background_loading=False)
 
     # 注册并加载模块
-    loader.register('json')
-    loader.register('time')
-    loader.register('os')
+    loader.register("json")
+    loader.register("time")
+    loader.register("os")
 
-    loader.load('json')
-    loader.load('time')
+    loader.load("json")
+    loader.load("time")
 
     # 获取统计
     stats = loader.get_stats()
-    assert stats['total_registered'] == 3
-    assert stats['total_loaded'] == 2
-    assert stats['avg_load_time_ms'] >= 0
+    assert stats["total_registered"] == 3
+    assert stats["total_loaded"] == 2
+    assert stats["avg_load_time_ms"] >= 0
 
     print(f"[OK] 统计: {stats}")
 
     # 检查未加载的模块
     unloaded = loader.get_unloaded_modules()
-    assert 'os' in unloaded
-    assert 'json' not in unloaded
+    assert "os" in unloaded
+    assert "json" not in unloaded
     print("[OK] 未加载模块列表")
 
 
@@ -136,26 +136,26 @@ def benchmark_loading():
     # 测试正常导入
     start_time = time.time()
     normal_time = time.time() - start_time
-    print(f"  正常导入5个模块: {normal_time*1000:.2f}ms")
+    print(f"  正常导入5个模块: {normal_time * 1000:.2f}ms")
 
     # 测试懒加载（首次加载）
     loader = SmartLazyLoader(enable_background_loading=False)
-    loader.register('json')
-    loader.register('time')
-    loader.register('os')
-    loader.register('sys')
-    loader.register('pathlib')
+    loader.register("json")
+    loader.register("time")
+    loader.register("os")
+    loader.register("sys")
+    loader.register("pathlib")
 
     start_time = time.time()
-    loader.load_many(['json', 'time', 'os', 'sys', 'pathlib'])
+    loader.load_many(["json", "time", "os", "sys", "pathlib"])
     lazy_time = time.time() - start_time
-    print(f"  懒加载5个模块: {lazy_time*1000:.2f}ms")
+    print(f"  懒加载5个模块: {lazy_time * 1000:.2f}ms")
 
     # 测试缓存命中（再次加载）
     start_time = time.time()
-    loader.load_many(['json', 'time', 'os', 'sys', 'pathlib'])
+    loader.load_many(["json", "time", "os", "sys", "pathlib"])
     cached_time = time.time() - start_time
-    print(f"  缓存命中5个模块: {cached_time*1000:.2f}ms")
+    print(f"  缓存命中5个模块: {cached_time * 1000:.2f}ms")
 
     # 统计
     stats = loader.get_stats()
@@ -173,9 +173,9 @@ def test_lazy_import_function():
     print("\n=== 便捷导入函数测试 ===")
 
     # 使用便捷函数
-    json_module = lazy_import('json')
+    json_module = lazy_import("json")
     assert json_module is not None
-    assert hasattr(json_module, 'loads')
+    assert hasattr(json_module, "loads")
     print("[OK] lazy_import函数")
 
 
@@ -210,5 +210,5 @@ def main():
         raise
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

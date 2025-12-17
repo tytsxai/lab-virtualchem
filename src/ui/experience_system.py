@@ -103,7 +103,11 @@ class ExperienceSystem(QObject):
         # 10级以后每5级一个特殊奖励
         for level in range(15, 51, 5):
             rewards[level] = LevelReward(
-                level, f"等级{level}大师", f"达到等级{level}的成就", [f"等级{level}专属功能"], bonus_exp=level * 10
+                level,
+                f"等级{level}大师",
+                f"达到等级{level}的成就",
+                [f"等级{level}专属功能"],
+                bonus_exp=level * 10,
             )
 
         return rewards
@@ -123,7 +127,9 @@ class ExperienceSystem(QObject):
                 with open(file_path, encoding="utf-8") as f:
                     data = json.load(f)
                     progress = UserProgress(**data)
-                    logger.info(f"加载用户 {user_id} 进度: 等级{progress.current_level}, 经验{progress.current_exp}")
+                    logger.info(
+                        f"加载用户 {user_id} 进度: 等级{progress.current_level}, 经验{progress.current_exp}"
+                    )
                     return progress
             except Exception as e:
                 logger.error(f"加载用户进度失败: {e}")
@@ -143,7 +149,9 @@ class ExperienceSystem(QObject):
         except Exception as e:
             logger.error(f"保存用户进度失败: {e}")
 
-    def add_experience(self, user_id: str, exp_points: int, source: str = "实验") -> tuple[bool, str | None]:
+    def add_experience(
+        self, user_id: str, exp_points: int, source: str = "实验"
+    ) -> tuple[bool, str | None]:
         """添加经验值
 
         Args:
@@ -169,10 +177,14 @@ class ExperienceSystem(QObject):
             if leveled_up:
                 progress.current_level = new_level
                 reward = self.rewards.get(new_level)
-                level_info = f"升级到等级{new_level} - {reward.title if reward else '未知'}"
+                level_info = (
+                    f"升级到等级{new_level} - {reward.title if reward else '未知'}"
+                )
 
                 # 发送信号
-                self.level_up.emit(new_level, reward.title if reward else f"等级{new_level}")
+                self.level_up.emit(
+                    new_level, reward.title if reward else f"等级{new_level}"
+                )
                 logger.info(f"用户 {user_id} 升级到等级{new_level}")
             else:
                 level_info = None
@@ -242,7 +254,10 @@ class ExperienceSystem(QObject):
         try:
             progress = self.get_user_progress(user_id)
 
-            if progress.achievements is not None and achievement_id not in progress.achievements:
+            if (
+                progress.achievements is not None
+                and achievement_id not in progress.achievements
+            ):
                 progress.achievements.append(achievement_id)
                 self._save_user_progress(progress)
 

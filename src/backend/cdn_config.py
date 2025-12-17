@@ -285,7 +285,9 @@ class ResourcePreloader:
             res_type = resource["type"]
 
             if res_type == "font":
-                links.append(f'<link rel="preload" href="{url}" as="font" type="font/woff2" crossorigin>')
+                links.append(
+                    f'<link rel="preload" href="{url}" as="font" type="font/woff2" crossorigin>'
+                )
             elif res_type == "image":
                 links.append(f'<link rel="preload" href="{url}" as="image">')
             elif res_type == "script":
@@ -306,7 +308,9 @@ class ResourcePreloader:
         Returns:
             HTML link标签
         """
-        return "\n".join([f'<link rel="dns-prefetch" href="//{domain}">' for domain in domains])
+        return "\n".join(
+            [f'<link rel="dns-prefetch" href="//{domain}">' for domain in domains]
+        )
 
 
 class CDNConfigBuilder:
@@ -342,7 +346,9 @@ class CDNConfigBuilder:
         return CDNConfig(provider="local", base_url=base_url)
 
     @staticmethod
-    def create_cloudflare_config(zone_id: str, api_key: str, base_url: str) -> CDNConfig:
+    def create_cloudflare_config(
+        zone_id: str, api_key: str, base_url: str
+    ) -> CDNConfig:
         """
         创建Cloudflare配置
 
@@ -354,7 +360,9 @@ class CDNConfigBuilder:
         Returns:
             CDN配置
         """
-        return CDNConfig(provider="cloudflare", base_url=base_url, zone_id=zone_id, api_key=api_key)
+        return CDNConfig(
+            provider="cloudflare", base_url=base_url, zone_id=zone_id, api_key=api_key
+        )
 
 
 # 全局CDN管理器

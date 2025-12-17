@@ -109,7 +109,11 @@ class SafeFileIO:
         try:
             # 在同一目录下创建临时文件
             with tempfile.NamedTemporaryFile(
-                mode="w", encoding=encoding, dir=path.parent, delete=False, suffix=".tmp"
+                mode="w",
+                encoding=encoding,
+                dir=path.parent,
+                delete=False,
+                suffix=".tmp",
             ) as f:
                 f.write(content)
                 temp_file = Path(f.name)
@@ -196,7 +200,9 @@ class SafeFileIO:
         """
         try:
             content = json.dumps(data, indent=indent, ensure_ascii=False)
-            return SafeFileIO.write_file(file_path, content, create_dirs=create_dirs, backup=backup)
+            return SafeFileIO.write_file(
+                file_path, content, create_dirs=create_dirs, backup=backup
+            )
         except TypeError as e:
             raise ValueError(f"无法序列化数据为JSON: {e}")
 
@@ -375,7 +381,9 @@ class SafeFileIO:
             except Exception as e:
                 last_error = e
                 if attempt < max_retries - 1:
-                    logger.warning(f"读取文件失败，{retry_delay}秒后重试 (尝试 {attempt + 1}/{max_retries}): {e}")
+                    logger.warning(
+                        f"读取文件失败，{retry_delay}秒后重试 (尝试 {attempt + 1}/{max_retries}): {e}"
+                    )
                     time.sleep(retry_delay)
 
         # 所有重试都失败

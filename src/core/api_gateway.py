@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 class HttpMethod(Enum):
     """HTTP方法"""
+
     GET = "GET"
     POST = "POST"
     PUT = "PUT"
@@ -37,6 +38,7 @@ class HttpMethod(Enum):
 
 class ApiResponseStatus(Enum):
     """API响应状态"""
+
     SUCCESS = "success"
     ERROR = "error"
     WARNING = "warning"
@@ -46,6 +48,7 @@ class ApiResponseStatus(Enum):
 @dataclass
 class ApiRequest:
     """API请求"""
+
     method: HttpMethod
     path: str
     headers: dict[str, str] = field(default_factory=dict)
@@ -69,13 +72,14 @@ class ApiRequest:
             "session_id": self.session_id,
             "ip_address": self.ip_address,
             "user_agent": self.user_agent,
-            "timestamp": self.timestamp
+            "timestamp": self.timestamp,
         }
 
 
 @dataclass
 class ApiResponse:
     """API响应"""
+
     status: ApiResponseStatus
     data: Any | None = None
     message: str = ""
@@ -93,13 +97,14 @@ class ApiResponse:
             "error_code": self.error_code,
             "headers": self.headers,
             "status_code": self.status_code,
-            "timestamp": self.timestamp
+            "timestamp": self.timestamp,
         }
 
 
 @dataclass
 class ApiRoute:
     """API路由"""
+
     method: HttpMethod
     path: str
     handler: Callable[[ApiRequest], ApiResponse]
@@ -116,13 +121,14 @@ class ApiRoute:
             "permissions": [p.value for p in self.permissions],
             "rate_limit": self.rate_limit,
             "description": self.description,
-            "tags": self.tags
+            "tags": self.tags,
         }
 
 
 @dataclass
 class ApiStats:
     """API统计"""
+
     total_requests: int = 0
     successful_requests: int = 0
     failed_requests: int = 0
@@ -140,12 +146,15 @@ class ApiStats:
 
         # 更新平均响应时间
         self.average_response_time = (
-            (self.average_response_time * (self.total_requests - 1) + response_time) /
-            self.total_requests
-        )
+            self.average_response_time * (self.total_requests - 1) + response_time
+        ) / self.total_requests
 
         # 更新错误率
-        self.error_rate = self.failed_requests / self.total_requests if self.total_requests > 0 else 0.0
+        self.error_rate = (
+            self.failed_requests / self.total_requests
+            if self.total_requests > 0
+            else 0.0
+        )
 
 
 class ApiHandler(ABC):
@@ -204,7 +213,7 @@ class ApiGateway:
             HttpMethod.GET,
             "/health",
             self._health_check_handler,
-            description="Health check endpoint"
+            description="Health check endpoint",
         )
 
         # API信息
@@ -212,7 +221,7 @@ class ApiGateway:
             HttpMethod.GET,
             "/api/info",
             self._api_info_handler,
-            description="API information"
+            description="API information",
         )
 
         # 统计信息
@@ -221,7 +230,7 @@ class ApiGateway:
             "/api/stats",
             self._api_stats_handler,
             permissions=[Permission.ADMIN],
-            description="API statistics"
+            description="API statistics",
         )
 
         # 路由列表
@@ -230,7 +239,7 @@ class ApiGateway:
             "/api/routes",
             self._routes_list_handler,
             permissions=[Permission.ADMIN],
-            description="List all routes"
+            description="List all routes",
         )
 
     def register_route(
@@ -241,7 +250,7 @@ class ApiGateway:
         permissions: list[Permission] | None = None,
         rate_limit: int | None = None,
         description: str = "",
-        tags: list[str] | None = None
+        tags: list[str] | None = None,
     ) -> None:
         """注册路由"""
         route_key = f"{method.value}:{path}"
@@ -253,7 +262,7 @@ class ApiGateway:
             permissions=permissions or [],
             rate_limit=rate_limit,
             description=description,
-            tags=tags or []
+            tags=tags or [],
         )
 
         with self._lock:
@@ -262,9 +271,7 @@ class ApiGateway:
 
         # 发布路由注册事件
         publish_event(
-            "route_registered",
-            route.to_dict(),
-            priority=EventPriority.NORMAL
+            "route_registered", route.to_dict(), priority=EventPriority.NORMAL
         )
 
         # 记录日志
@@ -272,14 +279,16 @@ class ApiGateway:
             LogLevel.INFO,
             f"Route registered: {route_key}",
             module="ApiGateway",
-            function="register_route"
+            function="register_route",
         )
 
     def add_middleware(self, middleware: Callable[[ApiRequest], ApiRequest]) -> None:
         """添加中间件"""
         self._middleware.append(middleware)
 
-    def add_post_middleware(self, middleware: Callable[[ApiResponse], ApiResponse]) -> None:
+    def add_post_middleware(
+        self, middleware: Callable[[ApiResponse], ApiResponse]
+    ) -> None:
         """添加后置中间件"""
         self._post_middleware.append(middleware)
 
@@ -296,9 +305,7 @@ class ApiGateway:
             route = self._find_route(request.method, request.path)
             if not route:
                 return self._create_error_response(
-                    "Route not found",
-                    status_code=404,
-                    error_code="ROUTE_NOT_FOUND"
+                    "Route not found", status_code=404, error_code="ROUTE_NOT_FOUND"
                 )
 
             # 检查权限
@@ -311,7 +318,7 @@ class ApiGateway:
                     return self._create_error_response(
                         "Insufficient permissions",
                         status_code=403,
-                        error_code="INSUFFICIENT_PERMISSIONS"
+                        error_code="INSUFFICIENT_PERMISSIONS",
                     )
 
             # 检查限流
@@ -320,7 +327,7 @@ class ApiGateway:
                     return self._create_error_response(
                         "Rate limit exceeded",
                         status_code=429,
-                        error_code="RATE_LIMIT_EXCEEDED"
+                        error_code="RATE_LIMIT_EXCEEDED",
                     )
 
             # 处理请求
@@ -342,8 +349,8 @@ class ApiGateway:
                 function="handle_request",
                 extra_data={
                     "status_code": response.status_code,
-                    "response_time": response_time
-                }
+                    "response_time": response_time,
+                },
             )
 
             return response
@@ -356,9 +363,7 @@ class ApiGateway:
             self._update_stats(None, response_time, False)
 
             return self._create_error_response(
-                "Internal server error",
-                status_code=500,
-                error_code="INTERNAL_ERROR"
+                "Internal server error", status_code=500, error_code="INTERNAL_ERROR"
             )
 
     def _find_route(self, method: HttpMethod, path: str) -> ApiRoute | None:
@@ -373,16 +378,14 @@ class ApiGateway:
         current_time = time.time()
 
         if client_key not in self._rate_limits:
-            self._rate_limits[client_key] = {
-                "requests": [],
-                "limit": route.rate_limit
-            }
+            self._rate_limits[client_key] = {"requests": [], "limit": route.rate_limit}
 
         client_limits = self._rate_limits[client_key]
 
         # 清理过期请求
         client_limits["requests"] = [
-            req_time for req_time in client_limits["requests"]
+            req_time
+            for req_time in client_limits["requests"]
             if current_time - req_time < self._rate_limit_window
         ]
 
@@ -394,7 +397,9 @@ class ApiGateway:
         client_limits["requests"].append(current_time)
         return True
 
-    def _update_stats(self, route: ApiRoute | None, response_time: float, success: bool) -> None:
+    def _update_stats(
+        self, route: ApiRoute | None, response_time: float, success: bool
+    ) -> None:
         """更新统计"""
         with self._lock:
             self._stats.update_stats(response_time, success)
@@ -405,73 +410,69 @@ class ApiGateway:
                     self._route_stats[route_key].update_stats(response_time, success)
 
     def _create_error_response(
-        self,
-        message: str,
-        status_code: int = 400,
-        error_code: str | None = None
+        self, message: str, status_code: int = 400, error_code: str | None = None
     ) -> ApiResponse:
         """创建错误响应"""
         return ApiResponse(
             status=ApiResponseStatus.ERROR,
             message=message,
             error_code=error_code,
-            status_code=status_code
+            status_code=status_code,
         )
 
     def _create_success_response(
-        self,
-        data: Any,
-        message: str = "",
-        status_code: int = 200
+        self, data: Any, message: str = "", status_code: int = 200
     ) -> ApiResponse:
         """创建成功响应"""
         return ApiResponse(
             status=ApiResponseStatus.SUCCESS,
             data=data,
             message=message,
-            status_code=status_code
+            status_code=status_code,
         )
 
     # 默认处理器
     def _health_check_handler(self, _request: ApiRequest) -> ApiResponse:
         """健康检查处理器"""
-        return self._create_success_response({
-            "status": "healthy",
-            "timestamp": time.time(),
-            "version": "1.0.0"
-        })
+        return self._create_success_response(
+            {"status": "healthy", "timestamp": time.time(), "version": "1.0.0"}
+        )
 
     def _api_info_handler(self, _request: ApiRequest) -> ApiResponse:
         """API信息处理器"""
-        return self._create_success_response({
-            "name": "VirtualChemLab API",
-            "version": "1.0.0",
-            "description": "Virtual Chemistry Laboratory API",
-            "endpoints": len(self._routes),
-            "timestamp": time.time()
-        })
+        return self._create_success_response(
+            {
+                "name": "VirtualChemLab API",
+                "version": "1.0.0",
+                "description": "Virtual Chemistry Laboratory API",
+                "endpoints": len(self._routes),
+                "timestamp": time.time(),
+            }
+        )
 
     def _api_stats_handler(self, _request: ApiRequest) -> ApiResponse:
         """API统计处理器"""
-        return self._create_success_response({
-            "global_stats": {
-                "total_requests": self._stats.total_requests,
-                "successful_requests": self._stats.successful_requests,
-                "failed_requests": self._stats.failed_requests,
-                "average_response_time": self._stats.average_response_time,
-                "error_rate": self._stats.error_rate
-            },
-            "route_stats": {
-                route: {
-                    "total_requests": stats.total_requests,
-                    "successful_requests": stats.successful_requests,
-                    "failed_requests": stats.failed_requests,
-                    "average_response_time": stats.average_response_time,
-                    "error_rate": stats.error_rate
-                }
-                for route, stats in self._route_stats.items()
+        return self._create_success_response(
+            {
+                "global_stats": {
+                    "total_requests": self._stats.total_requests,
+                    "successful_requests": self._stats.successful_requests,
+                    "failed_requests": self._stats.failed_requests,
+                    "average_response_time": self._stats.average_response_time,
+                    "error_rate": self._stats.error_rate,
+                },
+                "route_stats": {
+                    route: {
+                        "total_requests": stats.total_requests,
+                        "successful_requests": stats.successful_requests,
+                        "failed_requests": stats.failed_requests,
+                        "average_response_time": stats.average_response_time,
+                        "error_rate": stats.error_rate,
+                    }
+                    for route, stats in self._route_stats.items()
+                },
             }
-        })
+        )
 
     def _routes_list_handler(self, _request: ApiRequest) -> ApiResponse:
         """路由列表处理器"""
@@ -481,10 +482,9 @@ class ApiGateway:
             route_data["stats"] = self._route_stats.get(route_key, {}).__dict__
             routes_data.append(route_data)
 
-        return self._create_success_response({
-            "routes": routes_data,
-            "total_routes": len(routes_data)
-        })
+        return self._create_success_response(
+            {"routes": routes_data, "total_routes": len(routes_data)}
+        )
 
     def get_routes(self) -> dict[str, ApiRoute]:
         """获取所有路由"""
@@ -500,9 +500,8 @@ class ApiGateway:
         return {
             "global_stats": self._stats.__dict__,
             "route_stats": {
-                route: stats.__dict__
-                for route, stats in self._route_stats.items()
-            }
+                route: stats.__dict__ for route, stats in self._route_stats.items()
+            },
         }
 
     def _handle_api_request(self, event: Event) -> None:
@@ -519,7 +518,7 @@ class ApiGateway:
                 user_id=request_data.get("user_id"),
                 session_id=request_data.get("session_id"),
                 ip_address=request_data.get("ip_address"),
-                user_agent=request_data.get("user_agent")
+                user_agent=request_data.get("user_agent"),
             )
 
             # 处理请求
@@ -527,9 +526,7 @@ class ApiGateway:
 
             # 发布响应事件
             publish_event(
-                "api_response",
-                response.to_dict(),
-                priority=EventPriority.NORMAL
+                "api_response", response.to_dict(), priority=EventPriority.NORMAL
             )
 
     def _handle_route_register(self, event: Event) -> None:
@@ -545,7 +542,9 @@ class ApiGateway:
         # 这里需要根据handler_name找到实际的处理器函数
         # 简化实现，实际应用中需要更复杂的处理器查找机制
         def dummy_handler(_request: ApiRequest) -> ApiResponse:
-            return self._create_success_response({"message": f"Handler {handler_name} not implemented"})
+            return self._create_success_response(
+                {"message": f"Handler {handler_name} not implemented"}
+            )
 
         self.register_route(
             method, path, dummy_handler, permissions, rate_limit, description, tags
@@ -556,11 +555,7 @@ class ApiGateway:
         stats = self.get_stats()
 
         # 发布统计事件
-        publish_event(
-            "api_stats_response",
-            stats,
-            priority=EventPriority.NORMAL
-        )
+        publish_event("api_stats_response", stats, priority=EventPriority.NORMAL)
 
     def export_api_data(self, output_dir: Path) -> None:
         """导出API数据"""
@@ -570,15 +565,15 @@ class ApiGateway:
         routes_file = output_dir / "routes.json"
         routes_data = {
             "routes": [route.to_dict() for route in self._routes.values()],
-            "total_routes": len(self._routes)
+            "total_routes": len(self._routes),
         }
 
-        with open(routes_file, 'w', encoding='utf-8') as f:
+        with open(routes_file, "w", encoding="utf-8") as f:
             json.dump(routes_data, f, indent=2, ensure_ascii=False)
 
         # 导出统计信息
         stats_file = output_dir / "api_stats.json"
-        with open(stats_file, 'w', encoding='utf-8') as f:
+        with open(stats_file, "w", encoding="utf-8") as f:
             json.dump(self.get_stats(), f, indent=2, ensure_ascii=False)
 
 
@@ -598,7 +593,7 @@ def register_api_route(
     permissions: list[Permission] | None = None,
     rate_limit: int | None = None,
     description: str = "",
-    tags: list[str] | None = None
+    tags: list[str] | None = None,
 ) -> None:
     """注册API路由"""
     _global_api_gateway.register_route(

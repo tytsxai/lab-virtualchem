@@ -224,7 +224,14 @@ class TestRunner:
             统计信息
         """
         if not self.results:
-            return {"total_tests": 0, "passed": 0, "failed": 0, "errors": 0, "total_duration": 0, "average_duration": 0}
+            return {
+                "total_tests": 0,
+                "passed": 0,
+                "failed": 0,
+                "errors": 0,
+                "total_duration": 0,
+                "average_duration": 0,
+            }
 
         total_tests = len(self.results)
         passed = sum(1 for r in self.results if r.status == "passed")
@@ -327,15 +334,21 @@ class TestAssertions:
             raise AssertionError(f"{message} - {item} 在 {container} 中")
 
     @staticmethod
-    def assert_raises(expected_exception: type[Exception], func: Callable, *args, **kwargs) -> None:
+    def assert_raises(
+        expected_exception: type[Exception], func: Callable, *args, **kwargs
+    ) -> None:
         """断言抛出异常"""
         try:
             func(*args, **kwargs)
-            raise AssertionError(f"期望抛出 {expected_exception.__name__}，但未抛出异常")
+            raise AssertionError(
+                f"期望抛出 {expected_exception.__name__}，但未抛出异常"
+            )
         except expected_exception:
             pass
         except Exception as e:
-            raise AssertionError(f"期望抛出 {expected_exception.__name__}，但抛出 {type(e).__name__}: {e}") from e
+            raise AssertionError(
+                f"期望抛出 {expected_exception.__name__}，但抛出 {type(e).__name__}: {e}"
+            ) from e
 
 
 # 全局测试运行器
@@ -454,7 +467,13 @@ class TestDataFactory:
     @staticmethod
     def create_step_data(**kwargs) -> dict[str, Any]:
         """创建步骤测试数据"""
-        default_data = {"id": "test_step_001", "text": "测试步骤", "check": None, "hints": [], "safety_level": "info"}
+        default_data = {
+            "id": "test_step_001",
+            "text": "测试步骤",
+            "check": None,
+            "hints": [],
+            "safety_level": "info",
+        }
 
         default_data.update(kwargs)
         return default_data
@@ -482,11 +501,19 @@ class PerformanceTest:
         func(*args, **kwargs)
         duration = time.time() - start_time
 
-        self.results.append({"function": func.__name__, "duration": duration, "timestamp": datetime.now()})
+        self.results.append(
+            {
+                "function": func.__name__,
+                "duration": duration,
+                "timestamp": datetime.now(),
+            }
+        )
 
         return duration
 
-    def benchmark(self, func: Callable, iterations: int = 100, *args, **kwargs) -> dict[str, float]:
+    def benchmark(
+        self, func: Callable, iterations: int = 100, *args, **kwargs
+    ) -> dict[str, float]:
         """基准测试
 
         Args:
@@ -509,7 +536,11 @@ class PerformanceTest:
             "max": max(durations),
             "mean": sum(durations) / len(durations),
             "median": sorted(durations)[len(durations) // 2],
-            "std": (sum((d - sum(durations) / len(durations)) ** 2 for d in durations) / len(durations)) ** 0.5,
+            "std": (
+                sum((d - sum(durations) / len(durations)) ** 2 for d in durations)
+                / len(durations)
+            )
+            ** 0.5,
         }
 
     def get_report(self) -> str:

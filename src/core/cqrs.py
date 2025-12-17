@@ -147,12 +147,19 @@ class CommandBus:
         """
         self.max_queue_size = max_queue_size
         self.handlers: dict[str, ICommandHandler] = {}
-        self.command_queue: asyncio.Queue[Command] = asyncio.Queue(maxsize=max_queue_size)
+        self.command_queue: asyncio.Queue[Command] = asyncio.Queue(
+            maxsize=max_queue_size
+        )
         self.running = False
         self.worker_task: asyncio.Task[None] | None = None
 
         # 统计信息
-        self.stats = {"commands_received": 0, "commands_processed": 0, "commands_failed": 0, "queue_size": 0}
+        self.stats = {
+            "commands_received": 0,
+            "commands_processed": 0,
+            "commands_failed": 0,
+            "queue_size": 0,
+        }
 
         # 命令结果缓存
         self.results: dict[str, CommandResult] = {}
@@ -196,7 +203,9 @@ class CommandBus:
         """
         if command_type not in self.handlers:
             return CommandResult(
-                command_id=command.command_id, status=CommandStatus.FAILED, error=f"未找到命令处理器: {command_type}"
+                command_id=command.command_id,
+                status=CommandStatus.FAILED,
+                error=f"未找到命令处理器: {command_type}",
             )
 
         try:
@@ -213,7 +222,9 @@ class CommandBus:
 
         except Exception as e:
             logger.error(f"发送命令失败: {e}")
-            return CommandResult(command_id=command.command_id, status=CommandStatus.FAILED, error=str(e))
+            return CommandResult(
+                command_id=command.command_id, status=CommandStatus.FAILED, error=str(e)
+            )
 
     def send_sync(self, command: Command, command_type: str) -> CommandResult:
         """同步发送命令
@@ -227,7 +238,9 @@ class CommandBus:
         """
         if command_type not in self.handlers:
             return CommandResult(
-                command_id=command.command_id, status=CommandStatus.FAILED, error=f"未找到命令处理器: {command_type}"
+                command_id=command.command_id,
+                status=CommandStatus.FAILED,
+                error=f"未找到命令处理器: {command_type}",
             )
 
         try:
@@ -244,14 +257,18 @@ class CommandBus:
         except Exception as e:
             logger.error(f"处理命令失败: {e}")
             self.stats["commands_failed"] += 1
-            return CommandResult(command_id=command.command_id, status=CommandStatus.FAILED, error=str(e))
+            return CommandResult(
+                command_id=command.command_id, status=CommandStatus.FAILED, error=str(e)
+            )
 
     async def _worker_loop(self) -> None:
         """工作循环"""
         while self.running:
             try:
                 # 从队列获取命令
-                command, command_type = await asyncio.wait_for(self.command_queue.get(), timeout=1.0)
+                command, command_type = await asyncio.wait_for(
+                    self.command_queue.get(), timeout=1.0
+                )
 
                 # 处理命令
                 handler = self.handlers[command_type]
@@ -314,7 +331,9 @@ class CommandBus:
 
         # 超时返回失败结果
         logger.warning(f"等待命令结果超时: {command_id}")
-        return CommandResult(command_id=command_id, status=CommandStatus.FAILED, error="等待结果超时")
+        return CommandResult(
+            command_id=command_id, status=CommandStatus.FAILED, error="等待结果超时"
+        )
 
     async def start(self) -> None:
         """启动命令总线"""
@@ -363,7 +382,11 @@ class QueryBus:
         self.handlers: dict[str, IQueryHandler] = {}
 
         # 统计信息
-        self.stats = {"queries_received": 0, "queries_processed": 0, "queries_failed": 0}
+        self.stats = {
+            "queries_received": 0,
+            "queries_processed": 0,
+            "queries_failed": 0,
+        }
 
         logger.info("查询总线已初始化")
 
@@ -404,7 +427,9 @@ class QueryBus:
         """
         if query_type not in self.handlers:
             return QueryResult(
-                query_id=query.query_id, status=QueryStatus.FAILED, error=f"未找到查询处理器: {query_type}"
+                query_id=query.query_id,
+                status=QueryStatus.FAILED,
+                error=f"未找到查询处理器: {query_type}",
             )
 
         try:
@@ -421,7 +446,9 @@ class QueryBus:
         except Exception as e:
             logger.error(f"处理查询失败: {e}")
             self.stats["queries_failed"] += 1
-            return QueryResult(query_id=query.query_id, status=QueryStatus.FAILED, error=str(e))
+            return QueryResult(
+                query_id=query.query_id, status=QueryStatus.FAILED, error=str(e)
+            )
 
     def get_statistics(self) -> dict[str, Any]:
         """获取统计信息
@@ -442,7 +469,9 @@ class CQRSManager:
 
         logger.info("CQRS管理器已初始化")
 
-    def register_command_handler(self, command_type: str, handler: ICommandHandler) -> None:
+    def register_command_handler(
+        self, command_type: str, handler: ICommandHandler
+    ) -> None:
         """注册命令处理器"""
         self.command_bus.register_handler(command_type, handler)
 
@@ -474,7 +503,10 @@ class CQRSManager:
 
     def get_statistics(self) -> dict[str, Any]:
         """获取统计信息"""
-        return {"command_bus": self.command_bus.get_statistics(), "query_bus": self.query_bus.get_statistics()}
+        return {
+            "command_bus": self.command_bus.get_statistics(),
+            "query_bus": self.query_bus.get_statistics(),
+        }
 
 
 # 具体实现示例
@@ -526,13 +558,23 @@ class ExperimentCommandHandler(ICommandHandler):
             elif isinstance(command, DeleteExperimentCommand):
                 result = self._handle_delete_experiment(command)
             else:
-                return CommandResult(command_id=command.command_id, status=CommandStatus.FAILED, error="未知命令类型")
+                return CommandResult(
+                    command_id=command.command_id,
+                    status=CommandStatus.FAILED,
+                    error="未知命令类型",
+                )
 
-            return CommandResult(command_id=command.command_id, status=CommandStatus.COMPLETED, result=result)
+            return CommandResult(
+                command_id=command.command_id,
+                status=CommandStatus.COMPLETED,
+                result=result,
+            )
 
         except Exception as e:
             logger.error(f"处理实验命令失败: {e}")
-            return CommandResult(command_id=command.command_id, status=CommandStatus.FAILED, error=str(e))
+            return CommandResult(
+                command_id=command.command_id, status=CommandStatus.FAILED, error=str(e)
+            )
 
     def _handle_create_experiment(self, _command: CreateExperimentCommand) -> Any:
         """处理创建实验命令"""
@@ -564,13 +606,21 @@ class ExperimentQueryHandler(IQueryHandler):
             elif isinstance(query, ListExperimentsQuery):
                 result = self._handle_list_experiments(query)
             else:
-                return QueryResult(query_id=query.query_id, status=QueryStatus.FAILED, error="未知查询类型")
+                return QueryResult(
+                    query_id=query.query_id,
+                    status=QueryStatus.FAILED,
+                    error="未知查询类型",
+                )
 
-            return QueryResult(query_id=query.query_id, status=QueryStatus.COMPLETED, result=result)
+            return QueryResult(
+                query_id=query.query_id, status=QueryStatus.COMPLETED, result=result
+            )
 
         except Exception as e:
             logger.error(f"处理实验查询失败: {e}")
-            return QueryResult(query_id=query.query_id, status=QueryStatus.FAILED, error=str(e))
+            return QueryResult(
+                query_id=query.query_id, status=QueryStatus.FAILED, error=str(e)
+            )
 
     def _handle_get_experiment(self, query: GetExperimentQuery) -> Any:
         """处理获取实验查询"""
@@ -581,14 +631,19 @@ class ExperimentQueryHandler(IQueryHandler):
     def _handle_list_experiments(self, _query: ListExperimentsQuery) -> Any:
         """处理列出实验查询"""
         # 实现列出实验逻辑
-        return [{"id": "exp_001", "title": "实验1"}, {"id": "exp_002", "title": "实验2"}]
+        return [
+            {"id": "exp_001", "title": "实验1"},
+            {"id": "exp_002", "title": "实验2"},
+        ]
 
 
 # 全局CQRS管理器
 cqrs_manager = CQRSManager()
 
 
-def command_handler(command_type: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def command_handler(
+    command_type: str,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """命令处理器装饰器
 
     Args:
@@ -605,9 +660,17 @@ def command_handler(command_type: str) -> Callable[[Callable[..., Any]], Callabl
             def handle(self, command: Command) -> CommandResult:
                 try:
                     result = func(command)
-                    return CommandResult(command_id=command.command_id, status=CommandStatus.COMPLETED, result=result)
+                    return CommandResult(
+                        command_id=command.command_id,
+                        status=CommandStatus.COMPLETED,
+                        result=result,
+                    )
                 except Exception as e:
-                    return CommandResult(command_id=command.command_id, status=CommandStatus.FAILED, error=str(e))
+                    return CommandResult(
+                        command_id=command.command_id,
+                        status=CommandStatus.FAILED,
+                        error=str(e),
+                    )
 
         # 注册处理器
         cqrs_manager.register_command_handler(command_type, Handler())
@@ -616,7 +679,9 @@ def command_handler(command_type: str) -> Callable[[Callable[..., Any]], Callabl
     return decorator
 
 
-def query_handler(query_type: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def query_handler(
+    query_type: str,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """查询处理器装饰器
 
     Args:
@@ -633,9 +698,15 @@ def query_handler(query_type: str) -> Callable[[Callable[..., Any]], Callable[..
             def handle(self, query: Query) -> QueryResult:
                 try:
                     result = func(query)
-                    return QueryResult(query_id=query.query_id, status=QueryStatus.COMPLETED, result=result)
+                    return QueryResult(
+                        query_id=query.query_id,
+                        status=QueryStatus.COMPLETED,
+                        result=result,
+                    )
                 except Exception as e:
-                    return QueryResult(query_id=query.query_id, status=QueryStatus.FAILED, error=str(e))
+                    return QueryResult(
+                        query_id=query.query_id, status=QueryStatus.FAILED, error=str(e)
+                    )
 
         # 注册处理器
         cqrs_manager.register_query_handler(query_type, Handler())

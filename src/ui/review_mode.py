@@ -35,7 +35,9 @@ class ReviewMode(QDialog):
     # 信号
     review_completed = pyqtSignal(dict)  # 复习完成信号，传递结果
 
-    def __init__(self, student_id: str, mistake_ids: list, mistake_book=None, parent=None):
+    def __init__(
+        self, student_id: str, mistake_ids: list, mistake_book=None, parent=None
+    ):
         """
         初始化复习模式
 
@@ -242,7 +244,9 @@ class ReviewMode(QDialog):
             "safety": "安全错误",
             "other": "其他错误",
         }
-        self.type_label.setText(f"类型: {type_map.get(mistake.mistake_type, mistake.mistake_type)}")
+        self.type_label.setText(
+            f"类型: {type_map.get(mistake.mistake_type, mistake.mistake_type)}"
+        )
 
         self.desc_text.setPlainText(mistake.mistake_description)
         self.student_answer_text.setPlainText(mistake.student_answer)
@@ -293,7 +297,9 @@ class ReviewMode(QDialog):
 
         # 标记为已复习
         self.mistake_book.mark_as_reviewed(
-            mistake.mistake_id, self.student_id, mastered=self.mastered_radio.isChecked()
+            mistake.mistake_id,
+            self.student_id,
+            mastered=self.mastered_radio.isChecked(),
         )
 
         # 启用下一题
@@ -326,7 +332,10 @@ class ReviewMode(QDialog):
                 is_correct = True
                 self.result_label.setText("✓ 完全正确！")
                 self.result_label.setStyleSheet("color: green;")
-            elif any(word in student_answer.lower() for word in mistake.correct_answer.lower().split()):
+            elif any(
+                word in student_answer.lower()
+                for word in mistake.correct_answer.lower().split()
+            ):
                 is_correct = True
                 self.result_label.setText("✓ 基本正确！")
                 self.result_label.setStyleSheet("color: blue;")
@@ -343,7 +352,9 @@ class ReviewMode(QDialog):
             self.correct_count += 1
 
         # 标记为已复习
-        self.mistake_book.mark_as_reviewed(mistake.mistake_id, self.student_id, mastered=is_correct)
+        self.mistake_book.mark_as_reviewed(
+            mistake.mistake_id, self.student_id, mastered=is_correct
+        )
 
         # 启用下一题
         self.next_btn.setEnabled(True)
@@ -367,7 +378,9 @@ class ReviewMode(QDialog):
         duration = (datetime.now() - self.start_time).total_seconds()
 
         # 创建复习记录
-        record = self.mistake_book.create_review_session(self.student_id, self.mistake_ids)
+        record = self.mistake_book.create_review_session(
+            self.student_id, self.mistake_ids
+        )
 
         # 更新记录
         self.mistake_book.update_review_session(
@@ -379,7 +392,9 @@ class ReviewMode(QDialog):
         )
 
         # 显示结果
-        accuracy = (self.correct_count / len(self.mistakes) * 100) if self.mistakes else 0
+        accuracy = (
+            (self.correct_count / len(self.mistakes) * 100) if self.mistakes else 0
+        )
 
         result_msg = (
             "复习完成！\n\n"
@@ -477,12 +492,19 @@ class QuickReviewDialog(QDialog):
         suggestions = mistake_book.get_review_suggestions(self.student_id, limit=5)
 
         if not suggestions:
-            self.suggestion_text.setHtml("<h3>恭喜！</h3><p>暂无需要复习的错题。</p><p>继续保持，做更多练习！</p>")
+            self.suggestion_text.setHtml(
+                "<h3>恭喜！</h3><p>暂无需要复习的错题。</p><p>继续保持，做更多练习！</p>"
+            )
         else:
             html = "<h3>建议复习以下错题：</h3><ol>"
 
             for mistake in suggestions:
-                html += "<li>" f"<b>{mistake.experiment_name}</b> - " f"{mistake.mistake_description[:50]}..." "</li>"
+                html += (
+                    "<li>"
+                    f"<b>{mistake.experiment_name}</b> - "
+                    f"{mistake.mistake_description[:50]}..."
+                    "</li>"
+                )
 
             html += "</ol>"
             html += f"<p>共 <b>{len(suggestions)}</b> 个错题待复习</p>"

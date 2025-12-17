@@ -4,6 +4,8 @@
 提供实验数据趋势分析、统计和预测功能
 """
 
+from __future__ import annotations
+
 import json
 import logging
 from dataclasses import asdict, dataclass
@@ -11,13 +13,33 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 
 try:
-    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-except ImportError:
-    from matplotlib.backends.backend_qtagg import FigureCanvasQT as FigureCanvas
-from matplotlib.figure import Figure
+    import pandas as pd
+
+    PANDAS_AVAILABLE = True
+except ImportError:  # pragma: no cover - optional dependency
+    pd = None  # type: ignore[assignment]
+    PANDAS_AVAILABLE = False
+
+try:
+    from matplotlib.backends.backend_qt5agg import (
+        FigureCanvasQTAgg as FigureCanvas,  # type: ignore
+    )
+    from matplotlib.figure import Figure  # type: ignore
+
+    MATPLOTLIB_AVAILABLE = True
+except ImportError:  # pragma: no cover - optional dependency
+    try:
+        from matplotlib.backends.backend_qtagg import (
+            FigureCanvasQT as FigureCanvas,  # type: ignore
+        )
+        from matplotlib.figure import Figure  # type: ignore
+
+        MATPLOTLIB_AVAILABLE = True
+    except ImportError:
+        MATPLOTLIB_AVAILABLE = False
+
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtWidgets import (
     QComboBox,
@@ -25,7 +47,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QMessageBox,
-    QProgressBar,
+    QProgressDialog,
     QPushButton,
     QSplitter,
     QTableWidget,
@@ -112,7 +134,9 @@ class TrendAnalyzer(QThread):
             self.progress_updated.emit(85)
 
             # 生成洞察和建议
-            insights, recommendations = self._generate_insights(trend_direction, trend_strength, correlation, p_value)
+            insights, recommendations = self._generate_insights(
+                trend_direction, trend_strength, correlation, p_value
+            )
             self.progress_updated.emit(95)
 
             # 创建分析结果
@@ -141,6 +165,9 @@ class TrendAnalyzer(QThread):
     def _prepare_data(self) -> pd.DataFrame:
         """准备数据"""
         try:
+            if not PANDAS_AVAILABLE or pd is None:
+                raise RuntimeError("趋势分析需要 pandas（打包构建可能已排除该依赖）")
+
             # 转换为DataFrame
             data_dict = {
                 "date": [d.date for d in self.data],
@@ -171,14 +198,23 @@ class TrendAnalyzer(QThread):
             if len(df) < 2:
                 return "stable", 0.0
 
-            # 线性回归
-            X = df["time_index"].values.reshape(-1, 1)
-            y = df["value"].values
+            x = df["time_index"].values.astype(float)
+            y = df["value"].values.astype(float)
 
-            model = LinearRegression()
-            model.fit(X, y)
-
-            slope = model.coef_[0]
+            if LinearRegression is not None:
+                # sklearn 线性回归
+                X = x.reshape(-1, 1)
+                model = LinearRegression()
+                model.fit(X, y)
+                slope = float(model.coef_[0])
+                strength = float(model.score(X, y))
+            else:
+                # numpy 回退实现：y = slope * x + intercept
+                slope, intercept = np.polyfit(x, y, 1)
+                y_pred = slope * x + intercept
+                ss_res = float(np.sum((y - y_pred) ** 2))
+                ss_tot = float(np.sum((y - float(np.mean(y))) ** 2))
+                strength = 1.0 - (ss_res / ss_tot) if ss_tot > 0 else 0.0
 
             # 判断趋势方向
             if slope > 0.1:
@@ -187,9 +223,6 @@ class TrendAnalyzer(QThread):
                 direction = "decreasing"
             else:
                 direction = "stable"
-
-            # 计算趋势强度（R²）
-            strength = model.score(X, y)
 
             return direction, max(0, min(1, strength))
 
@@ -218,16 +251,25 @@ class TrendAnalyzer(QThread):
             if len(df) < 3:
                 return []
 
-            # 使用多项式回归进行预测
-            X = df["time_index"].values.reshape(-1, 1)
-            y = df["value"].values
+            x = df["time_index"].values.astype(float)
+            y = df["value"].values.astype(float)
 
-            # 多项式特征
-            poly_features = PolynomialFeatures(degree=2)
-            X_poly = poly_features.fit_transform(X)
+            if PolynomialFeatures is not None and LinearRegression is not None:
+                # sklearn 多项式回归
+                poly_features = PolynomialFeatures(degree=2)
+                X_poly = poly_features.fit_transform(x.reshape(-1, 1))
+                model = LinearRegression()
+                model.fit(X_poly, y)
 
-            model = LinearRegression()
-            model.fit(X_poly, y)
+                def predict_value(index: float) -> float:
+                    return float(model.predict(poly_features.transform([[index]]))[0])
+
+            else:
+                # numpy 回退实现：二次多项式拟合
+                coeffs = np.polyfit(x, y, 2)
+
+                def predict_value(index: float) -> float:
+                    return float(np.polyval(coeffs, index))
 
             # 预测未来5个时间点
             predictions = []
@@ -235,8 +277,7 @@ class TrendAnalyzer(QThread):
 
             for i in range(1, 6):
                 future_index = len(df) + i - 1
-                future_X = poly_features.transform([[future_index]])
-                predicted_value = model.predict(future_X)[0]
+                predicted_value = predict_value(float(future_index))
 
                 future_date = last_date + timedelta(days=i)
                 predictions.append((future_date.strftime("%Y-%m-%d"), predicted_value))
@@ -248,7 +289,11 @@ class TrendAnalyzer(QThread):
             return []
 
     def _generate_insights(
-        self, trend_direction: str, trend_strength: float, correlation: float, p_value: float
+        self,
+        trend_direction: str,
+        trend_strength: float,
+        correlation: float,
+        p_value: float,
     ) -> tuple[list[str], list[str]]:
         """生成洞察和建议"""
         insights = []
@@ -338,13 +383,17 @@ class TrendAnalysisWidget(QWidget):
         # 指标选择
         layout.addWidget(QLabel("分析指标:"))
         self.metric_combo = QComboBox()
-        self.metric_combo.addItems(["成功率", "完成时间", "数据质量", "用户满意度", "错误率"])
+        self.metric_combo.addItems(
+            ["成功率", "完成时间", "数据质量", "用户满意度", "错误率"]
+        )
         layout.addWidget(self.metric_combo)
 
         # 时间范围
         layout.addWidget(QLabel("时间范围:"))
         self.time_period_combo = QComboBox()
-        self.time_period_combo.addItems(["最近7天", "最近30天", "最近90天", "最近1年", "全部时间"])
+        self.time_period_combo.addItems(
+            ["最近7天", "最近30天", "最近90天", "最近1年", "全部时间"]
+        )
         layout.addWidget(self.time_period_combo)
 
         # 开始分析按钮
@@ -356,6 +405,13 @@ class TrendAnalysisWidget(QWidget):
         self.export_btn = QPushButton("导出结果")
         self.export_btn.clicked.connect(self._export_results)
         layout.addWidget(self.export_btn)
+
+        if not PANDAS_AVAILABLE:
+            self.analyze_btn.setEnabled(False)
+            self.export_btn.setEnabled(False)
+            hint = QLabel("缺少依赖：pandas（趋势分析已禁用）")
+            hint.setStyleSheet("color: #a33; padding-left: 8px;")
+            layout.addWidget(hint)
 
         layout.addStretch()
         return panel
@@ -369,7 +425,9 @@ class TrendAnalysisWidget(QWidget):
         layout.addWidget(QLabel("数据预览:"))
         self.data_table = QTableWidget()
         self.data_table.setColumnCount(5)
-        self.data_table.setHorizontalHeaderLabels(["日期", "数值", "实验ID", "用户", "类别"])
+        self.data_table.setHorizontalHeaderLabels(
+            ["日期", "数值", "实验ID", "用户", "类别"]
+        )
         layout.addWidget(self.data_table)
 
         # 数据统计
@@ -395,9 +453,19 @@ class TrendAnalysisWidget(QWidget):
         chart_layout = QVBoxLayout(self.chart_tab)
 
         # 图表画布
-        self.figure = Figure(figsize=(10, 6))
-        self.canvas = FigureCanvas(self.figure)
-        chart_layout.addWidget(self.canvas)
+        if MATPLOTLIB_AVAILABLE:
+            self.figure = Figure(figsize=(10, 6))
+            self.canvas = FigureCanvas(self.figure)
+            chart_layout.addWidget(self.canvas)
+        else:
+            self.figure = None
+            self.canvas = None
+            missing_label = QLabel(
+                "趋势图表需要 matplotlib（打包构建可能已排除该依赖）。"
+            )
+            missing_label.setWordWrap(True)
+            missing_label.setStyleSheet("color: #666; padding: 12px;")
+            chart_layout.addWidget(missing_label)
 
         panel.addTab(self.chart_tab, "趋势图表")
 
@@ -460,7 +528,11 @@ class TrendAnalysisWidget(QWidget):
                         # 成功率
                         steps_completed = len(record_data.get("step_records", []))
                         total_steps = record_data.get("total_steps", steps_completed)
-                        success_rate = (steps_completed / total_steps) * 100 if total_steps > 0 else 0
+                        success_rate = (
+                            (steps_completed / total_steps) * 100
+                            if total_steps > 0
+                            else 0
+                        )
 
                         trend_data.append(
                             TrendData(
@@ -476,8 +548,12 @@ class TrendAnalysisWidget(QWidget):
                         started_at = record_data.get("started_at", "")
                         if started_at:
                             try:
-                                start_time = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
-                                end_time = datetime.fromisoformat(completed_at.replace("Z", "+00:00"))
+                                start_time = datetime.fromisoformat(
+                                    started_at.replace("Z", "+00:00")
+                                )
+                                end_time = datetime.fromisoformat(
+                                    completed_at.replace("Z", "+00:00")
+                                )
                                 duration = (end_time - start_time).total_seconds()
 
                                 trend_data.append(
@@ -528,7 +604,9 @@ class TrendAnalysisWidget(QWidget):
                 dates = [d.date for d in filtered_data]
                 min_date = min(dates)
                 max_date = max(dates)
-                self.date_range_label.setText(f"日期范围: {min_date[:10]} 到 {max_date[:10]}")
+                self.date_range_label.setText(
+                    f"日期范围: {min_date[:10]} 到 {max_date[:10]}"
+                )
             else:
                 self.date_range_label.setText("日期范围: -")
 
@@ -538,6 +616,12 @@ class TrendAnalysisWidget(QWidget):
     def _start_analysis(self):
         """开始分析"""
         try:
+            if not PANDAS_AVAILABLE or pd is None:
+                QMessageBox.warning(
+                    self, "依赖缺失", "趋势分析需要 pandas，请安装后重试。"
+                )
+                return
+
             metric = self.metric_combo.currentText()
             time_period = self.time_period_combo.currentText()
 
@@ -549,9 +633,11 @@ class TrendAnalysisWidget(QWidget):
                 return
 
             # 显示进度
-            progress = QProgressBar()
+            progress = QProgressDialog("正在分析趋势...", "取消", 0, 100, self)
             progress.setWindowTitle("正在分析趋势...")
-            progress.setModal(True)
+            progress.setWindowModality(Qt.WindowModality.ApplicationModal)
+            progress.setAutoClose(False)
+            progress.setAutoReset(False)
             progress.show()
 
             # 创建分析线程
@@ -567,7 +653,9 @@ class TrendAnalysisWidget(QWidget):
 
             def on_error(error_msg):
                 progress.close()
-                QMessageBox.critical(self, "分析失败", f"趋势分析时发生错误: {error_msg}")
+                QMessageBox.critical(
+                    self, "分析失败", f"趋势分析时发生错误: {error_msg}"
+                )
 
             analyzer.analysis_completed.connect(on_analysis_completed)
             analyzer.progress_updated.connect(on_progress_updated)
@@ -587,10 +675,25 @@ class TrendAnalysisWidget(QWidget):
 
             results = [
                 ("趋势方向", analysis.trend_direction, "数据变化的主要方向", "正常"),
-                ("趋势强度", f"{analysis.trend_strength:.3f}", "趋势的明显程度", "正常"),
-                ("相关系数", f"{analysis.correlation_coefficient:.3f}", "时间与数值的相关性", "正常"),
+                (
+                    "趋势强度",
+                    f"{analysis.trend_strength:.3f}",
+                    "趋势的明显程度",
+                    "正常",
+                ),
+                (
+                    "相关系数",
+                    f"{analysis.correlation_coefficient:.3f}",
+                    "时间与数值的相关性",
+                    "正常",
+                ),
                 ("P值", f"{analysis.p_value:.3f}", "统计显著性", "正常"),
-                ("置信度", f"{analysis.confidence_level:.1%}", "结果的可信程度", "正常"),
+                (
+                    "置信度",
+                    f"{analysis.confidence_level:.1%}",
+                    "结果的可信程度",
+                    "正常",
+                ),
                 ("数据点数", str(len(self.trend_data)), "用于分析的数据量", "正常"),
             ]
 
@@ -604,12 +707,20 @@ class TrendAnalysisWidget(QWidget):
             self.prediction_table.setRowCount(len(analysis.predictions))
             for i, (date, predicted_value) in enumerate(analysis.predictions):
                 self.prediction_table.setItem(i, 0, QTableWidgetItem(date))
-                self.prediction_table.setItem(i, 1, QTableWidgetItem(f"{predicted_value:.2f}"))
-                self.prediction_table.setItem(i, 2, QTableWidgetItem(f"{analysis.confidence_level:.1%}"))
+                self.prediction_table.setItem(
+                    i, 1, QTableWidgetItem(f"{predicted_value:.2f}")
+                )
+                self.prediction_table.setItem(
+                    i, 2, QTableWidgetItem(f"{analysis.confidence_level:.1%}")
+                )
 
             # 更新洞察文本
-            insights_text = "洞察:\n" + "\n".join(f"• {insight}" for insight in analysis.insights)
-            insights_text += "\n\n建议:\n" + "\n".join(f"• {rec}" for rec in analysis.recommendations)
+            insights_text = "洞察:\n" + "\n".join(
+                f"• {insight}" for insight in analysis.insights
+            )
+            insights_text += "\n\n建议:\n" + "\n".join(
+                f"• {rec}" for rec in analysis.recommendations
+            )
             self.insights_text.setPlainText(insights_text)
 
             # 创建趋势图表
@@ -624,6 +735,9 @@ class TrendAnalysisWidget(QWidget):
     def _create_trend_chart(self, analysis: TrendAnalysis):
         """创建趋势图表"""
         try:
+            if not MATPLOTLIB_AVAILABLE or self.figure is None or self.canvas is None:
+                return
+
             self.figure.clear()
 
             # 准备数据
@@ -634,7 +748,10 @@ class TrendAnalysisWidget(QWidget):
                 return
 
             # 转换数据
-            dates = [datetime.fromisoformat(d.date.replace("Z", "+00:00")) for d in filtered_data]
+            dates = [
+                datetime.fromisoformat(d.date.replace("Z", "+00:00"))
+                for d in filtered_data
+            ]
             values = [d.value for d in filtered_data]
 
             # 创建子图
@@ -655,12 +772,20 @@ class TrendAnalysisWidget(QWidget):
                 z = np.polyfit(x_numeric, values, 1)
                 p = np.poly1d(z)
 
-                ax1.plot(dates, p(x_numeric), "r--", alpha=0.8, label=f"趋势线 (斜率: {z[0]:.2f})")
+                ax1.plot(
+                    dates,
+                    p(x_numeric),
+                    "r--",
+                    alpha=0.8,
+                    label=f"趋势线 (斜率: {z[0]:.2f})",
+                )
                 ax1.legend()
 
             # 预测数据
             if analysis.predictions:
-                pred_dates = [datetime.fromisoformat(pred[0]) for pred in analysis.predictions]
+                pred_dates = [
+                    datetime.fromisoformat(pred[0]) for pred in analysis.predictions
+                ]
                 pred_values = [pred[1] for pred in analysis.predictions]
 
                 ax2.plot(pred_dates, pred_values, "g-", marker="o", label="预测值")
@@ -700,13 +825,17 @@ class TrendAnalysisWidget(QWidget):
                         "analysis_count": len(self.analysis_results),
                     },
                     "trend_data": [asdict(d) for d in self.trend_data],
-                    "analysis_results": [asdict(result) for result in self.analysis_results],
+                    "analysis_results": [
+                        asdict(result) for result in self.analysis_results
+                    ],
                 }
 
                 with open(file_path, "w", encoding="utf-8") as f:
                     json.dump(export_data, f, ensure_ascii=False, indent=2)
 
-                QMessageBox.information(self, "导出成功", f"分析结果已导出到: {file_path}")
+                QMessageBox.information(
+                    self, "导出成功", f"分析结果已导出到: {file_path}"
+                )
                 logger.info(f"分析结果导出成功: {file_path}")
 
         except Exception as e:

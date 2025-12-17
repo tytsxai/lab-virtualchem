@@ -240,7 +240,11 @@ class InMemoryMessageQueue(IMessageQueue[T]):
             try:
                 now = datetime.now()
                 # 检查延迟消息
-                ready_messages = [msg for msg in self._delayed_messages if msg.scheduled_at and msg.scheduled_at <= now]
+                ready_messages = [
+                    msg
+                    for msg in self._delayed_messages
+                    if msg.scheduled_at and msg.scheduled_at <= now
+                ]
 
                 for msg in ready_messages:
                     self._delayed_messages.remove(msg)

@@ -92,7 +92,9 @@ class ICache(ABC, Generic[T]):
 class MemoryCache(ICache[T]):
     """内存缓存实现"""
 
-    def __init__(self, max_size: int = 1000, strategy: CacheStrategy = CacheStrategy.LRU):
+    def __init__(
+        self, max_size: int = 1000, strategy: CacheStrategy = CacheStrategy.LRU
+    ):
         self.max_size = max_size
         self.strategy = strategy
         self._cache: dict[str, CacheEntry[T]] = {}
@@ -148,16 +150,24 @@ class MemoryCache(ICache[T]):
 
         if self.strategy == CacheStrategy.LRU:
             # 移除最少最近使用的
-            oldest_key = min(self._cache.keys(), key=lambda k: self._cache[k].last_accessed)
+            oldest_key = min(
+                self._cache.keys(), key=lambda k: self._cache[k].last_accessed
+            )
         elif self.strategy == CacheStrategy.LFU:
             # 移除最少使用频率的
-            oldest_key = min(self._cache.keys(), key=lambda k: self._cache[k].access_count)
+            oldest_key = min(
+                self._cache.keys(), key=lambda k: self._cache[k].access_count
+            )
         elif self.strategy == CacheStrategy.FIFO:
             # 移除最早创建的
-            oldest_key = min(self._cache.keys(), key=lambda k: self._cache[k].created_at)
+            oldest_key = min(
+                self._cache.keys(), key=lambda k: self._cache[k].created_at
+            )
         else:  # TTL
             # 移除最早过期的
-            oldest_key = min(self._cache.keys(), key=lambda k: self._cache[k].created_at)
+            oldest_key = min(
+                self._cache.keys(), key=lambda k: self._cache[k].created_at
+            )
 
         del self._cache[oldest_key]
 
@@ -263,7 +273,11 @@ def cache_key(*args, **kwargs) -> str:
     return hashlib.sha256(key_str.encode()).hexdigest()
 
 
-def cached(ttl: int | None = None, cache_name: str = "default", key_func: Callable | None = None):
+def cached(
+    ttl: int | None = None,
+    cache_name: str = "default",
+    key_func: Callable | None = None,
+):
     """缓存装饰器"""
 
     def decorator(func: Callable) -> Callable:
@@ -295,7 +309,11 @@ def cached(ttl: int | None = None, cache_name: str = "default", key_func: Callab
     return decorator
 
 
-def async_cached(ttl: int | None = None, cache_name: str = "default", key_func: Callable | None = None):
+def async_cached(
+    ttl: int | None = None,
+    cache_name: str = "default",
+    key_func: Callable | None = None,
+):
     """异步缓存装饰器"""
 
     def decorator(func: Callable) -> Callable:

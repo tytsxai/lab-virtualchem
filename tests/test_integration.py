@@ -25,7 +25,9 @@ class TestExperimentIntegration(unittest.TestCase):
                 Step(
                     id="step_1",
                     text="第一步：准备试剂",
-                    check=CheckPoint(type=CheckType.CONFIRM, fail_hint="请确认已准备好所有试剂"),
+                    check=CheckPoint(
+                        type=CheckType.CONFIRM, fail_hint="请确认已准备好所有试剂"
+                    ),
                 ),
                 Step(
                     id="step_2",
@@ -48,7 +50,9 @@ class TestExperimentIntegration(unittest.TestCase):
         )
 
         # 创建实验控制器
-        self.controller = ExperimentController(template=self.template, user_id="test_user", enable_monitoring=False)
+        self.controller = ExperimentController(
+            template=self.template, user_id="test_user", enable_monitoring=False
+        )
 
     def test_complete_experiment_flow(self):
         """测试完整实验流程"""
@@ -132,34 +136,60 @@ class TestSecurityIntegration(unittest.TestCase):
 
     def setUp(self):
         self.rbac = RBACManager()
-        self.student = self.rbac.create_user(user_id="student_001", username="student", role=Role.STUDENT)
-        self.admin = self.rbac.create_user(user_id="admin_001", username="admin", role=Role.ADMIN)
+        self.student = self.rbac.create_user(
+            user_id="student_001", username="student", role=Role.STUDENT
+        )
+        self.admin = self.rbac.create_user(
+            user_id="admin_001", username="admin", role=Role.ADMIN
+        )
 
     def test_permission_hierarchy(self):
         """测试权限层次"""
         # 学生权限
-        self.assertTrue(self.rbac.has_permission(self.student, Permission.VIEW_EXPERIMENT))
-        self.assertFalse(self.rbac.has_permission(self.student, Permission.DELETE_EXPERIMENT))
+        self.assertTrue(
+            self.rbac.has_permission(self.student, Permission.VIEW_EXPERIMENT)
+        )
+        self.assertFalse(
+            self.rbac.has_permission(self.student, Permission.DELETE_EXPERIMENT)
+        )
 
         # 管理员权限
-        self.assertTrue(self.rbac.has_permission(self.admin, Permission.VIEW_EXPERIMENT))
-        self.assertTrue(self.rbac.has_permission(self.admin, Permission.DELETE_EXPERIMENT))
+        self.assertTrue(
+            self.rbac.has_permission(self.admin, Permission.VIEW_EXPERIMENT)
+        )
+        self.assertTrue(
+            self.rbac.has_permission(self.admin, Permission.DELETE_EXPERIMENT)
+        )
         self.assertTrue(self.rbac.has_permission(self.admin, Permission.MANAGE_USERS))
         self.assertTrue(self.rbac.has_permission(self.admin, Permission.VIEW_LOGS))
 
     def test_resource_access_control(self):
         """测试资源访问控制"""
         # 学生只能查看自己的记录
-        self.assertTrue(self.rbac.check_resource_access(self.student, "record", "student_001", "view"))
+        self.assertTrue(
+            self.rbac.check_resource_access(
+                self.student, "record", "student_001", "view"
+            )
+        )
 
         # 管理员可以查看所有记录
-        self.assertTrue(self.rbac.check_resource_access(self.admin, "record", "student_001", "view"))
+        self.assertTrue(
+            self.rbac.check_resource_access(self.admin, "record", "student_001", "view")
+        )
 
         # 学生不能删除实验
-        self.assertFalse(self.rbac.check_resource_access(self.student, "experiment", "exp_001", "delete"))
+        self.assertFalse(
+            self.rbac.check_resource_access(
+                self.student, "experiment", "exp_001", "delete"
+            )
+        )
 
         # 管理员可以删除实验
-        self.assertTrue(self.rbac.check_resource_access(self.admin, "experiment", "exp_001", "delete"))
+        self.assertTrue(
+            self.rbac.check_resource_access(
+                self.admin, "experiment", "exp_001", "delete"
+            )
+        )
 
     def test_session_management(self):
         """测试会话管理"""
@@ -191,7 +221,10 @@ class TestCacheIntegration(unittest.TestCase):
         experiment_data = {
             "id": "exp_001",
             "title": "测试实验",
-            "steps": [{"id": "step_1", "text": "步骤1"}, {"id": "step_2", "text": "步骤2"}],
+            "steps": [
+                {"id": "step_1", "text": "步骤1"},
+                {"id": "step_2", "text": "步骤2"},
+            ],
         }
 
         # 设置缓存
@@ -329,7 +362,10 @@ class TestDatabaseIntegration(unittest.TestCase):
     def setUp(self):
         # 使用内存SQLite数据库
         self.db_pool = DatabasePool(
-            db_type="sqlite", config={"database": ":memory:"}, min_connections=1, max_connections=3
+            db_type="sqlite",
+            config={"database": ":memory:"},
+            min_connections=1,
+            max_connections=3,
         )
         self.db_manager = DatabaseManager(self.db_pool)
 
@@ -441,9 +477,18 @@ class TestDatabaseIntegration(unittest.TestCase):
         """测试批量操作"""
         # 批量插入
         queries = [
-            ("INSERT INTO experiments (id, title, level) VALUES (?, ?, ?)", ("exp_001", "实验1", "basic")),
-            ("INSERT INTO experiments (id, title, level) VALUES (?, ?, ?)", ("exp_002", "实验2", "intermediate")),
-            ("INSERT INTO experiments (id, title, level) VALUES (?, ?, ?)", ("exp_003", "实验3", "advanced")),
+            (
+                "INSERT INTO experiments (id, title, level) VALUES (?, ?, ?)",
+                ("exp_001", "实验1", "basic"),
+            ),
+            (
+                "INSERT INTO experiments (id, title, level) VALUES (?, ?, ?)",
+                ("exp_002", "实验2", "intermediate"),
+            ),
+            (
+                "INSERT INTO experiments (id, title, level) VALUES (?, ?, ?)",
+                ("exp_003", "实验3", "advanced"),
+            ),
         ]
 
         results = self.db_manager.execute_batch(queries)
@@ -462,10 +507,16 @@ class TestDatabaseIntegration(unittest.TestCase):
 
             try:
                 # 插入数据
-                cursor.execute("INSERT INTO experiments (id, title) VALUES (?, ?)", ("exp_001", "测试实验"))
+                cursor.execute(
+                    "INSERT INTO experiments (id, title) VALUES (?, ?)",
+                    ("exp_001", "测试实验"),
+                )
 
                 # 故意引发错误
-                cursor.execute("INSERT INTO experiments (id, title) VALUES (?, ?)", ("exp_001", "重复ID"))  # 主键冲突
+                cursor.execute(
+                    "INSERT INTO experiments (id, title) VALUES (?, ?)",
+                    ("exp_001", "重复ID"),
+                )  # 主键冲突
 
                 connection.commit()
             except Exception:
@@ -475,7 +526,9 @@ class TestDatabaseIntegration(unittest.TestCase):
                 cursor.close()
 
         # 验证数据未插入
-        results = self.db_manager.execute_query("SELECT * FROM experiments WHERE id = ?", ("exp_001",))
+        results = self.db_manager.execute_query(
+            "SELECT * FROM experiments WHERE id = ?", ("exp_001",)
+        )
         self.assertEqual(len(results), 0)
 
 
@@ -488,12 +541,17 @@ class TestFullSystemIntegration(unittest.TestCase):
         self.cache = CacheManager(max_size=1000, default_ttl=300)
         self.async_manager = AsyncServiceManager(max_workers=2, max_processes=1)
         self.db_pool = DatabasePool(
-            db_type="sqlite", config={"database": ":memory:"}, min_connections=1, max_connections=3
+            db_type="sqlite",
+            config={"database": ":memory:"},
+            min_connections=1,
+            max_connections=3,
         )
         self.db_manager = DatabaseManager(self.db_pool)
 
         # 创建测试用户
-        self.user = self.rbac.create_user(user_id="test_user", username="testuser", role=Role.STUDENT)
+        self.user = self.rbac.create_user(
+            user_id="test_user", username="testuser", role=Role.STUDENT
+        )
 
         # 创建测试表
         self.db_manager.execute_query("""
@@ -513,7 +571,9 @@ class TestFullSystemIntegration(unittest.TestCase):
     def test_complete_experiment_workflow(self):
         """测试完整实验工作流"""
         # 1. 权限检查
-        self.assertTrue(self.rbac.has_permission(self.user, Permission.CREATE_EXPERIMENT))
+        self.assertTrue(
+            self.rbac.has_permission(self.user, Permission.CREATE_EXPERIMENT)
+        )
 
         # 2. 创建实验数据
         experiment_data = {
@@ -543,7 +603,12 @@ class TestFullSystemIntegration(unittest.TestCase):
             INSERT INTO experiments (id, title, description, level)
             VALUES (?, ?, ?, ?)
         """,
-            (experiment_data["id"], experiment_data["title"], experiment_data["description"], experiment_data["level"]),
+            (
+                experiment_data["id"],
+                experiment_data["title"],
+                experiment_data["description"],
+                experiment_data["level"],
+            ),
         )
 
         # 6. 验证结果
@@ -567,7 +632,12 @@ class TestFullSystemIntegration(unittest.TestCase):
     def test_error_recovery_workflow(self):
         """测试错误恢复工作流"""
         # 1. 创建实验数据
-        experiment_data = {"id": "exp_002", "title": "错误恢复测试", "description": "测试错误恢复", "level": "basic"}
+        experiment_data = {
+            "id": "exp_002",
+            "title": "错误恢复测试",
+            "description": "测试错误恢复",
+            "level": "basic",
+        }
 
         # 2. 缓存数据
         self.cache.set(f"experiment:{experiment_data['id']}", experiment_data)

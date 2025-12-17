@@ -125,7 +125,11 @@ class GestureRecognizer(QObject):
             if point.state() == Qt.TouchPointState.TouchPointPressed:  # type: ignore
                 # 新触摸点
                 self.touch_points[point_id] = TouchPoint(
-                    id=point_id, position=position, last_position=position, timestamp=current_time, pressed=True
+                    id=point_id,
+                    position=position,
+                    last_position=position,
+                    timestamp=current_time,
+                    pressed=True,
                 )
 
                 # 记录按压开始
@@ -165,7 +169,11 @@ class GestureRecognizer(QObject):
 
         # 检测长按
         if duration >= self.long_press_threshold / 1000 and distance < 10:
-            event = GestureEvent(gesture_type=GestureType.LONG_PRESS, position=touch.position, timestamp=current_time)
+            event = GestureEvent(
+                gesture_type=GestureType.LONG_PRESS,
+                position=touch.position,
+                timestamp=current_time,
+            )
             self.gesture_recognized.emit(event)
             self.long_press_detected.emit(touch.position)
             logger.debug(f"检测到长按手势: {touch.position}")
@@ -194,32 +202,47 @@ class GestureRecognizer(QObject):
             # 检测双击
             time_since_last_tap = current_time - self.last_tap_time
             distance_from_last_tap = math.sqrt(
-                (touch.position.x() - self.last_tap_pos.x()) ** 2 + (touch.position.y() - self.last_tap_pos.y()) ** 2
+                (touch.position.x() - self.last_tap_pos.x()) ** 2
+                + (touch.position.y() - self.last_tap_pos.y()) ** 2
             )
 
-            if time_since_last_tap < self.double_tap_threshold / 1000 and distance_from_last_tap < 50:
+            if (
+                time_since_last_tap < self.double_tap_threshold / 1000
+                and distance_from_last_tap < 50
+            ):
                 event = GestureEvent(
-                    gesture_type=GestureType.DOUBLE_TAP, position=touch.position, timestamp=current_time
+                    gesture_type=GestureType.DOUBLE_TAP,
+                    position=touch.position,
+                    timestamp=current_time,
                 )
                 self.gesture_recognized.emit(event)
                 self.double_tap_detected.emit(touch.position)
                 logger.debug(f"检测到双击手势: {touch.position}")
                 self.last_tap_time = 0  # 重置以避免三连击
             else:
-                event = GestureEvent(gesture_type=GestureType.TAP, position=touch.position, timestamp=current_time)
+                event = GestureEvent(
+                    gesture_type=GestureType.TAP,
+                    position=touch.position,
+                    timestamp=current_time,
+                )
                 self.gesture_recognized.emit(event)
                 self.tap_detected.emit(touch.position)
                 logger.debug(f"检测到点击手势: {touch.position}")
                 self.last_tap_time = current_time
                 self.last_tap_pos = touch.position
 
-    def _detect_multi_touch_gesture(self, points: list[QPointF], current_time: float) -> None:
+    def _detect_multi_touch_gesture(
+        self, points: list[QPointF], current_time: float
+    ) -> None:
         """检测多点触控手势"""
         if len(points) < 2:
             return
 
         # 计算中心点
-        center = QPointF(sum(p.x() for p in points) / len(points), sum(p.y() for p in points) / len(points))
+        center = QPointF(
+            sum(p.x() for p in points) / len(points),
+            sum(p.y() for p in points) / len(points),
+        )
 
         # 双指捏合/缩放
         if len(points) == 2:
@@ -231,7 +254,10 @@ class GestureRecognizer(QObject):
                 scale = current_distance / self.initial_distance
                 if abs(scale - 1.0) > 0.1:  # 10% 变化阈值
                     event = GestureEvent(
-                        gesture_type=GestureType.PINCH, position=center, scale=scale, timestamp=current_time
+                        gesture_type=GestureType.PINCH,
+                        position=center,
+                        scale=scale,
+                        timestamp=current_time,
                     )
                     self.gesture_recognized.emit(event)
                     self.pinch_detected.emit(scale, center)
@@ -245,7 +271,10 @@ class GestureRecognizer(QObject):
                 rotation = current_angle - self.initial_rotation
                 if abs(rotation) > self.rotation_threshold:
                     event = GestureEvent(
-                        gesture_type=GestureType.ROTATE, position=center, rotation=rotation, timestamp=current_time
+                        gesture_type=GestureType.ROTATE,
+                        position=center,
+                        rotation=rotation,
+                        timestamp=current_time,
                     )
                     self.gesture_recognized.emit(event)
                     self.rotate_detected.emit(rotation, center)
@@ -262,7 +291,9 @@ class GestureRecognizer(QObject):
                     total_delta_x += delta.x()
                     total_delta_y += delta.y()
 
-            avg_delta = QPointF(total_delta_x / len(points), total_delta_y / len(points))
+            avg_delta = QPointF(
+                total_delta_x / len(points), total_delta_y / len(points)
+            )
             distance = math.sqrt(avg_delta.x() ** 2 + avg_delta.y() ** 2)
 
             if distance >= self.swipe_threshold:
@@ -299,7 +330,9 @@ class GestureRecognizer(QObject):
         dy = p2.y() - p1.y()
         return math.degrees(math.atan2(dy, dx))
 
-    def register_custom_gesture(self, name: str, recognizer: Callable[[list[QPointF]], bool]) -> None:
+    def register_custom_gesture(
+        self, name: str, recognizer: Callable[[list[QPointF]], bool]
+    ) -> None:
         """注册自定义手势识别器"""
         self.custom_gestures[name] = recognizer
         logger.info(f"注册自定义手势: {name}")
@@ -373,7 +406,9 @@ class GestureController(QObject):
                 self.gesture_bindings[gesture_type].remove(action_name)
                 logger.info(f"解绑手势 {gesture_type.value} 从动作 {action_name}")
 
-    def register_action(self, action_name: str, handler: Callable[[GestureEvent], None]) -> None:
+    def register_action(
+        self, action_name: str, handler: Callable[[GestureEvent], None]
+    ) -> None:
         """注册动作处理器"""
         self.action_handlers[action_name] = handler
         logger.info(f"注册动作处理器: {action_name}")
@@ -400,13 +435,19 @@ class GestureController(QObject):
 
     def get_bindings(self) -> dict[str, list[str]]:
         """获取当前手势绑定"""
-        return {gesture_type.value: actions for gesture_type, actions in self.gesture_bindings.items()}
+        return {
+            gesture_type.value: actions
+            for gesture_type, actions in self.gesture_bindings.items()
+        }
 
     def save_bindings(self, filepath: str) -> None:
         """保存手势绑定配置"""
         import json
 
-        bindings_data = {gesture_type.value: actions for gesture_type, actions in self.gesture_bindings.items()}
+        bindings_data = {
+            gesture_type.value: actions
+            for gesture_type, actions in self.gesture_bindings.items()
+        }
 
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(bindings_data, f, indent=2, ensure_ascii=False)

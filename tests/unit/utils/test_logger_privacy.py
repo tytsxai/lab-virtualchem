@@ -12,7 +12,9 @@ from src.utils.logger import (
 )
 
 
-def _build_stream_logger(name: str, stream: StringIO, formatter: logging.Formatter) -> logging.Logger:
+def _build_stream_logger(
+    name: str, stream: StringIO, formatter: logging.Formatter
+) -> logging.Logger:
     logger = logging.getLogger(name)
     logger.handlers.clear()
     logger.propagate = False
@@ -26,7 +28,9 @@ def _build_stream_logger(name: str, stream: StringIO, formatter: logging.Formatt
 
 def test_sensitive_filter_masks_common_patterns():
     stream = StringIO()
-    logger = _build_stream_logger("privacy-test-message", stream, logging.Formatter("%(message)s"))
+    logger = _build_stream_logger(
+        "privacy-test-message", stream, logging.Formatter("%(message)s")
+    )
 
     logger.info("email=john.doe@example.com token=abcd1234efgh phone 138-1234-5678")
     output = stream.getvalue()
@@ -61,15 +65,23 @@ def test_extra_fields_masked_and_non_sensitive_preserved():
     assert payload["message"] == "user login"
 
 
-def test_setup_logger_enforces_filters_and_levels_in_production(monkeypatch, tmp_path: Path):
+def test_setup_logger_enforces_filters_and_levels_in_production(
+    monkeypatch, tmp_path: Path
+):
     monkeypatch.setenv("ENVIRONMENT", "production")
     log_path = tmp_path / "privacy.log"
-    logger = setup_logger("privacy-setup", logging.DEBUG, log_file=log_path, enable_console=False)
+    logger = setup_logger(
+        "privacy-setup", logging.DEBUG, log_file=log_path, enable_console=False
+    )
 
     try:
         assert logger.level >= logging.INFO
         assert all(handler.level >= logging.INFO for handler in logger.handlers)
-        assert any(isinstance(f, SensitiveDataFilter) for h in logger.handlers for f in h.filters)
+        assert any(
+            isinstance(f, SensitiveDataFilter)
+            for h in logger.handlers
+            for f in h.filters
+        )
 
         logger.info("secret=shhh-this-should-not-leak")
         for handler in logger.handlers:

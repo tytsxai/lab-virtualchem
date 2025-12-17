@@ -200,7 +200,11 @@ class TestConfigAccessLayer:
         self.access_layer.set("test.single_item", "single")
 
         assert self.access_layer.get_list("test.list") == ["item1", "item2", "item3"]
-        assert self.access_layer.get_list("test.string_list") == ["item1", "item2", "item3"]
+        assert self.access_layer.get_list("test.string_list") == [
+            "item1",
+            "item2",
+            "item3",
+        ]
         assert self.access_layer.get_list("test.single_item") == ["single"]
         assert self.access_layer.get_list("nonexistent") == []
         assert self.access_layer.get_list("nonexistent", ["default"]) == ["default"]
@@ -212,7 +216,9 @@ class TestConfigAccessLayer:
 
         assert self.access_layer.get_dict("test.dict") == test_dict
         assert self.access_layer.get_dict("nonexistent") == {}
-        assert self.access_layer.get_dict("nonexistent", {"default": "value"}) == {"default": "value"}
+        assert self.access_layer.get_dict("nonexistent", {"default": "value"}) == {
+            "default": "value"
+        }
 
     def test_clear_cache(self):
         """测试清除缓存"""
@@ -244,16 +250,25 @@ class TestConfigAccessLayer:
 
     def test_get_with_validation(self):
         """测试获取配置并验证"""
+
         def positive_validator(value):
             if value <= 0:
                 raise ValueError("Value must be positive")
             return value
 
         self.access_layer.set("test.positive", 5)
-        assert self.access_layer.get_with_validation("test.positive", positive_validator) == 5
+        assert (
+            self.access_layer.get_with_validation("test.positive", positive_validator)
+            == 5
+        )
 
         self.access_layer.set("test.negative", -5)
-        assert self.access_layer.get_with_validation("test.negative", positive_validator, 10) == 10
+        assert (
+            self.access_layer.get_with_validation(
+                "test.negative", positive_validator, 10
+            )
+            == 10
+        )
 
 
 class TestGlobalFunctions:
@@ -263,7 +278,7 @@ class TestGlobalFunctions:
         """测试前准备"""
         self.mock_config = MockConfig()
 
-    @patch('src.core.config_access_layer.get_config')
+    @patch("src.core.config_access_layer.get_config")
     def test_get_config_access(self, mock_get_config):
         """测试获取全局配置访问层"""
         mock_get_config.return_value = self.mock_config
@@ -271,7 +286,7 @@ class TestGlobalFunctions:
         access_layer = get_config_access()
         assert isinstance(access_layer, ConfigAccessLayer)
 
-    @patch('src.core.config_access_layer._config_access_layer')
+    @patch("src.core.config_access_layer._config_access_layer")
     def test_reload_config_access(self, mock_config_access_layer):
         """测试重新加载全局配置访问层"""
         mock_layer = MagicMock()
@@ -280,7 +295,7 @@ class TestGlobalFunctions:
         reload_config_access()
         mock_layer.reload.assert_called_once()
 
-    @patch('src.core.config_access_layer.get_config_access')
+    @patch("src.core.config_access_layer.get_config_access")
     def test_convenience_functions(self, mock_get_config_access):
         """测试便捷函数"""
         mock_layer = MagicMock()
@@ -318,7 +333,7 @@ class TestGlobalFunctions:
 class TestBackwardCompatibility:
     """测试向后兼容性"""
 
-    @patch('src.core.config_access_layer.get_config_access')
+    @patch("src.core.config_access_layer.get_config_access")
     def test_config_alias(self, mock_get_config_access):
         """测试config别名"""
         mock_layer = MagicMock()

@@ -118,9 +118,17 @@ class IconManager:
         self.available = QTAWESOME_AVAILABLE
 
         if not self.available:
-            logger.warning("QtAwesome未安装,图标功能不可用. 安装: pip install qtawesome")
+            logger.warning(
+                "QtAwesome未安装,图标功能不可用. 安装: pip install qtawesome"
+            )
 
-    def get_icon(self, name: str, color: str | None = None, scale_factor: float = 1.0, **kwargs: Any) -> Any | None:
+    def get_icon(
+        self,
+        name: str,
+        color: str | None = None,
+        scale_factor: float = 1.0,
+        **kwargs: Any,
+    ) -> Any | None:
         """获取图标
 
         Args:
@@ -151,7 +159,9 @@ class IconManager:
             logger.error(f"获取图标失败 {name}: {e}")
             return None
 
-    def get_colored_icon(self, name: str, color_name: str = "primary", scale_factor: float = 1.0) -> Any | None:
+    def get_colored_icon(
+        self, name: str, color_name: str = "primary", scale_factor: float = 1.0
+    ) -> Any | None:
         """获取彩色图标(便捷方法)
 
         Args:
@@ -228,7 +238,9 @@ class IconManager:
             logger.error(f"获取动画图标失败 {name}: {e}")
             return self.get_icon(name)
 
-    def get_spin_icon(self, name: str = "loading", color: str = "primary") -> Any | None:
+    def get_spin_icon(
+        self, name: str = "loading", color: str = "primary"
+    ) -> Any | None:
         """获取旋转图标(用于加载状态)"""
         return self.get_animated_icon(name, color=self.COLORS.get(color, color))
 

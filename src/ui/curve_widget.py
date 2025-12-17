@@ -39,7 +39,9 @@ class CurveWidget(QWidget):
 
         if not PYQTGRAPH_AVAILABLE:
             # PyQtGraph未安装,显示提示
-            warning_label = QLabel("⚠️ PyQtGraph未安装,无法显示曲线\n请运行: pip install pyqtgraph")
+            warning_label = QLabel(
+                "⚠️ PyQtGraph未安装,无法显示曲线\n请运行: pip install pyqtgraph"
+            )
             warning_label.setAlignment(Qt.AlignCenter)
             warning_label.setStyleSheet("color: red; font-size: 14px;")
             layout.addWidget(warning_label)
@@ -68,7 +70,11 @@ class CurveWidget(QWidget):
 
             # 生成曲线数据
             V_base, pH_values = self.curve_generator.generate_titration_curve(
-                acid_type=acid_type, acid_M=acid_M, acid_V_ml=acid_V_ml, base_M=base_M, pKa=pKa
+                acid_type=acid_type,
+                acid_M=acid_M,
+                acid_V_ml=acid_V_ml,
+                base_M=base_M,
+                pKa=pKa,
             )
 
             # 清除旧曲线
@@ -91,7 +97,9 @@ class CurveWidget(QWidget):
             self.plot_widget.setYRange(0, 14, padding=0)
 
             # 添加参考线(pH=7)
-            inf_line = pg.InfiniteLine(pos=7, angle=0, pen=pg.mkPen(color=(255, 0, 0), style=Qt.DashLine))
+            inf_line = pg.InfiniteLine(
+                pos=7, angle=0, pen=pg.mkPen(color=(255, 0, 0), style=Qt.DashLine)
+            )
             self.plot_widget.addItem(inf_line)
 
             logger.info(f"成功绘制滴定曲线: {len(V_base)} 个数据点")
@@ -115,7 +123,11 @@ class CurveWidget(QWidget):
 
             # 生成曲线数据
             time_points, temp_values = self.curve_generator.generate_temperature_curve(
-                curve_type=curve_type, T0=T0, T_target=T_target, k=k, duration_min=duration_min
+                curve_type=curve_type,
+                T0=T0,
+                T_target=T_target,
+                k=k,
+                duration_min=duration_min,
             )
 
             # 清除旧曲线

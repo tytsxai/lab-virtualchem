@@ -38,7 +38,9 @@ class TestBasicReportGeneration:
     def completed_experiment(self):
         """完成的实验fixture"""
 
-        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(
+            id="test_exp", title="测试实验", experiment_type="titration"
+        )
         experiment.prepare()
         experiment.start()
 
@@ -103,7 +105,9 @@ class TestReportFormatting:
     def experiment_with_data(self):
         """带数据的实验"""
 
-        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(
+            id="test_exp", title="测试实验", experiment_type="titration"
+        )
         experiment.prepare()
         experiment.start()
 
@@ -161,7 +165,9 @@ class TestDataVisualization:
     def test_chart_data_preparation(self):
         """测试图表数据准备"""
 
-        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(
+            id="test_exp", title="测试实验", experiment_type="titration"
+        )
         experiment.prepare()
         experiment.start()
 
@@ -181,7 +187,9 @@ class TestDataVisualization:
     def test_curve_data_export(self):
         """测试曲线数据导出"""
 
-        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(
+            id="test_exp", title="测试实验", experiment_type="titration"
+        )
         experiment.prepare()
         experiment.start()
 
@@ -206,7 +214,9 @@ class TestReportCustomization:
     def test_template_selection(self):
         """测试模板选择"""
 
-        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(
+            id="test_exp", title="测试实验", experiment_type="titration"
+        )
         experiment.prepare()
         experiment.start()
         experiment.complete()
@@ -222,7 +232,9 @@ class TestReportCustomization:
     def test_field_selection(self):
         """测试字段选择"""
 
-        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(
+            id="test_exp", title="测试实验", experiment_type="titration"
+        )
         experiment.prepare()
         experiment.start()
         experiment.record_data("field1", "value1")
@@ -238,13 +250,17 @@ class TestReportCustomization:
     def test_section_ordering(self):
         """测试章节排序"""
 
-        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(
+            id="test_exp", title="测试实验", experiment_type="titration"
+        )
         experiment.prepare()
         experiment.start()
         experiment.complete()
 
         # 自定义章节顺序
-        report = experiment.generate_report(sections_order=["data", "observations", "calculations", "conclusion"])
+        report = experiment.generate_report(
+            sections_order=["data", "observations", "calculations", "conclusion"]
+        )
 
         # 验证顺序（如果实现支持）
         if "sections" in report:
@@ -265,7 +281,9 @@ class TestReportStorage:
     def test_save_report_to_file(self, temp_storage):
         """测试保存报告到文件"""
 
-        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(
+            id="test_exp", title="测试实验", experiment_type="titration"
+        )
         experiment.prepare()
         experiment.start()
         experiment.complete()
@@ -307,7 +325,9 @@ class TestReportStorage:
     def test_report_versioning(self, temp_storage):
         """测试报告版本控制"""
 
-        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(
+            id="test_exp", title="测试实验", experiment_type="titration"
+        )
         experiment.prepare()
         experiment.start()
         experiment.complete()
@@ -336,7 +356,9 @@ class TestReportValidation:
     def test_required_fields_validation(self):
         """测试必需字段验证"""
 
-        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(
+            id="test_exp", title="测试实验", experiment_type="titration"
+        )
         experiment.prepare()
         experiment.start()
         # 不记录任何数据
@@ -354,7 +376,9 @@ class TestReportValidation:
     def test_data_type_validation(self):
         """测试数据类型验证"""
 
-        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(
+            id="test_exp", title="测试实验", experiment_type="titration"
+        )
         experiment.prepare()
         experiment.start()
 
@@ -370,7 +394,9 @@ class TestReportValidation:
     def test_calculation_accuracy_check(self):
         """测试计算准确性检查"""
 
-        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(
+            id="test_exp", title="测试实验", experiment_type="titration"
+        )
         experiment.prepare()
         experiment.start()
 
@@ -395,7 +421,9 @@ class TestReportSharing:
     def test_anonymous_report(self):
         """测试匿名报告"""
 
-        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(
+            id="test_exp", title="测试实验", experiment_type="titration"
+        )
         experiment.prepare()
         experiment.start()
         experiment.record_data("student_id", "123456")
@@ -412,13 +440,17 @@ class TestReportSharing:
     def test_watermark_addition(self):
         """测试水印添加"""
 
-        experiment = _create_base_experiment(id="test_exp", title="测试实验", experiment_type="titration")
+        experiment = _create_base_experiment(
+            id="test_exp", title="测试实验", experiment_type="titration"
+        )
         experiment.prepare()
         experiment.start()
         experiment.complete()
 
         # 添加水印
-        report_with_watermark = experiment.generate_report(watermark="VirtualChemLab - 仅供教学使用")
+        report_with_watermark = experiment.generate_report(
+            watermark="VirtualChemLab - 仅供教学使用"
+        )
 
         # 验证水印（如果实现）
         if "watermark" in report_with_watermark:

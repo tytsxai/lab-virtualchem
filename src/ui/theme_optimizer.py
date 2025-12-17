@@ -84,7 +84,9 @@ class ThemeOptimizer(QObject):
             else:
                 self._font_scale_factor = 1.3
 
-            logger.info(f"DPI缩放检测完成: DPI={dpi}, 缩放因子={self._dpi_scale_factor:.2f}")
+            logger.info(
+                f"DPI缩放检测完成: DPI={dpi}, 缩放因子={self._dpi_scale_factor:.2f}"
+            )
 
         except Exception as e:
             logger.error(f"DPI缩放检测失败: {e}", exc_info=True)
@@ -152,7 +154,9 @@ class ThemeOptimizer(QObject):
                 return True
 
             self._is_switching = True
-            logger.info(f"开始切换主题: {self._current_theme.value} -> {theme_type.value}")
+            logger.info(
+                f"开始切换主题: {self._current_theme.value} -> {theme_type.value}"
+            )
 
             # 获取主题配置
             theme_config = self._theme_cache.get(theme_type)
@@ -311,7 +315,9 @@ class ThemeTransitionManager:
         self._end_config: dict[str, Any] = {}
         self._current_config: dict[str, Any] = {}
 
-    def start_transition(self, start_config: dict[str, Any], end_config: dict[str, Any]) -> None:
+    def start_transition(
+        self, start_config: dict[str, Any], end_config: dict[str, Any]
+    ) -> None:
         """开始主题过渡"""
         try:
             if self._is_transitioning:
@@ -339,7 +345,9 @@ class ThemeTransitionManager:
             progress = min(elapsed / (self._transition_duration_ms / 1000.0), 1.0)
 
             # 计算当前配置
-            self._current_config = self._interpolate_config(self._start_config, self._end_config, progress)
+            self._current_config = self._interpolate_config(
+                self._start_config, self._end_config, progress
+            )
 
             # 应用当前配置
             self._apply_current_config()
@@ -351,7 +359,9 @@ class ThemeTransitionManager:
         except Exception as e:
             logger.error(f"更新过渡失败: {e}", exc_info=True)
 
-    def _interpolate_config(self, start: dict[str, Any], end: dict[str, Any], progress: float) -> dict[str, Any]:
+    def _interpolate_config(
+        self, start: dict[str, Any], end: dict[str, Any], progress: float
+    ) -> dict[str, Any]:
         """插值配置"""
         try:
             result = {}
@@ -360,7 +370,9 @@ class ThemeTransitionManager:
                 if key in end:
                     if isinstance(start[key], str) and start[key].startswith("#"):
                         # 颜色插值
-                        result[key] = self._interpolate_color(start[key], end[key], progress)
+                        result[key] = self._interpolate_color(
+                            start[key], end[key], progress
+                        )
                     elif isinstance(start[key], (int, float)):
                         # 数值插值
                         result[key] = start[key] + (end[key] - start[key]) * progress
@@ -376,7 +388,9 @@ class ThemeTransitionManager:
             logger.error(f"插值配置失败: {e}", exc_info=True)
             return start
 
-    def _interpolate_color(self, start_color: str, end_color: str, progress: float) -> str:
+    def _interpolate_color(
+        self, start_color: str, end_color: str, progress: float
+    ) -> str:
         """插值颜色"""
         try:
             # 简单的颜色插值实现

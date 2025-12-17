@@ -26,9 +26,13 @@ class PubChemIntegration:
         """初始化PubChem集成"""
         self.available = PUBCHEM_AVAILABLE
         if not self.available:
-            logger.warning("PubChemPy未安装,自动补充功能不可用. 安装: pip install pubchempy")
+            logger.warning(
+                "PubChemPy未安装,自动补充功能不可用. 安装: pip install pubchempy"
+            )
 
-    def search_compound(self, identifier: str, namespace: str = "name") -> dict[str, Any] | None:
+    def search_compound(
+        self, identifier: str, namespace: str = "name"
+    ) -> dict[str, Any] | None:
         """搜索化合物信息
 
         Args:
@@ -150,7 +154,9 @@ class PubChemIntegration:
         toxic_elements = ["Hg", "Pb", "As", "Cd", "Cr", "Cl", "Br", "I"]
         return any(elem in formula for elem in toxic_elements)
 
-    def auto_fill_reagent(self, name: str, existing_data: ReagentInfo | None = None) -> ReagentInfo:
+    def auto_fill_reagent(
+        self, name: str, existing_data: ReagentInfo | None = None
+    ) -> ReagentInfo:
         """自动填充试剂信息
 
         Args:
@@ -246,7 +252,9 @@ class PubChemIntegration:
 pubchem = PubChemIntegration()
 
 
-def get_compound_info(identifier: str, namespace: str = "name") -> dict[str, Any] | None:
+def get_compound_info(
+    identifier: str, namespace: str = "name"
+) -> dict[str, Any] | None:
     """便捷函数: 获取化合物信息"""
     return pubchem.search_compound(identifier, namespace)
 

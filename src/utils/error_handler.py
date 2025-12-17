@@ -16,12 +16,16 @@ from typing import Any
 try:  # 兼容旧的错误类型导入路径
     from ..core.validation import ValidationError
 except ImportError:  # pragma: no cover - 容错
+
     class ValidationError(Exception):
         """兜底的验证异常"""
 
-        def __init__(self, message: str = "", field: str | None = None, **_: Any) -> None:
+        def __init__(
+            self, message: str = "", field: str | None = None, **_: Any
+        ) -> None:
             super().__init__(message)
             self.field = field
+
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +90,10 @@ class ErrorHandler:
 
     @staticmethod
     def handle_exception(
-        func: Callable[..., Any], context: str = "", default_return: Any = None, raise_error: bool = False
+        func: Callable[..., Any],
+        context: str = "",
+        default_return: Any = None,
+        raise_error: bool = False,
     ) -> Callable[..., Any]:
         """
         异常处理装饰器
@@ -127,13 +134,18 @@ def safe_execute(
 
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         return ErrorHandler.handle_exception(
-            func, context=context, default_return=default_return, raise_error=raise_error
+            func,
+            context=context,
+            default_return=default_return,
+            raise_error=raise_error,
         )
 
     return decorator
 
 
-def safe_call(func: Callable[..., Any], *args: Any, default_return: Any = None, **kwargs: Any) -> Any:
+def safe_call(
+    func: Callable[..., Any], *args: Any, default_return: Any = None, **kwargs: Any
+) -> Any:
     """
     安全调用函数
 
@@ -160,6 +172,7 @@ def validate_not_none(value: Any, name: str = "参数") -> None:
     """验证值不为None"""
     if value is None:
         from ..core.validation import ValidationError
+
         raise ValidationError(field=name, message=f"{name}不能为None")
 
 
@@ -167,21 +180,27 @@ def validate_type(value: Any, expected_type: type, name: str = "参数") -> None
     """验证值的类型"""
     if not isinstance(value, expected_type):
         from ..core.validation import ValidationError
+
         raise ValidationError(
             field=name,
-            message=f"{name}类型错误: 期望 {expected_type.__name__}, 实际 {type(value).__name__}"
+            message=f"{name}类型错误: 期望 {expected_type.__name__}, 实际 {type(value).__name__}",
         )
 
 
 def validate_range(
-    value: float, min_val: float | None = None, max_val: float | None = None, name: str = "参数"
+    value: float,
+    min_val: float | None = None,
+    max_val: float | None = None,
+    name: str = "参数",
 ) -> None:
     """验证值在指定范围内"""
     if min_val is not None and value < min_val:
         from ..core.validation import ValidationError
+
         raise ValidationError(f"{name}不能小于 {min_val}", field=name, value=value)
     if max_val is not None and value > max_val:
         from ..core.validation import ValidationError
+
         raise ValidationError(f"{name}不能大于 {max_val}", field=name, value=value)
 
 
@@ -189,6 +208,7 @@ def validate_not_empty(value: str, name: str = "参数") -> None:
     """验证字符串不为空"""
     if not value or not value.strip():
         from ..core.validation import ValidationError
+
         raise ValidationError(f"{name}不能为空", field=name, value=value)
 
 
@@ -196,6 +216,7 @@ def validate_file_exists(file_path: str, name: str = "文件") -> None:
     """验证文件存在"""
     if not Path(file_path).exists():
         from ..core.validation import ValidationError
+
         raise ValidationError(f"{name}不存在: {file_path}", field=name, value=file_path)
 
 

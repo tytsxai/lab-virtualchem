@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 class PluginState(Enum):
     """插件状态"""
+
     UNLOADED = "unloaded"
     LOADING = "loading"
     LOADED = "loaded"
@@ -41,6 +42,7 @@ class PluginState(Enum):
 
 class PluginType(Enum):
     """插件类型"""
+
     CORE = "core"
     FEATURE = "feature"
     UI = "ui"
@@ -51,6 +53,7 @@ class PluginType(Enum):
 @dataclass
 class PluginInfo:
     """插件信息"""
+
     name: str
     version: str
     description: str
@@ -74,13 +77,14 @@ class PluginInfo:
             "optional_dependencies": self.optional_dependencies,
             "entry_point": self.entry_point,
             "config_schema": self.config_schema,
-            "tags": self.tags
+            "tags": self.tags,
         }
 
 
 @dataclass
 class PluginInstance:
     """插件实例"""
+
     info: PluginInfo
     module: Any
     instance: Any
@@ -96,7 +100,7 @@ class PluginInstance:
             "state": self.state.value,
             "load_time": self.load_time,
             "error": self.error,
-            "config": self.config
+            "config": self.config,
         }
 
 
@@ -145,6 +149,7 @@ class PluginInterface(ABC):
 
 class PluginManager:
     """插件管理器"""
+
     def __init__(self, config: dict[str, Any] | None = None):
         self._config = config or {}
         self._error_handler = get_error_handler()
@@ -165,7 +170,7 @@ class PluginManager:
             "loaded_plugins": 0,
             "started_plugins": 0,
             "failed_plugins": 0,
-            "load_time": 0.0
+            "load_time": 0.0,
         }
 
         # 事件订阅
@@ -184,11 +189,7 @@ class PluginManager:
             return
 
         # 添加默认插件目录
-        default_dirs = [
-            Path("plugins"),
-            Path("src/plugins"),
-            Path("extensions")
-        ]
+        default_dirs = [Path("plugins"), Path("src/plugins"), Path("extensions")]
 
         for dir_path in default_dirs:
             if dir_path.exists():
@@ -201,7 +202,7 @@ class PluginManager:
             LogLevel.INFO,
             "Plugin manager initialized",
             module="PluginManager",
-            function="initialize"
+            function="initialize",
         )
 
     def add_plugin_directory(self, directory: Path) -> None:
@@ -217,7 +218,7 @@ class PluginManager:
                 LogLevel.INFO,
                 f"Added plugin directory: {directory}",
                 module="PluginManager",
-                function="add_plugin_directory"
+                function="add_plugin_directory",
             )
 
     def _scan_directory(self, directory: Path) -> None:
@@ -246,7 +247,7 @@ class PluginManager:
             module_name = f"plugin_{file_path.stem}_{id(self)}"
 
             # 读取文件内容
-            with open(file_path, encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 source_code = f.read()
 
             # 编译模块
@@ -267,7 +268,7 @@ class PluginManager:
                     LogLevel.INFO,
                     f"Loaded plugin class: {plugin_class.__name__}",
                     module="PluginManager",
-                    function="_load_plugin_from_file"
+                    function="_load_plugin_from_file",
                 )
         except Exception as e:
             logger.error(f"Failed to load plugin from file {file_path}: {e}")
@@ -275,9 +276,11 @@ class PluginManager:
     def _find_plugin_class(self, module: Any) -> type[PluginInterface] | None:
         """查找插件类"""
         for _name, obj in inspect.getmembers(module):
-            if (inspect.isclass(obj) and
-                issubclass(obj, PluginInterface) and
-                obj != PluginInterface):
+            if (
+                inspect.isclass(obj)
+                and issubclass(obj, PluginInterface)
+                and obj != PluginInterface
+            ):
                 return obj
         return None
 
@@ -291,7 +294,7 @@ class PluginManager:
             LogLevel.DEBUG,
             f"Registered plugin class: {plugin_name}",
             module="PluginManager",
-            function="_register_plugin_class"
+            function="_register_plugin_class",
         )
 
     def load_plugin(self, name: str, config: dict[str, Any] | None = None) -> bool:
@@ -320,7 +323,7 @@ class PluginManager:
                     module=plugin_class,
                     instance=plugin_instance,
                     state=PluginState.LOADING,
-                    config=config or {}
+                    config=config or {},
                 )
 
                 self._plugins[name] = instance
@@ -331,7 +334,7 @@ class PluginManager:
                     LogLevel.INFO,
                     f"Plugin loaded: {name}",
                     module="PluginManager",
-                    function="load_plugin"
+                    function="load_plugin",
                 )
 
                 return True
@@ -367,7 +370,7 @@ class PluginManager:
                     LogLevel.INFO,
                     f"Plugin unloaded: {name}",
                     module="PluginManager",
-                    function="unload_plugin"
+                    function="unload_plugin",
                 )
 
                 return True
@@ -402,7 +405,7 @@ class PluginManager:
                     LogLevel.INFO,
                     f"Plugin initialized: {name}",
                     module="PluginManager",
-                    function="initialize_plugin"
+                    function="initialize_plugin",
                 )
 
                 return True
@@ -439,7 +442,7 @@ class PluginManager:
                     LogLevel.INFO,
                     f"Plugin started: {name}",
                     module="PluginManager",
-                    function="start_plugin"
+                    function="start_plugin",
                 )
 
                 return True
@@ -476,7 +479,7 @@ class PluginManager:
                     LogLevel.INFO,
                     f"Plugin stopped: {name}",
                     module="PluginManager",
-                    function="stop_plugin"
+                    function="stop_plugin",
                 )
 
                 return True
@@ -493,7 +496,8 @@ class PluginManager:
     def get_plugins_by_type(self, plugin_type: PluginType) -> list[PluginInstance]:
         """按类型获取插件"""
         return [
-            plugin for plugin in self._plugins.values()
+            plugin
+            for plugin in self._plugins.values()
             if plugin.info.plugin_type == plugin_type
         ]
 
@@ -550,10 +554,10 @@ class PluginManager:
         plugins_data = {
             "plugins": [plugin.to_dict() for plugin in self._plugins.values()],
             "available_plugins": self.get_available_plugins(),
-            "stats": self.get_stats()
+            "stats": self.get_stats(),
         }
 
-        with open(plugins_file, 'w', encoding='utf-8') as f:
+        with open(plugins_file, "w", encoding="utf-8") as f:
             json.dump(plugins_data, f, indent=2, ensure_ascii=False)
 
 

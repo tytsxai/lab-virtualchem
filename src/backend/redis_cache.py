@@ -244,7 +244,11 @@ class RedisCache:
         try:
             full_keys = [self._make_key(k) for k in keys]
             values = self.client.mget(full_keys)
-            return {k: self._deserialize(v) for k, v in zip(keys, values, strict=False) if v is not None}
+            return {
+                k: self._deserialize(v)
+                for k, v in zip(keys, values, strict=False)
+                if v is not None
+            }
         except Exception as e:
             logger.error(f"Redis批量获取失败: {e}")
             return {}
@@ -327,7 +331,12 @@ class RedisCacheDecorator:
     def __init__(self, cache: RedisCache):
         self.cache = cache
 
-    def cached(self, ttl: int | None = None, key_prefix: str = "", key_builder: "Callable | None" = None):
+    def cached(
+        self,
+        ttl: int | None = None,
+        key_prefix: str = "",
+        key_builder: "Callable | None" = None,
+    ):
         """
         缓存装饰器
 
@@ -412,7 +421,12 @@ if __name__ == "__main__":
         logger.info(f"获取: {cache.get('key1')}")
 
         # 批量操作
-        cache.set_many({"user:1": {"name": "Alice", "age": 25}, "user:2": {"name": "Bob", "age": 30}})
+        cache.set_many(
+            {
+                "user:1": {"name": "Alice", "age": 25},
+                "user:2": {"name": "Bob", "age": 30},
+            }
+        )
 
         users = cache.get_many(["user:1", "user:2"])
         logger.info(f"批量获取: {users}")

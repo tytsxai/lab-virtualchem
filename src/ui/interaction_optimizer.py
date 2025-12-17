@@ -95,7 +95,9 @@ class InteractionOptimizer(QObject):
         super().__init__(parent)
 
         # 用户行为数据
-        self.user_behaviors: dict[str, deque[Any]] = defaultdict(lambda: deque(maxlen=1000))
+        self.user_behaviors: dict[str, deque[Any]] = defaultdict(
+            lambda: deque(maxlen=1000)
+        )
         self.user_preferences: dict[str, dict[str, UserPreference]] = defaultdict(dict)
         self.interaction_patterns: dict[str, InteractionPattern] = {}
 
@@ -156,7 +158,9 @@ class InteractionOptimizer(QObject):
                 self._analyze_user_skill(user_id)
                 self._update_user_preferences(user_id, behavior)
 
-            logger.debug(f"记录用户交互: {user_id} - {interaction_type.value} - {component}")
+            logger.debug(
+                f"记录用户交互: {user_id} - {interaction_type.value} - {component}"
+            )
 
         except Exception as e:
             logger.error(f"记录用户交互失败: {e}")
@@ -172,14 +176,21 @@ class InteractionOptimizer(QObject):
             recent_behaviors = list(behaviors)[-50:]  # 最近50次交互
 
             # 计算平均交互时间
-            avg_duration = sum(b.duration_ms for b in recent_behaviors) / len(recent_behaviors)
+            avg_duration = sum(b.duration_ms for b in recent_behaviors) / len(
+                recent_behaviors
+            )
 
             # 计算成功率
-            success_rate = sum(1 for b in recent_behaviors if b.success) / len(recent_behaviors)
+            success_rate = sum(1 for b in recent_behaviors if b.success) / len(
+                recent_behaviors
+            )
 
             # 分析交互复杂度
             complex_interactions = sum(
-                1 for b in recent_behaviors if b.interaction_type in [InteractionType.DRAG, InteractionType.KEYBOARD]
+                1
+                for b in recent_behaviors
+                if b.interaction_type
+                in [InteractionType.DRAG, InteractionType.KEYBOARD]
             )
             complexity_ratio = complex_interactions / len(recent_behaviors)
 
@@ -189,11 +200,15 @@ class InteractionOptimizer(QObject):
                 if not recent_behaviors[i - 1].success and recent_behaviors[i].success:
                     error_recoveries += 1
 
-            recovery_rate = error_recoveries / max(1, sum(1 for b in recent_behaviors if not b.success))
+            recovery_rate = error_recoveries / max(
+                1, sum(1 for b in recent_behaviors if not b.success)
+            )
 
             # 技能水平评估
             old_skill = self.user_skill_levels.get(user_id, UserSkillLevel.BEGINNER)
-            new_skill = self._calculate_skill_level(avg_duration, success_rate, complexity_ratio, recovery_rate)
+            new_skill = self._calculate_skill_level(
+                avg_duration, success_rate, complexity_ratio, recovery_rate
+            )
 
             if new_skill != old_skill:
                 self.user_skill_levels[user_id] = new_skill
@@ -204,7 +219,11 @@ class InteractionOptimizer(QObject):
             logger.error(f"分析用户技能失败: {e}")
 
     def _calculate_skill_level(
-        self, avg_duration: float, success_rate: float, complexity_ratio: float, recovery_rate: float
+        self,
+        avg_duration: float,
+        success_rate: float,
+        complexity_ratio: float,
+        recovery_rate: float,
     ) -> UserSkillLevel:
         """计算技能水平"""
         # 技能评分算法
@@ -323,12 +342,16 @@ class InteractionOptimizer(QObject):
                 for pattern in all_patterns:
                     self._register_pattern(pattern)
 
-            logger.debug(f"模式分析完成，检测到 {len(self.interaction_patterns)} 个模式")
+            logger.debug(
+                f"模式分析完成，检测到 {len(self.interaction_patterns)} 个模式"
+            )
 
         except Exception as e:
             logger.error(f"分析交互模式失败: {e}")
 
-    def _detect_sequence_patterns(self, user_id: str, behaviors: deque[Any]) -> list[InteractionPattern]:
+    def _detect_sequence_patterns(
+        self, user_id: str, behaviors: deque[Any]
+    ) -> list[InteractionPattern]:
         """检测序列模式"""
         patterns = []
 
@@ -338,21 +361,25 @@ class InteractionOptimizer(QObject):
             sequences = defaultdict(list)
 
             for i in range(len(behaviors) - window_size + 1):
-                sequence = tuple(b.interaction_type for b in list(behaviors)[i : i + window_size])
+                sequence = tuple(
+                    b.interaction_type for b in list(behaviors)[i : i + window_size]
+                )
                 sequences[sequence].append(i)
 
             # 识别频繁序列
             for sequence, positions in sequences.items():
                 if len(positions) >= self.min_pattern_frequency:
                     # 计算模式统计
-                    pattern_behaviors = [list(behaviors)[i : i + window_size] for i in positions]
-                    success_rate = sum(1 for seq in pattern_behaviors if all(b.success for b in seq)) / len(
-                        pattern_behaviors
-                    )
+                    pattern_behaviors = [
+                        list(behaviors)[i : i + window_size] for i in positions
+                    ]
+                    success_rate = sum(
+                        1 for seq in pattern_behaviors if all(b.success for b in seq)
+                    ) / len(pattern_behaviors)
 
-                    avg_duration = sum(sum(b.duration_ms for b in seq) for seq in pattern_behaviors) / len(
-                        pattern_behaviors
-                    )
+                    avg_duration = sum(
+                        sum(b.duration_ms for b in seq) for seq in pattern_behaviors
+                    ) / len(pattern_behaviors)
 
                     # 提取上下文
                     contexts = []
@@ -369,7 +396,9 @@ class InteractionOptimizer(QObject):
                         success_rate=success_rate,
                         avg_duration_ms=avg_duration,
                         common_contexts=common_contexts,
-                        user_skill_level=self.user_skill_levels.get(user_id, UserSkillLevel.BEGINNER),
+                        user_skill_level=self.user_skill_levels.get(
+                            user_id, UserSkillLevel.BEGINNER
+                        ),
                     )
 
                     patterns.append(pattern)
@@ -379,7 +408,9 @@ class InteractionOptimizer(QObject):
 
         return patterns
 
-    def _detect_time_patterns(self, user_id: str, behaviors: deque[Any]) -> list[InteractionPattern]:
+    def _detect_time_patterns(
+        self, user_id: str, behaviors: deque[Any]
+    ) -> list[InteractionPattern]:
         """检测时间模式"""
         patterns = []
 
@@ -393,8 +424,12 @@ class InteractionOptimizer(QObject):
             # 识别活跃时间段
             for hour, hour_behaviors in hourly_groups.items():
                 if len(hour_behaviors) >= self.min_pattern_frequency:
-                    success_rate = sum(1 for b in hour_behaviors if b.success) / len(hour_behaviors)
-                    avg_duration = sum(b.duration_ms for b in hour_behaviors) / len(hour_behaviors)
+                    success_rate = sum(1 for b in hour_behaviors if b.success) / len(
+                        hour_behaviors
+                    )
+                    avg_duration = sum(b.duration_ms for b in hour_behaviors) / len(
+                        hour_behaviors
+                    )
 
                     pattern = InteractionPattern(
                         pattern_id=f"time_{user_id}_{hour}",
@@ -403,7 +438,9 @@ class InteractionOptimizer(QObject):
                         success_rate=success_rate,
                         avg_duration_ms=avg_duration,
                         common_contexts=[f"hour_{hour}"],
-                        user_skill_level=self.user_skill_levels.get(user_id, UserSkillLevel.BEGINNER),
+                        user_skill_level=self.user_skill_levels.get(
+                            user_id, UserSkillLevel.BEGINNER
+                        ),
                     )
 
                     patterns.append(pattern)
@@ -413,7 +450,9 @@ class InteractionOptimizer(QObject):
 
         return patterns
 
-    def _detect_context_patterns(self, user_id: str, behaviors: deque[Any]) -> list[InteractionPattern]:
+    def _detect_context_patterns(
+        self, user_id: str, behaviors: deque[Any]
+    ) -> list[InteractionPattern]:
         """检测上下文模式"""
         patterns = []
 
@@ -426,8 +465,12 @@ class InteractionOptimizer(QObject):
             # 识别组件使用模式
             for component, component_behaviors in component_groups.items():
                 if len(component_behaviors) >= self.min_pattern_frequency:
-                    success_rate = sum(1 for b in component_behaviors if b.success) / len(component_behaviors)
-                    avg_duration = sum(b.duration_ms for b in component_behaviors) / len(component_behaviors)
+                    success_rate = sum(
+                        1 for b in component_behaviors if b.success
+                    ) / len(component_behaviors)
+                    avg_duration = sum(
+                        b.duration_ms for b in component_behaviors
+                    ) / len(component_behaviors)
 
                     # 提取常见上下文
                     contexts = []
@@ -443,7 +486,9 @@ class InteractionOptimizer(QObject):
                         success_rate=success_rate,
                         avg_duration_ms=avg_duration,
                         common_contexts=common_contexts,
-                        user_skill_level=self.user_skill_levels.get(user_id, UserSkillLevel.BEGINNER),
+                        user_skill_level=self.user_skill_levels.get(
+                            user_id, UserSkillLevel.BEGINNER
+                        ),
                     )
 
                     patterns.append(pattern)
@@ -460,8 +505,12 @@ class InteractionOptimizer(QObject):
                 # 更新现有模式
                 existing = self.interaction_patterns[pattern.pattern_id]
                 existing.frequency += pattern.frequency
-                existing.success_rate = (existing.success_rate + pattern.success_rate) / 2
-                existing.avg_duration_ms = (existing.avg_duration_ms + pattern.avg_duration_ms) / 2
+                existing.success_rate = (
+                    existing.success_rate + pattern.success_rate
+                ) / 2
+                existing.avg_duration_ms = (
+                    existing.avg_duration_ms + pattern.avg_duration_ms
+                ) / 2
             else:
                 # 注册新模式
                 self.interaction_patterns[pattern.pattern_id] = pattern
@@ -480,14 +529,20 @@ class InteractionOptimizer(QObject):
         except Exception as e:
             logger.error(f"注册交互模式失败: {e}")
 
-    def get_user_preferences(self, user_id: str, component: str | None = None) -> dict[str, Any]:
+    def get_user_preferences(
+        self, user_id: str, component: str | None = None
+    ) -> dict[str, Any]:
         """获取用户偏好"""
         try:
             preferences = self.user_preferences.get(user_id, {})
 
             if component:
                 # 过滤特定组件的偏好
-                filtered = {key: pref for key, pref in preferences.items() if pref.component == component}
+                filtered = {
+                    key: pref
+                    for key, pref in preferences.items()
+                    if pref.component == component
+                }
                 return filtered
 
             return preferences
@@ -599,17 +654,23 @@ class InteractionOptimizer(QObject):
         except Exception as e:
             logger.error(f"个性化界面失败: {e}")
 
-    def _apply_preference(self, _component: QWidget, preference: UserPreference) -> None:
+    def _apply_preference(
+        self, _component: QWidget, preference: UserPreference
+    ) -> None:
         """应用偏好设置"""
         try:
             # 这里应该实现具体的偏好应用逻辑
             # 比如设置字体大小、颜色、布局等
-            logger.debug(f"应用偏好: {preference.component}.{preference.setting} = {preference.value}")
+            logger.debug(
+                f"应用偏好: {preference.component}.{preference.setting} = {preference.value}"
+            )
 
         except Exception as e:
             logger.error(f"应用偏好失败: {e}")
 
-    def _adjust_interface_for_skill(self, _component: QWidget, skill_level: UserSkillLevel) -> None:
+    def _adjust_interface_for_skill(
+        self, _component: QWidget, skill_level: UserSkillLevel
+    ) -> None:
         """根据技能水平调整界面"""
         try:
             # 这里应该实现基于技能水平的界面调整
@@ -637,7 +698,10 @@ class InteractionOptimizer(QObject):
                     }
                     for user_id, prefs in self.user_preferences.items()
                 },
-                "user_skill_levels": {user_id: skill.value for user_id, skill in self.user_skill_levels.items()},
+                "user_skill_levels": {
+                    user_id: skill.value
+                    for user_id, skill in self.user_skill_levels.items()
+                },
                 "interaction_patterns": {
                     pattern_id: {
                         "sequence": [t.value for t in pattern.sequence],
@@ -687,7 +751,9 @@ class InteractionOptimizer(QObject):
                 self.user_skill_levels[user_id] = UserSkillLevel(skill_value)
 
             # 加载交互模式
-            for pattern_id, pattern_data in data.get("interaction_patterns", {}).items():
+            for pattern_id, pattern_data in data.get(
+                "interaction_patterns", {}
+            ).items():
                 pattern = InteractionPattern(
                     pattern_id=pattern_id,
                     sequence=[InteractionType(t) for t in pattern_data["sequence"]],
@@ -709,7 +775,9 @@ class InteractionOptimizer(QObject):
         try:
             total_users = len(self.user_behaviors)
             total_patterns = len(self.interaction_patterns)
-            total_preferences = sum(len(prefs) for prefs in self.user_preferences.values())
+            total_preferences = sum(
+                len(prefs) for prefs in self.user_preferences.values()
+            )
 
             report = f"""
 # 交互优化报告
@@ -747,11 +815,15 @@ class InteractionOptimizer(QObject):
                 report += "- 未检测到用户偏好，建议启用偏好学习功能\n"
 
             low_success_patterns = [
-                pattern for pattern in self.interaction_patterns.values() if pattern.success_rate < 0.7
+                pattern
+                for pattern in self.interaction_patterns.values()
+                if pattern.success_rate < 0.7
             ]
 
             if low_success_patterns:
-                report += f"- 发现 {len(low_success_patterns)} 个低成功率模式，需要优化\n"
+                report += (
+                    f"- 发现 {len(low_success_patterns)} 个低成功率模式，需要优化\n"
+                )
 
             return report
 

@@ -25,4 +25,6 @@ def test_sensitive_data_filter_masks_known_fields(caplog):
 
 def test_setup_logger_attaches_filter(monkeypatch):
     logger = setup_logger("vcl.test.setup", logging.INFO)
-    assert any(isinstance(f, SensitiveDataFilter) for h in logger.handlers for f in h.filters)
+    assert any(
+        isinstance(f, SensitiveDataFilter) for h in logger.handlers for f in h.filters
+    )

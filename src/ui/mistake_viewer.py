@@ -144,7 +144,9 @@ class MistakeViewer(QDialog):
         # 表格
         self.table = QTableWidget()
         self.table.setColumnCount(6)
-        self.table.setHorizontalHeaderLabels(["日期", "实验", "类型", "描述", "状态", "掌握"])
+        self.table.setHorizontalHeaderLabels(
+            ["日期", "实验", "类型", "描述", "状态", "掌握"]
+        )
 
         # 设置列宽
         header = self.table.horizontalHeader()
@@ -266,7 +268,9 @@ class MistakeViewer(QDialog):
     def load_mistakes(self):
         """加载错题"""
         try:
-            self.current_mistakes = self.mistake_book.get_student_mistakes(self.student_id)
+            self.current_mistakes = self.mistake_book.get_student_mistakes(
+                self.student_id
+            )
             self.update_table()
             self.update_statistics()
         except Exception as e:
@@ -333,7 +337,9 @@ class MistakeViewer(QDialog):
             self.table.setItem(row, 5, mastered_item)
 
             # 存储错题ID
-            self.table.item(row, 0).setData(Qt.ItemDataRole.UserRole, mistake.mistake_id)
+            self.table.item(row, 0).setData(
+                Qt.ItemDataRole.UserRole, mistake.mistake_id
+            )
 
     def update_statistics(self):
         """更新统计信息"""
@@ -376,7 +382,9 @@ class MistakeViewer(QDialog):
             "safety": "安全错误",
             "other": "其他错误",
         }
-        self.type_label.setText(f"类型: {type_map.get(mistake.mistake_type, mistake.mistake_type)}")
+        self.type_label.setText(
+            f"类型: {type_map.get(mistake.mistake_type, mistake.mistake_type)}"
+        )
         self.date_label.setText(f"发生时间: {mistake.occurred_at[:19]}")
 
         self.desc_text.setPlainText(mistake.mistake_description)
@@ -413,7 +421,9 @@ class MistakeViewer(QDialog):
                 # 如果标记为掌握，自动标记为已复习
                 self.reviewed_checkbox.setChecked(True)
 
-            self.mistake_book.mark_as_reviewed(self.selected_mistake.mistake_id, self.student_id, mastered=mastered)
+            self.mistake_book.mark_as_reviewed(
+                self.selected_mistake.mistake_id, self.student_id, mastered=mastered
+            )
             self.load_mistakes()
 
     def on_start_review(self):
@@ -445,7 +455,9 @@ class MistakeViewer(QDialog):
 
         if file_path:
             format_type = "csv" if file_path.endswith(".csv") else "json"
-            success = self.mistake_book.export_mistakes(self.student_id, Path(file_path), format=format_type)
+            success = self.mistake_book.export_mistakes(
+                self.student_id, Path(file_path), format=format_type
+            )
 
             if success:
                 QMessageBox.information(self, "成功", "错题已导出")

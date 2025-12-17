@@ -26,7 +26,12 @@ class IReportGenerator(ABC):
     """报告生成器接口"""
 
     @abstractmethod
-    def generate(self, record: UserRecord, template: str | None = None, options: dict[str, Any] | None = None) -> str:
+    def generate(
+        self,
+        record: UserRecord,
+        template: str | None = None,
+        options: dict[str, Any] | None = None,
+    ) -> str:
         """生成报告内容"""
 
     @abstractmethod
@@ -56,7 +61,9 @@ class IReportExporter(ABC):
         """获取支持的格式"""
 
     @abstractmethod
-    def validate_export(self, output_path: Path, format: ReportFormat) -> tuple[bool, str]:
+    def validate_export(
+        self, output_path: Path, format: ReportFormat
+    ) -> tuple[bool, str]:
         """验证导出参数"""
 
 
@@ -76,7 +83,9 @@ class IReportBuilder(ABC):
         """添加表格"""
 
     @abstractmethod
-    def add_chart(self, chart_type: str, data: dict[str, Any], title: str | None = None) -> IReportBuilder:
+    def add_chart(
+        self, chart_type: str, data: dict[str, Any], title: str | None = None
+    ) -> IReportBuilder:
         """添加图表"""
 
     @abstractmethod
@@ -98,7 +107,10 @@ class SimpleReportGenerator(IReportGenerator):
         self._templates: dict[str, str] = {"default": "{title} ({user_id})"}
 
     def generate(
-        self, record: UserRecord, template: str | None = None, options: dict[str, Any] | None = None
+        self,
+        record: UserRecord,
+        template: str | None = None,
+        options: dict[str, Any] | None = None,
     ) -> str:
         tpl_name = template or "default"
         tpl = self._templates.get(tpl_name, "{title} ({user_id})")
@@ -110,7 +122,9 @@ class SimpleReportGenerator(IReportGenerator):
             "status": record.status,
             "score": record.score.total,
             "started_at": record.started_at.isoformat(),
-            "completed_at": record.completed_at.isoformat() if record.completed_at else None,
+            "completed_at": record.completed_at.isoformat()
+            if record.completed_at
+            else None,
             "steps": [
                 {
                     "step_id": s.step_id,
@@ -138,7 +152,12 @@ class SimpleReportExporter(IReportExporter):
     """简单导出器，在缺少第三方依赖时也可落盘"""
 
     def __init__(self) -> None:
-        self._supported = [ReportFormat.PDF, ReportFormat.HTML, ReportFormat.MARKDOWN, ReportFormat.JSON]
+        self._supported = [
+            ReportFormat.PDF,
+            ReportFormat.HTML,
+            ReportFormat.MARKDOWN,
+            ReportFormat.JSON,
+        ]
 
     def export(
         self,
@@ -156,7 +175,9 @@ class SimpleReportExporter(IReportExporter):
                 obj = json.loads(content)
             except json.JSONDecodeError:
                 obj = {"content": content}
-            output_path.write_text(json.dumps(obj, ensure_ascii=False, indent=2), encoding="utf-8")
+            output_path.write_text(
+                json.dumps(obj, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
             return True
 
         if format == ReportFormat.HTML:
@@ -180,7 +201,9 @@ class SimpleReportExporter(IReportExporter):
     def get_supported_formats(self) -> list[ReportFormat]:
         return list(self._supported)
 
-    def validate_export(self, output_path: Path, format: ReportFormat) -> tuple[bool, str]:
+    def validate_export(
+        self, output_path: Path, format: ReportFormat
+    ) -> tuple[bool, str]:
         if format not in self._supported:
             return False, f"不支持的格式: {format.value}"
         try:
@@ -199,7 +222,9 @@ class SimpleReportBuilder(IReportBuilder):
     title: str | None = None
     subtitle: str | None = None
 
-    def add_header(self, title: str, subtitle: str | None = None) -> SimpleReportBuilder:
+    def add_header(
+        self, title: str, subtitle: str | None = None
+    ) -> SimpleReportBuilder:
         self.title = title
         self.subtitle = subtitle
         return self
@@ -208,16 +233,24 @@ class SimpleReportBuilder(IReportBuilder):
         self.sections.append(f"# {section_name}\n{content}")
         return self
 
-    def add_table(self, headers: list[str], rows: list[list[Any]]) -> SimpleReportBuilder:
+    def add_table(
+        self, headers: list[str], rows: list[list[Any]]
+    ) -> SimpleReportBuilder:
         header_line = "| " + " | ".join(headers) + " |"
         sep_line = "| " + " | ".join(["---"] * len(headers)) + " |"
-        body = "\n".join("| " + " | ".join(str(cell) for cell in row) + " |" for row in rows)
+        body = "\n".join(
+            "| " + " | ".join(str(cell) for cell in row) + " |" for row in rows
+        )
         self.sections.append("\n".join([header_line, sep_line, body]))
         return self
 
-    def add_chart(self, chart_type: str, data: dict[str, Any], title: str | None = None) -> SimpleReportBuilder:
+    def add_chart(
+        self, chart_type: str, data: dict[str, Any], title: str | None = None
+    ) -> SimpleReportBuilder:
         chart_title = title or chart_type
-        self.sections.append(f"![{chart_title}](chart://{chart_type})\n{json.dumps(data)}")
+        self.sections.append(
+            f"![{chart_title}](chart://{chart_type})\n{json.dumps(data)}"
+        )
         return self
 
     def build(self) -> str:
@@ -233,6 +266,8 @@ class SimpleReportBuilder(IReportBuilder):
         self.subtitle = None
 
 
-def get_default_report_components() -> tuple[IReportGenerator, IReportExporter, IReportBuilder]:
+def get_default_report_components() -> tuple[
+    IReportGenerator, IReportExporter, IReportBuilder
+]:
     """工厂方法：提供简单可用的报告组件集合"""
     return SimpleReportGenerator(), SimpleReportExporter(), SimpleReportBuilder()

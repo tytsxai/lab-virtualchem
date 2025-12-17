@@ -369,7 +369,9 @@ class InteractionOptimizer:
                     raise e
                 finally:
                     elapsed = (time.time() - start) * 1000
-                    InteractionOptimizer.get_monitor().track_interaction(action, elapsed, success)
+                    InteractionOptimizer.get_monitor().track_interaction(
+                        action, elapsed, success
+                    )
 
             return wrapper
 

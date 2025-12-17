@@ -41,7 +41,13 @@ class QueryOptimizer:
         self._stats: list[QueryStats] = []
         self._slow_query_threshold = 1.0  # 秒
 
-    def record_query(self, query: str, execution_time: float, result_count: int = 0, from_cache: bool = False) -> None:
+    def record_query(
+        self,
+        query: str,
+        execution_time: float,
+        result_count: int = 0,
+        from_cache: bool = False,
+    ) -> None:
         """
         记录查询统计
 
@@ -144,7 +150,12 @@ class IndexAnalyzer:
         # 注意：这里的实现取决于具体的数据库类型
         # 以下是SQLite的示例
 
-        result = {"table": table_name, "indexes": [], "missing_indexes": [], "unused_indexes": []}
+        result = {
+            "table": table_name,
+            "indexes": [],
+            "missing_indexes": [],
+            "unused_indexes": [],
+        }
 
         try:
             cursor = self.connection.cursor()
@@ -174,7 +185,9 @@ class IndexAnalyzer:
 
         return result
 
-    def suggest_indexes(self, table_name: str, query_patterns: list[str]) -> list[dict[str, Any]]:
+    def suggest_indexes(
+        self, table_name: str, query_patterns: list[str]
+    ) -> list[dict[str, Any]]:
         """
         建议索引
 
@@ -228,7 +241,11 @@ class IndexAnalyzer:
                         parts = where_clause.split(op)
                         if parts:
                             col_name = parts[0].strip().split()[-1].strip("()")
-                            if col_name and col_name not in indexed_columns and col_name not in analyzed_columns:
+                            if (
+                                col_name
+                                and col_name not in indexed_columns
+                                and col_name not in analyzed_columns
+                            ):
                                 suggestions.append(
                                     {
                                         "column": col_name,
@@ -242,10 +259,16 @@ class IndexAnalyzer:
             # 提取ORDER BY列
             if "ORDER BY" in pattern_upper:
                 order_pos = pattern_upper.find("ORDER BY")
-                order_clause = pattern[order_pos + 8 :].split("LIMIT")[0].split("GROUP")[0]
+                order_clause = (
+                    pattern[order_pos + 8 :].split("LIMIT")[0].split("GROUP")[0]
+                )
                 col_name = order_clause.strip().split()[0].strip(",")
 
-                if col_name and col_name not in indexed_columns and col_name not in analyzed_columns:
+                if (
+                    col_name
+                    and col_name not in indexed_columns
+                    and col_name not in analyzed_columns
+                ):
                     suggestions.append(
                         {
                             "column": col_name,
@@ -260,7 +283,9 @@ class IndexAnalyzer:
             if "JOIN" in pattern_upper:
                 on_pos = pattern_upper.find(" ON ")
                 if on_pos > 0:
-                    on_clause = pattern[on_pos + 4 :].split("WHERE")[0].split("ORDER")[0]
+                    on_clause = (
+                        pattern[on_pos + 4 :].split("WHERE")[0].split("ORDER")[0]
+                    )
                     # 提取JOIN条件中的列
                     if "=" in on_clause:
                         parts = on_clause.split("=")
@@ -268,7 +293,10 @@ class IndexAnalyzer:
                             col_with_table = part.strip().split()[-1]
                             if "." in col_with_table:
                                 col_name = col_with_table.split(".")[-1]
-                                if col_name not in indexed_columns and col_name not in analyzed_columns:
+                                if (
+                                    col_name not in indexed_columns
+                                    and col_name not in analyzed_columns
+                                ):
                                     suggestions.append(
                                         {
                                             "column": col_name,
@@ -282,10 +310,16 @@ class IndexAnalyzer:
             # 提取GROUP BY列
             if "GROUP BY" in pattern_upper:
                 group_pos = pattern_upper.find("GROUP BY")
-                group_clause = pattern[group_pos + 8 :].split("HAVING")[0].split("ORDER")[0]
+                group_clause = (
+                    pattern[group_pos + 8 :].split("HAVING")[0].split("ORDER")[0]
+                )
                 col_name = group_clause.strip().split()[0].strip(",")
 
-                if col_name and col_name not in indexed_columns and col_name not in analyzed_columns:
+                if (
+                    col_name
+                    and col_name not in indexed_columns
+                    and col_name not in analyzed_columns
+                ):
                     suggestions.append(
                         {
                             "column": col_name,
@@ -302,7 +336,9 @@ class IndexAnalyzer:
 
         return suggestions
 
-    def create_index(self, table_name: str, column_name: str, index_name: str | None = None) -> bool:
+    def create_index(
+        self, table_name: str, column_name: str, index_name: str | None = None
+    ) -> bool:
         """
         创建索引
 
@@ -328,7 +364,9 @@ class IndexAnalyzer:
             logger.error(f"创建索引失败 {index_name}: {e}")
             return False
 
-    def auto_optimize_table(self, table_name: str, query_patterns: list[str]) -> dict[str, Any]:
+    def auto_optimize_table(
+        self, table_name: str, query_patterns: list[str]
+    ) -> dict[str, Any]:
         """
         自动优化表（分析并创建建议的索引）
 
@@ -358,7 +396,9 @@ class IndexAnalyzer:
                 success = self.create_index(table_name, col_name)
 
                 if success:
-                    report["created"].append({"column": col_name, "reason": suggestion["reason"]})
+                    report["created"].append(
+                        {"column": col_name, "reason": suggestion["reason"]}
+                    )
                 else:
                     report["failed"].append({"column": col_name, "error": "创建失败"})
             else:
@@ -439,7 +479,9 @@ class ConnectionPool:
                     conn = self.creator()
                     self._created_count += 1
                     self._in_use.add(id(conn))
-                    logger.debug(f"创建新连接: {self._created_count}/{self.max_connections}")
+                    logger.debug(
+                        f"创建新连接: {self._created_count}/{self.max_connections}"
+                    )
                     return conn
 
                 # 计算剩余等待时间
@@ -588,7 +630,9 @@ class DatabaseOptimizer:
         self.index_analyzer = IndexAnalyzer(connection)
         self.query_cache = QueryCache()
 
-    def execute_query(self, query: str, params: tuple = (), use_cache: bool = True) -> Any:
+    def execute_query(
+        self, query: str, params: tuple = (), use_cache: bool = True
+    ) -> Any:
         """
         执行优化的查询
 
@@ -604,7 +648,9 @@ class DatabaseOptimizer:
         if use_cache:
             cached_result = self.query_cache.get(query, params)
             if cached_result is not None:
-                self.query_optimizer.record_query(query, 0.0, len(cached_result), from_cache=True)
+                self.query_optimizer.record_query(
+                    query, 0.0, len(cached_result), from_cache=True
+                )
                 return cached_result
 
         # 执行查询
@@ -629,7 +675,11 @@ class DatabaseOptimizer:
         return {
             "query_summary": self.query_optimizer.get_query_summary(),
             "slow_queries": [
-                {"query": s.query, "time": s.execution_time, "timestamp": s.timestamp.isoformat()}
+                {
+                    "query": s.query,
+                    "time": s.execution_time,
+                    "timestamp": s.timestamp.isoformat(),
+                }
                 for s in self.query_optimizer.get_slow_queries()
             ],
         }

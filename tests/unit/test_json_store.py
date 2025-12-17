@@ -29,17 +29,13 @@ def sample_record():
         experiment_title="测试实验",
         record_id="test_record_001",
         started_at=now,
-        completed_at=now
+        completed_at=now,
     )
     record.score.total = 85
     record.status = "completed"
 
     # 添加步骤记录
-    step = StepRecord(
-        step_id="step1",
-        passed=True,
-        user_input={"value": 10}
-    )
+    step = StepRecord(step_id="step1", passed=True, user_input={"value": 10})
     step.completed_at = now
     record.step_records.append(step)
 
@@ -48,7 +44,7 @@ def sample_record():
         step_id="step2",
         error_type="input_error",
         description="测试错误",
-        severity="warning"
+        severity="warning",
     )
     record.mistakes_summary.append(mistake)
 
@@ -82,10 +78,7 @@ class TestJSONStore:
         temp_store.save_record(sample_record)
 
         # 再加载
-        loaded = temp_store.load_record(
-            sample_record.user_id,
-            sample_record.record_id
-        )
+        loaded = temp_store.load_record(sample_record.user_id, sample_record.record_id)
 
         assert loaded is not None
         assert loaded.user_id == sample_record.user_id
@@ -123,7 +116,7 @@ class TestJSONStore:
             experiment_id="test_exp2",
             experiment_title="测试实验2",
             record_id="test_record_002",
-            completed_at=datetime.now()
+            completed_at=datetime.now(),
         )
         record2.score.total = 90
         temp_store.save_record(record2)
@@ -139,15 +132,12 @@ class TestJSONStore:
             user_id="test_user",
             experiment_id="other_exp",
             experiment_title="其他实验",
-            record_id="test_record_002"
+            record_id="test_record_002",
         )
         temp_store.save_record(record2)
 
         # 筛选特定实验
-        records = temp_store.list_records(
-            user_id="test_user",
-            experiment_id="test_exp"
-        )
+        records = temp_store.list_records(user_id="test_user", experiment_id="test_exp")
         assert len(records) == 1
         assert records[0]["experiment_id"] == "test_exp"
 
@@ -160,7 +150,7 @@ class TestJSONStore:
                 experiment_id="test_exp",
                 experiment_title=f"测试实验{i}",
                 record_id=f"record_{i}",
-                completed_at=datetime.now()
+                completed_at=datetime.now(),
             )
             temp_store.save_record(record)
 
@@ -195,7 +185,7 @@ class TestJSONStore:
             user_id="test_user",
             experiment_id="titration",
             experiment_title="酸碱滴定",
-            record_id="rec1"
+            record_id="rec1",
         )
         temp_store.save_record(record1)
 
@@ -203,7 +193,7 @@ class TestJSONStore:
             user_id="test_user",
             experiment_id="recrystallization",
             experiment_title="重结晶",
-            record_id="rec2"
+            record_id="rec2",
         )
         temp_store.save_record(record2)
 
@@ -223,7 +213,7 @@ class TestJSONStore:
                 experiment_title=f"测试实验{i}",
                 record_id=f"rec{i}",
                 started_at=now,
-                completed_at=now
+                completed_at=now,
             )
             record.score.total = 80 + i * 5  # 80, 85, 90
             temp_store.save_record(record)
@@ -263,7 +253,7 @@ class TestJSONStore:
                 experiment_id="test_exp",
                 experiment_title=f"测试实验{i}",
                 record_id=f"rec{i}",
-                completed_at=datetime.now()
+                completed_at=datetime.now(),
             )
             record.score.total = i * 10
             temp_store.save_record(record)

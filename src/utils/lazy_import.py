@@ -173,7 +173,9 @@ class LazyImporter:
         import concurrent.futures
 
         # 并行预加载以提升性能
-        with concurrent.futures.ThreadPoolExecutor(max_workers=min(len(keys), 4)) as executor:
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=min(len(keys), 4)
+        ) as executor:
             futures = []
 
             for key in keys:
@@ -221,7 +223,9 @@ class LazyImporter:
             统计字典
         """
         total_registered = len(self._lazy_modules)
-        total_loaded = sum(1 for lazy in self._lazy_modules.values() if lazy._module is not None)
+        total_loaded = sum(
+            1 for lazy in self._lazy_modules.values() if lazy._module is not None
+        )
 
         return {
             "total_registered": total_registered,
@@ -243,7 +247,9 @@ class LazyImporter:
 
         if stats["import_times"]:
             print("\n  各模块加载时间:")
-            for key, elapsed in sorted(stats["import_times"].items(), key=lambda x: x[1], reverse=True):
+            for key, elapsed in sorted(
+                stats["import_times"].items(), key=lambda x: x[1], reverse=True
+            ):
                 print(f"    {key:25s}: {elapsed:.3f}秒")
 
         print("=" * 60)

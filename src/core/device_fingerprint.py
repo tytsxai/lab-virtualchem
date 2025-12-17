@@ -133,9 +133,11 @@ class DeviceFingerprint:
         """检查合规性"""
         compliance = {
             "has_security_features": len(self.security_features or []) > 0,
-            "recent_activity": self.last_seen and (datetime.now() - self.last_seen).days < 30,
+            "recent_activity": self.last_seen
+            and (datetime.now() - self.last_seen).days < 30,
             "stable_fingerprint": self.hardware_hash == self._calculate_hardware_hash(),
-            "valid_platform": self.platform_info.get("system") in ["Windows", "Darwin", "Linux"],
+            "valid_platform": self.platform_info.get("system")
+            in ["Windows", "Darwin", "Linux"],
             "has_network": bool(self.network_info.get("ip_address")),
         }
 
@@ -245,7 +247,11 @@ class DeviceFingerprintCollector:
         """获取MAC地址"""
         try:
             mac = uuid.getnode()
-            mac_str = ":".join([f"{(mac >> elements) & 0xFF:02x}" for elements in range(0, 8 * 6, 8)][::-1])
+            mac_str = ":".join(
+                [f"{(mac >> elements) & 0xFF:02x}" for elements in range(0, 8 * 6, 8)][
+                    ::-1
+                ]
+            )
             return mac_str
         except Exception as e:
             logger.warning(f"获取MAC地址失败: {e}")
@@ -479,7 +485,9 @@ class DeviceFingerprintCollector:
                 with open(self.device_registry_file, encoding="utf-8") as f:
                     data = json.load(f)
                     for device_id, device_data in data.items():
-                        self.device_registry[device_id] = DeviceFingerprint.from_dict(device_data)
+                        self.device_registry[device_id] = DeviceFingerprint.from_dict(
+                            device_data
+                        )
                 logger.info(f"已加载 {len(self.device_registry)} 个设备记录")
         except Exception as e:
             logger.warning(f"加载设备注册表失败: {e}")
@@ -487,7 +495,10 @@ class DeviceFingerprintCollector:
     def _save_device_registry(self) -> None:
         """保存设备注册表"""
         try:
-            data = {device_id: device.to_dict() for device_id, device in self.device_registry.items()}
+            data = {
+                device_id: device.to_dict()
+                for device_id, device in self.device_registry.items()
+            }
             with open(self.device_registry_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
         except Exception as e:
@@ -535,7 +546,9 @@ class DeviceFingerprintCollector:
     def _calculate_software_hash(self) -> str:
         """计算软件哈希"""
         try:
-            software_string = f"{platform.system()}{platform.release()}{platform.version()}"
+            software_string = (
+                f"{platform.system()}{platform.release()}{platform.version()}"
+            )
             return hashlib.sha256(software_string.encode()).hexdigest()[:16]
         except Exception:
             return ""
@@ -544,7 +557,16 @@ class DeviceFingerprintCollector:
         """检测是否在虚拟环境中运行"""
         try:
             # 检测常见的虚拟化标识
-            vm_indicators = ["VMware", "VirtualBox", "QEMU", "Xen", "Hyper-V", "Parallels", "Docker", "KVM"]
+            vm_indicators = [
+                "VMware",
+                "VirtualBox",
+                "QEMU",
+                "Xen",
+                "Hyper-V",
+                "Parallels",
+                "Docker",
+                "KVM",
+            ]
 
             system_info = platform.platform().lower()
             return any(indicator.lower() in system_info for indicator in vm_indicators)
@@ -557,7 +579,10 @@ class DeviceFingerprintCollector:
             if platform.system() == "Windows":
                 # Windows安全启动检测
                 result = subprocess.run(
-                    ["powershell", "-Command", "Get-SecureBootUEFI"], capture_output=True, text=True, timeout=5
+                    ["powershell", "-Command", "Get-SecureBootUEFI"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
                 )
                 return "True" in result.stdout
             return False
@@ -569,7 +594,10 @@ class DeviceFingerprintCollector:
         try:
             if platform.system() == "Windows":
                 result = subprocess.run(
-                    ["powershell", "-Command", "Get-Tpm"], capture_output=True, text=True, timeout=5
+                    ["powershell", "-Command", "Get-Tpm"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
                 )
                 return "TpmPresent" in result.stdout and "True" in result.stdout
             return False
@@ -581,7 +609,10 @@ class DeviceFingerprintCollector:
         try:
             if platform.system() == "Windows":
                 result = subprocess.run(
-                    ["netsh", "advfirewall", "show", "allprofiles", "state"], capture_output=True, text=True, timeout=5
+                    ["netsh", "advfirewall", "show", "allprofiles", "state"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
                 )
                 return "ON" in result.stdout
             return False
@@ -614,7 +645,9 @@ class DeviceFingerprintCollector:
 
             # 信任级别统计
             trust_level = device.trust_level.value
-            analytics["trust_levels"][trust_level] = analytics["trust_levels"].get(trust_level, 0) + 1
+            analytics["trust_levels"][trust_level] = (
+                analytics["trust_levels"].get(trust_level, 0) + 1
+            )
 
             # 平台分布统计
             platform_name = device.platform_info.get("system", "unknown")
@@ -632,11 +665,15 @@ class DeviceFingerprintCollector:
             # 安全特性统计
             if device.security_features:
                 for feature in device.security_features:
-                    security_features_count[feature] = security_features_count.get(feature, 0) + 1
+                    security_features_count[feature] = (
+                        security_features_count.get(feature, 0) + 1
+                    )
 
         analytics["active_devices"] = active_count
         analytics["compliance_rate"] = (
-            compliance_count / (len(self.device_registry) * 5) if self.device_registry else 0.0
+            compliance_count / (len(self.device_registry) * 5)
+            if self.device_registry
+            else 0.0
         )
         analytics["security_features"] = security_features_count
 
@@ -709,7 +746,9 @@ class DeviceAuthManager:
         # 加载封控列表
         self._blocked_devices = self._load_blocked_devices()
 
-    def check_device_authorization(self, license_key: str, max_devices: int = 1) -> tuple[bool, str, DeviceFingerprint]:
+    def check_device_authorization(
+        self, license_key: str, max_devices: int = 1
+    ) -> tuple[bool, str, DeviceFingerprint]:
         """检查设备授权
 
         Args:
@@ -724,14 +763,18 @@ class DeviceAuthManager:
 
         # 检查是否被封控
         if self._is_device_blocked(fingerprint.device_id):
-            self._record_auth_attempt(license_key, fingerprint, success=False, reason="设备已被封控")
+            self._record_auth_attempt(
+                license_key, fingerprint, success=False, reason="设备已被封控"
+            )
 
             # 记录审计日志
             try:
                 from .audit_logger import get_audit_logger
 
                 audit_logger = get_audit_logger()
-                audit_logger.log_license_validated(license_key, fingerprint.device_id, False, "设备已被封控")
+                audit_logger.log_license_validated(
+                    license_key, fingerprint.device_id, False, "设备已被封控"
+                )
             except Exception:
                 pass
 
@@ -747,15 +790,22 @@ class DeviceAuthManager:
                 authorized_devices.add(record.get("device_id"))
 
         # 检查设备数量限制
-        if fingerprint.device_id not in authorized_devices and len(authorized_devices) >= max_devices:
-            self._record_auth_attempt(license_key, fingerprint, success=False, reason="超出设备数量限制")
+        if (
+            fingerprint.device_id not in authorized_devices
+            and len(authorized_devices) >= max_devices
+        ):
+            self._record_auth_attempt(
+                license_key, fingerprint, success=False, reason="超出设备数量限制"
+            )
 
             # 记录审计日志
             try:
                 from .audit_logger import get_audit_logger
 
                 audit_logger = get_audit_logger()
-                audit_logger.log_license_validated(license_key, fingerprint.device_id, False, "超出设备数量限制")
+                audit_logger.log_license_validated(
+                    license_key, fingerprint.device_id, False, "超出设备数量限制"
+                )
             except Exception:
                 pass
 
@@ -773,7 +823,9 @@ class DeviceAuthManager:
             ip_tracker = get_ip_tracker()
 
             ip_info = ip_tracker.track_ip(license_key, fingerprint.device_id)
-            audit_logger.log_license_validated(license_key, fingerprint.device_id, True, "", ip_info.ip_address)
+            audit_logger.log_license_validated(
+                license_key, fingerprint.device_id, True, "", ip_info.ip_address
+            )
         except Exception:
             pass
 
@@ -860,7 +912,11 @@ class DeviceAuthManager:
         return device_id in self._blocked_devices
 
     def _record_auth_attempt(
-        self, license_key: str, fingerprint: DeviceFingerprint, success: bool, reason: str = ""
+        self,
+        license_key: str,
+        fingerprint: DeviceFingerprint,
+        success: bool,
+        reason: str = "",
     ) -> None:
         """记录授权尝试"""
         record = {

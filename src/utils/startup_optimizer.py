@@ -101,7 +101,9 @@ class StartupOptimizer:
             ]
 
             logger.info(f"加载缓存的依赖检查结果 ({len(results)} 项)")
-            return CachedCheckResult(results=results, timestamp=timestamp, checksum=checksum)
+            return CachedCheckResult(
+                results=results, timestamp=timestamp, checksum=checksum
+            )
 
         except Exception as e:
             logger.warning(f"加载依赖检查缓存失败: {e}")
@@ -133,7 +135,9 @@ class StartupOptimizer:
         except Exception as e:
             logger.warning(f"保存依赖检查缓存失败: {e}")
 
-    def check_dependency(self, module_name: str, package_name: str | None = None) -> DependencyCheckResult:
+    def check_dependency(
+        self, module_name: str, package_name: str | None = None
+    ) -> DependencyCheckResult:
         """检查单个依赖"""
         start_time = time.time()
         package_name = package_name or module_name
@@ -143,11 +147,18 @@ class StartupOptimizer:
             version = getattr(module, "__version__", None)
 
             check_time = time.time() - start_time
-            return DependencyCheckResult(name=package_name, available=True, version=version, check_time=check_time)
+            return DependencyCheckResult(
+                name=package_name,
+                available=True,
+                version=version,
+                check_time=check_time,
+            )
 
         except ImportError as e:
             check_time = time.time() - start_time
-            return DependencyCheckResult(name=package_name, available=False, check_time=check_time, error=str(e))
+            return DependencyCheckResult(
+                name=package_name, available=False, check_time=check_time, error=str(e)
+            )
 
     def check_dependencies_fast(
         self, dependencies: dict[str, str], force_check: bool = False
@@ -172,7 +183,9 @@ class StartupOptimizer:
         for module_name, package_name in dependencies.items():
             result = self.check_dependency(module_name, package_name)
             results.append(result)
-            logger.debug(f"检查 {package_name}: {'✅' if result.available else '❌'} ({result.check_time:.3f}s)")
+            logger.debug(
+                f"检查 {package_name}: {'✅' if result.available else '❌'} ({result.check_time:.3f}s)"
+            )
 
         # 保存到缓存
         self.save_cached_results(results)
@@ -218,7 +231,9 @@ class ResourceLoader:
         self.loaded_resources: dict[str, Any] = {}
         self.load_times: dict[str, float] = {}
 
-    async def load_multiple_resources(self, resources: list[tuple[str, Callable, int]]) -> dict[str, Any]:
+    async def load_multiple_resources(
+        self, resources: list[tuple[str, Callable, int]]
+    ) -> dict[str, Any]:
         """并行加载多个资源
 
         Args:
@@ -233,7 +248,10 @@ class ResourceLoader:
         sorted_resources = sorted(resources, key=lambda x: x[2])
 
         # 创建异步任务
-        tasks = [optimizer.load_resource_async(name, loader, priority) for name, loader, priority in sorted_resources]
+        tasks = [
+            optimizer.load_resource_async(name, loader, priority)
+            for name, loader, priority in sorted_resources
+        ]
 
         # 并行执行
         results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -252,7 +270,9 @@ class ResourceLoader:
             self.load_times[name] = elapsed
             total_time += elapsed
 
-        logger.info(f"资源加载完成: {len(loaded)}/{len(resources)} 项，总耗时: {total_time:.3f}s")
+        logger.info(
+            f"资源加载完成: {len(loaded)}/{len(resources)} 项，总耗时: {total_time:.3f}s"
+        )
         self.loaded_resources.update(loaded)
 
         return loaded
@@ -270,8 +290,13 @@ class ResourceLoader:
         return {
             "total_resources": len(self.loaded_resources),
             "total_time": sum(self.load_times.values()),
-            "average_time": sum(self.load_times.values()) / len(self.load_times) if self.load_times else 0.0,
-            "resources": {name: self.load_times.get(name, 0.0) for name in self.loaded_resources.keys()},
+            "average_time": sum(self.load_times.values()) / len(self.load_times)
+            if self.load_times
+            else 0.0,
+            "resources": {
+                name: self.load_times.get(name, 0.0)
+                for name in self.loaded_resources.keys()
+            },
         }
 
 

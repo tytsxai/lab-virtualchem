@@ -166,10 +166,14 @@ class PasswordManager:
                 salt=salt.encode("utf-8"),
                 iterations=100000,
             )
-            password_hash = base64.b64encode(kdf.derive(password.encode("utf-8"))).decode("utf-8")
+            password_hash = base64.b64encode(
+                kdf.derive(password.encode("utf-8"))
+            ).decode("utf-8")
         else:
             # 回退到标准库实现
-            password_hash = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 100000)
+            password_hash = hashlib.pbkdf2_hmac(
+                "sha256", password.encode("utf-8"), salt.encode("utf-8"), 100000
+            )
             password_hash = base64.b64encode(password_hash).decode("utf-8")
 
         return password_hash, salt
@@ -412,7 +416,9 @@ class DataSanitizer:
             清理后的数据
         """
         if isinstance(data, dict):
-            return {key: DataSanitizer.sanitize_json(value) for key, value in data.items()}
+            return {
+                key: DataSanitizer.sanitize_json(value) for key, value in data.items()
+            }
         elif isinstance(data, list):
             return [DataSanitizer.sanitize_json(item) for item in data]
         elif isinstance(data, str):

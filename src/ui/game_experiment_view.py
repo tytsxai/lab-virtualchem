@@ -430,7 +430,9 @@ class GameExperimentView(QWidget):
         """设置游戏场景"""
         try:
             # 获取场景配置
-            scene_config = GameSceneBuilder.get_scene_by_experiment_type(getattr(self.template, "category", "general"))
+            scene_config = GameSceneBuilder.get_scene_by_experiment_type(
+                getattr(self.template, "category", "general")
+            )
 
             # 创建游戏场景
             self.game_scene = GamePhysicsScene(scene_config)
@@ -462,7 +464,9 @@ class GameExperimentView(QWidget):
             self.game_scene.collision_detected.connect(self.on_collision_detected)
             self.game_scene.physics_updated.connect(self.on_physics_updated)
 
-    def on_item_interacted(self, item_id: str, interaction_type: InteractionType, data: dict):
+    def on_item_interacted(
+        self, item_id: str, interaction_type: InteractionType, data: dict
+    ):
         """处理物品交互"""
         # 记录交互
         interaction_log = {

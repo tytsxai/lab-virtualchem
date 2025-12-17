@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ModuleInfo:
     """模块信息"""
+
     name: str
     priority: int = 0  # 优先级（数字越大越优先）
     dependencies: list[str] = field(default_factory=list)
@@ -67,7 +68,9 @@ class SmartLazyLoader:
 
         logger.info("智能懒加载器初始化完成")
 
-    def register(self, module_name: str, priority: int = 0, dependencies: list[str] | None = None):
+    def register(
+        self, module_name: str, priority: int = 0, dependencies: list[str] | None = None
+    ):
         """注册模块
 
         Args:
@@ -77,9 +80,7 @@ class SmartLazyLoader:
         """
         with self._lock:
             self._modules[module_name] = ModuleInfo(
-                name=module_name,
-                priority=priority,
-                dependencies=dependencies or []
+                name=module_name, priority=priority, dependencies=dependencies or []
             )
             self._stats["total_registered"] += 1
             logger.debug(f"注册模块: {module_name} (优先级: {priority})")
@@ -129,7 +130,7 @@ class SmartLazyLoader:
                 self._stats["total_loaded"] += 1
                 self._stats["total_load_time"] += load_time
 
-                logger.debug(f"加载模块: {module_name} ({load_time*1000:.2f}ms)")
+                logger.debug(f"加载模块: {module_name} ({load_time * 1000:.2f}ms)")
                 return module
 
             except Exception as e:
@@ -171,8 +172,7 @@ class SmartLazyLoader:
 
         self._background_loading = True
         self._background_thread = threading.Thread(
-            target=self._background_load_loop,
-            daemon=True
+            target=self._background_load_loop, daemon=True
         )
         self._background_thread.start()
         logger.info("后台预加载已启动")
@@ -188,9 +188,7 @@ class SmartLazyLoader:
         """后台加载循环"""
         # 按优先级排序模块
         sorted_modules = sorted(
-            self._modules.values(),
-            key=lambda m: m.priority,
-            reverse=True
+            self._modules.values(), key=lambda m: m.priority, reverse=True
         )
 
         for module_info in sorted_modules:
@@ -237,7 +235,11 @@ class SmartLazyLoader:
     def get_unloaded_modules(self) -> list[str]:
         """获取未加载的模块列表"""
         with self._lock:
-            return [name for name, info in self._modules.items() if not info.loaded and name not in self._loaded_modules]
+            return [
+                name
+                for name, info in self._modules.items()
+                if not info.loaded and name not in self._loaded_modules
+            ]
 
     def clear_cache(self):
         """清空缓存"""
@@ -250,7 +252,9 @@ class SmartLazyLoader:
     def invalidate(self, module_name: str | None = None):
         """使模块缓存失效，支持单个或全部"""
         with self._lock:
-            targets = [module_name] if module_name else list(self._loaded_modules.keys())
+            targets = (
+                [module_name] if module_name else list(self._loaded_modules.keys())
+            )
             for name in targets:
                 if name is None:
                     continue

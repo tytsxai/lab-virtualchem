@@ -132,15 +132,20 @@ class ExperimentAssistant:
                 # 更新平均实验时间（使用指数移动平均）
                 alpha = 0.1
                 self.user_profile.average_experiment_time = int(
-                    alpha * duration + (1 - alpha) * self.user_profile.average_experiment_time
+                    alpha * duration
+                    + (1 - alpha) * self.user_profile.average_experiment_time
                 )
 
             # 分析成功率
             success = experiment_data.get("success", False)
             if success:
-                self.user_profile.success_rate = min(1.0, self.user_profile.success_rate + 0.05)
+                self.user_profile.success_rate = min(
+                    1.0, self.user_profile.success_rate + 0.05
+                )
             else:
-                self.user_profile.success_rate = max(0.0, self.user_profile.success_rate - 0.02)
+                self.user_profile.success_rate = max(
+                    0.0, self.user_profile.success_rate - 0.02
+                )
 
             # 分析错误模式
             mistakes = experiment_data.get("mistakes", [])
@@ -159,7 +164,9 @@ class ExperimentAssistant:
         except Exception as e:
             logger.error(f"分析实验行为失败: {e}")
 
-    def generate_suggestions(self, current_step: str, experiment_context: dict[str, Any]) -> list[ExperimentSuggestion]:
+    def generate_suggestions(
+        self, current_step: str, experiment_context: dict[str, Any]
+    ) -> list[ExperimentSuggestion]:
         """生成实验建议
 
         Args:
@@ -176,10 +183,18 @@ class ExperimentAssistant:
 
         try:
             # 基于用户画像生成个性化建议
-            suggestions.extend(self._generate_step_guidance(current_step, experiment_context))
-            suggestions.extend(self._generate_safety_reminders(current_step, experiment_context))
-            suggestions.extend(self._generate_efficiency_tips(current_step, experiment_context))
-            suggestions.extend(self._generate_error_prevention(current_step, experiment_context))
+            suggestions.extend(
+                self._generate_step_guidance(current_step, experiment_context)
+            )
+            suggestions.extend(
+                self._generate_safety_reminders(current_step, experiment_context)
+            )
+            suggestions.extend(
+                self._generate_efficiency_tips(current_step, experiment_context)
+            )
+            suggestions.extend(
+                self._generate_error_prevention(current_step, experiment_context)
+            )
 
             # 按优先级排序
             suggestions.sort(key=lambda x: x.priority, reverse=True)
@@ -201,7 +216,10 @@ class ExperimentAssistant:
         suggestions: list[ExperimentSuggestion] = []
 
         # 基于用户难度等级提供不同深度的指导
-        if self.user_profile and self.user_profile.difficulty_level == DifficultyLevel.BEGINNER:
+        if (
+            self.user_profile
+            and self.user_profile.difficulty_level == DifficultyLevel.BEGINNER
+        ):
             suggestion = ExperimentSuggestion(
                 suggestion_id=f"step_guidance_{current_step}_{datetime.now().timestamp()}",
                 type=SuggestionType.STEP_GUIDANCE,
@@ -250,7 +268,9 @@ class ExperimentAssistant:
         suggestions = []
 
         # 基于用户实验时间提供效率建议
-        if self.user_profile and self.user_profile.average_experiment_time > 60:  # 超过1小时
+        if (
+            self.user_profile and self.user_profile.average_experiment_time > 60
+        ):  # 超过1小时
             suggestion = ExperimentSuggestion(
                 suggestion_id=f"efficiency_{datetime.now().timestamp()}",
                 type=SuggestionType.EFFICIENCY_TIP,
@@ -333,9 +353,13 @@ class ExperimentAssistant:
         try:
             # 更新相关技能水平
             if "chemistry" in topic.lower():
-                self.user_profile.chemistry_knowledge = min(1.0, self.user_profile.chemistry_knowledge + progress * 0.1)
+                self.user_profile.chemistry_knowledge = min(
+                    1.0, self.user_profile.chemistry_knowledge + progress * 0.1
+                )
             elif "lab" in topic.lower():
-                self.user_profile.lab_skills = min(1.0, self.user_profile.lab_skills + progress * 0.1)
+                self.user_profile.lab_skills = min(
+                    1.0, self.user_profile.lab_skills + progress * 0.1
+                )
 
             # 保存更新
             self.save_user_profile()
@@ -364,5 +388,7 @@ class ExperimentAssistant:
             "average_experiment_time": self.user_profile.average_experiment_time,
             "common_mistakes": self.user_profile.common_mistakes,
             "learning_recommendations": self.get_learning_recommendations(),
-            "last_activity": self.user_profile.last_activity.isoformat() if self.user_profile.last_activity else None,
+            "last_activity": self.user_profile.last_activity.isoformat()
+            if self.user_profile.last_activity
+            else None,
         }

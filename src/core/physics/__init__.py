@@ -13,10 +13,9 @@ from .pymunk_adapter import (
 )
 
 __all__ = [
-    'PyMunkPhysicsEngine',
-    'PhysicsBody',
-    'PhysicsShape',
-    'BodyType',
-    'ShapeType',
+    "PyMunkPhysicsEngine",
+    "PhysicsBody",
+    "PhysicsShape",
+    "BodyType",
+    "ShapeType",
 ]
-

@@ -54,7 +54,9 @@ class TestConfigureContainer:
 
     def test_configure_with_custom_config(self, monkeypatch):
         """测试自定义配置"""
-        monkeypatch.setenv("JWT_SECRET_KEY", "test-jwt-secret-key-32-characters-long-12345")
+        monkeypatch.setenv(
+            "JWT_SECRET_KEY", "test-jwt-secret-key-32-characters-long-12345"
+        )
 
         from src.core.config_loader import get_config
 
@@ -165,7 +167,9 @@ class TestIntegration:
 
     def test_full_container_setup(self, monkeypatch):
         """测试完整容器设置"""
-        monkeypatch.setenv("JWT_SECRET_KEY", "test-jwt-secret-key-32-characters-long-12345")
+        monkeypatch.setenv(
+            "JWT_SECRET_KEY", "test-jwt-secret-key-32-characters-long-12345"
+        )
 
         # 1. 配置容器
         container = configure_container()
@@ -220,7 +224,9 @@ class TestAuthServiceRegistration:
 
     def test_default_admin_seeded_from_env(self, monkeypatch):
         """设置管理员环境变量时应自动初始化管理员账号"""
-        monkeypatch.setenv("VCL_ADMIN_PASSWORD", "roadmap-password-super-secure-value-123456")
+        monkeypatch.setenv(
+            "VCL_ADMIN_PASSWORD", "roadmap-password-super-secure-value-123456"
+        )
         monkeypatch.setenv("VCL_ADMIN_USERNAME", "roadmap_admin")
         monkeypatch.setenv("VCL_ADMIN_EMAIL", "roadmap_admin@example.com")
 

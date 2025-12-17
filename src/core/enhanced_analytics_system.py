@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class AnalysisType(Enum):
     """分析类型"""
+
     LEARNING_PROGRESS = "learning_progress"
     BEHAVIOR_PATTERN = "behavior_pattern"
     PERFORMANCE_TREND = "performance_trend"
@@ -29,6 +30,7 @@ class AnalysisType(Enum):
 
 class MetricType(Enum):
     """指标类型"""
+
     ACCURACY = "accuracy"
     SPEED = "speed"
     ENGAGEMENT = "engagement"
@@ -39,6 +41,7 @@ class MetricType(Enum):
 
 class TrendDirection(Enum):
     """趋势方向"""
+
     IMPROVING = "improving"
     DECLINING = "declining"
     STABLE = "stable"
@@ -48,6 +51,7 @@ class TrendDirection(Enum):
 @dataclass
 class DataPoint:
     """数据点"""
+
     timestamp: datetime
     value: float
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -56,6 +60,7 @@ class DataPoint:
 @dataclass
 class Metric:
     """指标"""
+
     metric_id: str
     name: str
     type: MetricType
@@ -69,6 +74,7 @@ class Metric:
 @dataclass
 class AnalysisResult:
     """分析结果"""
+
     analysis_id: str
     user_id: str
     analysis_type: AnalysisType
@@ -84,6 +90,7 @@ class AnalysisResult:
 @dataclass
 class Prediction:
     """预测"""
+
     prediction_id: str
     user_id: str
     prediction_type: str
@@ -97,6 +104,7 @@ class Prediction:
 @dataclass
 class LearningPath:
     """学习路径"""
+
     path_id: str
     user_id: str
     current_level: str
@@ -128,24 +136,16 @@ class EnhancedAnalyticsSystem:
                 "beginner": 0.6,
                 "intermediate": 0.75,
                 "advanced": 0.85,
-                "expert": 0.95
+                "expert": 0.95,
             },
             "speed": {
                 "beginner": 120,  # 秒/实验
                 "intermediate": 90,
                 "advanced": 60,
-                "expert": 45
+                "expert": 45,
             },
-            "engagement": {
-                "low": 0.3,
-                "medium": 0.6,
-                "high": 0.8
-            },
-            "retention": {
-                "daily": 0.7,
-                "weekly": 0.5,
-                "monthly": 0.3
-            }
+            "engagement": {"low": 0.3, "medium": 0.6, "high": 0.8},
+            "retention": {"daily": 0.7, "weekly": 0.5, "monthly": 0.3},
         }
         logger.info("分析基准已初始化")
 
@@ -155,9 +155,7 @@ class EnhancedAnalyticsSystem:
         pass
 
     @enhance_robustness(
-        operation_name="add_data_point",
-        security_level="low",
-        enable_caching=False
+        operation_name="add_data_point", security_level="low", enable_caching=False
     )
     @log_operation(operation_name="add_data")
     def add_data_point(
@@ -165,7 +163,7 @@ class EnhancedAnalyticsSystem:
         user_id: str,
         metric_name: str,
         value: float,
-        metadata: dict[str, Any] | None = None
+        metadata: dict[str, Any] | None = None,
     ) -> bool:
         """添加数据点"""
         if user_id not in self.user_metrics:
@@ -175,16 +173,12 @@ class EnhancedAnalyticsSystem:
             # 创建新指标
             metric_type = self._infer_metric_type(metric_name)
             self.user_metrics[user_id][metric_name] = Metric(
-                metric_id=f"{user_id}_{metric_name}",
-                name=metric_name,
-                type=metric_type
+                metric_id=f"{user_id}_{metric_name}", name=metric_name, type=metric_type
             )
 
         # 添加数据点
         data_point = DataPoint(
-            timestamp=datetime.now(),
-            value=value,
-            metadata=metadata or {}
+            timestamp=datetime.now(), value=value, metadata=metadata or {}
         )
 
         self.user_metrics[user_id][metric_name].data_points.append(data_point)
@@ -216,7 +210,10 @@ class EnhancedAnalyticsSystem:
 
     def _update_metric_statistics(self, user_id: str, metric_name: str) -> None:
         """更新指标统计"""
-        if user_id not in self.user_metrics or metric_name not in self.user_metrics[user_id]:
+        if (
+            user_id not in self.user_metrics
+            or metric_name not in self.user_metrics[user_id]
+        ):
             return
 
         metric = self.user_metrics[user_id][metric_name]
@@ -283,7 +280,11 @@ class EnhancedAnalyticsSystem:
 
         # 基于数据点数量和变异系数计算置信度
         n = len(values)
-        cv = statistics.stdev(values) / abs(statistics.mean(values)) if statistics.mean(values) != 0 else 1.0
+        cv = (
+            statistics.stdev(values) / abs(statistics.mean(values))
+            if statistics.mean(values) != 0
+            else 1.0
+        )
 
         # 数据点越多，置信度越高
         n_factor = min(1.0, n / 20.0)
@@ -297,7 +298,7 @@ class EnhancedAnalyticsSystem:
     @enhance_robustness(
         operation_name="perform_learning_analysis",
         security_level="low",
-        enable_caching=True
+        enable_caching=True,
     )
     @log_operation(operation_name="learning_analysis")
     def perform_learning_analysis(self, user_id: str) -> AnalysisResult:
@@ -327,7 +328,7 @@ class EnhancedAnalyticsSystem:
             recommendations=recommendations,
             metrics=user_metrics,
             confidence=self._calculate_overall_confidence(user_metrics),
-            actionable=True
+            actionable=True,
         )
 
         # 保存分析结果
@@ -364,7 +365,9 @@ class EnhancedAnalyticsSystem:
         if "engagement" in metrics:
             engagement_metric = metrics["engagement"]
             if engagement_metric.current_value > 0.8:
-                insights.append("您对学习内容表现出很高的参与度，这是学习成功的关键因素")
+                insights.append(
+                    "您对学习内容表现出很高的参与度，这是学习成功的关键因素"
+                )
             elif engagement_metric.current_value < 0.5:
                 insights.append("您的学习参与度较低，建议寻找更感兴趣的学习内容")
 
@@ -422,7 +425,9 @@ class EnhancedAnalyticsSystem:
 
         return insights
 
-    def _generate_learning_recommendations(self, metrics: dict[str, Metric]) -> list[str]:
+    def _generate_learning_recommendations(
+        self, metrics: dict[str, Metric]
+    ) -> list[str]:
         """生成学习建议"""
         recommendations = []
 
@@ -493,7 +498,9 @@ class EnhancedAnalyticsSystem:
         confidences = [metric.confidence for metric in metrics.values()]
         return statistics.mean(confidences) if confidences else 0.0
 
-    def _create_empty_analysis(self, user_id: str, analysis_type: AnalysisType) -> AnalysisResult:
+    def _create_empty_analysis(
+        self, user_id: str, analysis_type: AnalysisType
+    ) -> AnalysisResult:
         """创建空分析结果"""
         return AnalysisResult(
             analysis_id=f"empty_{user_id}_{int(time.time())}",
@@ -504,20 +511,17 @@ class EnhancedAnalyticsSystem:
             insights=["需要更多学习数据才能生成有意义的分析"],
             recommendations=["建议多参与学习活动，积累更多数据"],
             confidence=0.0,
-            actionable=False
+            actionable=False,
         )
 
     @enhance_robustness(
         operation_name="generate_prediction",
         security_level="medium",
-        enable_caching=True
+        enable_caching=True,
     )
     @log_operation(operation_name="generate_prediction")
     def generate_prediction(
-        self,
-        user_id: str,
-        prediction_type: str,
-        time_horizon: int = 30
+        self, user_id: str, prediction_type: str, time_horizon: int = 30
     ) -> Prediction:
         """生成预测"""
         if user_id not in self.user_metrics:
@@ -526,8 +530,12 @@ class EnhancedAnalyticsSystem:
         user_metrics = self.user_metrics[user_id]
 
         # 基于历史数据生成预测
-        predicted_value = self._predict_value(user_metrics, prediction_type, time_horizon)
-        confidence = self._calculate_prediction_confidence(user_metrics, prediction_type)
+        predicted_value = self._predict_value(
+            user_metrics, prediction_type, time_horizon
+        )
+        confidence = self._calculate_prediction_confidence(
+            user_metrics, prediction_type
+        )
         factors = self._identify_prediction_factors(user_metrics, prediction_type)
 
         prediction = Prediction(
@@ -537,7 +545,7 @@ class EnhancedAnalyticsSystem:
             predicted_value=predicted_value,
             confidence=confidence,
             time_horizon=time_horizon,
-            factors=factors
+            factors=factors,
         )
 
         # 保存预测
@@ -548,7 +556,9 @@ class EnhancedAnalyticsSystem:
         logger.info(f"预测已生成: {user_id} - {prediction_type}")
         return prediction
 
-    def _predict_value(self, metrics: dict[str, Metric], prediction_type: str, _time_horizon: int) -> float:
+    def _predict_value(
+        self, metrics: dict[str, Metric], prediction_type: str, _time_horizon: int
+    ) -> float:
         """预测数值"""
         # 简化的预测逻辑
         if prediction_type == "accuracy":
@@ -576,13 +586,17 @@ class EnhancedAnalyticsSystem:
 
         return 0.0
 
-    def _calculate_prediction_confidence(self, metrics: dict[str, Metric], prediction_type: str) -> float:
+    def _calculate_prediction_confidence(
+        self, metrics: dict[str, Metric], prediction_type: str
+    ) -> float:
         """计算预测置信度"""
         if prediction_type in metrics:
             return metrics[prediction_type].confidence
         return 0.5  # 默认置信度
 
-    def _identify_prediction_factors(self, metrics: dict[str, Metric], prediction_type: str) -> list[str]:
+    def _identify_prediction_factors(
+        self, metrics: dict[str, Metric], prediction_type: str
+    ) -> list[str]:
         """识别预测因素"""
         factors = []
 
@@ -602,7 +616,9 @@ class EnhancedAnalyticsSystem:
 
         return factors
 
-    def _create_empty_prediction(self, user_id: str, prediction_type: str, time_horizon: int) -> Prediction:
+    def _create_empty_prediction(
+        self, user_id: str, prediction_type: str, time_horizon: int
+    ) -> Prediction:
         """创建空预测"""
         return Prediction(
             prediction_id=f"empty_pred_{user_id}_{int(time.time())}",
@@ -611,13 +627,11 @@ class EnhancedAnalyticsSystem:
             predicted_value=0.0,
             confidence=0.0,
             time_horizon=time_horizon,
-            factors=["需要更多历史数据"]
+            factors=["需要更多历史数据"],
         )
 
     @enhance_robustness(
-        operation_name="get_learning_path",
-        security_level="low",
-        enable_caching=True
+        operation_name="get_learning_path", security_level="low", enable_caching=True
     )
     def get_learning_path(self, user_id: str, target_level: str) -> LearningPath:
         """获取学习路径"""
@@ -643,7 +657,7 @@ class EnhancedAnalyticsSystem:
             target_level=target_level,
             steps=steps,
             estimated_duration=estimated_duration,
-            success_probability=success_probability
+            success_probability=success_probability,
         )
 
         # 保存学习路径
@@ -667,7 +681,9 @@ class EnhancedAnalyticsSystem:
                 return "beginner"
         return "beginner"
 
-    def _generate_learning_steps(self, current_level: str, target_level: str) -> list[dict[str, Any]]:
+    def _generate_learning_steps(
+        self, current_level: str, target_level: str
+    ) -> list[dict[str, Any]]:
         """生成学习步骤"""
         steps = []
 
@@ -684,13 +700,15 @@ class EnhancedAnalyticsSystem:
 
         for i in range(current_idx + 1, target_idx + 1):
             level = level_hierarchy[i]
-            steps.append({
-                "step": i - current_idx,
-                "level": level,
-                "description": f"达到{level}水平",
-                "estimated_time": 30,  # 天
-                "requirements": self._get_level_requirements(level)
-            })
+            steps.append(
+                {
+                    "step": i - current_idx,
+                    "level": level,
+                    "description": f"达到{level}水平",
+                    "estimated_time": 30,  # 天
+                    "requirements": self._get_level_requirements(level),
+                }
+            )
 
         return steps
 
@@ -700,11 +718,13 @@ class EnhancedAnalyticsSystem:
             "beginner": ["掌握基础概念", "完成基础实验"],
             "intermediate": ["理解复杂概念", "独立完成实验"],
             "advanced": ["深入理解原理", "设计实验方案"],
-            "expert": ["创新性思维", "解决复杂问题"]
+            "expert": ["创新性思维", "解决复杂问题"],
         }
         return requirements.get(level, [])
 
-    def _estimate_learning_duration(self, metrics: dict[str, Metric], steps: list[dict[str, Any]]) -> int:
+    def _estimate_learning_duration(
+        self, metrics: dict[str, Metric], steps: list[dict[str, Any]]
+    ) -> int:
         """估算学习持续时间"""
         base_duration = len(steps) * 30  # 每步30天
 
@@ -718,7 +738,9 @@ class EnhancedAnalyticsSystem:
 
         return base_duration
 
-    def _calculate_success_probability(self, metrics: dict[str, Metric], _steps: list[dict[str, Any]]) -> float:
+    def _calculate_success_probability(
+        self, metrics: dict[str, Metric], _steps: list[dict[str, Any]]
+    ) -> float:
         """计算成功概率"""
         base_probability = 0.7  # 基础成功概率
 
@@ -739,28 +761,32 @@ class EnhancedAnalyticsSystem:
 
         return max(0.0, min(1.0, base_probability))
 
-    def _create_default_learning_path(self, user_id: str, target_level: str) -> LearningPath:
+    def _create_default_learning_path(
+        self, user_id: str, target_level: str
+    ) -> LearningPath:
         """创建默认学习路径"""
         return LearningPath(
             path_id=f"default_path_{user_id}_{int(time.time())}",
             user_id=user_id,
             current_level="beginner",
             target_level=target_level,
-            steps=[{
-                "step": 1,
-                "level": target_level,
-                "description": f"达到{target_level}水平",
-                "estimated_time": 60,
-                "requirements": self._get_level_requirements(target_level)
-            }],
+            steps=[
+                {
+                    "step": 1,
+                    "level": target_level,
+                    "description": f"达到{target_level}水平",
+                    "estimated_time": 60,
+                    "requirements": self._get_level_requirements(target_level),
+                }
+            ],
             estimated_duration=60,
-            success_probability=0.5
+            success_probability=0.5,
         )
 
     @enhance_robustness(
         operation_name="get_analytics_dashboard",
         security_level="low",
-        enable_caching=True
+        enable_caching=True,
     )
     def get_analytics_dashboard(self, user_id: str) -> dict[str, Any]:
         """获取分析仪表板"""
@@ -771,7 +797,7 @@ class EnhancedAnalyticsSystem:
             "analysis": {},
             "predictions": {},
             "learning_path": {},
-            "recommendations": []
+            "recommendations": [],
         }
 
         # 获取用户指标
@@ -782,46 +808,56 @@ class EnhancedAnalyticsSystem:
                     "average_value": metric.average_value,
                     "trend": metric.trend.value,
                     "confidence": metric.confidence,
-                    "data_points_count": len(metric.data_points)
+                    "data_points_count": len(metric.data_points),
                 }
                 for name, metric in self.user_metrics[user_id].items()
             }
 
         # 获取最新分析结果
         if user_id in self.analysis_results:
-            latest_analysis = self.analysis_results[user_id][-1] if self.analysis_results[user_id] else None
+            latest_analysis = (
+                self.analysis_results[user_id][-1]
+                if self.analysis_results[user_id]
+                else None
+            )
             if latest_analysis:
                 dashboard["analysis"] = {
                     "summary": latest_analysis.summary,
                     "insights": latest_analysis.insights,
                     "confidence": latest_analysis.confidence,
-                    "timestamp": latest_analysis.timestamp.isoformat()
+                    "timestamp": latest_analysis.timestamp.isoformat(),
                 }
 
         # 获取最新预测
         if user_id in self.predictions:
-            latest_predictions = self.predictions[user_id][-3:] if self.predictions[user_id] else []
+            latest_predictions = (
+                self.predictions[user_id][-3:] if self.predictions[user_id] else []
+            )
             dashboard["predictions"] = [
                 {
                     "type": pred.prediction_type,
                     "value": pred.predicted_value,
                     "confidence": pred.confidence,
                     "time_horizon": pred.time_horizon,
-                    "factors": pred.factors
+                    "factors": pred.factors,
                 }
                 for pred in latest_predictions
             ]
 
         # 获取学习路径
         if user_id in self.learning_paths:
-            latest_path = self.learning_paths[user_id][-1] if self.learning_paths[user_id] else None
+            latest_path = (
+                self.learning_paths[user_id][-1]
+                if self.learning_paths[user_id]
+                else None
+            )
             if latest_path:
                 dashboard["learning_path"] = {
                     "current_level": latest_path.current_level,
                     "target_level": latest_path.target_level,
                     "steps": latest_path.steps,
                     "estimated_duration": latest_path.estimated_duration,
-                    "success_probability": latest_path.success_probability
+                    "success_probability": latest_path.success_probability,
                 }
 
         # 生成推荐

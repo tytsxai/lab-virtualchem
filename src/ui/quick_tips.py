@@ -22,7 +22,9 @@ class QuickTip(QWidget):
 
     closed = Signal()
 
-    def __init__(self, tip_text: str, duration: int = 5000, parent: QWidget | None = None):
+    def __init__(
+        self, tip_text: str, duration: int = 5000, parent: QWidget | None = None
+    ):
         super().__init__(parent)
         self.tip_text = tip_text
         self.duration = duration if duration > 0 else 5000  # 确保至少有5秒

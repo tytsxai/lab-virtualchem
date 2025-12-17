@@ -13,28 +13,34 @@ import psutil
 
 class OptimizationLevel(Enum):
     """优化级别"""
+
     NONE = "none"
     BASIC = "basic"
     AGGRESSIVE = "aggressive"
     MAXIMUM = "maximum"
 
+
 @dataclass
 class PerformanceMetric:
     """性能指标"""
+
     name: str
     value: float
     unit: str
     timestamp: float
     threshold: float | None = None
 
+
 @dataclass
 class OptimizationRule:
     """优化规则"""
+
     name: str
     condition: Callable[[dict[str, Any]], bool]
     action: Callable[[], None]
     priority: int = 0
     enabled: bool = True
+
 
 class PerformanceOptimizer:
     """性能优化器"""
@@ -50,10 +56,10 @@ class PerformanceOptimizer:
 
         # 性能阈值
         self.thresholds = {
-            'cpu_usage': 80.0,
-            'memory_usage': 85.0,
-            'disk_usage': 90.0,
-            'response_time': 1000.0,  # 毫秒
+            "cpu_usage": 80.0,
+            "memory_usage": 85.0,
+            "disk_usage": 90.0,
+            "response_time": 1000.0,  # 毫秒
         }
 
         # 初始化优化规则
@@ -62,36 +68,48 @@ class PerformanceOptimizer:
     def _initialize_rules(self):
         """初始化优化规则"""
         # CPU优化规则
-        self.add_rule(OptimizationRule(
-            name="high_cpu_usage",
-            condition=lambda metrics: metrics.get('cpu_usage', 0) > self.thresholds['cpu_usage'],
-            action=self._optimize_cpu,
-            priority=1
-        ))
+        self.add_rule(
+            OptimizationRule(
+                name="high_cpu_usage",
+                condition=lambda metrics: metrics.get("cpu_usage", 0)
+                > self.thresholds["cpu_usage"],
+                action=self._optimize_cpu,
+                priority=1,
+            )
+        )
 
         # 内存优化规则
-        self.add_rule(OptimizationRule(
-            name="high_memory_usage",
-            condition=lambda metrics: metrics.get('memory_usage', 0) > self.thresholds['memory_usage'],
-            action=self._optimize_memory,
-            priority=2
-        ))
+        self.add_rule(
+            OptimizationRule(
+                name="high_memory_usage",
+                condition=lambda metrics: metrics.get("memory_usage", 0)
+                > self.thresholds["memory_usage"],
+                action=self._optimize_memory,
+                priority=2,
+            )
+        )
 
         # 磁盘优化规则
-        self.add_rule(OptimizationRule(
-            name="high_disk_usage",
-            condition=lambda metrics: metrics.get('disk_usage', 0) > self.thresholds['disk_usage'],
-            action=self._optimize_disk,
-            priority=3
-        ))
+        self.add_rule(
+            OptimizationRule(
+                name="high_disk_usage",
+                condition=lambda metrics: metrics.get("disk_usage", 0)
+                > self.thresholds["disk_usage"],
+                action=self._optimize_disk,
+                priority=3,
+            )
+        )
 
         # 响应时间优化规则
-        self.add_rule(OptimizationRule(
-            name="slow_response",
-            condition=lambda metrics: metrics.get('response_time', 0) > self.thresholds['response_time'],
-            action=self._optimize_response_time,
-            priority=4
-        ))
+        self.add_rule(
+            OptimizationRule(
+                name="slow_response",
+                condition=lambda metrics: metrics.get("response_time", 0)
+                > self.thresholds["response_time"],
+                action=self._optimize_response_time,
+                priority=4,
+            )
+        )
 
     def add_rule(self, rule: OptimizationRule):
         """添加优化规则"""
@@ -111,9 +129,7 @@ class PerformanceOptimizer:
 
         self.is_monitoring = True
         self.monitor_thread = threading.Thread(
-            target=self._monitor_loop,
-            args=(interval,),
-            daemon=True
+            target=self._monitor_loop, args=(interval,), daemon=True
         )
         self.monitor_thread.start()
 
@@ -148,31 +164,31 @@ class PerformanceOptimizer:
 
         try:
             # CPU使用率
-            metrics['cpu_usage'] = psutil.cpu_percent(interval=0.1)
+            metrics["cpu_usage"] = psutil.cpu_percent(interval=0.1)
 
             # 内存使用率
             memory = psutil.virtual_memory()
-            metrics['memory_usage'] = memory.percent
-            metrics['memory_available'] = memory.available
+            metrics["memory_usage"] = memory.percent
+            metrics["memory_available"] = memory.available
 
             # 磁盘使用率
-            disk = psutil.disk_usage('/')
-            metrics['disk_usage'] = (disk.used / disk.total) * 100
-            metrics['disk_free'] = disk.free
+            disk = psutil.disk_usage("/")
+            metrics["disk_usage"] = (disk.used / disk.total) * 100
+            metrics["disk_free"] = disk.free
 
             # 进程信息
             process = psutil.Process()
-            metrics['process_cpu'] = process.cpu_percent()
-            metrics['process_memory'] = process.memory_info().rss
+            metrics["process_cpu"] = process.cpu_percent()
+            metrics["process_memory"] = process.memory_info().rss
 
             # 系统负载
-            if hasattr(psutil, 'getloadavg'):
-                metrics['load_avg'] = psutil.getloadavg()[0]
+            if hasattr(psutil, "getloadavg"):
+                metrics["load_avg"] = psutil.getloadavg()[0]
 
             # 网络统计
             net_io = psutil.net_io_counters()
-            metrics['network_sent'] = net_io.bytes_sent
-            metrics['network_recv'] = net_io.bytes_recv
+            metrics["network_sent"] = net_io.bytes_sent
+            metrics["network_recv"] = net_io.bytes_recv
 
         except Exception as e:
             print(f"收集性能指标错误: {e}")
@@ -193,7 +209,7 @@ class PerformanceOptimizer:
                     value=value,
                     unit=self._get_unit(name),
                     timestamp=timestamp,
-                    threshold=self.thresholds.get(name)
+                    threshold=self.thresholds.get(name),
                 )
 
                 self.metrics[name].append(metric)
@@ -205,17 +221,17 @@ class PerformanceOptimizer:
     def _get_unit(self, metric_name: str) -> str:
         """获取指标单位"""
         units = {
-            'cpu_usage': '%',
-            'memory_usage': '%',
-            'disk_usage': '%',
-            'response_time': 'ms',
-            'memory_available': 'bytes',
-            'disk_free': 'bytes',
-            'process_memory': 'bytes',
-            'network_sent': 'bytes',
-            'network_recv': 'bytes',
+            "cpu_usage": "%",
+            "memory_usage": "%",
+            "disk_usage": "%",
+            "response_time": "ms",
+            "memory_available": "bytes",
+            "disk_free": "bytes",
+            "process_memory": "bytes",
+            "network_sent": "bytes",
+            "network_recv": "bytes",
         }
-        return units.get(metric_name, '')
+        return units.get(metric_name, "")
 
     def _check_optimization_rules(self, metrics: dict[str, Any]):
         """检查优化规则"""
@@ -363,20 +379,20 @@ class PerformanceOptimizer:
         """获取性能摘要"""
         with self.lock:
             summary = {
-                'monitoring': self.is_monitoring,
-                'optimization_level': self.optimization_level.value,
-                'rules_count': len(self.rules),
-                'metrics_count': sum(len(metrics) for metrics in self.metrics.values()),
-                'current_metrics': {}
+                "monitoring": self.is_monitoring,
+                "optimization_level": self.optimization_level.value,
+                "rules_count": len(self.rules),
+                "metrics_count": sum(len(metrics) for metrics in self.metrics.values()),
+                "current_metrics": {},
             }
 
             # 获取当前指标
             current_metrics = self._collect_metrics()
             for name, value in current_metrics.items():
-                summary['current_metrics'][name] = {
-                    'value': value,
-                    'unit': self._get_unit(name),
-                    'threshold': self.thresholds.get(name)
+                summary["current_metrics"][name] = {
+                    "value": value,
+                    "unit": self._get_unit(name),
+                    "threshold": self.thresholds.get(name),
                 }
 
             return summary
@@ -389,7 +405,9 @@ class PerformanceOptimizer:
         """设置性能阈值"""
         self.thresholds[metric_name] = threshold
 
-    def get_metrics_history(self, metric_name: str, limit: int = 100) -> list[PerformanceMetric]:
+    def get_metrics_history(
+        self, metric_name: str, limit: int = 100
+    ) -> list[PerformanceMetric]:
         """获取指标历史"""
         with self.lock:
             if metric_name not in self.metrics:

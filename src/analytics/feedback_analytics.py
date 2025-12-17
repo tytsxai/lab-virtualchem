@@ -147,14 +147,20 @@ class FeedbackAnalytics(QObject):
             period_scores = []
             for period_start, period_feedbacks in sorted(periods.items()):
                 if period_feedbacks:
-                    avg_score = sum(f.get("rating", 0) for f in period_feedbacks) / len(period_feedbacks)
+                    avg_score = sum(f.get("rating", 0) for f in period_feedbacks) / len(
+                        period_feedbacks
+                    )
                     period_scores.append((period_start, avg_score))
 
             # 分析趋势
             if len(period_scores) >= 2:
                 current_value = period_scores[-1][1]
                 previous_value = period_scores[-2][1]
-                change = ((current_value - previous_value) / previous_value * 100) if previous_value > 0 else 0
+                change = (
+                    ((current_value - previous_value) / previous_value * 100)
+                    if previous_value > 0
+                    else 0
+                )
 
                 # 确定趋势方向
                 if abs(change) < 5:
@@ -165,8 +171,14 @@ class FeedbackAnalytics(QObject):
                     direction = TrendDirection.DECLINING
                 else:
                     # 检查波动性
-                    variance = self._calculate_variance([score for _, score in period_scores])
-                    direction = TrendDirection.VOLATILE if variance > 1.0 else TrendDirection.STABLE
+                    variance = self._calculate_variance(
+                        [score for _, score in period_scores]
+                    )
+                    direction = (
+                        TrendDirection.VOLATILE
+                        if variance > 1.0
+                        else TrendDirection.STABLE
+                    )
 
                 trend = FeedbackTrend(
                     metric_name="user_satisfaction",
@@ -181,7 +193,10 @@ class FeedbackAnalytics(QObject):
                 trends.append(trend)
                 self.trends["user_satisfaction"] = trend
 
-                self.trend_detected.emit("user_satisfaction", {"change": change, "direction": direction.value})
+                self.trend_detected.emit(
+                    "user_satisfaction",
+                    {"change": change, "direction": direction.value},
+                )
 
             return trends
 
@@ -189,7 +204,9 @@ class FeedbackAnalytics(QObject):
             logger.error(f"分析满意度趋势失败: {e}")
             return []
 
-    def _group_by_period(self, feedbacks: list[dict[str, Any]], period: str) -> dict[datetime, list[dict[str, Any]]]:
+    def _group_by_period(
+        self, feedbacks: list[dict[str, Any]], period: str
+    ) -> dict[datetime, list[dict[str, Any]]]:
         """按时间段分组"""
         groups: dict[datetime, list[dict[str, Any]]] = defaultdict(list)
 
@@ -203,12 +220,18 @@ class FeedbackAnalytics(QObject):
                 continue
 
             if period == "day":
-                period_key = timestamp.replace(hour=0, minute=0, second=0, microsecond=0)
+                period_key = timestamp.replace(
+                    hour=0, minute=0, second=0, microsecond=0
+                )
             elif period == "week":
                 period_key = timestamp - timedelta(days=timestamp.weekday())
-                period_key = period_key.replace(hour=0, minute=0, second=0, microsecond=0)
+                period_key = period_key.replace(
+                    hour=0, minute=0, second=0, microsecond=0
+                )
             elif period == "month":
-                period_key = timestamp.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+                period_key = timestamp.replace(
+                    day=1, hour=0, minute=0, second=0, microsecond=0
+                )
             else:
                 period_key = timestamp
 
@@ -333,7 +356,9 @@ class FeedbackAnalytics(QObject):
             # 保存细分结果
             for segment in segments:
                 self.segments[segment.segment_id] = segment
-                self.segment_analyzed.emit(segment.segment_id, self._segment_to_dict(segment))
+                self.segment_analyzed.emit(
+                    segment.segment_id, self._segment_to_dict(segment)
+                )
 
             return segments
 
@@ -355,7 +380,8 @@ class FeedbackAnalytics(QObject):
                     name="高满意度用户",
                     description="评分4-5星的用户",
                     user_count=len(high_satisfaction),
-                    avg_satisfaction=sum(f.get("rating", 0) for f in high_satisfaction) / len(high_satisfaction),
+                    avg_satisfaction=sum(f.get("rating", 0) for f in high_satisfaction)
+                    / len(high_satisfaction),
                     common_feedback_types=common_types,
                     key_issues=[],
                     characteristics={"satisfaction_level": "high"},
@@ -373,7 +399,8 @@ class FeedbackAnalytics(QObject):
                     name="低满意度用户",
                     description="评分1-2星的用户",
                     user_count=len(low_satisfaction),
-                    avg_satisfaction=sum(f.get("rating", 0) for f in low_satisfaction) / len(low_satisfaction),
+                    avg_satisfaction=sum(f.get("rating", 0) for f in low_satisfaction)
+                    / len(low_satisfaction),
                     common_feedback_types=common_types,
                     key_issues=key_issues,
                     characteristics={"satisfaction_level": "low"},
@@ -488,7 +515,9 @@ class FeedbackAnalytics(QObject):
             return insights
 
         # 计算总体满意度
-        avg_rating = sum(f.get("rating", 0) for f in self.feedbacks) / len(self.feedbacks)
+        avg_rating = sum(f.get("rating", 0) for f in self.feedbacks) / len(
+            self.feedbacks
+        )
 
         # 低满意度警告
         if avg_rating < 3.0:
@@ -508,7 +537,10 @@ class FeedbackAnalytics(QObject):
                         "主动联系不满意用户了解详情",
                         "考虑推出改进计划并告知用户",
                     ],
-                    evidence=[f"低分评价数量: {len(low_rating_users)}", f"平均分: {avg_rating:.2f}"],
+                    evidence=[
+                        f"低分评价数量: {len(low_rating_users)}",
+                        f"平均分: {avg_rating:.2f}",
+                    ],
                     created_at=timestamp,
                 )
             )
@@ -531,7 +563,10 @@ class FeedbackAnalytics(QObject):
                         "分析高满意度的关键因素并强化",
                         "考虑推出用户推荐奖励计划",
                     ],
-                    evidence=[f"高分评价数量: {len(high_rating_users)}", f"平均分: {avg_rating:.2f}"],
+                    evidence=[
+                        f"高分评价数量: {len(high_rating_users)}",
+                        f"平均分: {avg_rating:.2f}",
+                    ],
                     created_at=timestamp,
                 )
             )
@@ -543,7 +578,10 @@ class FeedbackAnalytics(QObject):
         insights = []
 
         for metric_name, trend in self.trends.items():
-            if trend.direction == TrendDirection.DECLINING and abs(trend.change_percentage) > 10:
+            if (
+                trend.direction == TrendDirection.DECLINING
+                and abs(trend.change_percentage) > 10
+            ):
                 insights.append(
                     Insight(
                         insight_id=f"insight_trend_{metric_name}",
@@ -558,7 +596,10 @@ class FeedbackAnalytics(QObject):
                             "检查最近的产品变更是否导致问题",
                             "与用户沟通了解具体不满",
                         ],
-                        evidence=[f"变化: {trend.change_percentage:.1f}%", f"期间: {trend.period}"],
+                        evidence=[
+                            f"变化: {trend.change_percentage:.1f}%",
+                            f"期间: {trend.period}",
+                        ],
                         created_at=timestamp,
                     )
                 )
@@ -587,7 +628,10 @@ class FeedbackAnalytics(QObject):
                             "为这部分用户提供专门的支持",
                             "考虑针对性的产品改进",
                         ],
-                        evidence=[f"用户数: {segment.user_count}", f"关键问题: {', '.join(segment.key_issues[:2])}"],
+                        evidence=[
+                            f"用户数: {segment.user_count}",
+                            f"关键问题: {', '.join(segment.key_issues[:2])}",
+                        ],
                         created_at=timestamp,
                     )
                 )
@@ -626,7 +670,10 @@ class FeedbackAnalytics(QObject):
         """导出分析报告"""
         try:
             if not output_path:
-                output_file = self.data_dir / f"analytics_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                output_file = (
+                    self.data_dir
+                    / f"analytics_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                )
             else:
                 output_file = Path(output_path)
 
@@ -648,7 +695,10 @@ class FeedbackAnalytics(QObject):
                     "total_feedbacks": len(self.feedbacks),
                     "nps_score": nps.nps_score,
                     "avg_satisfaction": (
-                        sum(f.get("rating", 0) for f in self.feedbacks) / len(self.feedbacks) if self.feedbacks else 0
+                        sum(f.get("rating", 0) for f in self.feedbacks)
+                        / len(self.feedbacks)
+                        if self.feedbacks
+                        else 0
                     ),
                 },
                 "nps_analysis": {

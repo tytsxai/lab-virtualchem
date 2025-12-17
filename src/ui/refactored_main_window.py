@@ -50,7 +50,9 @@ class RefactoredMainWindow(QMainWindow):
     experiment_stopped = Signal(str)
     settings_changed = Signal(dict)
 
-    def __init__(self, container: DIContainer | None = None, workflow_manager=None, parent=None):
+    def __init__(
+        self, container: DIContainer | None = None, workflow_manager=None, parent=None
+    ):
         super().__init__(parent)
 
         # 如果未显式传入容器，则使用全局配置好的容器
@@ -169,7 +171,9 @@ class RefactoredMainWindow(QMainWindow):
         try:
             from .experiment_view import ExperimentView
 
-            view = ExperimentView(template=template, container=self._container, user_id="student_001")
+            view = ExperimentView(
+                template=template, container=self._container, user_id="student_001"
+            )
             self._stacked_widget.addWidget(view)
             self._stacked_widget.setCurrentWidget(view)
             self._current_view = view
@@ -225,7 +229,9 @@ class RefactoredMainWindow(QMainWindow):
 
         scene, controller = self._get_current_scene_and_controller()
         try:
-            return self._state_manager.restore_state(state, scene=scene, controller=controller)
+            return self._state_manager.restore_state(
+                state, scene=scene, controller=controller
+            )
         except Exception as exc:  # noqa: BLE001
             logger.error(f"恢复实验状态失败: {exc}", exc_info=True)
             return False
@@ -261,12 +267,16 @@ class RefactoredMainWindow(QMainWindow):
 
         # 连接工具栏信号
         if self._toolbar_component:
-            self._toolbar_component.action_triggered.connect(self._handle_toolbar_action)
+            self._toolbar_component.action_triggered.connect(
+                self._handle_toolbar_action
+            )
 
         # 连接状态栏信号
         if self._statusbar_component:
             self._statusbar_component.status_changed.connect(self._on_status_changed)
-            self._statusbar_component.progress_changed.connect(self._on_progress_changed)
+            self._statusbar_component.progress_changed.connect(
+                self._on_progress_changed
+            )
 
         # 连接窗口管理器信号
         self._window_manager.window_created.connect(self._on_window_created)
@@ -327,7 +337,7 @@ class RefactoredMainWindow(QMainWindow):
             message=f"Error handling action {action}: {str(error)}",
             widget="RefactoredMainWindow",
             action=action,
-            cause=error
+            cause=error,
         )
         self._error_handler.handle_error(ui_error)
 
@@ -352,7 +362,10 @@ class RefactoredMainWindow(QMainWindow):
             # 弹出简单对话框让用户选择模板ID
             from PySide6.QtWidgets import QInputDialog
 
-            items = [t["id"] if isinstance(t, dict) else getattr(t, "id", "") for t in templates]
+            items = [
+                t["id"] if isinstance(t, dict) else getattr(t, "id", "")
+                for t in templates
+            ]
             items = [i for i in items if i]
             if not items:
                 self._statusbar_component.set_status("模板列表为空", 3000)
@@ -378,7 +391,9 @@ class RefactoredMainWindow(QMainWindow):
             self._load_experiment_view(template)
 
             # 这里预留后续将 ExperimentView/GameExperimentView 挂到 _stacked_widget 的接口
-            logger.info(f"新实验已选择: {selected_id} - {getattr(template, 'title', '')}")
+            logger.info(
+                f"新实验已选择: {selected_id} - {getattr(template, 'title', '')}"
+            )
             self._statusbar_component.set_status(f"已创建实验: {selected_id}", 3000)
         except Exception as e:  # noqa: BLE001
             logger.error(f"创建新实验失败: {e}", exc_info=True)
@@ -392,7 +407,9 @@ class RefactoredMainWindow(QMainWindow):
         self._statusbar_component.set_status("正在打开实验...")
 
         if not self._state_manager:
-            self._statusbar_component.set_status("状态管理器未初始化，无法打开实验", 3000)
+            self._statusbar_component.set_status(
+                "状态管理器未初始化，无法打开实验", 3000
+            )
             return
 
         try:
@@ -409,18 +426,26 @@ class RefactoredMainWindow(QMainWindow):
                 self._current_experiment_id = state.experiment_id
 
                 if not self._template_engine:
-                    self._statusbar_component.set_status("模板引擎未初始化，无法加载实验视图", 3000)
+                    self._statusbar_component.set_status(
+                        "模板引擎未初始化，无法加载实验视图", 3000
+                    )
                     return
 
                 # 加载模板和视图
-                template = self._template_engine.load_experiment_by_id(state.experiment_id)
+                template = self._template_engine.load_experiment_by_id(
+                    state.experiment_id
+                )
                 self._load_experiment_view(template)
 
                 restored = self._restore_loaded_state(state)
                 if restored:
-                    self._statusbar_component.set_status(f"已加载实验状态: {file_path}", 3000)
+                    self._statusbar_component.set_status(
+                        f"已加载实验状态: {file_path}", 3000
+                    )
                 else:
-                    self._statusbar_component.set_status(f"已加载: {file_path}（部分状态未恢复）", 3000)
+                    self._statusbar_component.set_status(
+                        f"已加载: {file_path}（部分状态未恢复）", 3000
+                    )
                 logger.info(f"打开实验状态文件: {file_path}")
             else:
                 self._statusbar_component.set_status("未选择文件", 3000)
@@ -446,7 +471,9 @@ class RefactoredMainWindow(QMainWindow):
             if file_path:
                 state = self._capture_current_state()
                 if state is None:
-                    self._statusbar_component.set_status("当前没有可保存的实验状态", 3000)
+                    self._statusbar_component.set_status(
+                        "当前没有可保存的实验状态", 3000
+                    )
                     return
 
                 saved_path = self._state_manager.save_to_file(state)
@@ -457,7 +484,9 @@ class RefactoredMainWindow(QMainWindow):
                 except Exception as exc:  # noqa: BLE001
                     logger.warning(f"复制实验状态文件失败: {exc}")
                     # 回退到直接写入目标文件
-                    dest_path.write_text(saved_path.read_text(encoding="utf-8"), encoding="utf-8")
+                    dest_path.write_text(
+                        saved_path.read_text(encoding="utf-8"), encoding="utf-8"
+                    )
 
                 logger.info(f"保存实验到: {file_path}")
                 self._statusbar_component.set_status(f"已保存: {file_path}", 3000)
@@ -516,7 +545,11 @@ class RefactoredMainWindow(QMainWindow):
         try:
             from .settings_dialog import SettingsDialog
 
-            dialog = SettingsDialog(i18n_dir="assets/i18n", settings_file="config/settings.json", parent=self)
+            dialog = SettingsDialog(
+                i18n_dir="assets/i18n",
+                settings_file="config/settings.json",
+                parent=self,
+            )
             # 透传设置变更事件给外部监听者
             dialog.settings_changed.connect(self.settings_changed)
             if dialog.exec():
@@ -597,16 +630,17 @@ class RefactoredMainWindow(QMainWindow):
         """加载设置"""
         try:
             from ..core.config_manager import get_config_manager
+
             config_manager = get_config_manager()
 
             # 加载窗口设置
-            window_config = config_manager.get_app_config().get('window', {})
+            window_config = config_manager.get_app_config().get("window", {})
             if window_config:
-                width = window_config.get('width', 1200)
-                height = window_config.get('height', 800)
+                width = window_config.get("width", 1200)
+                height = window_config.get("height", 800)
                 self.resize(width, height)
 
-                if window_config.get('maximized', False):
+                if window_config.get("maximized", False):
                     self.showMaximized()
 
             logger.info("设置加载成功")
@@ -617,15 +651,16 @@ class RefactoredMainWindow(QMainWindow):
         """保存设置"""
         try:
             from ..core.config_manager import get_config_manager
+
             config_manager = get_config_manager()
 
             # 保存窗口设置
             window_config = {
-                'width': self.width(),
-                'height': self.height(),
-                'maximized': self.isMaximized()
+                "width": self.width(),
+                "height": self.height(),
+                "maximized": self.isMaximized(),
             }
-            config_manager.update_app_config({'window': window_config})
+            config_manager.update_app_config({"window": window_config})
 
             logger.info("设置保存成功")
         except Exception as e:
@@ -637,7 +672,7 @@ class RefactoredMainWindow(QMainWindow):
             message=f"Failed to initialize RefactoredMainWindow: {str(error)}",
             widget="RefactoredMainWindow",
             action="initialize",
-            cause=error
+            cause=error,
         )
         self._error_handler.handle_error(ui_error)
 

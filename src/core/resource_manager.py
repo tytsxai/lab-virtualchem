@@ -59,7 +59,12 @@ class ResourceManager:
         self._lock = _resource_lock
         self._registered = False
 
-    def register_resource(self, name: str, resource: Any, cleanup_func: Callable[[Any | None], None] | None = None) -> None:
+    def register_resource(
+        self,
+        name: str,
+        resource: Any,
+        cleanup_func: Callable[[Any | None], None] | None = None,
+    ) -> None:
         """注册资源
 
         Args:
@@ -132,7 +137,9 @@ def get_resource_manager() -> ResourceManager:
     return _resource_manager
 
 
-def register_resource(name: str, resource: Any, cleanup_func: Callable[[Any], None] | None = None) -> None:
+def register_resource(
+    name: str, resource: Any, cleanup_func: Callable[[Any], None] | None = None
+) -> None:
     """注册资源（便捷函数）"""
     _resource_manager.register_resource(name, resource, cleanup_func)
 

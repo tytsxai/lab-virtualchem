@@ -73,7 +73,7 @@ class FeedbackManager(QObject):
         return cls._instance
 
     def __init__(self):
-        if not hasattr(self, '_initialized'):
+        if not hasattr(self, "_initialized"):
             super().__init__()
             self._initialized = True
             self.feedback_system = EnhancedFeedbackSystem()
@@ -87,7 +87,9 @@ class FeedbackManager(QObject):
 
     def show_feedback(self, widget, feedback_type, animation_type=None, **kwargs):
         """显示反馈"""
-        return self.feedback_system.show_feedback(widget, feedback_type, animation_type, **kwargs)
+        return self.feedback_system.show_feedback(
+            widget, feedback_type, animation_type, **kwargs
+        )
 
     def play_sound(self, feedback_type):
         """播放音效"""
@@ -99,7 +101,9 @@ class FeedbackManager(QObject):
 
     def create_particle_effect(self, scene, center, color, **kwargs):
         """创建粒子效果"""
-        return self.feedback_system.create_particle_effect(scene, center, color, **kwargs)
+        return self.feedback_system.create_particle_effect(
+            scene, center, color, **kwargs
+        )
 
     def cleanup(self):
         """清理资源"""
@@ -188,7 +192,9 @@ class EnhancedFeedbackSystem(QObject):
 
         logger.info(f"音量已设置为: {self.sound_volume:.1%}")
 
-    def animate_widget(self, widget: QWidget, animation_type: AnimationType, duration: int = 300) -> None:
+    def animate_widget(
+        self, widget: QWidget, animation_type: AnimationType, duration: int = 300
+    ) -> None:
         """为组件添加动画效果"""
         if animation_type == AnimationType.SCALE:
             self._animate_scale(widget, duration)
@@ -378,7 +384,9 @@ class EnhancedFeedbackSystem(QObject):
         self.animate_widget(widget, animation_type, duration)
 
         # 延迟发送完成信号
-        QTimer.singleShot(duration, lambda: self.feedback_completed.emit(feedback_type.value))
+        QTimer.singleShot(
+            duration, lambda: self.feedback_completed.emit(feedback_type.value)
+        )
 
         logger.debug(f"显示反馈: {feedback_type.value} - {animation_type.value}")
 
@@ -447,7 +455,13 @@ class EnhancedFeedbackSystem(QObject):
 
     def show_success_effect(self, widget: QWidget, message: str = "成功！") -> None:
         """显示成功效果"""
-        self.show_feedback(widget, FeedbackType.SUCCESS, AnimationType.BOUNCE, duration=400, with_sound=True)
+        self.show_feedback(
+            widget,
+            FeedbackType.SUCCESS,
+            AnimationType.BOUNCE,
+            duration=400,
+            with_sound=True,
+        )
 
         # 可以添加一个临时标签显示消息
         from PySide6.QtWidgets import QLabel
@@ -466,7 +480,10 @@ class EnhancedFeedbackSystem(QObject):
             """
         )
         label.adjustSize()
-        label.move((widget.width() - label.width()) // 2, (widget.height() - label.height()) // 2)
+        label.move(
+            (widget.width() - label.width()) // 2,
+            (widget.height() - label.height()) // 2,
+        )
         label.show()
 
         # 淡出并移除
@@ -474,7 +491,13 @@ class EnhancedFeedbackSystem(QObject):
 
     def show_error_effect(self, widget: QWidget, message: str = "错误！") -> None:
         """显示错误效果"""
-        self.show_feedback(widget, FeedbackType.ERROR, AnimationType.SHAKE, duration=400, with_sound=True)
+        self.show_feedback(
+            widget,
+            FeedbackType.ERROR,
+            AnimationType.SHAKE,
+            duration=400,
+            with_sound=True,
+        )
 
         from PySide6.QtWidgets import QLabel
 
@@ -492,12 +515,17 @@ class EnhancedFeedbackSystem(QObject):
         """
         )
         label.adjustSize()
-        label.move((widget.width() - label.width()) // 2, (widget.height() - label.height()) // 2)
+        label.move(
+            (widget.width() - label.width()) // 2,
+            (widget.height() - label.height()) // 2,
+        )
         label.show()
 
         QTimer.singleShot(1500, label.deleteLater)
 
-    def show_achievement_effect(self, widget: QWidget, achievement_name: str, scene: Any | None = None) -> None:
+    def show_achievement_effect(
+        self, widget: QWidget, achievement_name: str, scene: Any | None = None
+    ) -> None:
         """显示成就解锁效果"""
         self.play_sound(FeedbackType.ACHIEVEMENT)
 

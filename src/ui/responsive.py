@@ -56,23 +56,23 @@ class ResponsiveHelper:
         screen = QGuiApplication.primaryScreen()
         if screen:
             return {
-                'screen': screen,
-                'size': screen.size(),
-                'available_size': screen.availableSize(),
-                'geometry': screen.geometry(),
-                'available_geometry': screen.availableGeometry(),
-                'dpi': screen.logicalDotsPerInch(),
-                'device_pixel_ratio': screen.devicePixelRatio()
+                "screen": screen,
+                "size": screen.size(),
+                "available_size": screen.availableSize(),
+                "geometry": screen.geometry(),
+                "available_geometry": screen.availableGeometry(),
+                "dpi": screen.logicalDotsPerInch(),
+                "device_pixel_ratio": screen.devicePixelRatio(),
             }
         else:
-            return {'screen': None}
+            return {"screen": None}
 
     @staticmethod
     def is_mobile_screen() -> bool:
         """判断是否为移动设备屏幕"""
         screen_info = ResponsiveHelper.get_screen_info()
-        if screen_info.get('screen'):
-            size = screen_info['size']
+        if screen_info.get("screen"):
+            size = screen_info["size"]
             # 如果宽度小于800像素，认为是移动设备
             return size.width() < 800
         return False
@@ -81,8 +81,8 @@ class ResponsiveHelper:
     def get_optimal_font_size(base_size: int = 12) -> int:
         """获取最佳字体大小"""
         screen_info = ResponsiveHelper.get_screen_info()
-        if screen_info.get('screen'):
-            dpi = screen_info['dpi']
+        if screen_info.get("screen"):
+            dpi = screen_info["dpi"]
             # 根据DPI调整字体大小
             if dpi > 120:
                 return int(base_size * 1.2)
@@ -94,8 +94,8 @@ class ResponsiveHelper:
     def get_optimal_spacing(base_spacing: int = 8) -> int:
         """获取最佳间距"""
         screen_info = ResponsiveHelper.get_screen_info()
-        if screen_info.get('screen'):
-            size = screen_info['size']
+        if screen_info.get("screen"):
+            size = screen_info["size"]
             # 根据屏幕大小调整间距
             if size.width() > 1920:
                 return int(base_spacing * 1.5)

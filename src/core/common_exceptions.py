@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 class ErrorSeverity(Enum):
     """错误严重程度"""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -23,6 +24,7 @@ class ErrorSeverity(Enum):
 
 class ErrorCategory(Enum):
     """错误类别"""
+
     CONFIGURATION = "configuration"
     VALIDATION = "validation"
     NETWORK = "network"
@@ -46,7 +48,7 @@ class VirtualChemLabError(Exception):
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
         error_code: str | None = None,
         details: dict[str, Any] | None = None,
-        cause: Exception | None = None
+        cause: Exception | None = None,
     ):
         super().__init__(message)
         self.message = message
@@ -63,6 +65,7 @@ class VirtualChemLabError(Exception):
     def _get_timestamp(self) -> str:
         """获取时间戳"""
         from datetime import datetime
+
         return datetime.now().isoformat()
 
     def _log_error(self) -> None:
@@ -71,12 +74,12 @@ class VirtualChemLabError(Exception):
             ErrorSeverity.LOW: logging.DEBUG,
             ErrorSeverity.MEDIUM: logging.INFO,
             ErrorSeverity.HIGH: logging.WARNING,
-            ErrorSeverity.CRITICAL: logging.ERROR
+            ErrorSeverity.CRITICAL: logging.ERROR,
         }.get(self.severity, logging.ERROR)
 
         logger.log(
             log_level,
-            f"[{self.category.value}] {self.message} (Code: {self.error_code})"
+            f"[{self.category.value}] {self.message} (Code: {self.error_code})",
         )
 
         if self.cause:
@@ -92,7 +95,7 @@ class VirtualChemLabError(Exception):
             "error_code": self.error_code,
             "details": self.details,
             "timestamp": self.timestamp,
-            "cause": str(self.cause) if self.cause else None
+            "cause": str(self.cause) if self.cause else None,
         }
 
     def __str__(self) -> str:
@@ -107,7 +110,7 @@ class ConfigurationError(VirtualChemLabError):
         message: str,
         config_key: str | None = None,
         details: dict[str, Any] | None = None,
-        cause: Exception | None = None
+        cause: Exception | None = None,
     ):
         super().__init__(
             message=message,
@@ -115,7 +118,7 @@ class ConfigurationError(VirtualChemLabError):
             severity=ErrorSeverity.HIGH,
             error_code="CONFIG_ERROR",
             details=details,
-            cause=cause
+            cause=cause,
         )
         if config_key:
             self.details["config_key"] = config_key
@@ -130,7 +133,7 @@ class ValidationError(VirtualChemLabError):
         field: str | None = None,
         value: Any | None = None,
         details: dict[str, Any] | None = None,
-        cause: Exception | None = None
+        cause: Exception | None = None,
     ):
         super().__init__(
             message=message,
@@ -138,7 +141,7 @@ class ValidationError(VirtualChemLabError):
             severity=ErrorSeverity.MEDIUM,
             error_code="VALIDATION_ERROR",
             details=details,
-            cause=cause
+            cause=cause,
         )
         if field:
             self.details["field"] = field
@@ -155,7 +158,7 @@ class NetworkError(VirtualChemLabError):
         url: str | None = None,
         status_code: int | None = None,
         details: dict[str, Any] | None = None,
-        cause: Exception | None = None
+        cause: Exception | None = None,
     ):
         super().__init__(
             message=message,
@@ -163,7 +166,7 @@ class NetworkError(VirtualChemLabError):
             severity=ErrorSeverity.MEDIUM,
             error_code="NETWORK_ERROR",
             details=details,
-            cause=cause
+            cause=cause,
         )
         if url:
             self.details["url"] = url
@@ -180,7 +183,7 @@ class StorageError(VirtualChemLabError):
         operation: str | None = None,
         path: str | None = None,
         details: dict[str, Any] | None = None,
-        cause: Exception | None = None
+        cause: Exception | None = None,
     ):
         super().__init__(
             message=message,
@@ -188,7 +191,7 @@ class StorageError(VirtualChemLabError):
             severity=ErrorSeverity.HIGH,
             error_code="STORAGE_ERROR",
             details=details,
-            cause=cause
+            cause=cause,
         )
         if operation:
             self.details["operation"] = operation
@@ -205,7 +208,7 @@ class UIError(VirtualChemLabError):
         widget: str | None = None,
         action: str | None = None,
         details: dict[str, Any] | None = None,
-        cause: Exception | None = None
+        cause: Exception | None = None,
     ):
         super().__init__(
             message=message,
@@ -213,7 +216,7 @@ class UIError(VirtualChemLabError):
             severity=ErrorSeverity.MEDIUM,
             error_code="UI_ERROR",
             details=details,
-            cause=cause
+            cause=cause,
         )
         if widget:
             self.details["widget"] = widget
@@ -231,7 +234,7 @@ class PerformanceError(VirtualChemLabError):
         threshold: float | None = None,
         actual_value: float | None = None,
         details: dict[str, Any] | None = None,
-        cause: Exception | None = None
+        cause: Exception | None = None,
     ):
         super().__init__(
             message=message,
@@ -239,7 +242,7 @@ class PerformanceError(VirtualChemLabError):
             severity=ErrorSeverity.MEDIUM,
             error_code="PERFORMANCE_ERROR",
             details=details,
-            cause=cause
+            cause=cause,
         )
         if metric:
             self.details["metric"] = metric
@@ -257,7 +260,7 @@ class SecurityError(VirtualChemLabError):
         message: str,
         threat_type: str | None = None,
         details: dict[str, Any] | None = None,
-        cause: Exception | None = None
+        cause: Exception | None = None,
     ):
         super().__init__(
             message=message,
@@ -265,7 +268,7 @@ class SecurityError(VirtualChemLabError):
             severity=ErrorSeverity.HIGH,
             error_code="SECURITY_ERROR",
             details=details,
-            cause=cause
+            cause=cause,
         )
         if threat_type:
             self.details["threat_type"] = threat_type
@@ -279,7 +282,7 @@ class BusinessLogicError(VirtualChemLabError):
         message: str,
         operation: str | None = None,
         details: dict[str, Any] | None = None,
-        cause: Exception | None = None
+        cause: Exception | None = None,
     ):
         super().__init__(
             message=message,
@@ -287,7 +290,7 @@ class BusinessLogicError(VirtualChemLabError):
             severity=ErrorSeverity.MEDIUM,
             error_code="BUSINESS_LOGIC_ERROR",
             details=details,
-            cause=cause
+            cause=cause,
         )
         if operation:
             self.details["operation"] = operation
@@ -301,7 +304,7 @@ class SystemError(VirtualChemLabError):
         message: str,
         component: str | None = None,
         details: dict[str, Any] | None = None,
-        cause: Exception | None = None
+        cause: Exception | None = None,
     ):
         super().__init__(
             message=message,
@@ -309,7 +312,7 @@ class SystemError(VirtualChemLabError):
             severity=ErrorSeverity.CRITICAL,
             error_code="SYSTEM_ERROR",
             details=details,
-            cause=cause
+            cause=cause,
         )
         if component:
             self.details["component"] = component
@@ -319,9 +322,10 @@ class SystemError(VirtualChemLabError):
 def handle_errors(
     error_class: type[VirtualChemLabError] = VirtualChemLabError,
     severity: ErrorSeverity = ErrorSeverity.MEDIUM,
-    category: ErrorCategory = ErrorCategory.SYSTEM
+    category: ErrorCategory = ErrorCategory.SYSTEM,
 ):
     """错误处理装饰器"""
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             try:
@@ -335,9 +339,11 @@ def handle_errors(
                     message=f"Error in {func.__name__}: {str(e)}",
                     category=category,
                     severity=severity,
-                    cause=e
+                    cause=e,
                 ) from e
+
         return wrapper
+
     return decorator
 
 
@@ -345,9 +351,10 @@ def handle_errors(
 def recoverable_error(
     fallback_value: Any = None,
     retry_count: int = 0,
-    error_class: type[VirtualChemLabError] = VirtualChemLabError
+    error_class: type[VirtualChemLabError] = VirtualChemLabError,
 ):
     """可恢复错误装饰器"""
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             last_error = None
@@ -363,12 +370,16 @@ def recoverable_error(
 
             # 所有重试都失败，返回默认值或抛出异常
             if fallback_value is not None:
-                logger.error(f"Function {func.__name__} failed after {retry_count} retries, using fallback")
+                logger.error(
+                    f"Function {func.__name__} failed after {retry_count} retries, using fallback"
+                )
                 return fallback_value
             else:
                 raise error_class(
                     message=f"Function {func.__name__} failed after {retry_count} retries",
-                    cause=last_error
+                    cause=last_error,
                 )
+
         return wrapper
+
     return decorator

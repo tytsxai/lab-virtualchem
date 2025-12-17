@@ -36,7 +36,7 @@ class PerformanceTest:
         _ = template_engine.list_available_experiments()
 
         elapsed = time.time() - start
-        self.results['startup_time'] = elapsed
+        self.results["startup_time"] = elapsed
         print(f"  启动时间: {elapsed:.3f}秒")
         return elapsed
 
@@ -50,13 +50,13 @@ class PerformanceTest:
 
         # 加载所有实验
         for exp in experiments:
-            _ = template_engine.load_experiment_by_id(exp['id'])
+            _ = template_engine.load_experiment_by_id(exp["id"])
 
         # 获取内存使用
         memory_info = self.process.memory_info()
         memory_mb = memory_info.rss / 1024 / 1024
 
-        self.results['memory_usage_mb'] = memory_mb
+        self.results["memory_usage_mb"] = memory_mb
         print(f"  内存占用: {memory_mb:.2f} MB")
         return memory_mb
 
@@ -69,14 +69,14 @@ class PerformanceTest:
         loading_times = {}
         for exp in experiments:
             start = time.time()
-            _ = template_engine.load_experiment_by_id(exp['id'])
+            _ = template_engine.load_experiment_by_id(exp["id"])
             elapsed = time.time() - start
-            loading_times[exp['id']] = elapsed
-            print(f"  {exp['id']}: {elapsed*1000:.2f}ms")
+            loading_times[exp["id"]] = elapsed
+            print(f"  {exp['id']}: {elapsed * 1000:.2f}ms")
 
         avg_time = sum(loading_times.values()) / len(loading_times)
-        self.results['avg_template_load_ms'] = avg_time * 1000
-        print(f"  平均加载时间: {avg_time*1000:.2f}ms")
+        self.results["avg_template_load_ms"] = avg_time * 1000
+        print(f"  平均加载时间: {avg_time * 1000:.2f}ms")
         return loading_times
 
     def test_curve_generation(self) -> dict[str, float]:
@@ -86,14 +86,14 @@ class PerformanceTest:
 
         tests = {
             "强酸强碱滴定": lambda: generator.generate_titration_curve(
-                'strong_strong', acid_M=0.1, acid_V_ml=25, base_M=0.1
+                "strong_strong", acid_M=0.1, acid_V_ml=25, base_M=0.1
             ),
             "弱酸强碱滴定": lambda: generator.generate_titration_curve(
-                'weak_strong', acid_M=0.1, acid_V_ml=25, base_M=0.1
+                "weak_strong", acid_M=0.1, acid_V_ml=25, base_M=0.1
             ),
             "温度曲线": lambda: generator.generate_temperature_curve(
-                'heating', 25, {'target_temp': 100, 'heating_rate': 5.0}
-            )
+                "heating", 25, {"target_temp": 100, "heating_rate": 5.0}
+            ),
         }
 
         curve_times = {}
@@ -102,25 +102,25 @@ class PerformanceTest:
             _ = func()
             elapsed = time.time() - start
             curve_times[name] = elapsed
-            print(f"  {name}: {elapsed*1000:.2f}ms")
+            print(f"  {name}: {elapsed * 1000:.2f}ms")
 
         avg_time = sum(curve_times.values()) / len(curve_times)
-        self.results['avg_curve_gen_ms'] = avg_time * 1000
-        print(f"  平均生成时间: {avg_time*1000:.2f}ms")
+        self.results["avg_curve_gen_ms"] = avg_time * 1000
+        print(f"  平均生成时间: {avg_time * 1000:.2f}ms")
         return curve_times
 
     def test_controller_performance(self) -> float:
         """测试实验控制器性能"""
         print("\n测试实验控制器性能...")
         template_engine = TemplateEngine(Path("assets/templates"))
-        template = template_engine.load_experiment_by_id('titration_naoh_hcl')
+        template = template_engine.load_experiment_by_id("titration_naoh_hcl")
 
         start = time.time()
         ExperimentController(template, user_id="perf_test")
         elapsed = time.time() - start
 
-        self.results['controller_init_ms'] = elapsed * 1000
-        print(f"  控制器初始化: {elapsed*1000:.2f}ms")
+        self.results["controller_init_ms"] = elapsed * 1000
+        print(f"  控制器初始化: {elapsed * 1000:.2f}ms")
         return elapsed
 
     def test_storage_performance(self) -> dict[str, float]:
@@ -135,7 +135,7 @@ class PerformanceTest:
         try:
             store = JSONStore(temp_dir)
             template_engine = TemplateEngine(Path("assets/templates"))
-            template = template_engine.load_experiment_by_id('titration_naoh_hcl')
+            template = template_engine.load_experiment_by_id("titration_naoh_hcl")
 
             from datetime import datetime
 
@@ -150,33 +150,29 @@ class PerformanceTest:
                     experiment_id=template.id,
                     experiment_title=template.title,
                     started_at=datetime.now(),
-                    score=ExperimentScore(correctness=80, procedure=90, safety=85)
+                    score=ExperimentScore(correctness=80, procedure=90, safety=85),
                 )
                 store.save_record(record)
             save_time = (time.time() - start) / 10
-            print(f"  平均保存时间: {save_time*1000:.2f}ms")
+            print(f"  平均保存时间: {save_time * 1000:.2f}ms")
 
             # 测试查询
             start = time.time()
             _ = store.list_records()
             query_time = time.time() - start
-            print(f"  查询所有记录: {query_time*1000:.2f}ms")
+            print(f"  查询所有记录: {query_time * 1000:.2f}ms")
 
             # 测试搜索
             start = time.time()
             _ = store.list_records(experiment_id=template.id)
             search_time = time.time() - start
-            print(f"  搜索记录: {search_time*1000:.2f}ms")
+            print(f"  搜索记录: {search_time * 1000:.2f}ms")
 
-            self.results['storage_save_ms'] = save_time * 1000
-            self.results['storage_query_ms'] = query_time * 1000
-            self.results['storage_search_ms'] = search_time * 1000
+            self.results["storage_save_ms"] = save_time * 1000
+            self.results["storage_query_ms"] = query_time * 1000
+            self.results["storage_search_ms"] = search_time * 1000
 
-            return {
-                'save': save_time,
-                'query': query_time,
-                'search': search_time
-            }
+            return {"save": save_time, "query": query_time, "search": search_time}
         finally:
             # 清理临时目录
             shutil.rmtree(temp_dir)
@@ -200,10 +196,10 @@ class PerformanceTest:
 
         # 检查是否满足目标
         goals = {
-            'startup_time': ('启动时间', 3.0, 's', '<='),
-            'memory_usage_mb': ('内存占用', 400, 'MB', '<='),
-            'avg_template_load_ms': ('模板加载', 100, 'ms', '<='),
-            'avg_curve_gen_ms': ('曲线生成', 50, 'ms', '<='),
+            "startup_time": ("启动时间", 3.0, "s", "<="),
+            "memory_usage_mb": ("内存占用", 400, "MB", "<="),
+            "avg_template_load_ms": ("模板加载", 100, "ms", "<="),
+            "avg_curve_gen_ms": ("曲线生成", 50, "ms", "<="),
         }
 
         print("\n目标达成情况:")
@@ -211,7 +207,7 @@ class PerformanceTest:
         for key, (name, target, unit, op) in goals.items():
             if key in self.results:
                 value = self.results[key]
-                passed = value <= target if op == '<=' else value >= target
+                passed = value <= target if op == "<=" else value >= target
 
                 status = "✓ 通过" if passed else "✗ 未达标"
                 print(f"  {name}: {value:.2f}{unit} (目标{op}{target}{unit}) {status}")
@@ -231,14 +227,15 @@ def main():
 
     # 保存结果到文件
     import json
+
     output_file = Path("tests/performance/results.json")
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
 
     print(f"\n结果已保存至: {output_file}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

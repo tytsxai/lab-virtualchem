@@ -17,6 +17,7 @@ from typing import Any
 try:
     from pydantic import BaseModel
     from pydantic import ValidationError as PydanticValidationError
+
     PYDANTIC_AVAILABLE = True
 except ImportError:
     PYDANTIC_AVAILABLE = False
@@ -28,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class ValidationLevel(Enum):
     """验证级别"""
+
     BASIC = "basic"
     STRICT = "strict"
     PARANOID = "paranoid"
@@ -35,6 +37,7 @@ class ValidationLevel(Enum):
 
 class ValidationSeverity(Enum):
     """验证严重性"""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -44,6 +47,7 @@ class ValidationSeverity(Enum):
 @dataclass
 class ValidationRule:
     """验证规则"""
+
     name: str
     validator: Callable[[Any], bool]
     message: str
@@ -55,6 +59,7 @@ class ValidationRule:
 @dataclass
 class ValidationResult:
     """验证结果"""
+
     is_valid: bool
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
@@ -132,7 +137,7 @@ class LengthValidator(BaseValidator):
         """验证长度"""
         result = ValidationResult(is_valid=True)
 
-        if not hasattr(data, '__len__'):
+        if not hasattr(data, "__len__"):
             result.is_valid = False
             result.errors.append(f"数据没有长度属性: {type(data).__name__}")
             return result
@@ -163,7 +168,9 @@ class PatternValidator(BaseValidator):
 
         if not isinstance(data, str):
             result.is_valid = False
-            result.errors.append(f"模式验证需要字符串类型，实际类型: {type(data).__name__}")
+            result.errors.append(
+                f"模式验证需要字符串类型，实际类型: {type(data).__name__}"
+            )
             return result
 
         if not self.regex.match(data):
@@ -209,33 +216,35 @@ class SchemaValidator(BaseValidator):
             validators = []
 
             # 类型验证
-            if 'type' in field_config:
-                validators.append(TypeValidator(field_config['type']))
+            if "type" in field_config:
+                validators.append(TypeValidator(field_config["type"]))
 
             # 范围验证
-            if 'min' in field_config or 'max' in field_config:
-                validators.append(RangeValidator(
-                    field_config.get('min'),
-                    field_config.get('max')
-                ))
+            if "min" in field_config or "max" in field_config:
+                validators.append(
+                    RangeValidator(field_config.get("min"), field_config.get("max"))
+                )
 
             # 长度验证
-            if 'min_length' in field_config or 'max_length' in field_config:
-                validators.append(LengthValidator(
-                    field_config.get('min_length'),
-                    field_config.get('max_length')
-                ))
+            if "min_length" in field_config or "max_length" in field_config:
+                validators.append(
+                    LengthValidator(
+                        field_config.get("min_length"), field_config.get("max_length")
+                    )
+                )
 
             # 模式验证
-            if 'pattern' in field_config:
-                validators.append(PatternValidator(field_config['pattern']))
+            if "pattern" in field_config:
+                validators.append(PatternValidator(field_config["pattern"]))
 
             # 自定义验证
-            if 'validator' in field_config:
-                validators.append(CustomValidator(
-                    field_config['validator'],
-                    field_config.get('error_message', '自定义验证失败')
-                ))
+            if "validator" in field_config:
+                validators.append(
+                    CustomValidator(
+                        field_config["validator"],
+                        field_config.get("error_message", "自定义验证失败"),
+                    )
+                )
 
             self.field_validators[field_name] = validators
 
@@ -249,8 +258,9 @@ class SchemaValidator(BaseValidator):
             return result
 
         # 验证必需字段
-        required_fields = [name for name, config in self.schema.items()
-                          if config.get('required', True)]
+        required_fields = [
+            name for name, config in self.schema.items() if config.get("required", True)
+        ]
 
         for field_name in required_fields:
             if field_name not in data:
@@ -264,9 +274,18 @@ class SchemaValidator(BaseValidator):
                     field_result = validator.validate(value)
                     if not field_result.is_valid:
                         result.is_valid = False
-                        result.errors.extend([f"{field_name}: {error}" for error in field_result.errors])
-                    result.warnings.extend([f"{field_name}: {warning}" for warning in field_result.warnings])
-                    result.info.extend([f"{field_name}: {info}" for info in field_result.info])
+                        result.errors.extend(
+                            [f"{field_name}: {error}" for error in field_result.errors]
+                        )
+                    result.warnings.extend(
+                        [
+                            f"{field_name}: {warning}"
+                            for warning in field_result.warnings
+                        ]
+                    )
+                    result.info.extend(
+                        [f"{field_name}: {info}" for info in field_result.info]
+                    )
 
         return result
 
@@ -302,7 +321,7 @@ class ValidationChain(BaseValidator):
     def __init__(self):
         self.validators: list[BaseValidator] = []
 
-    def add_validator(self, validator: BaseValidator) -> 'ValidationChain':
+    def add_validator(self, validator: BaseValidator) -> "ValidationChain":
         """添加验证器"""
         self.validators.append(validator)
         return self
@@ -323,7 +342,9 @@ class ValidationChain(BaseValidator):
             result.info.extend(validator_result.info)
 
             # 如果验证失败且是严格模式，停止验证
-            if not validator_result.is_valid and result.metadata.get('strict_mode', False):
+            if not validator_result.is_valid and result.metadata.get(
+                "strict_mode", False
+            ):
                 break
 
         return result
@@ -345,7 +366,9 @@ class EnhancedValidator:
         self.validators[name] = validator
         logger.debug(f"注册验证器: {name}")
 
-    def validate(self, data: Any, validator_name: str | None = None) -> ValidationResult:
+    def validate(
+        self, data: Any, validator_name: str | None = None
+    ) -> ValidationResult:
         """验证数据"""
         start_time = time.time()
 
@@ -385,7 +408,7 @@ class EnhancedValidator:
             chain.add_validator(TypeValidator(dict))
 
             # 检查是否有模式
-            if 'type' in data or 'schema' in data:
+            if "type" in data or "schema" in data:
                 # 尝试解析为模式
                 try:
                     schema = self._extract_schema(data)
@@ -435,23 +458,23 @@ class EnhancedValidator:
         """更新统计信息"""
         if validator_name not in self.validation_stats:
             self.validation_stats[validator_name] = {
-                'total': 0,
-                'valid': 0,
-                'invalid': 0,
-                'errors': 0,
-                'warnings': 0
+                "total": 0,
+                "valid": 0,
+                "invalid": 0,
+                "errors": 0,
+                "warnings": 0,
             }
 
         stats = self.validation_stats[validator_name]
-        stats['total'] += 1
+        stats["total"] += 1
 
         if result.is_valid:
-            stats['valid'] += 1
+            stats["valid"] += 1
         else:
-            stats['invalid'] += 1
+            stats["invalid"] += 1
 
-        stats['errors'] += len(result.errors)
-        stats['warnings'] += len(result.warnings)
+        stats["errors"] += len(result.errors)
+        stats["warnings"] += len(result.warnings)
 
     def get_validation_stats(self) -> dict[str, dict[str, int]]:
         """获取验证统计"""
@@ -473,11 +496,17 @@ class EnhancedValidator:
         report.append("")
 
         # 统计信息
-        total_validations = sum(stats['total'] for stats in self.validation_stats.values())
-        total_valid = sum(stats['valid'] for stats in self.validation_stats.values())
-        total_invalid = sum(stats['invalid'] for stats in self.validation_stats.values())
-        total_errors = sum(stats['errors'] for stats in self.validation_stats.values())
-        total_warnings = sum(stats['warnings'] for stats in self.validation_stats.values())
+        total_validations = sum(
+            stats["total"] for stats in self.validation_stats.values()
+        )
+        total_valid = sum(stats["valid"] for stats in self.validation_stats.values())
+        total_invalid = sum(
+            stats["invalid"] for stats in self.validation_stats.values()
+        )
+        total_errors = sum(stats["errors"] for stats in self.validation_stats.values())
+        total_warnings = sum(
+            stats["warnings"] for stats in self.validation_stats.values()
+        )
 
         report.append("## 总体统计")
         report.append(f"总验证次数: {total_validations}")
@@ -485,7 +514,11 @@ class EnhancedValidator:
         report.append(f"无效验证: {total_invalid}")
         report.append(f"总错误数: {total_errors}")
         report.append(f"总警告数: {total_warnings}")
-        report.append(f"成功率: {(total_valid/total_validations*100):.1f}%" if total_validations > 0 else "N/A")
+        report.append(
+            f"成功率: {(total_valid / total_validations * 100):.1f}%"
+            if total_validations > 0
+            else "N/A"
+        )
         report.append("")
 
         # 详细统计
@@ -509,7 +542,7 @@ enhanced_validator = EnhancedValidator()
 def validate_data(
     data: Any,
     validator_name: str | None = None,
-    validation_level: ValidationLevel | None = None
+    validation_level: ValidationLevel | None = None,
 ) -> ValidationResult:
     """验证数据的便捷函数"""
     if validation_level:

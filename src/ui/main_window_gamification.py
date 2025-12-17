@@ -26,13 +26,21 @@ class MainWindowGamificationMixin:
 
             # 更新等级卡片
             user_data = self.gamification_manager.get_or_create_user_data(self.user_id)
-            self.gamification_panel.update_level_card(user_data.level, progress["exp"], progress["next_level_exp"])
+            self.gamification_panel.update_level_card(
+                user_data.level, progress["exp"], progress["next_level_exp"]
+            )
 
             # 更新任务列表
             self.gamification_panel.clear_quests()
-            active_quests = [q for q in user_data.quests if q.status.value == "active" or q.status.value == "completed"]
+            active_quests = [
+                q
+                for q in user_data.quests
+                if q.status.value == "active" or q.status.value == "completed"
+            ]
             for user_quest in active_quests[:5]:  # 只显示前5个
-                quest = self.gamification_manager.quest_manager.get_quest(user_quest.quest_id)
+                quest = self.gamification_manager.quest_manager.get_quest(
+                    user_quest.quest_id
+                )
                 if quest:
                     card = self.gamification_panel.add_quest_card(quest, user_quest)
                     card.claim_clicked.connect(self._on_claim_quest_reward)
@@ -40,14 +48,20 @@ class MainWindowGamificationMixin:
             # 更新成就显示（显示最近解锁的）
             self.gamification_panel.clear_achievements()
             completed_achievements = [a for a in user_data.achievements if a.completed]
-            recent_achievements = sorted(completed_achievements, key=lambda x: x.unlocked_at, reverse=True)[:6]
+            recent_achievements = sorted(
+                completed_achievements, key=lambda x: x.unlocked_at, reverse=True
+            )[:6]
 
             for user_achievement in recent_achievements:
-                achievement = self.gamification_manager.achievement_manager.get_achievement(
-                    user_achievement.achievement_id
+                achievement = (
+                    self.gamification_manager.achievement_manager.get_achievement(
+                        user_achievement.achievement_id
+                    )
                 )
                 if achievement:
-                    self.gamification_panel.add_achievement_card(achievement, unlocked=True)
+                    self.gamification_panel.add_achievement_card(
+                        achievement, unlocked=True
+                    )
 
         except Exception as e:
             logger.error(f"更新游戏化面板失败: {e}", exc_info=True)
@@ -91,16 +105,22 @@ class MainWindowGamificationMixin:
     def _on_claim_quest_reward(self, quest_id: str):
         """领取任务奖励"""
         try:
-            result = self.gamification_manager.claim_quest_reward(self.user_id, quest_id)
+            result = self.gamification_manager.claim_quest_reward(
+                self.user_id, quest_id
+            )
 
             if result["success"]:
                 exp_gained = result["exp_gained"]
-                QMessageBox.information(self, "奖励领取", f"成功领取任务奖励！\n获得 {exp_gained} 经验值")
+                QMessageBox.information(
+                    self, "奖励领取", f"成功领取任务奖励！\n获得 {exp_gained} 经验值"
+                )
 
                 # 刷新面板
                 self._update_gamification_panel()
             else:
-                QMessageBox.warning(self, "领取失败", "无法领取该任务奖励，请稍后再试。")
+                QMessageBox.warning(
+                    self, "领取失败", "无法领取该任务奖励，请稍后再试。"
+                )
 
         except Exception as e:
             logger.error(f"领取任务奖励失败: {e}", exc_info=True)
@@ -124,7 +144,9 @@ class MainWindowGamificationMixin:
 
             # 获取用户数据
             user_data = self.gamification_manager.get_or_create_user_data(self.user_id)
-            unlocked_ids = {a.achievement_id for a in user_data.achievements if a.completed}
+            unlocked_ids = {
+                a.achievement_id for a in user_data.achievements if a.completed
+            }
 
             # 成就网格
             from PySide6.QtWidgets import QScrollArea, QWidget
@@ -135,7 +157,11 @@ class MainWindowGamificationMixin:
             content = QWidget()
             grid = QGridLayout(content)
 
-            all_achievements = self.gamification_manager.achievement_manager.get_all_achievements(include_hidden=False)
+            all_achievements = (
+                self.gamification_manager.achievement_manager.get_all_achievements(
+                    include_hidden=False
+                )
+            )
 
             for i, achievement in enumerate(all_achievements):
                 from .gamification_widgets import AchievementCard

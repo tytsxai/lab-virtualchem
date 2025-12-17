@@ -105,7 +105,9 @@ class AlertRule:
 
         # 检查冷却期
         if self._last_triggered:
-            cooldown_end = self._last_triggered + timedelta(seconds=self.cooldown_seconds)
+            cooldown_end = self._last_triggered + timedelta(
+                seconds=self.cooldown_seconds
+            )
             if datetime.now() < cooldown_end:
                 return False
 
@@ -184,7 +186,9 @@ class FileAlertChannel(AlertChannel):
     def send(self, alert: Alert) -> bool:
         """写入文件"""
         try:
-            log_file = self.log_dir / f"alerts_{datetime.now().strftime('%Y%m%d')}.jsonl"
+            log_file = (
+                self.log_dir / f"alerts_{datetime.now().strftime('%Y%m%d')}.jsonl"
+            )
             with open(log_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(alert.to_dict(), ensure_ascii=False) + "\n")
             return True
@@ -324,7 +328,9 @@ class AlertManager:
 
         return triggered_alerts
 
-    def fire_alert(self, rule_name: str, severity: AlertSeverity, message: str, **labels) -> Alert:
+    def fire_alert(
+        self, rule_name: str, severity: AlertSeverity, message: str, **labels
+    ) -> Alert:
         """手动触发告警"""
         alert_id = f"{rule_name}_{int(time.time() * 1000)}"
 
@@ -377,7 +383,9 @@ class AlertManager:
         return {
             "active_alerts": active_count,
             "by_severity": dict(by_severity),
-            "top_rules": dict(sorted(by_rule.items(), key=lambda x: x[1], reverse=True)[:10]),
+            "top_rules": dict(
+                sorted(by_rule.items(), key=lambda x: x[1], reverse=True)[:10]
+            ),
         }
 
     def start_auto_check(self, interval_seconds: int = 60) -> None:
@@ -386,7 +394,9 @@ class AlertManager:
             return
 
         self._check_running = True
-        self._check_thread = threading.Thread(target=self._auto_check_loop, args=(interval_seconds,), daemon=True)
+        self._check_thread = threading.Thread(
+            target=self._auto_check_loop, args=(interval_seconds,), daemon=True
+        )
         self._check_thread.start()
 
     def stop_auto_check(self) -> None:
@@ -466,4 +476,10 @@ def create_threshold_rule(
 
     msg = message or f"{name} {operator} {threshold}"
 
-    return AlertRule(name=name, condition=condition, severity=severity, message=msg, threshold=threshold)
+    return AlertRule(
+        name=name,
+        condition=condition,
+        severity=severity,
+        message=msg,
+        threshold=threshold,
+    )

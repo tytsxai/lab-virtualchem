@@ -191,7 +191,9 @@ class ExperimentStateManager:
             logger.error(f"恢复状态失败: {e}", exc_info=True)
             return False
 
-    def save_to_file(self, state: ExperimentState | None = None, filename: str | None = None) -> Path:
+    def save_to_file(
+        self, state: ExperimentState | None = None, filename: str | None = None
+    ) -> Path:
         """
         保存状态到文件
 
@@ -253,7 +255,9 @@ class ExperimentStateManager:
             logger.error(f"加载状态失败: {e}", exc_info=True)
             raise
 
-    def list_saved_states(self, experiment_id: str | None = None) -> list[dict[str, Any]]:
+    def list_saved_states(
+        self, experiment_id: str | None = None
+    ) -> list[dict[str, Any]]:
         """
         列出保存的状态文件
 

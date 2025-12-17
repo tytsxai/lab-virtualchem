@@ -89,7 +89,9 @@ class FeedbackToast(QWidget):
         self.theme_manager = ThemeManager()  # type: ignore
 
         # 窗口设置
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
+        )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
 
@@ -319,7 +321,9 @@ class FeedbackToast(QWidget):
         elif self.message.position == FeedbackPosition.TOP_CENTER:
             return QPoint((screen_geometry.width() - toast_size.width()) // 2, margin)
         elif self.message.position == FeedbackPosition.BOTTOM_LEFT:
-            return QPoint(margin, screen_geometry.height() - toast_size.height() - margin)
+            return QPoint(
+                margin, screen_geometry.height() - toast_size.height() - margin
+            )
         elif self.message.position == FeedbackPosition.BOTTOM_RIGHT:
             return QPoint(
                 screen_geometry.width() - toast_size.width() - margin,
@@ -335,7 +339,10 @@ class FeedbackToast(QWidget):
                 (screen_geometry.width() - toast_size.width()) // 2,
                 (screen_geometry.height() - toast_size.height()) // 2,
             )
-        elif self.message.position == FeedbackPosition.CUSTOM and self.message.custom_position:
+        elif (
+            self.message.position == FeedbackPosition.CUSTOM
+            and self.message.custom_position
+        ):
             return self.message.custom_position
         else:
             # 默认右上角
@@ -343,11 +350,17 @@ class FeedbackToast(QWidget):
 
     def slide_in(self) -> None:
         """滑入动画"""
-        if self.message.position in [FeedbackPosition.TOP_RIGHT, FeedbackPosition.BOTTOM_RIGHT]:
+        if self.message.position in [
+            FeedbackPosition.TOP_RIGHT,
+            FeedbackPosition.BOTTOM_RIGHT,
+        ]:
             # 从右侧滑入
             start_pos = QPoint(self.x() + self.width(), self.y())
             end_pos = QPoint(self.x(), self.y())
-        elif self.message.position in [FeedbackPosition.TOP_LEFT, FeedbackPosition.BOTTOM_LEFT]:
+        elif self.message.position in [
+            FeedbackPosition.TOP_LEFT,
+            FeedbackPosition.BOTTOM_LEFT,
+        ]:
             # 从左侧滑入
             start_pos = QPoint(self.x() - self.width(), self.y())
             end_pos = QPoint(self.x(), self.y())
@@ -367,10 +380,16 @@ class FeedbackToast(QWidget):
 
     def slide_out(self) -> None:
         """滑出动画"""
-        if self.message.position in [FeedbackPosition.TOP_RIGHT, FeedbackPosition.BOTTOM_RIGHT]:
+        if self.message.position in [
+            FeedbackPosition.TOP_RIGHT,
+            FeedbackPosition.BOTTOM_RIGHT,
+        ]:
             # 向右侧滑出
             end_pos = QPoint(self.x() + self.width(), self.y())
-        elif self.message.position in [FeedbackPosition.TOP_LEFT, FeedbackPosition.BOTTOM_LEFT]:
+        elif self.message.position in [
+            FeedbackPosition.TOP_LEFT,
+            FeedbackPosition.BOTTOM_LEFT,
+        ]:
             # 向左侧滑出
             end_pos = QPoint(self.x() - self.width(), self.y())
         else:
@@ -481,7 +500,9 @@ class FeedbackManager:
         # 检查最大数量限制
         if len(self.active_toasts) >= self.max_toasts:
             # 关闭最旧的消息
-            oldest_id = min(self.active_toasts.keys(), key=lambda k: int(k.split("_")[1]))
+            oldest_id = min(
+                self.active_toasts.keys(), key=lambda k: int(k.split("_")[1])
+            )
             self.close_message(oldest_id)
 
         # 创建提示框
@@ -518,12 +539,18 @@ class FeedbackManager:
 
     def show_loading(self, title: str, message: str, **kwargs: Any) -> str:
         """显示加载消息"""
-        return self.show_message(FeedbackType.LOADING, title, message, persistent=True, **kwargs)
+        return self.show_message(
+            FeedbackType.LOADING, title, message, persistent=True, **kwargs
+        )
 
-    def show_progress(self, title: str, message: str, progress: float = 0.0, **kwargs: Any) -> str:
+    def show_progress(
+        self, title: str, message: str, progress: float = 0.0, **kwargs: Any
+    ) -> str:
         """显示进度消息"""
         progress_text = f"{message}\n进度: {progress:.1%}"
-        return self.show_message(FeedbackType.PROGRESS, title, progress_text, persistent=True, **kwargs)
+        return self.show_message(
+            FeedbackType.PROGRESS, title, progress_text, persistent=True, **kwargs
+        )
 
     def close_message(self, message_id: str) -> bool:
         """关闭消息"""
@@ -641,6 +668,8 @@ def show_loading(title: str, message: str, **kwargs: Any) -> str:
     return get_feedback_manager().show_loading(title, message, **kwargs)
 
 
-def show_progress(title: str, message: str, progress: float = 0.0, **kwargs: Any) -> str:
+def show_progress(
+    title: str, message: str, progress: float = 0.0, **kwargs: Any
+) -> str:
     """显示进度消息"""
     return get_feedback_manager().show_progress(title, message, progress, **kwargs)

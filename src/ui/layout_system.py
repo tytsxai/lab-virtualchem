@@ -154,7 +154,9 @@ class GridLayout(QGridLayout):
             self._current_row += 1
             self._current_col = 0
 
-        self.addWidget(widget, self._current_row, self._current_col, row_span, col_span, alignment)
+        self.addWidget(
+            widget, self._current_row, self._current_col, row_span, col_span, alignment
+        )
 
         # 更新当前位置
         self._current_col += col_span
@@ -184,7 +186,9 @@ class ResponsiveContainer(QWidget):
 
         # 设置尺寸策略
         if max_width == ContentWidth.FULL:
-            self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+            self.setSizePolicy(
+                QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+            )
         else:
             self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
             if self.max_width > 0:
@@ -418,22 +422,30 @@ class Spacer:
     @staticmethod
     def vertical(size: LayoutSpacing = LayoutSpacing.MEDIUM) -> QSpacerItem:
         """创建垂直空间"""
-        return QSpacerItem(0, size.value, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
+        return QSpacerItem(
+            0, size.value, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed
+        )
 
     @staticmethod
     def horizontal(size: LayoutSpacing = LayoutSpacing.MEDIUM) -> QSpacerItem:
         """创建水平空间"""
-        return QSpacerItem(size.value, 0, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+        return QSpacerItem(
+            size.value, 0, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum
+        )
 
     @staticmethod
     def expanding_vertical() -> QSpacerItem:
         """创建可扩展的垂直空间"""
-        return QSpacerItem(0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        return QSpacerItem(
+            0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
+        )
 
     @staticmethod
     def expanding_horizontal() -> QSpacerItem:
         """创建可扩展的水平空间"""
-        return QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        return QSpacerItem(
+            0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
+        )
 
 
 # 便捷函数
@@ -442,7 +454,9 @@ def create_flex_row(
     margins: LayoutMargin = LayoutMargin.NONE,
 ) -> FlexLayout:
     """创建水平Flex布局"""
-    return FlexLayout(spacing=spacing, margins=margins, direction=Qt.Orientation.Horizontal)
+    return FlexLayout(
+        spacing=spacing, margins=margins, direction=Qt.Orientation.Horizontal
+    )
 
 
 def create_flex_column(
@@ -450,7 +464,9 @@ def create_flex_column(
     margins: LayoutMargin = LayoutMargin.NONE,
 ) -> FlexLayout:
     """创建垂直Flex布局"""
-    return FlexLayout(spacing=spacing, margins=margins, direction=Qt.Orientation.Vertical)
+    return FlexLayout(
+        spacing=spacing, margins=margins, direction=Qt.Orientation.Vertical
+    )
 
 
 def create_card(

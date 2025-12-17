@@ -38,7 +38,6 @@ class TooltipEnhancer:
         "settings": "打开设置\n配置应用程序的各项参数",
         "help": "获取帮助\n查看用户手册和常见问题",
         "about": "关于\n查看应用程序信息和版本",
-
         # 实验操作类
         "add_reagent": "添加试剂\n将试剂加入容器中",
         "heat": "加热\n对容器进行加热操作",
@@ -46,13 +45,11 @@ class TooltipEnhancer:
         "mix": "搅拌\n混合容器中的物质",
         "measure": "测量\n记录实验数据",
         "observe": "观察\n记录实验现象",
-
         # 设置类
         "language": "语言设置\n选择界面显示语言",
         "theme": "主题设置\n选择浅色或深色主题",
         "auto_save": "自动保存\n定时自动保存实验进度",
         "notifications": "通知设置\n配置系统通知选项",
-
         # 输入类
         "experiment_name": "实验名称\n为您的实验输入一个描述性名称",
         "student_name": "学生姓名\n输入您的真实姓名",
@@ -81,7 +78,12 @@ class TooltipEnhancer:
     }
 
     @staticmethod
-    def enhance_widget(widget: QWidget, tooltip_key: str | None = None, custom_tooltip: str | None = None, shortcut: str | None = None):
+    def enhance_widget(
+        widget: QWidget,
+        tooltip_key: str | None = None,
+        custom_tooltip: str | None = None,
+        shortcut: str | None = None,
+    ):
         """增强控件的工具提示
 
         Args:
@@ -115,13 +117,21 @@ class TooltipEnhancer:
 
             # 添加类型特定的提示
             if isinstance(widget, QPushButton):
-                tooltip_text = TooltipEnhancer._enhance_button_tooltip(widget, tooltip_text)
+                tooltip_text = TooltipEnhancer._enhance_button_tooltip(
+                    widget, tooltip_text
+                )
             elif isinstance(widget, (QLineEdit, QSpinBox, QDoubleSpinBox)):
-                tooltip_text = TooltipEnhancer._enhance_input_tooltip(widget, tooltip_text)
+                tooltip_text = TooltipEnhancer._enhance_input_tooltip(
+                    widget, tooltip_text
+                )
             elif isinstance(widget, QComboBox):
-                tooltip_text = TooltipEnhancer._enhance_combobox_tooltip(widget, tooltip_text)
+                tooltip_text = TooltipEnhancer._enhance_combobox_tooltip(
+                    widget, tooltip_text
+                )
             elif isinstance(widget, QCheckBox):
-                tooltip_text = TooltipEnhancer._enhance_checkbox_tooltip(widget, tooltip_text)
+                tooltip_text = TooltipEnhancer._enhance_checkbox_tooltip(
+                    widget, tooltip_text
+                )
 
             # 设置富文本格式的工具提示
             if tooltip_text:
@@ -132,7 +142,9 @@ class TooltipEnhancer:
                 # 设置工具提示的显示时间
                 widget.setToolTipDuration(5000)  # 5秒
 
-            logger.debug(f"增强控件工具提示: {widget.objectName() or type(widget).__name__}")
+            logger.debug(
+                f"增强控件工具提示: {widget.objectName() or type(widget).__name__}"
+            )
 
         except Exception as e:
             logger.warning(f"增强工具提示失败: {e}")
@@ -266,38 +278,56 @@ class RichTooltip:
         Returns:
             str: HTML格式的工具提示
         """
-        html_parts = ['<div style="font-family: \'Microsoft YaHei UI\', \'Segoe UI\'; font-size: 11pt; line-height: 1.6;">']
+        html_parts = [
+            "<div style=\"font-family: 'Microsoft YaHei UI', 'Segoe UI'; font-size: 11pt; line-height: 1.6;\">"
+        ]
 
         # 标题
-        html_parts.append(f'<p style="font-size: 12pt; font-weight: bold; color: #2c3e50; margin-bottom: 8px;">{title}</p>')
+        html_parts.append(
+            f'<p style="font-size: 12pt; font-weight: bold; color: #2c3e50; margin-bottom: 8px;">{title}</p>'
+        )
 
         # 描述
-        html_parts.append(f'<p style="color: #34495e; margin-bottom: 8px;">{description}</p>')
+        html_parts.append(
+            f'<p style="color: #34495e; margin-bottom: 8px;">{description}</p>'
+        )
 
         # 快捷键
         if shortcuts:
-            html_parts.append('<p style="font-weight: bold; color: #3498db; margin-top: 8px; margin-bottom: 4px;">快捷键:</p>')
+            html_parts.append(
+                '<p style="font-weight: bold; color: #3498db; margin-top: 8px; margin-bottom: 4px;">快捷键:</p>'
+            )
             html_parts.append('<table style="margin-left: 10px;">')
             for action, shortcut in shortcuts:
-                html_parts.append(f'<tr><td style="color: #7f8c8d; padding-right: 10px;">{action}:</td><td style="color: #2c3e50; font-weight: 500;">{shortcut}</td></tr>')
-            html_parts.append('</table>')
+                html_parts.append(
+                    f'<tr><td style="color: #7f8c8d; padding-right: 10px;">{action}:</td><td style="color: #2c3e50; font-weight: 500;">{shortcut}</td></tr>'
+                )
+            html_parts.append("</table>")
 
         # 提示
         if tips:
-            html_parts.append('<p style="font-weight: bold; color: #27ae60; margin-top: 8px; margin-bottom: 4px;">💡 提示:</p>')
-            html_parts.append('<ul style="margin-left: 20px; margin-top: 0; color: #7f8c8d;">')
+            html_parts.append(
+                '<p style="font-weight: bold; color: #27ae60; margin-top: 8px; margin-bottom: 4px;">💡 提示:</p>'
+            )
+            html_parts.append(
+                '<ul style="margin-left: 20px; margin-top: 0; color: #7f8c8d;">'
+            )
             for tip in tips:
                 html_parts.append(f'<li style="margin-bottom: 4px;">{tip}</li>')
-            html_parts.append('</ul>')
+            html_parts.append("</ul>")
 
         # 警告
         if warnings:
-            html_parts.append('<p style="font-weight: bold; color: #e74c3c; margin-top: 8px; margin-bottom: 4px;">⚠️ 警告:</p>')
-            html_parts.append('<ul style="margin-left: 20px; margin-top: 0; color: #c0392b;">')
+            html_parts.append(
+                '<p style="font-weight: bold; color: #e74c3c; margin-top: 8px; margin-bottom: 4px;">⚠️ 警告:</p>'
+            )
+            html_parts.append(
+                '<ul style="margin-left: 20px; margin-top: 0; color: #c0392b;">'
+            )
             for warning in warnings:
                 html_parts.append(f'<li style="margin-bottom: 4px;">{warning}</li>')
-            html_parts.append('</ul>')
+            html_parts.append("</ul>")
 
-        html_parts.append('</div>')
+        html_parts.append("</div>")
 
         return "".join(html_parts)

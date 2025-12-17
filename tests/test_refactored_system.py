@@ -62,7 +62,7 @@ class TestCommonExceptions:
         error = VirtualChemLabError(
             message="Test error",
             category=ErrorCategory.SYSTEM,
-            severity=ErrorSeverity.MEDIUM
+            severity=ErrorSeverity.MEDIUM,
         )
 
         assert error.message == "Test error"
@@ -80,7 +80,7 @@ class TestCommonExceptions:
             severity=ErrorSeverity.HIGH,
             error_code="TEST_ERROR",
             details={"key": "value"},
-            cause=ValueError("Original error")
+            cause=ValueError("Original error"),
         )
 
         assert error.error_code == "TEST_ERROR"
@@ -90,9 +90,7 @@ class TestCommonExceptions:
     def test_error_to_dict(self):
         """测试异常转字典"""
         error = VirtualChemLabError(
-            message="Test error",
-            category=ErrorCategory.UI,
-            severity=ErrorSeverity.LOW
+            message="Test error", category=ErrorCategory.UI, severity=ErrorSeverity.LOW
         )
 
         error_dict = error.to_dict()
@@ -193,7 +191,7 @@ class TestEnhancedEventBus:
             name="test_event",
             data={"key": "value"},
             source="test_source",
-            priority=EventPriority.HIGH
+            priority=EventPriority.HIGH,
         )
 
         assert event.name == "test_event"
@@ -263,7 +261,7 @@ class TestEnhancedErrorRecovery:
         rule = RecoveryRule(
             error_type=VirtualChemLabError,
             strategy=RecoveryStrategy.RETRY,
-            max_attempts=3
+            max_attempts=3,
         )
 
         recovery.add_recovery_rule(VirtualChemLabError, rule)
@@ -278,7 +276,7 @@ class TestEnhancedErrorRecovery:
             error_type=VirtualChemLabError,
             strategy=RecoveryStrategy.RETRY,
             max_attempts=2,
-            delay=0.1
+            delay=0.1,
         )
 
         recovery.add_recovery_rule(VirtualChemLabError, rule)
@@ -296,7 +294,7 @@ class TestEnhancedErrorRecovery:
         rule = RecoveryRule(
             error_type=VirtualChemLabError,
             strategy=RecoveryStrategy.FALLBACK,
-            fallback_function=fallback_func
+            fallback_function=fallback_func,
         )
 
         recovery.add_recovery_rule(VirtualChemLabError, rule)
@@ -314,7 +312,7 @@ class TestEnhancedErrorRecovery:
             error_type=VirtualChemLabError,
             strategy=RecoveryStrategy.CIRCUIT_BREAKER,
             circuit_breaker_threshold=2,
-            circuit_breaker_timeout=1.0
+            circuit_breaker_timeout=1.0,
         )
 
         recovery.add_recovery_rule(VirtualChemLabError, rule)
@@ -407,10 +405,7 @@ class TestUnifiedPerformanceMonitor:
     def test_performance_metric_creation(self):
         """测试性能指标创建"""
         metric = PerformanceMetric(
-            name="test_metric",
-            value=42.0,
-            timestamp=time.time(),
-            unit="ms"
+            name="test_metric", value=42.0, timestamp=time.time(), unit="ms"
         )
 
         assert metric.name == "test_metric"
@@ -423,9 +418,7 @@ class TestUnifiedPerformanceMonitor:
 
         # 收集指标
         metric = PerformanceMetric(
-            name="test_metric",
-            value=42.0,
-            timestamp=time.time()
+            name="test_metric", value=42.0, timestamp=time.time()
         )
 
         monitor._collector.collect_metric(metric)
@@ -494,7 +487,7 @@ class TestPerformanceAlerting:
             metric_name="test_metric",
             threshold=80.0,
             comparison="gt",
-            severity=AlertSeverity.WARNING
+            severity=AlertSeverity.WARNING,
         )
 
         alerting.add_rule(rule)
@@ -515,15 +508,13 @@ class TestPerformanceAlerting:
             metric_name="test_metric",
             threshold=50.0,
             comparison="gt",
-            severity=AlertSeverity.WARNING
+            severity=AlertSeverity.WARNING,
         )
         alerting.add_rule(rule)
 
         # 创建超过阈值的指标
         metric = PerformanceMetric(
-            name="test_metric",
-            value=60.0,
-            timestamp=time.time()
+            name="test_metric", value=60.0, timestamp=time.time()
         )
 
         # 检查指标
@@ -543,14 +534,12 @@ class TestPerformanceAlerting:
             metric_name="test_metric",
             threshold=50.0,
             comparison="gt",
-            severity=AlertSeverity.WARNING
+            severity=AlertSeverity.WARNING,
         )
         alerting.add_rule(rule)
 
         metric = PerformanceMetric(
-            name="test_metric",
-            value=60.0,
-            timestamp=time.time()
+            name="test_metric", value=60.0, timestamp=time.time()
         )
         alerting.check_metric(metric)
 
@@ -577,11 +566,7 @@ class TestConfigMigration:
 
         # 测试v1.0.0配置
         v1_config = {
-            "app": {
-                "name": "TestApp",
-                "version": "1.0.0",
-                "environment": "development"
-            }
+            "app": {"name": "TestApp", "version": "1.0.0", "environment": "development"}
         }
 
         version = migration.detect_config_version(v1_config)
@@ -592,11 +577,9 @@ class TestConfigMigration:
             "app": {
                 "name": "TestApp",
                 "version": APP_VERSION,
-                "environment": "development"
+                "environment": "development",
             },
-            "ui": {
-                "theme": "dark"
-            }
+            "ui": {"theme": "dark"},
         }
 
         version = migration.detect_config_version(current_config)
@@ -608,11 +591,7 @@ class TestConfigMigration:
 
         # v1.0.0配置
         v1_config = {
-            "app": {
-                "name": "TestApp",
-                "version": "1.0.0",
-                "environment": "development"
-            }
+            "app": {"name": "TestApp", "version": "1.0.0", "environment": "development"}
         }
 
         # 迁移到当前版本

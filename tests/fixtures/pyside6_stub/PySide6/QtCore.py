@@ -1,5 +1,6 @@
 """Lightweight QtCore stubs used in tests."""
 
+
 class _Signal:
     def __init__(self) -> None:
         self._slots: list = []

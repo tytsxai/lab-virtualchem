@@ -25,7 +25,9 @@ class ReportGenerator:
         """
         self.i18n = I18n(i18n_dir)
 
-    def generate_html_report(self, record: UserRecord, output_path: str | None = None) -> str:
+    def generate_html_report(
+        self, record: UserRecord, output_path: str | None = None
+    ) -> str:
         """
         生成HTML格式报告
 
@@ -65,8 +67,12 @@ class ReportGenerator:
         try:
             from weasyprint import HTML
         except ImportError as e:
-            logger.error("未安装weasyprint，无法生成PDF。请运行: pip install weasyprint")
-            raise ImportError("需要安装weasyprint才能生成PDF报告。请运行: pip install weasyprint") from e
+            logger.error(
+                "未安装weasyprint，无法生成PDF。请运行: pip install weasyprint"
+            )
+            raise ImportError(
+                "需要安装weasyprint才能生成PDF报告。请运行: pip install weasyprint"
+            ) from e
 
         html_content = self._build_html(record)
 
@@ -334,7 +340,9 @@ class ReportGenerator:
     def _build_summary(self, record: UserRecord) -> str:
         """构建摘要部分"""
         record.started_at.strftime("%Y-%m-%d %H:%M:%S") if record.started_at else "N/A"
-        record.finished_at.strftime("%Y-%m-%d %H:%M:%S") if record.finished_at else "N/A"
+        record.finished_at.strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ) if record.finished_at else "N/A"
 
         if record.started_at and record.finished_at:
             delta = record.finished_at - record.started_at
@@ -382,7 +390,9 @@ class ReportGenerator:
         """构建步骤详情"""
         steps_html = ""
         for step_record in record.step_records:
-            self.i18n.t("step.passed") if step_record.passed else self.i18n.t("step.failed")
+            self.i18n.t("step.passed") if step_record.passed else self.i18n.t(
+                "step.failed"
+            )
 
             str(step_record.user_input) if step_record.user_input else ""
 
@@ -413,7 +423,9 @@ class ReportGenerator:
     def _build_mistakes(self, record: UserRecord) -> str:
         """构建错误汇总"""
         if not record.mistakes:
-            mistakes_html = f"<div class='no-mistakes'>✅ {self.i18n.t('ui.no_errors')}</div>"
+            mistakes_html = (
+                f"<div class='no-mistakes'>✅ {self.i18n.t('ui.no_errors')}</div>"
+            )
         else:
             mistakes_html = ""
             for _mistake in record.mistakes:

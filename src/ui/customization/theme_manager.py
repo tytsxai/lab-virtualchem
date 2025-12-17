@@ -89,7 +89,7 @@ class ThemeManager:
         return cls._instance
 
     def __init__(self):
-        if not hasattr(self, '_initialized'):
+        if not hasattr(self, "_initialized"):
             self._initialized = True
             self.current_theme = ThemeType.DARK
             self.themes = {
@@ -134,21 +134,36 @@ class ThemeManager:
         except Exception as e:
             logger.error(f"应用主题失败: {e}")
 
-    def _apply_qt_theme(self, app: QApplication, theme_scheme: ThemeColorScheme) -> None:
+    def _apply_qt_theme(
+        self, app: QApplication, theme_scheme: ThemeColorScheme
+    ) -> None:
         """应用Qt主题"""
         palette = QPalette()
 
         # 设置基础颜色
         palette.setColor(QPalette.ColorRole.Window, theme_scheme.get_color("window"))
-        palette.setColor(QPalette.ColorRole.WindowText, theme_scheme.get_color("window_text"))
+        palette.setColor(
+            QPalette.ColorRole.WindowText, theme_scheme.get_color("window_text")
+        )
         palette.setColor(QPalette.ColorRole.Base, theme_scheme.get_color("base"))
-        palette.setColor(QPalette.ColorRole.AlternateBase, theme_scheme.get_color("alternate_base"))
+        palette.setColor(
+            QPalette.ColorRole.AlternateBase, theme_scheme.get_color("alternate_base")
+        )
         palette.setColor(QPalette.ColorRole.Text, theme_scheme.get_color("text"))
-        palette.setColor(QPalette.ColorRole.BrightText, theme_scheme.get_color("bright_text"))
+        palette.setColor(
+            QPalette.ColorRole.BrightText, theme_scheme.get_color("bright_text")
+        )
         palette.setColor(QPalette.ColorRole.Button, theme_scheme.get_color("button"))
-        palette.setColor(QPalette.ColorRole.ButtonText, theme_scheme.get_color("button_text"))
-        palette.setColor(QPalette.ColorRole.Highlight, theme_scheme.get_color("highlight"))
-        palette.setColor(QPalette.ColorRole.HighlightedText, theme_scheme.get_color("highlighted_text"))
+        palette.setColor(
+            QPalette.ColorRole.ButtonText, theme_scheme.get_color("button_text")
+        )
+        palette.setColor(
+            QPalette.ColorRole.Highlight, theme_scheme.get_color("highlight")
+        )
+        palette.setColor(
+            QPalette.ColorRole.HighlightedText,
+            theme_scheme.get_color("highlighted_text"),
+        )
 
         app.setPalette(palette)
 

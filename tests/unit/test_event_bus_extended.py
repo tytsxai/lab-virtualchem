@@ -134,7 +134,9 @@ class TestEventSubscriber:
         def filter_func(event):
             return event.data.get("amount", 0) > 100
 
-        subscriber = EventSubscriber(handler=handler, event_name="order.*", filter_func=filter_func)
+        subscriber = EventSubscriber(
+            handler=handler, event_name="order.*", filter_func=filter_func
+        )
 
         event1 = Event(name="order.created", data={"amount": 150})
         event2 = Event(name="order.created", data={"amount": 50})
@@ -236,7 +238,11 @@ class TestEventBus:
         def handler(event):
             high_value_orders.append(event.data["order_id"])
 
-        bus.subscribe("order.created", handler, filter_func=lambda e: e.data.get("amount", 0) > 100)
+        bus.subscribe(
+            "order.created",
+            handler,
+            filter_func=lambda e: e.data.get("amount", 0) > 100,
+        )
 
         bus.publish(Event(name="order.created", data={"order_id": 1, "amount": 150}))
         bus.publish(Event(name="order.created", data={"order_id": 2, "amount": 50}))
@@ -559,5 +565,3 @@ class TestEventBusIntegration:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-
-

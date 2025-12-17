@@ -19,7 +19,9 @@ class ChemRenderer:
         self.rdkit = registry.get_module("rdkit")
 
     @require_plugin("rdkit")
-    def smiles_to_image(self, smiles: str, width: int = 300, height: int = 300, format: str = "PNG") -> bytes | None:
+    def smiles_to_image(
+        self, smiles: str, width: int = 300, height: int = 300, format: str = "PNG"
+    ) -> bytes | None:
         """将SMILES转换为图片
 
         Args:
@@ -107,7 +109,9 @@ class ChemRenderer:
             if not smiles or not isinstance(smiles, str):
                 return False, "SMILES不能为空"
             # 基本格式检查
-            if any(c in smiles for c in ["C", "N", "O", "S", "P", "c", "n", "o", "s", "p"]):
+            if any(
+                c in smiles for c in ["C", "N", "O", "S", "P", "c", "n", "o", "s", "p"]
+            ):
                 return True, "警告: RDKit未安装，仅进行了基本格式检查"
             return False, "SMILES格式可能无效"
 
@@ -157,26 +161,13 @@ class ChemRenderer:
 # 回退实现：无RDKit时的简单渲染
 def _fallback_smiles_to_image(*_args, **kwargs) -> bytes:
     """回退：返回占位图片"""
-    # 创建简单的占位PNG
-    from PIL import Image, ImageDraw
-
-    width = kwargs.get("width", 300)
-    height = kwargs.get("height", 300)
-
-    img = Image.new("RGB", (width, height), color="white")
-    draw = ImageDraw.Draw(img)
-
-    text = "RDKit 未安装\n无法渲染分子结构"
-    bbox = draw.textbbox((0, 0), text)
-    text_width = bbox[2] - bbox[0]
-    text_height = bbox[3] - bbox[1]
-
-    position = ((width - text_width) // 2, (height - text_height) // 2)
-    draw.text(position, text, fill="gray")
-
-    buffer = BytesIO()
-    img.save(buffer, format="PNG")
-    return buffer.getvalue()
+    # Keep fallback dependency-free: return a minimal 1x1 PNG.
+    # (Base64-decoded bytes for a valid transparent PNG)
+    return (
+        b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
+        b"\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\rIDATx\x9cc`\x00"
+        b"\x00\x00\x02\x00\x01\xe2!\xbc3\x00\x00\x00\x00IEND\xaeB`\x82"
+    )
 
 
 # 注册插件和回退

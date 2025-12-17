@@ -338,7 +338,9 @@ class HealthChecker:
 
     async def check_all(self) -> SystemHealth:
         """执行所有健康检查"""
-        results = await asyncio.gather(*[check.check() for check in self._checks], return_exceptions=True)
+        results = await asyncio.gather(
+            *[check.check() for check in self._checks], return_exceptions=True
+        )
 
         check_results = []
         for result in results:
@@ -366,7 +368,9 @@ class HealthChecker:
         # 计算运行时间
         uptime = (datetime.now() - self._start_time).total_seconds()
 
-        return SystemHealth(status=overall_status, checks=check_results, uptime_seconds=uptime)
+        return SystemHealth(
+            status=overall_status, checks=check_results, uptime_seconds=uptime
+        )
 
 
 class MetricsCollector:
@@ -377,13 +381,17 @@ class MetricsCollector:
         self._metrics: dict[str, deque] = {}
         self._lock = threading.Lock()
 
-    def record(self, metric_name: str, value: float, tags: dict[str, str] | None = None) -> None:
+    def record(
+        self, metric_name: str, value: float, tags: dict[str, str] | None = None
+    ) -> None:
         """记录指标"""
         with self._lock:
             if metric_name not in self._metrics:
                 self._metrics[metric_name] = deque(maxlen=self.max_history)
 
-            self._metrics[metric_name].append({"value": value, "timestamp": datetime.now(), "tags": tags or {}})
+            self._metrics[metric_name].append(
+                {"value": value, "timestamp": datetime.now(), "tags": tags or {}}
+            )
 
     def get_metric(self, metric_name: str) -> list[dict[str, Any]]:
         """获取指标历史"""
@@ -406,7 +414,11 @@ class MetricsCollector:
                 return None
 
             cutoff = datetime.now() - duration
-            values = [m["value"] for m in self._metrics[metric_name] if m["timestamp"] >= cutoff]
+            values = [
+                m["value"]
+                for m in self._metrics[metric_name]
+                if m["timestamp"] >= cutoff
+            ]
 
             return sum(values) / len(values) if values else None
 
@@ -509,7 +521,9 @@ async def demo():
 
     for check in health.checks:
         status_icon = "✅" if check.status == HealthStatus.HEALTHY else "⚠️"
-        logger.info(f"{status_icon} {check.name}: {check.message} ({check.duration_ms:.2f}ms)")
+        logger.info(
+            f"{status_icon} {check.name}: {check.message} ({check.duration_ms:.2f}ms)"
+        )
         if check.metadata:
             for key, value in check.metadata.items():
                 if isinstance(value, float):

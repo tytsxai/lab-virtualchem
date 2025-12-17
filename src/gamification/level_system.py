@@ -38,6 +38,7 @@ class UserLevel(BaseModel):
     def serialize_updated_at(self, value: datetime) -> str:
         return value.isoformat()
 
+
 class LevelSystem:
     """等级系统"""
 
@@ -74,7 +75,9 @@ class LevelSystem:
         """
         if level <= 1:
             return 0
-        return int(self.config.base_exp * math.pow(self.config.exp_multiplier, level - 1))
+        return int(
+            self.config.base_exp * math.pow(self.config.exp_multiplier, level - 1)
+        )
 
     def calculate_total_exp_for_level(self, level: int) -> int:
         """计算达到某等级需要的总经验值
@@ -175,7 +178,9 @@ class LevelSystem:
             }
 
         required_exp = self.calculate_level_exp(user_level.level + 1)
-        progress_percent = (user_level.exp / required_exp * 100) if required_exp > 0 else 0
+        progress_percent = (
+            (user_level.exp / required_exp * 100) if required_exp > 0 else 0
+        )
 
         return {
             "current_exp": user_level.exp,

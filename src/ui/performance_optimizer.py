@@ -192,7 +192,9 @@ class PerformanceOptimizer(QObject):
             self.cleanup_temporary_objects()
 
             self.optimizations_applied.add("memory_optimization")
-            self.optimization_applied.emit("memory_optimization", {"level": self.optimization_level.value})
+            self.optimization_applied.emit(
+                "memory_optimization", {"level": self.optimization_level.value}
+            )
 
             logger.debug("内存优化完成")
 
@@ -397,7 +399,9 @@ class LazyLoader:
 
         logger.info("懒加载器初始化完成")
 
-    def load_component(self, component_id: str, loader_func: Callable, _priority: int = 0):
+    def load_component(
+        self, component_id: str, loader_func: Callable, _priority: int = 0
+    ):
         """加载组件"""
         if component_id in self.loaded_components:
             return True
@@ -469,7 +473,9 @@ class ResourceManager:
         """清理缓存"""
         try:
             # 清理一半的缓存
-            keys_to_remove = list(self.resource_cache.keys())[: len(self.resource_cache) // 2]
+            keys_to_remove = list(self.resource_cache.keys())[
+                : len(self.resource_cache) // 2
+            ]
 
             for key in keys_to_remove:
                 if key in self.resource_cache:
@@ -526,7 +532,9 @@ def optimize_performance(level: OptimizationLevel = OptimizationLevel.MEDIUM):
     optimizer.set_optimization_level(level)
 
 
-def lazy_load_component(component_id: str, loader_func: Callable, _priority: int = 0) -> bool:
+def lazy_load_component(
+    component_id: str, loader_func: Callable, _priority: int = 0
+) -> bool:
     """懒加载组件"""
     loader = get_lazy_loader()
     return loader.load_component(component_id, loader_func, _priority)

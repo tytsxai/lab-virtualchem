@@ -24,7 +24,9 @@ def _base_config(environment: str = "development") -> dict[str, dict]:
     }
 
 
-def test_merge_env_requires_jwt_secret_in_production_with_admin_set(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_merge_env_requires_jwt_secret_in_production_with_admin_set(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Production environment must error without JWT secret even when admin secret is set."""
     config_data = _base_config(environment="production")
 
@@ -36,7 +38,9 @@ def test_merge_env_requires_jwt_secret_in_production_with_admin_set(monkeypatch:
         Config._merge_env_vars(config_data)
 
 
-def test_merge_env_respects_custom_jwt_secret_env(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_merge_env_respects_custom_jwt_secret_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """When security.jwt_secret_env is provided, loader should honor it."""
     config_data = _base_config()
     config_data["security"]["jwt_secret_env"] = "CUSTOM_JWT_SECRET"
@@ -52,7 +56,9 @@ def test_merge_env_respects_custom_jwt_secret_env(monkeypatch: pytest.MonkeyPatc
     assert merged["security"]["jwt_secret_key"] == "A" * 40
 
 
-def test_merge_env_requires_jwt_secret_in_production(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_merge_env_requires_jwt_secret_in_production(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Production must fail fast when JWT secret env is missing."""
     config_data = _base_config(environment="production")
 
@@ -63,7 +69,9 @@ def test_merge_env_requires_jwt_secret_in_production(monkeypatch: pytest.MonkeyP
         Config._merge_env_vars(config_data)
 
 
-def test_merge_env_requires_session_secret_in_production(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_merge_env_requires_session_secret_in_production(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Production must fail fast when session secret env is missing."""
     config_data = _base_config(environment="production")
 
@@ -76,7 +84,9 @@ def test_merge_env_requires_session_secret_in_production(monkeypatch: pytest.Mon
         Config._merge_env_vars(config_data)
 
 
-def test_merge_env_requires_developer_secret_when_enabled(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_merge_env_requires_developer_secret_when_enabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Enabling developer mode in production requires a secret."""
     config_data = _base_config(environment="production")
     config_data["developer"]["enabled"] = True
@@ -91,7 +101,9 @@ def test_merge_env_requires_developer_secret_when_enabled(monkeypatch: pytest.Mo
         Config._merge_env_vars(config_data)
 
 
-def test_developer_mode_defaults_off_without_env_toggle(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_developer_mode_defaults_off_without_env_toggle(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Production should keep developer mode disabled unless env explicitly enables it."""
     config_data = _base_config(environment="production")
     config_data["developer"]["enabled"] = True
@@ -107,7 +119,9 @@ def test_developer_mode_defaults_off_without_env_toggle(monkeypatch: pytest.Monk
     assert merged["developer"]["enabled"] is False
 
 
-def test_merge_env_requires_admin_secret_in_production(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_merge_env_requires_admin_secret_in_production(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Production environment should fail fast without admin secret."""
     config_data = _base_config(environment="production")
 
@@ -121,7 +135,9 @@ def test_merge_env_requires_admin_secret_in_production(monkeypatch: pytest.Monke
         Config._merge_env_vars(config_data)
 
 
-def test_merge_env_rejects_short_admin_secret_in_production(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_merge_env_rejects_short_admin_secret_in_production(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Admin secret must meet length requirements in production."""
     config_data = _base_config(environment="production")
 
@@ -133,7 +149,9 @@ def test_merge_env_rejects_short_admin_secret_in_production(monkeypatch: pytest.
         Config._merge_env_vars(config_data)
 
 
-def test_load_enforces_version_alignment(monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
+def test_load_enforces_version_alignment(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
     """Config.load should align app.version with the runtime version."""
 
     def _fake_load_config_file(cls, environment: str) -> dict[str, Any]:  # type: ignore[override]
@@ -146,10 +164,14 @@ def test_load_enforces_version_alignment(monkeypatch: pytest.MonkeyPatch, caplog
             "security": {"jwt_secret_key": "Z" * 40},
         }
 
-    def _identity_merge(cls, config: dict[str, Any], environment_override: str | None = None) -> dict[str, Any]:  # type: ignore[override]
+    def _identity_merge(
+        cls, config: dict[str, Any], environment_override: str | None = None
+    ) -> dict[str, Any]:  # type: ignore[override]
         return config
 
-    monkeypatch.setattr(Config, "_load_config_file", classmethod(_fake_load_config_file))
+    monkeypatch.setattr(
+        Config, "_load_config_file", classmethod(_fake_load_config_file)
+    )
     monkeypatch.setattr(Config, "_merge_env_vars", classmethod(_identity_merge))
 
     with caplog.at_level("WARNING"):
@@ -159,7 +181,9 @@ def test_load_enforces_version_alignment(monkeypatch: pytest.MonkeyPatch, caplog
     assert "配置文件版本" in caplog.text
 
 
-def test_load_keeps_version_when_already_aligned(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_load_keeps_version_when_already_aligned(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """No warning and version preserved when config already matches runtime."""
 
     def _fake_load_config_file(cls, environment: str) -> dict[str, Any]:  # type: ignore[override]
@@ -172,10 +196,14 @@ def test_load_keeps_version_when_already_aligned(monkeypatch: pytest.MonkeyPatch
             "security": {"jwt_secret_key": "Y" * 40},
         }
 
-    def _identity_merge(cls, config: dict[str, Any], environment_override: str | None = None) -> dict[str, Any]:  # type: ignore[override]
+    def _identity_merge(
+        cls, config: dict[str, Any], environment_override: str | None = None
+    ) -> dict[str, Any]:  # type: ignore[override]
         return config
 
-    monkeypatch.setattr(Config, "_load_config_file", classmethod(_fake_load_config_file))
+    monkeypatch.setattr(
+        Config, "_load_config_file", classmethod(_fake_load_config_file)
+    )
     monkeypatch.setattr(Config, "_merge_env_vars", classmethod(_identity_merge))
 
     config = Config.load(env="development")
@@ -183,12 +211,18 @@ def test_load_keeps_version_when_already_aligned(monkeypatch: pytest.MonkeyPatch
     assert config.app.version == APP_VERSION
 
 
-def test_load_prepares_runtime_directories(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+def test_load_prepares_runtime_directories(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
     """Writable directories should be created relative to the project root."""
 
     def _fake_load_config_file(cls, environment: str) -> dict[str, Any]:  # type: ignore[override]
         return {
-            "app": {"name": "VirtualChemLab", "version": APP_VERSION, "environment": environment},
+            "app": {
+                "name": "VirtualChemLab",
+                "version": APP_VERSION,
+                "environment": environment,
+            },
             "paths": {
                 "user_data": "user_data",
                 "reports": "reports",
@@ -200,11 +234,15 @@ def test_load_prepares_runtime_directories(monkeypatch: pytest.MonkeyPatch, tmp_
             "security": {"jwt_secret_key": "X" * 40},
         }
 
-    def _identity_merge(cls, config: dict[str, Any], environment_override: str | None = None) -> dict[str, Any]:  # type: ignore[override]
+    def _identity_merge(
+        cls, config: dict[str, Any], environment_override: str | None = None
+    ) -> dict[str, Any]:  # type: ignore[override]
         return config
 
     monkeypatch.setattr(config_loader, "PROJECT_ROOT", tmp_path)
-    monkeypatch.setattr(Config, "_load_config_file", classmethod(_fake_load_config_file))
+    monkeypatch.setattr(
+        Config, "_load_config_file", classmethod(_fake_load_config_file)
+    )
     monkeypatch.setattr(Config, "_merge_env_vars", classmethod(_identity_merge))
 
     Config.load(env="development")
@@ -217,19 +255,27 @@ def test_load_prepares_runtime_directories(monkeypatch: pytest.MonkeyPatch, tmp_
     assert (tmp_path / "data" / "storage").is_dir()
 
 
-def test_load_directory_creation_failure_raises(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+def test_load_directory_creation_failure_raises(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
     """Directory creation errors should propagate so deployment can fail fast."""
 
     def _fake_load_config_file(cls, environment: str) -> dict[str, Any]:  # type: ignore[override]
         return {
-            "app": {"name": "VirtualChemLab", "version": APP_VERSION, "environment": environment},
+            "app": {
+                "name": "VirtualChemLab",
+                "version": APP_VERSION,
+                "environment": environment,
+            },
             "paths": {"user_data": "user_data"},
             "log": {"file": "logs/app.log"},
             "database": {"path": "data/virtualchemlab.db"},
             "security": {"jwt_secret_key": "X" * 40},
         }
 
-    def _identity_merge(cls, config: dict[str, Any], environment_override: str | None = None) -> dict[str, Any]:  # type: ignore[override]
+    def _identity_merge(
+        cls, config: dict[str, Any], environment_override: str | None = None
+    ) -> dict[str, Any]:  # type: ignore[override]
         return config
 
     # Use a path inside tmp but remove permissions by pointing to file
@@ -237,7 +283,9 @@ def test_load_directory_creation_failure_raises(monkeypatch: pytest.MonkeyPatch,
     locked_path.write_text("not a dir", encoding="utf-8")
 
     monkeypatch.setattr(config_loader, "PROJECT_ROOT", tmp_path)
-    monkeypatch.setattr(Config, "_load_config_file", classmethod(_fake_load_config_file))
+    monkeypatch.setattr(
+        Config, "_load_config_file", classmethod(_fake_load_config_file)
+    )
     monkeypatch.setattr(Config, "_merge_env_vars", classmethod(_identity_merge))
 
     with pytest.raises(OSError):

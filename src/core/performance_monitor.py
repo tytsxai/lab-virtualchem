@@ -97,7 +97,9 @@ class PerformanceMonitor(QObject):
     metrics_updated = Signal(PerformanceMetrics)
     performance_warning = Signal(str, str)  # category, message
     optimization_suggested = Signal(OptimizationSuggestion)
-    threshold_exceeded = Signal(str, float, float)  # metric_name, current_value, threshold
+    threshold_exceeded = Signal(
+        str, float, float
+    )  # metric_name, current_value, threshold
 
     def __init__(self, parent: QObject | None = None):
         super().__init__(parent)
@@ -295,11 +297,15 @@ class PerformanceMonitor(QObject):
         """检查性能警告"""
         # CPU使用率警告
         if metrics.cpu_percent > self.thresholds["cpu_percent"]:
-            self.performance_warning.emit("cpu", f"CPU使用率过高: {metrics.cpu_percent:.1f}%")
+            self.performance_warning.emit(
+                "cpu", f"CPU使用率过高: {metrics.cpu_percent:.1f}%"
+            )
 
         # 内存使用率警告
         if metrics.memory_percent > self.thresholds["memory_percent"]:
-            self.performance_warning.emit("memory", f"内存使用率过高: {metrics.memory_percent:.1f}%")
+            self.performance_warning.emit(
+                "memory", f"内存使用率过高: {metrics.memory_percent:.1f}%"
+            )
 
         # FPS警告
         if metrics.fps < self.thresholds["fps"] and metrics.fps > 0:
@@ -307,7 +313,9 @@ class PerformanceMonitor(QObject):
 
         # 帧时间警告
         if metrics.frame_time_ms > self.thresholds["frame_time_ms"]:
-            self.performance_warning.emit("frame_time", f"帧时间过长: {metrics.frame_time_ms:.1f}ms")
+            self.performance_warning.emit(
+                "frame_time", f"帧时间过长: {metrics.frame_time_ms:.1f}ms"
+            )
 
     def _generate_optimization_suggestions(self, metrics: PerformanceMetrics) -> None:
         """生成优化建议"""
@@ -389,8 +397,12 @@ class PerformanceMonitor(QObject):
 
         # 计算平均值
         if self.metrics_history:
-            avg_cpu = sum(m.cpu_percent for m in self.metrics_history) / len(self.metrics_history)
-            avg_memory = sum(m.memory_percent for m in self.metrics_history) / len(self.metrics_history)
+            avg_cpu = sum(m.cpu_percent for m in self.metrics_history) / len(
+                self.metrics_history
+            )
+            avg_memory = sum(m.memory_percent for m in self.metrics_history) / len(
+                self.metrics_history
+            )
             avg_fps = sum(m.fps for m in self.metrics_history if m.fps > 0) / max(
                 1, sum(1 for m in self.metrics_history if m.fps > 0)
             )
@@ -564,7 +576,11 @@ class PerformanceMonitor(QObject):
 
             app = QCoreApplication.instance()
             if app:
-                return app.eventDispatcher().remainingTime(0) if hasattr(app.eventDispatcher(), "remainingTime") else 0
+                return (
+                    app.eventDispatcher().remainingTime(0)
+                    if hasattr(app.eventDispatcher(), "remainingTime")
+                    else 0
+                )
         except Exception as e:
             logger.debug(f"获取事件队列大小失败: {e}")
         return 0
@@ -598,11 +614,15 @@ class PerformanceMonitor(QObject):
         except Exception as e:
             logger.error(f"调整采样率失败: {e}")
 
-    def add_performance_callback(self, callback: Callable[[PerformanceMetrics], None]) -> None:
+    def add_performance_callback(
+        self, callback: Callable[[PerformanceMetrics], None]
+    ) -> None:
         """添加性能回调"""
         self.performance_callbacks.append(callback)
 
-    def remove_performance_callback(self, callback: Callable[[PerformanceMetrics], None]) -> None:
+    def remove_performance_callback(
+        self, callback: Callable[[PerformanceMetrics], None]
+    ) -> None:
         """移除性能回调"""
         if callback in self.performance_callbacks:
             self.performance_callbacks.remove(callback)
@@ -617,7 +637,9 @@ class PerformanceMonitor(QObject):
         """获取性能阈值"""
         return self.thresholds.get(metric_name)
 
-    def get_performance_trends(self, duration_minutes: int = 5) -> dict[str, list[float]]:
+    def get_performance_trends(
+        self, duration_minutes: int = 5
+    ) -> dict[str, list[float]]:
         """获取性能趋势数据"""
         cutoff_time = datetime.now() - timedelta(minutes=duration_minutes)
         recent_metrics = [m for m in self.metrics_history if m.timestamp >= cutoff_time]

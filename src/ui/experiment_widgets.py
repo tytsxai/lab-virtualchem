@@ -95,7 +95,9 @@ class ValueSlider(QWidget):
         slider_range = int((self.max_value - self.min_value) * (10**self.decimals))
         self.slider.setMinimum(0)
         self.slider.setMaximum(slider_range)
-        self.slider.setValue(int((default_value - self.min_value) * (10**self.decimals)))
+        self.slider.setValue(
+            int((default_value - self.min_value) * (10**self.decimals))
+        )
         self.slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         self.slider.setTickInterval(slider_range // 10)
         self.slider.setStyleSheet(
@@ -185,7 +187,13 @@ class NumericInput(QWidget):
         self.init_ui(label, min_value, max_value, default_value, decimals, step)
 
     def init_ui(
-        self, label: str, min_value: float, max_value: float, default_value: float, decimals: int, step: float
+        self,
+        label: str,
+        min_value: float,
+        max_value: float,
+        default_value: float,
+        decimals: int,
+        step: float,
     ) -> None:
         """初始化UI"""
         layout = QHBoxLayout(self)
@@ -299,7 +307,12 @@ class ColorPicker(QWidget):
 
     color_changed = Signal(QColor)
 
-    def __init__(self, label: str = "颜色", default_color: QColor | None = None, parent: QWidget | None = None):
+    def __init__(
+        self,
+        label: str = "颜色",
+        default_color: QColor | None = None,
+        parent: QWidget | None = None,
+    ):
         super().__init__(parent)
         self.current_color = default_color or QColor(255, 255, 255)
 
@@ -399,7 +412,12 @@ class ColorPicker(QWidget):
 class TemperatureGauge(QWidget):
     """温度计组件"""
 
-    def __init__(self, min_temp: float = 0.0, max_temp: float = 100.0, parent: QWidget | None = None):
+    def __init__(
+        self,
+        min_temp: float = 0.0,
+        max_temp: float = 100.0,
+        parent: QWidget | None = None,
+    ):
         super().__init__(parent)
         self._current_temp = min_temp
         self._min_temp = min_temp
@@ -450,16 +468,23 @@ class TemperatureGauge(QWidget):
         painter.setBrush(QBrush(QColor(240, 240, 240)))
 
         # 绘制管子
-        painter.drawRoundedRect(int(tube_x), tube_y, tube_width, int(tube_height), 10, 10)
+        painter.drawRoundedRect(
+            int(tube_x), tube_y, tube_width, int(tube_height), 10, 10
+        )
 
         # 绘制球部
         bulb_center_y = tube_y + tube_height + bulb_radius
         painter.drawEllipse(
-            int(width / 2 - bulb_radius), int(bulb_center_y - bulb_radius), bulb_radius * 2, bulb_radius * 2
+            int(width / 2 - bulb_radius),
+            int(bulb_center_y - bulb_radius),
+            bulb_radius * 2,
+            bulb_radius * 2,
         )
 
         # 绘制水银柱
-        temp_ratio = (self._current_temp - self._min_temp) / (self._max_temp - self._min_temp)
+        temp_ratio = (self._current_temp - self._min_temp) / (
+            self._max_temp - self._min_temp
+        )
         mercury_height = tube_height * temp_ratio
 
         # 渐变色（从蓝到红）
@@ -479,7 +504,9 @@ class TemperatureGauge(QWidget):
 
         # 绘制水银柱
         mercury_y = tube_y + tube_height - mercury_height
-        painter.drawRoundedRect(int(tube_x + 2), int(mercury_y), tube_width - 4, int(mercury_height), 8, 8)
+        painter.drawRoundedRect(
+            int(tube_x + 2), int(mercury_y), tube_width - 4, int(mercury_height), 8, 8
+        )
 
         # 绘制球部的水银
         if temp_ratio < 0.3:
@@ -506,10 +533,17 @@ class TemperatureGauge(QWidget):
         num_ticks = 10
         for i in range(num_ticks + 1):
             tick_y = tube_y + (tube_height / num_ticks) * i
-            tick_temp = self._max_temp - (self._max_temp - self._min_temp) * i / num_ticks
+            tick_temp = (
+                self._max_temp - (self._max_temp - self._min_temp) * i / num_ticks
+            )
 
             # 刻度线
-            painter.drawLine(int(tube_x + tube_width + 2), int(tick_y), int(tube_x + tube_width + 8), int(tick_y))
+            painter.drawLine(
+                int(tube_x + tube_width + 2),
+                int(tick_y),
+                int(tube_x + tube_width + 8),
+                int(tick_y),
+            )
 
             # 温度标签
             if i % 2 == 0:
@@ -576,7 +610,9 @@ class PHIndicator(QWidget):
 
             painter.setBrush(QBrush(color))
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.drawRect(int(i * segment_width), int(bar_y), int(segment_width), bar_height)
+            painter.drawRect(
+                int(i * segment_width), int(bar_y), int(segment_width), bar_height
+            )
 
         # 绘制刻度
         painter.setPen(QPen(QColor(0, 0, 0), 2))
@@ -586,7 +622,14 @@ class PHIndicator(QWidget):
 
             # 标签
             if i % 2 == 0:
-                painter.drawText(int(x - 10), int(bar_y + bar_height + 5), 20, 20, Qt.AlignmentFlag.AlignCenter, str(i))
+                painter.drawText(
+                    int(x - 10),
+                    int(bar_y + bar_height + 5),
+                    20,
+                    20,
+                    Qt.AlignmentFlag.AlignCenter,
+                    str(i),
+                )
 
         # 绘制当前pH指示器
         indicator_x = self._ph_value * segment_width
@@ -611,9 +654,18 @@ class PHIndicator(QWidget):
         font.setBold(True)
         painter.setFont(font)
         ph_text = f"pH: {self._ph_value:.1f}"
-        painter.drawText(int(indicator_x - 30), int(bar_y - 25), 60, 20, Qt.AlignmentFlag.AlignCenter, ph_text)
+        painter.drawText(
+            int(indicator_x - 30),
+            int(bar_y - 25),
+            60,
+            20,
+            Qt.AlignmentFlag.AlignCenter,
+            ph_text,
+        )
 
-    def _interpolate_color(self, ph: float, color_map: list[tuple[float, QColor]]) -> QColor:
+    def _interpolate_color(
+        self, ph: float, color_map: list[tuple[float, QColor]]
+    ) -> QColor:
         """插值颜色"""
         for i in range(len(color_map) - 1):
             ph1, color1 = color_map[i]
@@ -684,14 +736,23 @@ class ReactionProgressBar(QWidget):
 
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(QBrush(gradient))
-            painter.drawRoundedRect(2, bar_y + 2, progress_width - 4, bar_height - 4, 13, 13)
+            painter.drawRoundedRect(
+                2, bar_y + 2, progress_width - 4, bar_height - 4, 13, 13
+            )
 
         # 进度文本
         painter.setPen(QPen(QColor(0, 0, 0)))
         font.setPointSize(10)
         painter.setFont(font)
         progress_text = f"{self._progress:.1f}%"
-        painter.drawText(0, bar_y + bar_height + 5, width, 20, Qt.AlignmentFlag.AlignCenter, progress_text)
+        painter.drawText(
+            0,
+            bar_y + bar_height + 5,
+            width,
+            20,
+            Qt.AlignmentFlag.AlignCenter,
+            progress_text,
+        )
 
 
 class Timer(QWidget):

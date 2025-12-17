@@ -310,7 +310,7 @@ class TestGlobalFunctions:
         )
         buffer.add_entry(entry)
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
             temp_file = f.name
 
         try:
@@ -318,7 +318,7 @@ class TestGlobalFunctions:
             assert success is True
 
             # 验证导出的文件
-            with open(temp_file, encoding='utf-8') as f:
+            with open(temp_file, encoding="utf-8") as f:
                 lines = f.readlines()
                 # 应该包含初始条目 + 新添加的条目
                 assert len(lines) == initial_count + 1

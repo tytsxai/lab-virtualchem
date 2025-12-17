@@ -64,13 +64,25 @@ class ValidationResult:
 
     def add_error(self, field: str, message: str, code: str | None = None) -> None:
         """添加错误"""
-        self.errors.append(ValidationError(field=field, message=message, severity=ValidationSeverity.ERROR, code=code))
+        self.errors.append(
+            ValidationError(
+                field=field,
+                message=message,
+                severity=ValidationSeverity.ERROR,
+                code=code,
+            )
+        )
         self.is_valid = False
 
     def add_warning(self, field: str, message: str, code: str | None = None) -> None:
         """添加警告"""
         self.warnings.append(
-            ValidationError(field=field, message=message, severity=ValidationSeverity.WARNING, code=code)
+            ValidationError(
+                field=field,
+                message=message,
+                severity=ValidationSeverity.WARNING,
+                code=code,
+            )
         )
 
     def merge(self, other: "ValidationResult") -> None:
@@ -125,7 +137,10 @@ class TypeValidator(BaseValidator[Any]):
 
     def _do_validate(self, value: Any, result: ValidationResult) -> None:
         if not isinstance(value, self.expected_type):
-            result.add_error(self.field_name, f"{self.field_name} 必须是 {self.expected_type.__name__} 类型")
+            result.add_error(
+                self.field_name,
+                f"{self.field_name} 必须是 {self.expected_type.__name__} 类型",
+            )
 
 
 class RangeValidator(BaseValidator[float]):
@@ -143,10 +158,14 @@ class RangeValidator(BaseValidator[float]):
 
     def _do_validate(self, value: float, result: ValidationResult) -> None:
         if self.min_value is not None and value < self.min_value:
-            result.add_error(self.field_name, f"{self.field_name} 不能小于 {self.min_value}")
+            result.add_error(
+                self.field_name, f"{self.field_name} 不能小于 {self.min_value}"
+            )
 
         if self.max_value is not None and value > self.max_value:
-            result.add_error(self.field_name, f"{self.field_name} 不能大于 {self.max_value}")
+            result.add_error(
+                self.field_name, f"{self.field_name} 不能大于 {self.max_value}"
+            )
 
 
 class LengthValidator(BaseValidator[str]):
@@ -166,16 +185,22 @@ class LengthValidator(BaseValidator[str]):
         length = len(value)
 
         if self.min_length is not None and length < self.min_length:
-            result.add_error(self.field_name, f"{self.field_name} 长度不能小于 {self.min_length}")
+            result.add_error(
+                self.field_name, f"{self.field_name} 长度不能小于 {self.min_length}"
+            )
 
         if self.max_length is not None and length > self.max_length:
-            result.add_error(self.field_name, f"{self.field_name} 长度不能大于 {self.max_length}")
+            result.add_error(
+                self.field_name, f"{self.field_name} 长度不能大于 {self.max_length}"
+            )
 
 
 class PatternValidator(BaseValidator[str]):
     """正则模式验证器"""
 
-    def __init__(self, pattern: str, field_name: str = "value", message: str | None = None):
+    def __init__(
+        self, pattern: str, field_name: str = "value", message: str | None = None
+    ):
         super().__init__(field_name)
         self.pattern = re.compile(pattern)
         self.message = message or f"{field_name} 格式不正确"
@@ -200,13 +225,22 @@ class URLValidator(PatternValidator):
     """URL验证器"""
 
     def __init__(self, field_name: str = "url"):
-        super().__init__(pattern=r"^https?://[^\s]+$", field_name=field_name, message=f"{field_name} 格式不正确")
+        super().__init__(
+            pattern=r"^https?://[^\s]+$",
+            field_name=field_name,
+            message=f"{field_name} 格式不正确",
+        )
 
 
 class CustomValidator(BaseValidator[Any]):
     """自定义验证器"""
 
-    def __init__(self, validate_func: Callable[[Any], bool], error_message: str, field_name: str = "value"):
+    def __init__(
+        self,
+        validate_func: Callable[[Any], bool],
+        error_message: str,
+        field_name: str = "value",
+    ):
         super().__init__(field_name)
         self.validate_func = validate_func
         self.error_message = error_message
@@ -300,14 +334,18 @@ class ValidationRule:
 
     @staticmethod
     def range(
-        min_value: float | None = None, max_value: float | None = None, field_name: str = "value"
+        min_value: float | None = None,
+        max_value: float | None = None,
+        field_name: str = "value",
     ) -> RangeValidator:
         """范围规则"""
         return RangeValidator(min_value, max_value, field_name)
 
     @staticmethod
     def length(
-        min_length: int | None = None, max_length: int | None = None, field_name: str = "value"
+        min_length: int | None = None,
+        max_length: int | None = None,
+        field_name: str = "value",
     ) -> LengthValidator:
         """长度规则"""
         return LengthValidator(min_length, max_length, field_name)
@@ -328,7 +366,11 @@ class ValidationRule:
         return URLValidator(field_name)
 
     @staticmethod
-    def custom(validate_func: Callable[[Any], bool], error_message: str, field_name: str = "value") -> CustomValidator:
+    def custom(
+        validate_func: Callable[[Any], bool],
+        error_message: str,
+        field_name: str = "value",
+    ) -> CustomValidator:
         """自定义规则"""
         return CustomValidator(validate_func, error_message, field_name)
 
@@ -352,7 +394,9 @@ class ExperimentValidator(SchemaValidator):
 
         # 温度验证
         self.field("temperature").add(ValidationRule.type_of(float, "temperature")).add(
-            ValidationRule.range(min_value=-273.15, max_value=1000, field_name="temperature")
+            ValidationRule.range(
+                min_value=-273.15, max_value=1000, field_name="temperature"
+            )
         )
 
 
@@ -368,12 +412,16 @@ class ChemicalValidator(SchemaValidator):
         )
 
         # 浓度验证
-        self.field("concentration").add(ValidationRule.type_of(float, "concentration")).add(
+        self.field("concentration").add(
+            ValidationRule.type_of(float, "concentration")
+        ).add(
             ValidationRule.range(min_value=0, max_value=100, field_name="concentration")
         )
 
         # pH值验证
-        self.field("ph").add(ValidationRule.range(min_value=0, max_value=14, field_name="ph"))
+        self.field("ph").add(
+            ValidationRule.range(min_value=0, max_value=14, field_name="ph")
+        )
 
 
 if __name__ == "__main__":
@@ -407,7 +455,11 @@ if __name__ == "__main__":
     logger.info("3. 实验数据验证:")
     experiment_validator = ExperimentValidator()
 
-    experiment_data = {"experiment_id": "exp_001", "title": "酸碱滴定实验", "temperature": 25.5}
+    experiment_data = {
+        "experiment_id": "exp_001",
+        "title": "酸碱滴定实验",
+        "temperature": 25.5,
+    }
 
     result = experiment_validator.validate(experiment_data)
     logger.info(f"实验数据: {'✅ 有效' if result.is_valid else '❌ 无效'}\n")

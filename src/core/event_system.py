@@ -103,7 +103,9 @@ class IEventBus(ABC):
         pass
 
     @abstractmethod
-    def emit_async(self, event: Event | EventType, data: EventData | None = None) -> Awaitable[None]:
+    def emit_async(
+        self, event: Event | EventType, data: EventData | None = None
+    ) -> Awaitable[None]:
         """异步发送事件"""
         pass
 
@@ -139,16 +141,22 @@ class EventBus(IEventBus):
         """注册事件监听器"""
         with self._lock:
             if len(self._listeners[event_type]) >= self.max_listeners:
-                logger.warning(f"事件 {event_type} 的监听器数量已达到上限 {self.max_listeners}")
+                logger.warning(
+                    f"事件 {event_type} 的监听器数量已达到上限 {self.max_listeners}"
+                )
                 return ""
 
-            listener = EventListener(handler=handler, priority=priority, async_handler=async_handler)
+            listener = EventListener(
+                handler=handler, priority=priority, async_handler=async_handler
+            )
 
             self._listeners[event_type].append(listener)
             self._listener_ids[listener.id] = listener
 
             # 按优先级排序
-            self._listeners[event_type].sort(key=lambda x: x.priority.value, reverse=True)
+            self._listeners[event_type].sort(
+                key=lambda x: x.priority.value, reverse=True
+            )
 
             logger.debug(f"注册事件监听器: {event_type} -> {listener.id}")
             return listener.id
@@ -201,7 +209,9 @@ class EventBus(IEventBus):
             except Exception as e:
                 logger.error(f"事件监听器执行错误: {event.type} -> {listener.id}: {e}")
 
-    async def emit_async(self, event: Event | EventType, data: EventData | None = None) -> None:
+    async def emit_async(
+        self, event: Event | EventType, data: EventData | None = None
+    ) -> None:
         """异步发送事件"""
         if isinstance(event, str):
             event = Event(type=event, data=data or {})
@@ -217,7 +227,9 @@ class EventBus(IEventBus):
 
             try:
                 if listener.async_handler:
-                    task = asyncio.create_task(self._handle_async_listener(listener, event))
+                    task = asyncio.create_task(
+                        self._handle_async_listener(listener, event)
+                    )
                     tasks.append(task)
                 else:
                     # 同步处理
@@ -234,7 +246,9 @@ class EventBus(IEventBus):
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
 
-    async def _handle_async_listener(self, listener: EventListener, event: Event) -> None:
+    async def _handle_async_listener(
+        self, listener: EventListener, event: Event
+    ) -> None:
         """处理异步监听器"""
         try:
             if asyncio.iscoroutinefunction(listener.handler):
@@ -277,7 +291,9 @@ class EventBus(IEventBus):
     def has_listeners(self, event_type: EventType) -> bool:
         """检查是否有监听器"""
         with self._lock:
-            return event_type in self._listeners and len(self._listeners[event_type]) > 0
+            return (
+                event_type in self._listeners and len(self._listeners[event_type]) > 0
+            )
 
 
 class EventEmitter:
@@ -299,7 +315,9 @@ class EventEmitter:
         """发送事件"""
         self.event_bus.emit(event_type, data)
 
-    async def emit_async(self, event_type: EventType, data: EventData | None = None) -> None:
+    async def emit_async(
+        self, event_type: EventType, data: EventData | None = None
+    ) -> None:
         """异步发送事件"""
         await self.event_bus.emit_async(event_type, data)
 
@@ -341,7 +359,10 @@ class EventStore:
             self.events.append(event)
 
     def get_events(
-        self, event_type: EventType | None = None, since: float | None = None, limit: int | None = None
+        self,
+        event_type: EventType | None = None,
+        since: float | None = None,
+        limit: int | None = None,
     ) -> list[Event]:
         """获取事件"""
         with self._lock:
@@ -373,7 +394,12 @@ class EventReplay:
         self.event_bus = event_bus
         self.event_store = event_store
 
-    def replay(self, event_type: EventType | None = None, since: float | None = None, speed: float = 1.0) -> None:
+    def replay(
+        self,
+        event_type: EventType | None = None,
+        since: float | None = None,
+        speed: float = 1.0,
+    ) -> None:
         """重放事件"""
         events = self.event_store.get_events(event_type, since)
 
@@ -464,7 +490,9 @@ def once(event_type: EventType, handler: EventHandler, **kwargs) -> str:
 
 
 # 事件装饰器
-def event_handler(event_type: EventType, priority: EventPriority = EventPriority.NORMAL):
+def event_handler(
+    event_type: EventType, priority: EventPriority = EventPriority.NORMAL
+):
     """事件处理器装饰器"""
 
     def decorator(func: EventHandler) -> EventHandler:
@@ -474,7 +502,9 @@ def event_handler(event_type: EventType, priority: EventPriority = EventPriority
     return decorator
 
 
-def async_event_handler(event_type: EventType, priority: EventPriority = EventPriority.NORMAL):
+def async_event_handler(
+    event_type: EventType, priority: EventPriority = EventPriority.NORMAL
+):
     """异步事件处理器装饰器"""
 
     def decorator(func: EventHandler) -> EventHandler:

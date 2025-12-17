@@ -130,7 +130,9 @@ class TraceManager:
         self.log_dir = Path("logs/traces")
         self.log_dir.mkdir(parents=True, exist_ok=True)
 
-    def start_trace(self, operation_name: str, context: TracingContext | None = None, **tags) -> TracingContext:
+    def start_trace(
+        self, operation_name: str, context: TracingContext | None = None, **tags
+    ) -> TracingContext:
         """
         启动追踪
 
@@ -166,7 +168,9 @@ class TraceManager:
             self._active_spans[span_id] = span
 
         # 保存到线程本地
-        ctx = TracingContext(trace_id=trace_id, span_id=span_id, parent_span_id=parent_span_id)
+        ctx = TracingContext(
+            trace_id=trace_id, span_id=span_id, parent_span_id=parent_span_id
+        )
         self._set_current_context(ctx)
 
         return ctx
@@ -209,7 +213,9 @@ class TraceManager:
             self.finish_span(ctx, status="error")
             raise
 
-    def log_event(self, event: str, context: TracingContext | None = None, **fields) -> None:
+    def log_event(
+        self, event: str, context: TracingContext | None = None, **fields
+    ) -> None:
         """记录事件到当前跨度"""
         if not context:
             context = self._get_current_context()
@@ -222,7 +228,9 @@ class TraceManager:
             if span:
                 span.log_event(event, **fields)
 
-    def set_tag(self, key: str, value: Any, context: TracingContext | None = None) -> None:
+    def set_tag(
+        self, key: str, value: Any, context: TracingContext | None = None
+    ) -> None:
         """设置标签到当前跨度"""
         if not context:
             context = self._get_current_context()
@@ -257,12 +265,18 @@ class TraceManager:
         return {
             "trace_id": trace_id,
             "spans": root_spans,
-            "total_duration_ms": max(s.duration_ms for s in spans if s.duration_ms) if spans else 0,
+            "total_duration_ms": max(s.duration_ms for s in spans if s.duration_ms)
+            if spans
+            else 0,
         }
 
     def _build_span_tree(self, span: Span, span_map: dict[str, Span]) -> dict[str, Any]:
         """构建跨度树"""
-        children = [self._build_span_tree(s, span_map) for s in span_map.values() if s.parent_span_id == span.span_id]
+        children = [
+            self._build_span_tree(s, span_map)
+            for s in span_map.values()
+            if s.parent_span_id == span.span_id
+        ]
 
         return {**span.to_dict(), "children": children}
 
@@ -319,7 +333,9 @@ class TraceManager:
     def _write_span_log(self, span: Span) -> None:
         """写入跨度日志"""
         try:
-            log_file = self.log_dir / f"traces_{datetime.now().strftime('%Y%m%d')}.jsonl"
+            log_file = (
+                self.log_dir / f"traces_{datetime.now().strftime('%Y%m%d')}.jsonl"
+            )
             with open(log_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(span.to_dict(), ensure_ascii=False) + "\n")
         except Exception:

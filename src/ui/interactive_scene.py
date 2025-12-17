@@ -58,7 +58,9 @@ class DraggableItem(QGraphicsPixmapItem):
         self.setCursor(QCursor(Qt.CursorShape.OpenHandCursor))
 
         # 接受鼠标事件
-        self.setAcceptedMouseButtons(Qt.MouseButton.LeftButton | Qt.MouseButton.RightButton)
+        self.setAcceptedMouseButtons(
+            Qt.MouseButton.LeftButton | Qt.MouseButton.RightButton
+        )
 
         # 工具提示
         self.setToolTip(f"{item_type}: {item_id}")
@@ -76,6 +78,7 @@ class DraggableItem(QGraphicsPixmapItem):
 
             # 添加阴影效果
             from PySide6.QtWidgets import QGraphicsDropShadowEffect
+
             shadow = QGraphicsDropShadowEffect()
             shadow.setBlurRadius(20)
             shadow.setColor(QColor(0, 0, 0, 180))
@@ -107,7 +110,10 @@ class DraggableItem(QGraphicsPixmapItem):
                 for zone_id, zone in scene.drop_zones.items():
                     if zone.contains_item(self):
                         # 检查类型是否匹配
-                        if not zone.accepted_types or self.item_type in zone.accepted_types:
+                        if (
+                            not zone.accepted_types
+                            or self.item_type in zone.accepted_types
+                        ):
                             # 成功放入 - 添加成功动画
                             self.animate_drop_success()
                             scene.item_dropped.emit(self.item_id, zone_id)
@@ -117,12 +123,14 @@ class DraggableItem(QGraphicsPixmapItem):
                         else:
                             # 类型不匹配 - 添加错误动画
                             self.animate_drop_error()
-                            logger.warning(f"物品 {self.item_id} 类型不匹配区域 {zone_id}")
+                            logger.warning(
+                                f"物品 {self.item_id} 类型不匹配区域 {zone_id}"
+                            )
                             dropped_in_zone = True
                             break
 
                 # 如果没有放入任何区域，可以选择返回原位
-                if not dropped_in_zone and hasattr(self, 'snap_back_on_invalid_drop'):
+                if not dropped_in_zone and hasattr(self, "snap_back_on_invalid_drop"):
                     if self.snap_back_on_invalid_drop:
                         self.animate_snap_back()
         super().mouseReleaseEvent(event)
@@ -168,7 +176,10 @@ class DraggableItem(QGraphicsPixmapItem):
 
     def itemChange(self, change: Any, value: Any) -> Any:
         """物品状态改变"""
-        if change == QGraphicsItem.GraphicsItemChange.ItemPositionChange and self.scene():
+        if (
+            change == QGraphicsItem.GraphicsItemChange.ItemPositionChange
+            and self.scene()
+        ):
             # 限制在场景范围内
             new_pos = value
             rect = self.scene().sceneRect()
@@ -213,7 +224,9 @@ class ClickableItem(QGraphicsPixmapItem):
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
 
         # 接受鼠标事件
-        self.setAcceptedMouseButtons(Qt.MouseButton.LeftButton | Qt.MouseButton.RightButton)
+        self.setAcceptedMouseButtons(
+            Qt.MouseButton.LeftButton | Qt.MouseButton.RightButton
+        )
 
         self.setToolTip(f"点击使用: {item_type}")
 
@@ -318,7 +331,7 @@ class DropZone(QGraphicsRectItem):
         animation.start()
 
         # 保存动画引用以防被垃圾回收
-        if not hasattr(self, '_animations'):
+        if not hasattr(self, "_animations"):
             self._animations = []
         self._animations.append(animation)
 
@@ -331,7 +344,9 @@ class InteractiveExperimentScene(QGraphicsScene):
     item_clicked = Signal(str)  # 物品ID
     action_completed = Signal(str, dict)  # 动作名称, 结果数据
 
-    def __init__(self, scene_config: dict[str, Any] | None = None, parent: QWidget | None = None):
+    def __init__(
+        self, scene_config: dict[str, Any] | None = None, parent: QWidget | None = None
+    ):
         super().__init__(parent)
 
         self.scene_config = scene_config or {}
@@ -457,7 +472,9 @@ class InteractiveExperimentScene(QGraphicsScene):
             "drop_zones": {
                 zone_id: {
                     "items_in_zone": [
-                        item_id for item_id, item in self.draggable_items.items() if zone.contains_item(item)
+                        item_id
+                        for item_id, item in self.draggable_items.items()
+                        if zone.contains_item(item)
                     ]
                 }
                 for zone_id, zone in self.drop_zones.items()
@@ -497,9 +514,13 @@ class InteractiveExperimentScene(QGraphicsScene):
             for item_id, zone_id in drop_actions.items():
                 self.action_log.append({"item_id": item_id, "zone_id": zone_id})
 
-        logger.info(f"场景状态已加载: {len(item_positions)} 个物品位置, {len(drop_actions)} 个放置动作")
+        logger.info(
+            f"场景状态已加载: {len(item_positions)} 个物品位置, {len(drop_actions)} 个放置动作"
+        )
 
-    def _load_pixmap(self, image_path: str | None, size: tuple[int, int] | None) -> QPixmap:
+    def _load_pixmap(
+        self, image_path: str | None, size: tuple[int, int] | None
+    ) -> QPixmap:
         """加载并缩放图片"""
         if not image_path:
             # 创建默认占位符
@@ -526,7 +547,10 @@ class InteractiveExperimentScene(QGraphicsScene):
             # 缩放
             if size and not pixmap.isNull():
                 pixmap = pixmap.scaled(
-                    size[0], size[1], Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
+                    size[0],
+                    size[1],
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
                 )
 
             return pixmap
@@ -542,7 +566,11 @@ class InteractiveExperimentScene(QGraphicsScene):
 class InteractiveExperimentView(QGraphicsView):
     """交互式实验视图 - QGraphicsView的封装"""
 
-    def __init__(self, scene: InteractiveExperimentScene | None = None, parent: QWidget | None = None):
+    def __init__(
+        self,
+        scene: InteractiveExperimentScene | None = None,
+        parent: QWidget | None = None,
+    ):
         super().__init__(parent)
 
         if scene is None:
@@ -655,8 +683,20 @@ PRESET_SCENES = {
         "height": 600,
         "background_color": "#f9f9f9",
         "draggable_items": [
-            {"id": "burette", "type": "burette", "position": [100, 100], "size": [60, 180], "image": "burette.png"},
-            {"id": "beaker_100ml", "type": "beaker", "position": [100, 400], "size": [80, 100], "image": "beaker.png"},
+            {
+                "id": "burette",
+                "type": "burette",
+                "position": [100, 100],
+                "size": [60, 180],
+                "image": "burette.png",
+            },
+            {
+                "id": "beaker_100ml",
+                "type": "beaker",
+                "position": [100, 400],
+                "size": [80, 100],
+                "image": "beaker.png",
+            },
             {
                 "id": "erlenmeyer_flask",
                 "type": "flask",
@@ -689,8 +729,16 @@ PRESET_SCENES = {
             },
         ],
         "drop_zones": [
-            {"id": "work_area", "rect": [250, 300, 300, 250], "accepted_types": ["beaker", "flask"]},
-            {"id": "titration_stand", "rect": [80, 200, 100, 200], "accepted_types": ["burette"]},
+            {
+                "id": "work_area",
+                "rect": [250, 300, 300, 250],
+                "accepted_types": ["beaker", "flask"],
+            },
+            {
+                "id": "titration_stand",
+                "rect": [80, 200, 100, 200],
+                "accepted_types": ["burette"],
+            },
         ],
     },
     "distillation": {
@@ -712,7 +760,13 @@ PRESET_SCENES = {
                 "size": [150, 60],
                 "image": "condenser.png",
             },
-            {"id": "receiving_flask", "type": "flask", "position": [450, 380], "size": [90, 110], "image": "flask.png"},
+            {
+                "id": "receiving_flask",
+                "type": "flask",
+                "position": [450, 380],
+                "size": [90, 110],
+                "image": "flask.png",
+            },
             {
                 "id": "thermometer",
                 "type": "instrument",
@@ -722,7 +776,13 @@ PRESET_SCENES = {
             },
         ],
         "clickable_items": [
-            {"id": "alcohol_lamp", "type": "heater", "position": [50, 50], "size": [60, 80], "image": "lamp.png"},
+            {
+                "id": "alcohol_lamp",
+                "type": "heater",
+                "position": [50, 50],
+                "size": [60, 80],
+                "image": "lamp.png",
+            },
             {
                 "id": "mixture_sample",
                 "type": "reagent",
@@ -732,9 +792,21 @@ PRESET_SCENES = {
             },
         ],
         "drop_zones": [
-            {"id": "heat_area", "rect": [80, 450, 140, 100], "accepted_types": ["flask"]},
-            {"id": "condenser_area", "rect": [220, 220, 210, 120], "accepted_types": ["equipment"]},
-            {"id": "collection_area", "rect": [420, 380, 140, 150], "accepted_types": ["flask"]},
+            {
+                "id": "heat_area",
+                "rect": [80, 450, 140, 100],
+                "accepted_types": ["flask"],
+            },
+            {
+                "id": "condenser_area",
+                "rect": [220, 220, 210, 120],
+                "accepted_types": ["equipment"],
+            },
+            {
+                "id": "collection_area",
+                "rect": [420, 380, 140, 150],
+                "accepted_types": ["flask"],
+            },
         ],
     },
     "precipitation": {
@@ -742,7 +814,13 @@ PRESET_SCENES = {
         "height": 600,
         "background_color": "#f9f9f9",
         "draggable_items": [
-            {"id": "beaker_250ml", "type": "beaker", "position": [100, 400], "size": [100, 120], "image": "beaker.png"},
+            {
+                "id": "beaker_250ml",
+                "type": "beaker",
+                "position": [100, 400],
+                "size": [100, 120],
+                "image": "beaker.png",
+            },
             {
                 "id": "test_tube",
                 "type": "test_tube",
@@ -750,8 +828,20 @@ PRESET_SCENES = {
                 "size": [50, 150],
                 "image": "test_tube.png",
             },
-            {"id": "funnel", "type": "equipment", "position": [400, 300], "size": [80, 80], "image": "funnel.png"},
-            {"id": "filter_paper", "type": "equipment", "position": [100, 100], "size": [60, 60], "image": "paper.png"},
+            {
+                "id": "funnel",
+                "type": "equipment",
+                "position": [400, 300],
+                "size": [80, 80],
+                "image": "funnel.png",
+            },
+            {
+                "id": "filter_paper",
+                "type": "equipment",
+                "position": [100, 100],
+                "size": [60, 60],
+                "image": "paper.png",
+            },
         ],
         "clickable_items": [
             {
@@ -768,11 +858,25 @@ PRESET_SCENES = {
                 "size": [60, 80],
                 "image": "reagent_bottle.png",
             },
-            {"id": "stirring_rod", "type": "tool", "position": [250, 50], "size": [40, 100], "image": "rod.png"},
+            {
+                "id": "stirring_rod",
+                "type": "tool",
+                "position": [250, 50],
+                "size": [40, 100],
+                "image": "rod.png",
+            },
         ],
         "drop_zones": [
-            {"id": "mixing_area", "rect": [70, 380, 160, 180], "accepted_types": ["beaker", "test_tube"]},
-            {"id": "filtration_area", "rect": [370, 280, 140, 140], "accepted_types": ["funnel", "equipment"]},
+            {
+                "id": "mixing_area",
+                "rect": [70, 380, 160, 180],
+                "accepted_types": ["beaker", "test_tube"],
+            },
+            {
+                "id": "filtration_area",
+                "rect": [370, 280, 140, 140],
+                "accepted_types": ["funnel", "equipment"],
+            },
         ],
     },
 }

@@ -41,7 +41,13 @@ class MetricsCollector:
         self.max_history = max_history
         self._metrics: dict[str, deque[PerformanceMetric]] = {}
 
-    def record(self, name: str, value: float, unit: str = "", tags: dict[str, str] | None = None) -> None:
+    def record(
+        self,
+        name: str,
+        value: float,
+        unit: str = "",
+        tags: dict[str, str] | None = None,
+    ) -> None:
         """
         记录指标
 
@@ -72,7 +78,9 @@ class MetricsCollector:
             return self._metrics[name][-1]
         return None
 
-    def get_history(self, name: str, duration: timedelta | None = None) -> list[PerformanceMetric]:
+    def get_history(
+        self, name: str, duration: timedelta | None = None
+    ) -> list[PerformanceMetric]:
         """
         获取历史指标
 
@@ -163,15 +171,21 @@ class SystemMonitor:
     def collect_disk_metrics(self) -> None:
         """收集磁盘指标"""
         disk = psutil.disk_usage("/")
-        self.collector.record("system.disk.total", disk.total / 1024 / 1024 / 1024, "GB")
+        self.collector.record(
+            "system.disk.total", disk.total / 1024 / 1024 / 1024, "GB"
+        )
         self.collector.record("system.disk.used", disk.used / 1024 / 1024 / 1024, "GB")
         self.collector.record("system.disk.percent", disk.percent, "%")
 
     def collect_network_metrics(self) -> None:
         """收集网络指标"""
         net_io = psutil.net_io_counters()
-        self.collector.record("system.network.bytes_sent", net_io.bytes_sent / 1024 / 1024, "MB")
-        self.collector.record("system.network.bytes_recv", net_io.bytes_recv / 1024 / 1024, "MB")
+        self.collector.record(
+            "system.network.bytes_sent", net_io.bytes_sent / 1024 / 1024, "MB"
+        )
+        self.collector.record(
+            "system.network.bytes_recv", net_io.bytes_recv / 1024 / 1024, "MB"
+        )
 
     def collect_all(self) -> None:
         """收集所有指标"""
@@ -223,7 +237,9 @@ class ResponseTimeTracker:
 
         return decorator
 
-    def track_async(self, name: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    def track_async(
+        self, name: str
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """
         异步响应时间追踪装饰器
 
@@ -240,7 +256,9 @@ class ResponseTimeTracker:
                     return result
                 finally:
                     duration = time.time() - start_time
-                    self.collector.record(f"response_time.{name}", duration * 1000, "ms")
+                    self.collector.record(
+                        f"response_time.{name}", duration * 1000, "ms"
+                    )
 
             return wrapper
 
@@ -326,12 +344,16 @@ class PerformanceMonitor:
         # CPU
         cpu_stats = self.collector.get_statistics("process.cpu.percent")
         if cpu_stats:
-            lines.append(f"CPU使用率: {cpu_stats['latest']:.1f}% (平均: {cpu_stats['avg']:.1f}%)")
+            lines.append(
+                f"CPU使用率: {cpu_stats['latest']:.1f}% (平均: {cpu_stats['avg']:.1f}%)"
+            )
 
         # 内存
         mem_stats = self.collector.get_statistics("process.memory.rss")
         if mem_stats:
-            lines.append(f"内存使用: {mem_stats['latest']:.1f}MB (平均: {mem_stats['avg']:.1f}MB)")
+            lines.append(
+                f"内存使用: {mem_stats['latest']:.1f}MB (平均: {mem_stats['avg']:.1f}MB)"
+            )
 
         # 响应时间
         lines.append("\n响应时间:")
@@ -365,7 +387,9 @@ def track_performance(name: str) -> Callable[[Callable[..., Any]], Callable[...,
     return monitor.response_tracker.track(name)
 
 
-def track_performance_async(name: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def track_performance_async(
+    name: str,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """异步性能追踪装饰器"""
     monitor = get_performance_monitor()
     return monitor.response_tracker.track_async(name)

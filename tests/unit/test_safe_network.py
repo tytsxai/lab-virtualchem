@@ -106,7 +106,9 @@ def test_request_http_client_error_converted(monkeypatch):
 def test_request_retries_connection_errors(monkeypatch):
     client = SafeNetworkClient(
         base_url="https://api.example.com",
-        retry_strategy=RetryStrategy(max_retries=3, initial_delay=0.1, backoff_factor=1),
+        retry_strategy=RetryStrategy(
+            max_retries=3, initial_delay=0.1, backoff_factor=1
+        ),
     )
     attempts = {"count": 0}
 
@@ -135,7 +137,9 @@ def test_check_connection_handles_missing_requests(monkeypatch):
 def test_check_connection_success(monkeypatch):
     client = SafeNetworkClient()
     response = SimpleNamespace(status_code=200)
-    monkeypatch.setattr(safe_network.requests, "get", lambda *_args, **_kwargs: response)
+    monkeypatch.setattr(
+        safe_network.requests, "get", lambda *_args, **_kwargs: response
+    )
     assert client.check_connection("https://example.com") is True
 
 
@@ -151,7 +155,9 @@ def test_download_file_streams_chunks(tmp_path, monkeypatch):
         def iter_content(self, chunk_size=8192):
             yield from chunks
 
-    monkeypatch.setattr(safe_network.requests, "get", lambda *_args, **_kwargs: StreamResponse())
+    monkeypatch.setattr(
+        safe_network.requests, "get", lambda *_args, **_kwargs: StreamResponse()
+    )
 
     progress_updates: list[tuple[int, int]] = []
 
@@ -159,7 +165,9 @@ def test_download_file_streams_chunks(tmp_path, monkeypatch):
         progress_updates.append((downloaded, total))
 
     destination = tmp_path / "file.bin"
-    assert client.download_file("https://example.com/file.bin", destination, progress_callback=callback)
+    assert client.download_file(
+        "https://example.com/file.bin", destination, progress_callback=callback
+    )
 
     assert destination.read_bytes() == b"abc12345"
     assert progress_updates[-1] == (total_size, total_size)

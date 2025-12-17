@@ -7,4 +7,3 @@ from tools.chemlab_integration.src.converters.card_converter import (
 )
 
 __all__ = ["CardConverter"]
-

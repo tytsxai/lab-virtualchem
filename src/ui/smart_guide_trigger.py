@@ -125,9 +125,13 @@ class SmartGuideTrigger(QObject):
 
         logger.debug(f"记录用户行为: {behavior.action}")
 
-    def record_action(self, action: str, context: str | None = None, success: bool = True):
+    def record_action(
+        self, action: str, context: str | None = None, success: bool = True
+    ):
         """记录用户操作"""
-        behavior = UserBehavior(action=action, timestamp=datetime.now(), context=context, success=success)
+        behavior = UserBehavior(
+            action=action, timestamp=datetime.now(), context=context, success=success
+        )
 
         self.record_behavior(behavior)
 
@@ -175,12 +179,16 @@ class SmartGuideTrigger(QObject):
                     if not self._has_triggered(trigger.id):
                         self._fire_trigger(trigger)
 
-    def _check_trigger_condition(self, trigger: GuideTrigger, behavior: UserBehavior) -> bool:
+    def _check_trigger_condition(
+        self, trigger: GuideTrigger, behavior: UserBehavior
+    ) -> bool:
         """检查触发条件"""
 
         if trigger.condition == TriggerCondition.FIRST_TIME:
             # 首次操作
-            return behavior.action == trigger.metadata.get("action") and not self._has_triggered(trigger.id)
+            return behavior.action == trigger.metadata.get(
+                "action"
+            ) and not self._has_triggered(trigger.id)
 
         elif trigger.condition == TriggerCondition.ERROR_COUNT:
             # 错误次数达到阈值
@@ -253,7 +261,10 @@ class SmartGuideTrigger(QObject):
 
     def _has_triggered(self, trigger_id: str) -> bool:
         """检查触发器是否已触发过"""
-        return trigger_id in self.trigger_history and len(self.trigger_history[trigger_id]) > 0
+        return (
+            trigger_id in self.trigger_history
+            and len(self.trigger_history[trigger_id]) > 0
+        )
 
     def _fire_trigger(self, trigger: GuideTrigger):
         """触发引导"""
@@ -284,7 +295,9 @@ class SmartGuideTrigger(QObject):
                 continue
 
             if trigger.condition == TriggerCondition.IDLE_TIME:
-                if idle_duration >= trigger.threshold and self._is_trigger_available(trigger):
+                if idle_duration >= trigger.threshold and self._is_trigger_available(
+                    trigger
+                ):
                     self._fire_trigger(trigger)
 
     def load_triggers(self):

@@ -239,7 +239,9 @@ class ErrorDiagnosis:
         self.patterns.append(pattern)
         logger.debug(f"添加错误模式: {pattern.pattern_id}")
 
-    def diagnose(self, error: Exception, context: dict[str, Any] | None = None) -> DiagnosisResult:
+    def diagnose(
+        self, error: Exception, context: dict[str, Any] | None = None
+    ) -> DiagnosisResult:
         """诊断错误
 
         Args:
@@ -257,7 +259,9 @@ class ErrorDiagnosis:
         for pattern in self.patterns:
             import re
 
-            if re.search(pattern.pattern_regex, error_type) or re.search(pattern.pattern_regex, error_message):
+            if re.search(pattern.pattern_regex, error_type) or re.search(
+                pattern.pattern_regex, error_message
+            ):
                 matched_patterns.append(pattern)
 
         # 确定错误类别
@@ -299,7 +303,10 @@ class ErrorDiagnosis:
         )
 
     def _analyze_root_cause(
-        self, error: Exception, patterns: list[ErrorPattern], context: dict[str, Any] | None
+        self,
+        error: Exception,
+        patterns: list[ErrorPattern],
+        context: dict[str, Any] | None,
     ) -> str:
         """分析根本原因"""
         if not patterns:
@@ -343,7 +350,9 @@ if __name__ == "__main__":
     try:
         raise ModuleNotFoundError("No module named 'some_module'")
     except Exception as e:
-        result = diagnosis.diagnose(e, context={"file_path": "main.py", "line_number": 10})
+        result = diagnosis.diagnose(
+            e, context={"file_path": "main.py", "line_number": 10}
+        )
 
         print("错误诊断结果:")
         print(f"错误消息: {result.error_message}")

@@ -65,7 +65,9 @@ class InteractiveValidator(QObject):
 
         logger.info("交互式实验验证器初始化完成")
 
-    def start_step_validation(self, step_id: str, validation_config: dict[str, Any]) -> None:
+    def start_step_validation(
+        self, step_id: str, validation_config: dict[str, Any]
+    ) -> None:
         """开始步骤验证"""
         self.current_step = step_id
         self.validation_rules[step_id] = validation_config
@@ -74,11 +76,20 @@ class InteractiveValidator(QObject):
         logger.info(f"开始步骤验证: {step_id}")
 
     def validate_drop_action(
-        self, item_id: str, zone_id: str, expected_item_id: str | None = None, expected_zone_id: str | None = None
+        self,
+        item_id: str,
+        zone_id: str,
+        expected_item_id: str | None = None,
+        expected_zone_id: str | None = None,
     ) -> ValidationResult:
         """验证拖放动作"""
         # 记录操作
-        operation = {"type": "drop", "item_id": item_id, "zone_id": zone_id, "timestamp": time.time()}
+        operation = {
+            "type": "drop",
+            "item_id": item_id,
+            "zone_id": zone_id,
+            "timestamp": time.time(),
+        }
         self.operation_history.append(operation)
 
         # 验证规则
@@ -118,7 +129,11 @@ class InteractiveValidator(QObject):
         self.operation_history.append(operation)
 
         # 统计点击次数
-        click_count = sum(1 for op in self.operation_history if op["type"] == "click" and op["item_id"] == item_id)
+        click_count = sum(
+            1
+            for op in self.operation_history
+            if op["type"] == "click" and op["item_id"] == item_id
+        )
 
         # 验证规则
         passed = True
@@ -148,14 +163,19 @@ class InteractiveValidator(QObject):
 
         return result
 
-    def validate_sequence_action(self, required_sequence: list[str], _tolerance: float = 5.0) -> ValidationResult:
+    def validate_sequence_action(
+        self, required_sequence: list[str], _tolerance: float = 5.0
+    ) -> ValidationResult:
         """验证操作序列"""
         # 获取最近的操作序列
         recent_operations = self.operation_history[-len(required_sequence) :]
 
         if len(recent_operations) < len(required_sequence):
             return ValidationResult(
-                False, 0.0, "操作序列不完整", [f"还需要 {len(required_sequence) - len(recent_operations)} 个操作"]
+                False,
+                0.0,
+                "操作序列不完整",
+                [f"还需要 {len(required_sequence) - len(recent_operations)} 个操作"],
             )
 
         # 验证序列
@@ -219,7 +239,9 @@ class InteractiveValidator(QObject):
                 message = "✓ 数值正确"
             else:
                 passed = False
-                message = f"数值误差过大: 期望 {expected_value}±{tolerance}, 实际 {value}"
+                message = (
+                    f"数值误差过大: 期望 {expected_value}±{tolerance}, 实际 {value}"
+                )
                 hints.append("请仔细读取数值")
         else:
             if passed:
@@ -230,7 +252,9 @@ class InteractiveValidator(QObject):
 
         return result
 
-    def validate_combined_action(self, actions: list[dict[str, Any]]) -> ValidationResult:
+    def validate_combined_action(
+        self, actions: list[dict[str, Any]]
+    ) -> ValidationResult:
         """验证组合动作"""
         total_score = 0.0
         all_passed = True
@@ -249,7 +273,9 @@ class InteractiveValidator(QObject):
                 )
             elif action_type == "click":
                 result = self.validate_click_action(
-                    action.get("item_id", ""), action.get("expected_item_id"), action.get("required_times", 1)
+                    action.get("item_id", ""),
+                    action.get("expected_item_id"),
+                    action.get("required_times", 1),
                 )
             else:
                 result = ValidationResult(False, 0.0, f"未知动作类型: {action_type}")
@@ -277,7 +303,9 @@ class InteractiveValidator(QObject):
             return 0.0
 
         # 获取该步骤的所有验证结果
-        step_operations = [op for op in self.operation_history if op.get("step_id") == step_id]
+        step_operations = [
+            op for op in self.operation_history if op.get("step_id") == step_id
+        ]
 
         if not step_operations:
             return 0.0

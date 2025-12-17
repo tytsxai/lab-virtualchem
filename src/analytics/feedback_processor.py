@@ -107,7 +107,12 @@ class FeedbackProcessor(QObject):
         self.load_knowledge_base()
 
         # 处理统计
-        self.processing_stats = {"total": 0, "auto_resolved": 0, "escalated": 0, "pending": 0}
+        self.processing_stats = {
+            "total": 0,
+            "auto_resolved": 0,
+            "escalated": 0,
+            "pending": 0,
+        }
 
         # 批处理定时器
         self.batch_timer = QTimer()
@@ -226,7 +231,9 @@ class FeedbackProcessor(QObject):
             auto_category = self.categorize_feedback(content, detected_patterns)
 
             # 自动优先级
-            auto_priority = self.determine_priority(content, feedback.get("rating", 3), detected_patterns)
+            auto_priority = self.determine_priority(
+                content, feedback.get("rating", 3), detected_patterns
+            )
 
             # 提取实体
             entities = self.extract_entities(content)
@@ -235,7 +242,9 @@ class FeedbackProcessor(QObject):
             sentiment_score = self.analyze_sentiment(content)
 
             # 紧急度评分
-            urgency_score = self.calculate_urgency(content, feedback.get("rating", 3), detected_patterns)
+            urgency_score = self.calculate_urgency(
+                content, feedback.get("rating", 3), detected_patterns
+            )
 
             # 生成建议响应
             suggested_response = self.generate_response(
@@ -243,7 +252,9 @@ class FeedbackProcessor(QObject):
             )
 
             # 是否需要人工审核
-            requires_review = self.needs_human_review(auto_priority, sentiment_score, urgency_score, detected_patterns)
+            requires_review = self.needs_human_review(
+                auto_priority, sentiment_score, urgency_score, detected_patterns
+            )
 
             # 创建处理结果
             processed = ProcessedFeedback(
@@ -261,7 +272,9 @@ class FeedbackProcessor(QObject):
             )
 
             # 发送信号
-            self.feedback_processed.emit(feedback_id, self._processed_to_dict(processed))
+            self.feedback_processed.emit(
+                feedback_id, self._processed_to_dict(processed)
+            )
 
             # 发送检测到的模式
             for pattern_id in detected_patterns:
@@ -351,9 +364,13 @@ class FeedbackProcessor(QObject):
         # 基于关键词分类
         content_lower = content.lower()
 
-        if any(word in content_lower for word in ["bug", "错误", "崩溃", "问题", "故障"]):
+        if any(
+            word in content_lower for word in ["bug", "错误", "崩溃", "问题", "故障"]
+        ):
             return "bug_report"
-        elif any(word in content_lower for word in ["建议", "希望", "功能", "添加", "增加"]):
+        elif any(
+            word in content_lower for word in ["建议", "希望", "功能", "添加", "增加"]
+        ):
             return "feature_request"
         elif any(word in content_lower for word in ["慢", "卡", "延迟", "slow", "lag"]):
             return "performance_issue"
@@ -362,7 +379,9 @@ class FeedbackProcessor(QObject):
         else:
             return "general_feedback"
 
-    def determine_priority(self, content: str, rating: int, detected_patterns: list[str]) -> str:
+    def determine_priority(
+        self, content: str, rating: int, detected_patterns: list[str]
+    ) -> str:
         """确定优先级"""
         content_lower = content.lower()
 
@@ -407,7 +426,18 @@ class FeedbackProcessor(QObject):
     def analyze_sentiment(self, text: str) -> float:
         """情感分析（简化版）"""
         # 积极词
-        positive_words = ["好", "棒", "优秀", "满意", "喜欢", "推荐", "完美", "excellent", "great", "love"]
+        positive_words = [
+            "好",
+            "棒",
+            "优秀",
+            "满意",
+            "喜欢",
+            "推荐",
+            "完美",
+            "excellent",
+            "great",
+            "love",
+        ]
 
         # 消极词
         negative_words = [
@@ -437,7 +467,9 @@ class FeedbackProcessor(QObject):
         # 返回-1到1之间的分数
         return (positive_count - negative_count) / total
 
-    def calculate_urgency(self, content: str, rating: int, detected_patterns: list[str]) -> float:
+    def calculate_urgency(
+        self, content: str, rating: int, detected_patterns: list[str]
+    ) -> float:
         """计算紧急度（0-100）"""
         urgency = 50.0  # 基础值
 
@@ -445,7 +477,15 @@ class FeedbackProcessor(QObject):
         urgency += (3 - rating) * 10  # 低评分增加紧急度
 
         # 关键词影响
-        urgent_keywords = ["紧急", "急", "立即", "马上", "urgent", "asap", "immediately"]
+        urgent_keywords = [
+            "紧急",
+            "急",
+            "立即",
+            "马上",
+            "urgent",
+            "asap",
+            "immediately",
+        ]
         content_lower = content.lower()
         if any(keyword in content_lower for keyword in urgent_keywords):
             urgency += 20
@@ -461,7 +501,11 @@ class FeedbackProcessor(QObject):
         return min(100, max(0, urgency))
 
     def generate_response(
-        self, category: str, detected_patterns: list[str], entities: dict[str, Any], rating: int
+        self,
+        category: str,
+        detected_patterns: list[str],
+        entities: dict[str, Any],
+        rating: int,
     ) -> str | None:
         """生成建议响应"""
         # 检查是否有预定义响应
@@ -471,14 +515,18 @@ class FeedbackProcessor(QObject):
                 return pattern.auto_response
 
         # 使用模板生成响应
-        template = self.response_templates.get(category, self.response_templates["general"])
+        template = self.response_templates.get(
+            category, self.response_templates["general"]
+        )
 
         # 填充模板变量
         response = template
 
         # 替换实体
         if "experiment_name" in entities:
-            response = response.replace("{issue}", f"实验'{entities['experiment_name']}'")
+            response = response.replace(
+                "{issue}", f"实验'{entities['experiment_name']}'"
+            )
         elif "feature_name" in entities:
             response = response.replace("{feature}", entities["feature_name"])
         else:
@@ -494,11 +542,15 @@ class FeedbackProcessor(QObject):
         # 添加解决步骤
         if "{steps}" in response:
             steps = self._find_solution_steps(category, entities)
-            response = response.replace("{steps}", "\n".join(f"{i}. {step}" for i, step in enumerate(steps, 1)))
+            response = response.replace(
+                "{steps}", "\n".join(f"{i}. {step}" for i, step in enumerate(steps, 1))
+            )
 
         return response
 
-    def _find_solution_steps(self, category: str, entities: dict[str, Any]) -> list[str]:
+    def _find_solution_steps(
+        self, category: str, entities: dict[str, Any]
+    ) -> list[str]:
         """查找解决步骤"""
         # 从知识库匹配解决方案
         for kb_key, kb_item in self.knowledge_base.items():
@@ -515,7 +567,11 @@ class FeedbackProcessor(QObject):
         ]
 
     def needs_human_review(
-        self, priority: str, sentiment_score: float, urgency_score: float, detected_patterns: list[str]
+        self,
+        priority: str,
+        sentiment_score: float,
+        urgency_score: float,
+        detected_patterns: list[str],
     ) -> bool:
         """判断是否需要人工审核"""
         # 关键问题需要人工审核
@@ -571,7 +627,9 @@ class FeedbackProcessor(QObject):
             "escalated": self.processing_stats["escalated"],
             "pending": self.processing_stats["pending"],
             "auto_resolution_rate": (
-                self.processing_stats["auto_resolved"] / self.processing_stats["total"] * 100
+                self.processing_stats["auto_resolved"]
+                / self.processing_stats["total"]
+                * 100
                 if self.processing_stats["total"] > 0
                 else 0
             ),
@@ -595,13 +653,20 @@ class FeedbackProcessor(QObject):
     def export_processing_report(self) -> str:
         """导出处理报告"""
         try:
-            output_path = self.data_dir / f"processing_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            output_path = (
+                self.data_dir
+                / f"processing_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            )
 
             report = {
                 "generated_at": datetime.now().isoformat(),
                 "statistics": self.get_processing_stats(),
                 "patterns": {
-                    pattern_id: {"name": p.name, "category": p.category, "priority": p.priority}
+                    pattern_id: {
+                        "name": p.name,
+                        "category": p.category,
+                        "priority": p.priority,
+                    }
                     for pattern_id, p in self.patterns.items()
                 },
                 "knowledge_base_size": len(self.knowledge_base),

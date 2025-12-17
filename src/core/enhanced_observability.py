@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 class LogLevel(Enum):
     """日志级别"""
+
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
@@ -33,6 +34,7 @@ class LogLevel(Enum):
 
 class TraceType(Enum):
     """追踪类型"""
+
     REQUEST = "request"
     DATABASE = "database"
     CACHE = "cache"
@@ -44,6 +46,7 @@ class TraceType(Enum):
 @dataclass
 class LogEntry:
     """日志条目"""
+
     timestamp: float
     level: LogLevel
     message: str
@@ -69,13 +72,14 @@ class LogEntry:
             "trace_id": self.trace_id,
             "span_id": self.span_id,
             "tags": self.tags,
-            "extra_data": self.extra_data
+            "extra_data": self.extra_data,
         }
 
 
 @dataclass
 class TraceSpan:
     """追踪跨度"""
+
     trace_id: str
     span_id: str
     parent_span_id: str | None
@@ -95,12 +99,14 @@ class TraceSpan:
 
     def add_log(self, level: LogLevel, message: str, **kwargs) -> None:
         """添加日志"""
-        self.logs.append({
-            "timestamp": time.time(),
-            "level": level.value,
-            "message": message,
-            **kwargs
-        })
+        self.logs.append(
+            {
+                "timestamp": time.time(),
+                "level": level.value,
+                "message": message,
+                **kwargs,
+            }
+        )
 
     def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
@@ -115,13 +121,14 @@ class TraceSpan:
             "trace_type": self.trace_type.value,
             "tags": self.tags,
             "logs": self.logs,
-            "error": self.error
+            "error": self.error,
         }
 
 
 @dataclass
 class MetricData:
     """指标数据"""
+
     name: str
     value: float
     timestamp: float
@@ -135,7 +142,7 @@ class MetricData:
             "value": self.value,
             "timestamp": self.timestamp,
             "tags": self.tags,
-            "unit": self.unit
+            "unit": self.unit,
         }
 
 
@@ -168,7 +175,7 @@ class EnhancedObservability:
             "logs_count": 0,
             "spans_count": 0,
             "metrics_count": 0,
-            "errors_count": 0
+            "errors_count": 0,
         }
 
         # 初始化日志文件
@@ -176,7 +183,9 @@ class EnhancedObservability:
 
         # 启动后台任务
         self._running = True
-        self._background_task = threading.Thread(target=self._background_worker, daemon=True)
+        self._background_task = threading.Thread(
+            target=self._background_worker, daemon=True
+        )
         self._background_task.start()
 
     def _setup_log_file(self) -> None:
@@ -209,16 +218,18 @@ class EnhancedObservability:
         """清理过期数据"""
         # 清理日志条目
         if len(self._log_entries) > self._max_log_entries:
-            self._log_entries = self._log_entries[-self._max_log_entries:]
+            self._log_entries = self._log_entries[-self._max_log_entries :]
 
         # 清理完成的跨度
         if len(self._completed_spans) > self._max_spans:
-            self._completed_spans = self._completed_spans[-self._max_spans:]
+            self._completed_spans = self._completed_spans[-self._max_spans :]
 
         # 清理指标数据
         for metric_name in list(self._metrics.keys()):
             if len(self._metrics[metric_name]) > self._max_metrics:
-                self._metrics[metric_name] = self._metrics[metric_name][-self._max_metrics:]
+                self._metrics[metric_name] = self._metrics[metric_name][
+                    -self._max_metrics :
+                ]
 
     def _write_logs_to_file(self) -> None:
         """写入日志到文件"""
@@ -226,9 +237,9 @@ class EnhancedObservability:
             return
 
         try:
-            with open(self._log_file, 'a', encoding='utf-8') as f:
+            with open(self._log_file, "a", encoding="utf-8") as f:
                 for entry in self._log_entries[-100:]:  # 只写入最近的100条
-                    f.write(json.dumps(entry.to_dict(), ensure_ascii=False) + '\n')
+                    f.write(json.dumps(entry.to_dict(), ensure_ascii=False) + "\n")
         except Exception as e:
             logger.error(f"Failed to write logs to file: {e}")
 
@@ -244,7 +255,7 @@ class EnhancedObservability:
                 "min": min(values),
                 "max": max(values),
                 "avg": sum(values) / len(values),
-                "latest": values[-1]
+                "latest": values[-1],
             }
 
     def log(
@@ -254,7 +265,7 @@ class EnhancedObservability:
         module: str = "",
         function: str = "",
         line_number: int = 0,
-        **kwargs
+        **kwargs,
     ) -> None:
         """记录日志"""
         if level.value not in [lvl.value for lvl in LogLevel]:
@@ -273,14 +284,16 @@ class EnhancedObservability:
                 trace_id=self._trace_context.get("trace_id"),
                 span_id=self._trace_context.get("span_id"),
                 tags=self._trace_context.copy(),
-                extra_data=kwargs
+                extra_data=kwargs,
             )
 
             self._log_entries.append(entry)
             self._stats["logs_count"] += 1
 
             # 发布日志事件
-            publish_event("observability_log", entry.to_dict(), priority=EventPriority.NORMAL)
+            publish_event(
+                "observability_log", entry.to_dict(), priority=EventPriority.NORMAL
+            )
 
     def _should_log(self, level: LogLevel) -> bool:
         """检查是否应该记录日志"""
@@ -289,7 +302,7 @@ class EnhancedObservability:
             LogLevel.INFO: 1,
             LogLevel.WARNING: 2,
             LogLevel.ERROR: 3,
-            LogLevel.CRITICAL: 4
+            LogLevel.CRITICAL: 4,
         }
 
         return level_values[level] >= level_values[self._log_level]
@@ -299,7 +312,7 @@ class EnhancedObservability:
         operation_name: str,
         trace_type: TraceType = TraceType.REQUEST,
         parent_span_id: str | None = None,
-        **tags
+        **tags,
     ) -> str:
         """开始追踪"""
         trace_id = self._trace_context.get("trace_id") or str(uuid.uuid4())
@@ -312,7 +325,7 @@ class EnhancedObservability:
             operation_name=operation_name,
             start_time=time.time(),
             trace_type=trace_type,
-            tags=tags
+            tags=tags,
         )
 
         self._active_spans[span_id] = span
@@ -322,7 +335,9 @@ class EnhancedObservability:
         self._trace_context["span_id"] = span_id
 
         # 发布追踪事件
-        publish_event("observability_trace_start", span.to_dict(), priority=EventPriority.NORMAL)
+        publish_event(
+            "observability_trace_start", span.to_dict(), priority=EventPriority.NORMAL
+        )
 
         return span_id
 
@@ -341,27 +356,21 @@ class EnhancedObservability:
         self._stats["spans_count"] += 1
 
         # 发布追踪事件
-        publish_event("observability_trace_finish", span.to_dict(), priority=EventPriority.NORMAL)
+        publish_event(
+            "observability_trace_finish", span.to_dict(), priority=EventPriority.NORMAL
+        )
 
-    def add_trace_log(self, span_id: str, level: LogLevel, message: str, **kwargs) -> None:
+    def add_trace_log(
+        self, span_id: str, level: LogLevel, message: str, **kwargs
+    ) -> None:
         """添加追踪日志"""
         if span_id in self._active_spans:
             self._active_spans[span_id].add_log(level, message, **kwargs)
 
-    def record_metric(
-        self,
-        name: str,
-        value: float,
-        unit: str = "",
-        **tags
-    ) -> None:
+    def record_metric(self, name: str, value: float, unit: str = "", **tags) -> None:
         """记录指标"""
         metric_data = MetricData(
-            name=name,
-            value=value,
-            timestamp=time.time(),
-            tags=tags,
-            unit=unit
+            name=name, value=value, timestamp=time.time(), tags=tags, unit=unit
         )
 
         if name not in self._metrics:
@@ -371,7 +380,9 @@ class EnhancedObservability:
         self._stats["metrics_count"] += 1
 
         # 发布指标事件
-        publish_event("observability_metric", metric_data.to_dict(), priority=EventPriority.NORMAL)
+        publish_event(
+            "observability_metric", metric_data.to_dict(), priority=EventPriority.NORMAL
+        )
 
     def increment_counter(self, name: str, value: float = 1.0, **tags) -> None:
         """增加计数器"""
@@ -387,10 +398,7 @@ class EnhancedObservability:
 
     @contextmanager
     def trace_span(
-        self,
-        operation_name: str,
-        trace_type: TraceType = TraceType.REQUEST,
-        **tags
+        self, operation_name: str, trace_type: TraceType = TraceType.REQUEST, **tags
     ):
         """追踪跨度上下文管理器"""
         span_id = self.start_trace(operation_name, trace_type, **tags)
@@ -406,7 +414,7 @@ class EnhancedObservability:
         self,
         level: LogLevel | None = None,
         module: str | None = None,
-        limit: int | None = None
+        limit: int | None = None,
     ) -> list[LogEntry]:
         """获取日志"""
         logs = self._log_entries.copy()
@@ -429,7 +437,7 @@ class EnhancedObservability:
         self,
         trace_id: str | None = None,
         operation_name: str | None = None,
-        limit: int | None = None
+        limit: int | None = None,
     ) -> list[TraceSpan]:
         """获取追踪"""
         traces = self._completed_spans.copy()
@@ -440,7 +448,9 @@ class EnhancedObservability:
 
         # 过滤操作名称
         if operation_name:
-            traces = [trace for trace in traces if trace.operation_name == operation_name]
+            traces = [
+                trace for trace in traces if trace.operation_name == operation_name
+            ]
 
         # 限制数量
         if limit:
@@ -449,9 +459,7 @@ class EnhancedObservability:
         return traces
 
     def get_metrics(
-        self,
-        name: str | None = None,
-        limit: int | None = None
+        self, name: str | None = None, limit: int | None = None
     ) -> dict[str, list[MetricData]]:
         """获取指标"""
         if name:
@@ -466,7 +474,9 @@ class EnhancedObservability:
 
         return metrics
 
-    def get_metric_aggregates(self, name: str | None = None) -> dict[str, dict[str, float]]:
+    def get_metric_aggregates(
+        self, name: str | None = None
+    ) -> dict[str, dict[str, float]]:
         """获取指标聚合"""
         if name:
             return {name: self._metric_aggregates.get(name, {})}
@@ -480,7 +490,7 @@ class EnhancedObservability:
             "active_spans": len(self._active_spans),
             "completed_spans": len(self._completed_spans),
             "metrics_count": sum(len(data) for data in self._metrics.values()),
-            "log_file": str(self._log_file) if self._log_file else None
+            "log_file": str(self._log_file) if self._log_file else None,
         }
 
     def export_data(self, output_dir: Path) -> None:
@@ -489,13 +499,23 @@ class EnhancedObservability:
 
         # 导出日志
         logs_file = output_dir / "logs.json"
-        with open(logs_file, 'w', encoding='utf-8') as f:
-            json.dump([log.to_dict() for log in self._log_entries], f, indent=2, ensure_ascii=False)
+        with open(logs_file, "w", encoding="utf-8") as f:
+            json.dump(
+                [log.to_dict() for log in self._log_entries],
+                f,
+                indent=2,
+                ensure_ascii=False,
+            )
 
         # 导出追踪
         traces_file = output_dir / "traces.json"
-        with open(traces_file, 'w', encoding='utf-8') as f:
-            json.dump([trace.to_dict() for trace in self._completed_spans], f, indent=2, ensure_ascii=False)
+        with open(traces_file, "w", encoding="utf-8") as f:
+            json.dump(
+                [trace.to_dict() for trace in self._completed_spans],
+                f,
+                indent=2,
+                ensure_ascii=False,
+            )
 
         # 导出指标
         metrics_file = output_dir / "metrics.json"
@@ -503,12 +523,12 @@ class EnhancedObservability:
         for name, data_points in self._metrics.items():
             metrics_data[name] = [dp.to_dict() for dp in data_points]
 
-        with open(metrics_file, 'w', encoding='utf-8') as f:
+        with open(metrics_file, "w", encoding="utf-8") as f:
             json.dump(metrics_data, f, indent=2, ensure_ascii=False)
 
         # 导出统计
         stats_file = output_dir / "stats.json"
-        with open(stats_file, 'w', encoding='utf-8') as f:
+        with open(stats_file, "w", encoding="utf-8") as f:
             json.dump(self.get_stats(), f, indent=2, ensure_ascii=False)
 
     def cleanup(self) -> None:
@@ -539,7 +559,9 @@ def log(level: LogLevel, message: str, **kwargs) -> None:
     _global_observability.log(level, message, **kwargs)
 
 
-def start_trace(operation_name: str, trace_type: TraceType = TraceType.REQUEST, **tags) -> str:
+def start_trace(
+    operation_name: str, trace_type: TraceType = TraceType.REQUEST, **tags
+) -> str:
     """开始追踪"""
     return _global_observability.start_trace(operation_name, trace_type, **tags)
 

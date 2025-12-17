@@ -79,7 +79,11 @@ class TaskInfo:
     @property
     def is_completed(self) -> bool:
         """是否已完成"""
-        return self.status in [TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELLED]
+        return self.status in [
+            TaskStatus.COMPLETED,
+            TaskStatus.FAILED,
+            TaskStatus.CANCELLED,
+        ]
 
 
 class ProgressTracker:
@@ -140,7 +144,10 @@ class ProgressTracker:
     def complete(self) -> None:
         """完成进度"""
         self.update(progress=1.0)
-        emit("progress.completed", {"task_id": self.task_id, "total_time": time.time() - self.start_time})
+        emit(
+            "progress.completed",
+            {"task_id": self.task_id, "total_time": time.time() - self.start_time},
+        )
 
     def reset(self) -> None:
         """重置进度"""
@@ -226,7 +233,13 @@ class TaskManager(ITaskManager):
             self._task_counter += 1
             task_id = f"task_{self._task_counter}_{int(time.time())}"
 
-            task = TaskInfo(id=task_id, name=name, description=description, priority=priority, total_steps=total_steps)
+            task = TaskInfo(
+                id=task_id,
+                name=name,
+                description=description,
+                priority=priority,
+                total_steps=total_steps,
+            )
 
             self.tasks[task_id] = task
 
@@ -268,7 +281,9 @@ class TaskManager(ITaskManager):
 
             # 发送事件
             if self.event_bus:
-                self.event_bus.emit("task.started", {"task_id": task_id, "name": task.name})
+                self.event_bus.emit(
+                    "task.started", {"task_id": task_id, "name": task.name}
+                )
 
             return True
 
@@ -288,7 +303,9 @@ class TaskManager(ITaskManager):
 
             # 发送事件
             if self.event_bus:
-                self.event_bus.emit("task.paused", {"task_id": task_id, "name": task.name})
+                self.event_bus.emit(
+                    "task.paused", {"task_id": task_id, "name": task.name}
+                )
 
             return True
 
@@ -308,7 +325,9 @@ class TaskManager(ITaskManager):
 
             # 发送事件
             if self.event_bus:
-                self.event_bus.emit("task.resumed", {"task_id": task_id, "name": task.name})
+                self.event_bus.emit(
+                    "task.resumed", {"task_id": task_id, "name": task.name}
+                )
 
             return True
 
@@ -319,7 +338,11 @@ class TaskManager(ITaskManager):
                 return False
 
             task = self.tasks[task_id]
-            if task.status in [TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELLED]:
+            if task.status in [
+                TaskStatus.COMPLETED,
+                TaskStatus.FAILED,
+                TaskStatus.CANCELLED,
+            ]:
                 return False
 
             task.status = TaskStatus.CANCELLED
@@ -329,7 +352,9 @@ class TaskManager(ITaskManager):
 
             # 发送事件
             if self.event_bus:
-                self.event_bus.emit("task.cancelled", {"task_id": task_id, "name": task.name})
+                self.event_bus.emit(
+                    "task.cancelled", {"task_id": task_id, "name": task.name}
+                )
 
             return True
 
@@ -340,7 +365,11 @@ class TaskManager(ITaskManager):
                 return False
 
             task = self.tasks[task_id]
-            if task.status in [TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELLED]:
+            if task.status in [
+                TaskStatus.COMPLETED,
+                TaskStatus.FAILED,
+                TaskStatus.CANCELLED,
+            ]:
                 return False
 
             if error:
@@ -388,7 +417,9 @@ class TaskManager(ITaskManager):
         with self._lock:
             return self.trackers.get(task_id)
 
-    def update_task_progress(self, task_id: str, step: int | None = None, progress: float | None = None) -> bool:
+    def update_task_progress(
+        self, task_id: str, step: int | None = None, progress: float | None = None
+    ) -> bool:
         """更新任务进度"""
         with self._lock:
             if task_id not in self.tasks:
@@ -418,7 +449,11 @@ class TaskManager(ITaskManager):
             to_remove = []
 
             for task_id, task in self.tasks.items():
-                if task.is_completed and task.completed_at and current_time - task.completed_at > max_age:
+                if (
+                    task.is_completed
+                    and task.completed_at
+                    and current_time - task.completed_at > max_age
+                ):
                     to_remove.append(task_id)
 
             for task_id in to_remove:
@@ -435,14 +470,18 @@ class TaskManager(ITaskManager):
 class ProgressBar:
     """进度条"""
 
-    def __init__(self, width: int = 50, show_percentage: bool = True, show_eta: bool = True):
+    def __init__(
+        self, width: int = 50, show_percentage: bool = True, show_eta: bool = True
+    ):
         self.width = width
         self.show_percentage = show_percentage
         self.show_eta = show_eta
         self.start_time = time.time()
         self.last_update = time.time()
 
-    def render(self, progress: float, current: int = 0, total: int = 0, prefix: str = "") -> str:
+    def render(
+        self, progress: float, current: int = 0, total: int = 0, prefix: str = ""
+    ) -> str:
         """渲染进度条"""
         # 限制进度范围
         progress = max(0.0, min(1.0, progress))
@@ -509,7 +548,9 @@ class ProgressNotifier:
         self.notifications: list[dict[str, Any]] = []
         self._lock = threading.RLock()
 
-    def notify(self, message: str, level: str = "info", task_id: str | None = None) -> None:
+    def notify(
+        self, message: str, level: str = "info", task_id: str | None = None
+    ) -> None:
         """发送通知"""
         notification = {
             "id": f"notif_{int(time.time() * 1000)}",
@@ -545,7 +586,10 @@ def get_global_task_manager() -> TaskManager:
 
 # 便捷函数
 def create_task(
-    name: str, description: str | None = None, priority: TaskPriority = TaskPriority.NORMAL, total_steps: int = 0
+    name: str,
+    description: str | None = None,
+    priority: TaskPriority = TaskPriority.NORMAL,
+    total_steps: int = 0,
 ) -> str:
     """创建任务"""
     return _global_task_manager.create_task(name, description, priority, total_steps)
@@ -561,7 +605,9 @@ def complete_task(task_id: str, error: str | None = None) -> bool:
     return _global_task_manager.complete_task(task_id, error)
 
 
-def update_progress(task_id: str, step: int | None = None, progress: float | None = None) -> bool:
+def update_progress(
+    task_id: str, step: int | None = None, progress: float | None = None
+) -> bool:
     """更新进度"""
     return _global_task_manager.update_task_progress(task_id, step, progress)
 
@@ -577,7 +623,11 @@ def get_tracker(task_id: str) -> ProgressTracker | None:
 
 
 # 任务装饰器
-def task(name: str, description: str | None = None, priority: TaskPriority = TaskPriority.NORMAL):
+def task(
+    name: str,
+    description: str | None = None,
+    priority: TaskPriority = TaskPriority.NORMAL,
+):
     """任务装饰器"""
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
@@ -605,7 +655,11 @@ def task(name: str, description: str | None = None, priority: TaskPriority = Tas
     return decorator
 
 
-def async_task(name: str, description: str | None = None, priority: TaskPriority = TaskPriority.NORMAL):
+def async_task(
+    name: str,
+    description: str | None = None,
+    priority: TaskPriority = TaskPriority.NORMAL,
+):
     """异步任务装饰器"""
 
     def decorator(func: Callable[..., Awaitable[T]]) -> Callable[..., Awaitable[T]]:
@@ -665,7 +719,9 @@ if __name__ == "__main__":
     logger.info("2. 任务装饰器:")
 
     @task("计算任务", "执行复杂计算", TaskPriority.NORMAL)
-    def complex_calculation(n: int, progress_callback: ProgressCallback | None = None) -> int:
+    def complex_calculation(
+        n: int, progress_callback: ProgressCallback | None = None
+    ) -> int:
         result = 0
         for i in range(n):
             result += i * i
@@ -696,7 +752,9 @@ if __name__ == "__main__":
     logger.info("4. 异步任务:")
 
     @async_task("异步任务", "执行异步操作", TaskPriority.HIGH)
-    async def async_operation(duration: float, progress_callback: ProgressCallback | None = None) -> str:
+    async def async_operation(
+        duration: float, progress_callback: ProgressCallback | None = None
+    ) -> str:
         steps = 10
         for i in range(steps):
             await asyncio.sleep(duration / steps)

@@ -298,7 +298,10 @@ class TestRepositoryIntegration:
         repository = InMemoryRepository()
 
         # 批量添加
-        entities = [SampleEntity(id=f"test{i}", name=f"Test{i}", value=i * 100) for i in range(10)]
+        entities = [
+            SampleEntity(id=f"test{i}", name=f"Test{i}", value=i * 100)
+            for i in range(10)
+        ]
 
         for entity in entities:
             repository.add(entity)

@@ -174,14 +174,26 @@ class AdvancedChartCreator:
 
         # 为每个物质添加轨迹
         for substance, conc in concentrations.items():
-            fig.add_trace(go.Scatter(x=time_points, y=conc, mode="lines+markers", name=substance, line={"width": 3}))
+            fig.add_trace(
+                go.Scatter(
+                    x=time_points,
+                    y=conc,
+                    mode="lines+markers",
+                    name=substance,
+                    line={"width": 3},
+                )
+            )
 
         # 添加动画帧
         frames = []
         for i in range(len(time_points)):
             frame_data = []
             for _substance, conc in concentrations.items():
-                frame_data.append(go.Scatter(x=time_points[: i + 1], y=conc[: i + 1], mode="lines+markers"))
+                frame_data.append(
+                    go.Scatter(
+                        x=time_points[: i + 1], y=conc[: i + 1], mode="lines+markers"
+                    )
+                )
             frames.append(go.Frame(data=frame_data, name=str(i)))
 
         fig.frames = frames
@@ -197,7 +209,10 @@ class AdvancedChartCreator:
                             "method": "animate",
                             "args": [
                                 None,
-                                {"frame": {"duration": 100, "redraw": True}, "fromcurrent": True},
+                                {
+                                    "frame": {"duration": 100, "redraw": True},
+                                    "fromcurrent": True,
+                                },
                             ],
                         },
                         {
@@ -231,7 +246,9 @@ class AdvancedChartCreator:
 
         return fig
 
-    def create_periodic_table_heatmap(self, element_data: dict[str, float], property_name: str = "属性值") -> go.Figure:
+    def create_periodic_table_heatmap(
+        self, element_data: dict[str, float], property_name: str = "属性值"
+    ) -> go.Figure:
         """创建元素周期表热图
 
         Args:
@@ -293,7 +310,9 @@ class AdvancedChartCreator:
 
         return fig
 
-    def create_realtime_chart(self, max_points: int = 100) -> tuple[go.Figure, callable]:
+    def create_realtime_chart(
+        self, max_points: int = 100
+    ) -> tuple[go.Figure, callable]:
         """创建实时数据图表
 
         Args:
@@ -342,7 +361,9 @@ class AdvancedChartCreator:
 
         return fig, update_data
 
-    def create_comparison_chart(self, experiments: list[dict[str, Any]], metric: str = "结果") -> go.Figure:
+    def create_comparison_chart(
+        self, experiments: list[dict[str, Any]], metric: str = "结果"
+    ) -> go.Figure:
         """创建实验对比图
 
         Args:
@@ -400,7 +421,13 @@ class AdvancedChartCreator:
             if format == "html":
                 fig.write_html(str(output_path))
             else:
-                fig.write_image(str(output_path), format=format, width=width, height=height, scale=scale)
+                fig.write_image(
+                    str(output_path),
+                    format=format,
+                    width=width,
+                    height=height,
+                    scale=scale,
+                )
 
             logger.info(f"图表已导出: {output_path}")
 
@@ -424,7 +451,9 @@ def demo_charts():
     volumes = np.linspace(0, 50, 100)
     ph_values = 3 + 10 / (1 + np.exp(-0.5 * (volumes - 25)))
 
-    creator.create_titration_curve(volumes.tolist(), ph_values.tolist(), save_path=Path("demo_titration.html"))
+    creator.create_titration_curve(
+        volumes.tolist(), ph_values.tolist(), save_path=Path("demo_titration.html")
+    )
 
     # 2. 反应动画
     time = np.linspace(0, 10, 50)

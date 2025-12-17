@@ -46,7 +46,13 @@ class TestRuleValidator:
             text="输入移取的HCl体积",
             check=CheckPoint(
                 type=CheckType.INPUT,
-                input=InputSpec(key="volume", label="HCl体积", input_type="float", range=[20.0, 30.0], unit="mL"),
+                input=InputSpec(
+                    key="volume",
+                    label="HCl体积",
+                    input_type="float",
+                    range=[20.0, 30.0],
+                    unit="mL",
+                ),
                 correct_value=25.0,
                 fail_hint="体积输入不正确",
             ),
@@ -61,7 +67,13 @@ class TestRuleValidator:
             text="输入移取的HCl体积",
             check=CheckPoint(
                 type=CheckType.INPUT,
-                input=InputSpec(key="volume", label="HCl体积", input_type="float", range=[20.0, 30.0], unit="mL"),
+                input=InputSpec(
+                    key="volume",
+                    label="HCl体积",
+                    input_type="float",
+                    range=[20.0, 30.0],
+                    unit="mL",
+                ),
                 fail_hint="体积超出范围",
             ),
         )
@@ -76,7 +88,9 @@ class TestRuleValidator:
             text="输入正确的体积",
             check=CheckPoint(
                 type=CheckType.INPUT,
-                input=InputSpec(key="volume", label="体积", input_type="float", unit="mL"),
+                input=InputSpec(
+                    key="volume", label="体积", input_type="float", unit="mL"
+                ),
                 correct_value=25.0,
                 fail_hint="数值不正确",
             ),
@@ -93,7 +107,9 @@ class TestRuleValidator:
             text="输入体积",
             check=CheckPoint(
                 type=CheckType.INPUT,
-                input=InputSpec(key="volume", label="体积", input_type="float", unit="mL"),
+                input=InputSpec(
+                    key="volume", label="体积", input_type="float", unit="mL"
+                ),
                 correct_value=25.0,
             ),
         )
@@ -106,7 +122,10 @@ class TestRuleValidator:
         step = Step(
             id="step7",
             text="输入体积",
-            check=CheckPoint(type=CheckType.INPUT, input=InputSpec(key="volume", label="体积", input_type="float")),
+            check=CheckPoint(
+                type=CheckType.INPUT,
+                input=InputSpec(key="volume", label="体积", input_type="float"),
+            ),
         )
         passed, msg = self.validator.check_step(step, {}, {})
         assert passed is False
@@ -170,7 +189,10 @@ class TestRuleValidator:
                     key="indicator",
                     label="指示剂",
                     input_type="string",
-                    options=[{"value": "甲基橙", "label": "甲基橙"}, {"value": "酚酞", "label": "酚酞"}],
+                    options=[
+                        {"value": "甲基橙", "label": "甲基橙"},
+                        {"value": "酚酞", "label": "酚酞"},
+                    ],
                 ),
             ),
         )
@@ -183,7 +205,11 @@ class TestRuleValidator:
         step = Step(
             id="step11",
             text="开始滴定",
-            check=CheckPoint(type=CheckType.SEQUENCE, require=["step1", "step2"], fail_hint="请先完成前置步骤"),
+            check=CheckPoint(
+                type=CheckType.SEQUENCE,
+                require=["step1", "step2"],
+                fail_hint="请先完成前置步骤",
+            ),
         )
         context = {"step1_completed": True, "step2_completed": True}
         passed, msg = self.validator.check_step(step, {}, context)
@@ -194,7 +220,11 @@ class TestRuleValidator:
         step = Step(
             id="step12",
             text="开始滴定",
-            check=CheckPoint(type=CheckType.SEQUENCE, require=["step1", "step2"], fail_hint="请先完成前置步骤"),
+            check=CheckPoint(
+                type=CheckType.SEQUENCE,
+                require=["step1", "step2"],
+                fail_hint="请先完成前置步骤",
+            ),
         )
         context = {"step1_completed": True, "step2_completed": False}
         passed, msg = self.validator.check_step(step, {}, context)
@@ -234,7 +264,9 @@ class TestExpressionEvaluation:
         result = self.validator.evaluate_expression("abs(x) > 5", {"x": -10})
         assert result is True
 
-        result2 = self.validator.evaluate_expression("max(a, b) == 20", {"a": 10, "b": 20})
+        result2 = self.validator.evaluate_expression(
+            "max(a, b) == 20", {"a": 10, "b": 20}
+        )
         assert result2 is True
 
     def test_evaluate_expression_unsafe(self):
@@ -296,7 +328,10 @@ class TestInputValidation:
         """测试选项验证"""
         spec = {
             "input_type": "string",
-            "options": [{"value": "option1", "label": "选项1"}, {"value": "option2", "label": "选项2"}],
+            "options": [
+                {"value": "option1", "label": "选项1"},
+                {"value": "option2", "label": "选项2"},
+            ],
         }
 
         valid1, _ = self.validator.validate_input(spec, "option1")
@@ -314,12 +349,17 @@ class TestScoreRules:
 
     def test_evaluate_score_rules_simple(self):
         """测试简单评分规则"""
-        rules = [{"when": "correct == True", "then": 10}, {"when": "correct == False", "then": 0}]
+        rules = [
+            {"when": "correct == True", "then": 10},
+            {"when": "correct == False", "then": 0},
+        ]
 
         score1, details1 = self.validator.evaluate_score_rules(rules, {"correct": True})
         assert score1 == 10
 
-        score2, details2 = self.validator.evaluate_score_rules(rules, {"correct": False})
+        score2, details2 = self.validator.evaluate_score_rules(
+            rules, {"correct": False}
+        )
         assert score2 == 0
 
     def test_evaluate_score_rules_complex(self):
@@ -341,9 +381,15 @@ class TestScoreRules:
 
     def test_evaluate_score_rules_multiple_match(self):
         """测试多个规则匹配"""
-        rules = [{"when": "a > 0", "then": 5}, {"when": "b > 0", "then": 5}, {"when": "c > 0", "then": 5}]
+        rules = [
+            {"when": "a > 0", "then": 5},
+            {"when": "b > 0", "then": 5},
+            {"when": "c > 0", "then": 5},
+        ]
 
-        score, details = self.validator.evaluate_score_rules(rules, {"a": 1, "b": 1, "c": 1})
+        score, details = self.validator.evaluate_score_rules(
+            rules, {"a": 1, "b": 1, "c": 1}
+        )
         assert score == 15  # 所有规则都匹配
 
     def test_evaluate_score_rules_with_error(self):
@@ -353,7 +399,9 @@ class TestScoreRules:
             {"when": "invalid syntax !@#", "then": 5},  # 无效表达式
         ]
 
-        score, details = self.validator.evaluate_score_rules(rules, {"valid_expr": True})
+        score, details = self.validator.evaluate_score_rules(
+            rules, {"valid_expr": True}
+        )
         # 第一个规则成功,第二个失败
         assert score == 10
         assert "error" in details.get("rule_1", {})
@@ -394,7 +442,9 @@ class TestEdgeCases:
             id="precision_test",
             text="测试精度",
             check=CheckPoint(
-                type=CheckType.INPUT, input=InputSpec(key="value", label="数值", input_type="float"), correct_value=0.1
+                type=CheckType.INPUT,
+                input=InputSpec(key="value", label="数值", input_type="float"),
+                correct_value=0.1,
             ),
         )
         # 0.1 + 0.2 在浮点数中可能不精确等于0.3
@@ -407,7 +457,9 @@ class TestEdgeCases:
             id="expr_check",
             text="表达式检查",
             check=CheckPoint(
-                type=CheckType.EXPRESSION, expression="volume >= 20 and volume <= 30", fail_hint="体积不在有效范围"
+                type=CheckType.EXPRESSION,
+                expression="volume >= 20 and volume <= 30",
+                fail_hint="体积不在有效范围",
             ),
         )
         # 测试通过情况
@@ -438,7 +490,9 @@ class TestEdgeCases:
         input_spec.multi_select = True
 
         step = Step(
-            id="multi_select", text="选择所有正确的试剂", check=CheckPoint(type=CheckType.SELECT, input=input_spec)
+            id="multi_select",
+            text="选择所有正确的试剂",
+            check=CheckPoint(type=CheckType.SELECT, input=input_spec),
         )
 
         # 测试选择正确的所有选项
@@ -451,7 +505,9 @@ class TestEdgeCases:
         assert "缺少" in msg2
 
         # 测试选择了错误选项
-        passed3, msg3 = self.validator.check_step(step, {"reagents": ["NaOH", "HCl", "H2O"]}, {})
+        passed3, msg3 = self.validator.check_step(
+            step, {"reagents": ["NaOH", "HCl", "H2O"]}, {}
+        )
         assert passed3 is False
         assert "多余" in msg3
 

@@ -13,17 +13,21 @@ import psutil
 
 logger = logging.getLogger(__name__)
 
+
 class OptimizationTarget(Enum):
     """优化目标"""
+
     MEMORY_USAGE = "memory_usage"
     GARBAGE_COLLECTION = "garbage_collection"
     MEMORY_LEAKS = "memory_leaks"
     FRAGMENTATION = "fragmentation"
     CACHE_SIZE = "cache_size"
 
+
 @dataclass
 class MemoryOptimizationRule:
     """内存优化规则"""
+
     name: str
     target: OptimizationTarget
     condition: Callable[[dict[str, Any]], bool]
@@ -31,6 +35,7 @@ class MemoryOptimizationRule:
     priority: int = 0
     enabled: bool = True
     cooldown: float = 60.0  # 冷却时间（秒）
+
 
 class MemoryOptimizer:
     """内存优化器"""
@@ -46,11 +51,11 @@ class MemoryOptimizer:
 
         # 内存阈值
         self.thresholds = {
-            'memory_usage_percent': 80.0,
-            'memory_usage_mb': 1024.0,  # 1GB
-            'gc_threshold': 1000,
-            'fragmentation_rate': 0.3,
-            'cache_size_mb': 512.0,  # 512MB
+            "memory_usage_percent": 80.0,
+            "memory_usage_mb": 1024.0,  # 1GB
+            "gc_threshold": 1000,
+            "fragmentation_rate": 0.3,
+            "cache_size_mb": 512.0,  # 512MB
         }
 
         # 初始化默认规则
@@ -59,49 +64,63 @@ class MemoryOptimizer:
     def _initialize_default_rules(self):
         """初始化默认优化规则"""
         # 高内存使用率优化
-        self.add_rule(MemoryOptimizationRule(
-            name="high_memory_usage",
-            target=OptimizationTarget.MEMORY_USAGE,
-            condition=lambda metrics: metrics.get('memory_percent', 0) > self.thresholds['memory_usage_percent'],
-            action=self._optimize_memory_usage,
-            priority=1
-        ))
+        self.add_rule(
+            MemoryOptimizationRule(
+                name="high_memory_usage",
+                target=OptimizationTarget.MEMORY_USAGE,
+                condition=lambda metrics: metrics.get("memory_percent", 0)
+                > self.thresholds["memory_usage_percent"],
+                action=self._optimize_memory_usage,
+                priority=1,
+            )
+        )
 
         # 垃圾回收优化
-        self.add_rule(MemoryOptimizationRule(
-            name="garbage_collection",
-            target=OptimizationTarget.GARBAGE_COLLECTION,
-            condition=lambda metrics: metrics.get('gc_count', 0) > self.thresholds['gc_threshold'],
-            action=self._optimize_garbage_collection,
-            priority=2
-        ))
+        self.add_rule(
+            MemoryOptimizationRule(
+                name="garbage_collection",
+                target=OptimizationTarget.GARBAGE_COLLECTION,
+                condition=lambda metrics: metrics.get("gc_count", 0)
+                > self.thresholds["gc_threshold"],
+                action=self._optimize_garbage_collection,
+                priority=2,
+            )
+        )
 
         # 内存泄漏检测
-        self.add_rule(MemoryOptimizationRule(
-            name="memory_leak_detection",
-            target=OptimizationTarget.MEMORY_LEAKS,
-            condition=lambda metrics: metrics.get('memory_growth_rate', 0) > 0.1,
-            action=self._detect_memory_leaks,
-            priority=3
-        ))
+        self.add_rule(
+            MemoryOptimizationRule(
+                name="memory_leak_detection",
+                target=OptimizationTarget.MEMORY_LEAKS,
+                condition=lambda metrics: metrics.get("memory_growth_rate", 0) > 0.1,
+                action=self._detect_memory_leaks,
+                priority=3,
+            )
+        )
 
         # 内存碎片化优化
-        self.add_rule(MemoryOptimizationRule(
-            name="fragmentation_optimization",
-            target=OptimizationTarget.FRAGMENTATION,
-            condition=lambda metrics: metrics.get('fragmentation_rate', 0) > self.thresholds['fragmentation_rate'],
-            action=self._optimize_fragmentation,
-            priority=4
-        ))
+        self.add_rule(
+            MemoryOptimizationRule(
+                name="fragmentation_optimization",
+                target=OptimizationTarget.FRAGMENTATION,
+                condition=lambda metrics: metrics.get("fragmentation_rate", 0)
+                > self.thresholds["fragmentation_rate"],
+                action=self._optimize_fragmentation,
+                priority=4,
+            )
+        )
 
         # 缓存大小优化
-        self.add_rule(MemoryOptimizationRule(
-            name="cache_size_optimization",
-            target=OptimizationTarget.CACHE_SIZE,
-            condition=lambda metrics: metrics.get('cache_size_mb', 0) > self.thresholds['cache_size_mb'],
-            action=self._optimize_cache_size,
-            priority=5
-        ))
+        self.add_rule(
+            MemoryOptimizationRule(
+                name="cache_size_optimization",
+                target=OptimizationTarget.CACHE_SIZE,
+                condition=lambda metrics: metrics.get("cache_size_mb", 0)
+                > self.thresholds["cache_size_mb"],
+                action=self._optimize_cache_size,
+                priority=5,
+            )
+        )
 
     def add_rule(self, rule: MemoryOptimizationRule):
         """添加优化规则"""
@@ -121,9 +140,7 @@ class MemoryOptimizer:
 
         self.is_monitoring = True
         self.monitor_thread = threading.Thread(
-            target=self._monitor_loop,
-            args=(interval,),
-            daemon=True
+            target=self._monitor_loop, args=(interval,), daemon=True
         )
         self.monitor_thread.start()
 
@@ -156,31 +173,33 @@ class MemoryOptimizer:
         try:
             # 系统内存信息
             memory = psutil.virtual_memory()
-            metrics['memory_percent'] = memory.percent
-            metrics['memory_available'] = memory.available
-            metrics['memory_used'] = memory.used
-            metrics['memory_total'] = memory.total
+            metrics["memory_percent"] = memory.percent
+            metrics["memory_available"] = memory.available
+            metrics["memory_used"] = memory.used
+            metrics["memory_total"] = memory.total
 
             # 进程内存信息
             process = psutil.Process()
             process_memory = process.memory_info()
-            metrics['process_rss'] = process_memory.rss
-            metrics['process_vms'] = process_memory.vms
+            metrics["process_rss"] = process_memory.rss
+            metrics["process_vms"] = process_memory.vms
 
             # 垃圾回收统计
             gc_stats = gc.get_stats()
-            metrics['gc_count'] = sum(stat['collections'] for stat in gc_stats)
-            metrics['gc_collected'] = sum(stat['collected'] for stat in gc_stats)
-            metrics['gc_uncollectable'] = sum(stat['uncollectable'] for stat in gc_stats)
+            metrics["gc_count"] = sum(stat["collections"] for stat in gc_stats)
+            metrics["gc_collected"] = sum(stat["collected"] for stat in gc_stats)
+            metrics["gc_uncollectable"] = sum(
+                stat["uncollectable"] for stat in gc_stats
+            )
 
             # 内存碎片化率
-            metrics['fragmentation_rate'] = self._calculate_fragmentation_rate()
+            metrics["fragmentation_rate"] = self._calculate_fragmentation_rate()
 
             # 缓存大小（估算）
-            metrics['cache_size_mb'] = self._estimate_cache_size()
+            metrics["cache_size_mb"] = self._estimate_cache_size()
 
             # 内存增长率
-            metrics['memory_growth_rate'] = self._calculate_memory_growth_rate()
+            metrics["memory_growth_rate"] = self._calculate_memory_growth_rate()
 
         except Exception as e:
             logger.error(f"收集内存指标错误: {e}")
@@ -309,13 +328,12 @@ class MemoryOptimizer:
         current_memory = psutil.Process().memory_info().rss
 
         # 记录内存使用历史
-        if not hasattr(self, '_memory_history'):
+        if not hasattr(self, "_memory_history"):
             self._memory_history = []
 
-        self._memory_history.append({
-            'timestamp': time.time(),
-            'memory': current_memory
-        })
+        self._memory_history.append(
+            {"timestamp": time.time(), "memory": current_memory}
+        )
 
         # 保持最近100个记录
         if len(self._memory_history) > 100:
@@ -362,7 +380,7 @@ class MemoryOptimizer:
 
         # 计算内存增长率
         recent = self._memory_history[-10:]
-        memory_values = [record['memory'] for record in recent]
+        memory_values = [record["memory"] for record in recent]
 
         # 简单线性回归
         n = len(memory_values)
@@ -395,12 +413,12 @@ class MemoryOptimizer:
         """获取优化统计"""
         with self.lock:
             return {
-                'is_monitoring': self.is_monitoring,
-                'rules_count': len(self.rules),
-                'enabled_rules': len([r for r in self.rules if r.enabled]),
-                'optimization_stats': self.optimization_stats.copy(),
-                'last_execution': self.last_execution.copy(),
-                'thresholds': self.thresholds.copy()
+                "is_monitoring": self.is_monitoring,
+                "rules_count": len(self.rules),
+                "enabled_rules": len([r for r in self.rules if r.enabled]),
+                "optimization_stats": self.optimization_stats.copy(),
+                "last_execution": self.last_execution.copy(),
+                "thresholds": self.thresholds.copy(),
             }
 
     def set_threshold(self, threshold_name: str, value: float):

@@ -273,7 +273,10 @@ class TestDatabasePool(unittest.TestCase):
     def setUp(self):
         # 使用内存SQLite数据库进行测试
         self.db_pool = DatabasePool(
-            db_type="sqlite", config={"database": ":memory:"}, min_connections=1, max_connections=3
+            db_type="sqlite",
+            config={"database": ":memory:"},
+            min_connections=1,
+            max_connections=3,
         )
 
     def tearDown(self):

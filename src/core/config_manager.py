@@ -22,17 +22,20 @@ logger = get_logger(__name__)
 
 class ConfigValidationError(Exception):
     """配置验证错误"""
+
     pass
 
 
 class ConfigSchemaError(Exception):
     """配置模式错误"""
+
     pass
 
 
 @dataclass
 class ConfigValidationResult:
     """配置验证结果"""
+
     is_valid: bool
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
@@ -80,6 +83,7 @@ class ConfigSchema:
 
     def get_default_config(self) -> dict[str, Any]:
         """获取默认配置"""
+
         def extract_defaults(schema: dict[str, Any]) -> dict[str, Any]:
             defaults = {}
 
@@ -180,38 +184,74 @@ class ConfigManager:
                         "name": {"type": "string", "default": "VirtualChemLab"},
                         "version": {"type": "string", "default": APP_VERSION},
                         "language": {"type": "string", "default": "zh_CN"},
-                        "theme": {"type": "string", "enum": ["light", "dark", "auto"], "default": "dark"},
+                        "theme": {
+                            "type": "string",
+                            "enum": ["light", "dark", "auto"],
+                            "default": "dark",
+                        },
                         "window": {
                             "type": "object",
                             "properties": {
-                                "width": {"type": "integer", "minimum": 800, "default": 1200},
-                                "height": {"type": "integer", "minimum": 600, "default": 800},
-                                "maximized": {"type": "boolean", "default": False}
-                            }
-                        }
-                    }
+                                "width": {
+                                    "type": "integer",
+                                    "minimum": 800,
+                                    "default": 1200,
+                                },
+                                "height": {
+                                    "type": "integer",
+                                    "minimum": 600,
+                                    "default": 800,
+                                },
+                                "maximized": {"type": "boolean", "default": False},
+                            },
+                        },
+                    },
                 },
                 "ui": {
                     "type": "object",
                     "properties": {
-                        "font_size": {"type": "integer", "minimum": 8, "maximum": 24, "default": 12},
+                        "font_size": {
+                            "type": "integer",
+                            "minimum": 8,
+                            "maximum": 24,
+                            "default": 12,
+                        },
                         "font_family": {"type": "string", "default": "Arial"},
                         "animation_enabled": {"type": "boolean", "default": True},
                         "sound_enabled": {"type": "boolean", "default": True},
-                        "particle_effects": {"type": "boolean", "default": True}
-                    }
+                        "particle_effects": {"type": "boolean", "default": True},
+                    },
                 },
                 "game": {
                     "type": "object",
                     "properties": {
                         "physics_enabled": {"type": "boolean", "default": True},
-                        "gravity_strength": {"type": "number", "minimum": 0, "maximum": 2, "default": 0.5},
-                        "friction": {"type": "number", "minimum": 0, "maximum": 1, "default": 0.9},
-                        "bounce_factor": {"type": "number", "minimum": 0, "maximum": 1, "default": 0.6},
+                        "gravity_strength": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 2,
+                            "default": 0.5,
+                        },
+                        "friction": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                            "default": 0.9,
+                        },
+                        "bounce_factor": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                            "default": 0.6,
+                        },
                         "collision_detection": {"type": "boolean", "default": True},
                         "auto_save": {"type": "boolean", "default": True},
-                        "auto_save_interval": {"type": "integer", "minimum": 60, "default": 300}
-                    }
+                        "auto_save_interval": {
+                            "type": "integer",
+                            "minimum": 60,
+                            "default": 300,
+                        },
+                    },
                 },
                 "experiment": {
                     "type": "object",
@@ -220,21 +260,29 @@ class ConfigManager:
                         "step_validation": {"type": "boolean", "default": True},
                         "real_time_feedback": {"type": "boolean", "default": True},
                         "data_logging": {"type": "boolean", "default": True},
-                        "backup_enabled": {"type": "boolean", "default": True}
-                    }
+                        "backup_enabled": {"type": "boolean", "default": True},
+                    },
                 },
                 "logging": {
                     "type": "object",
                     "properties": {
-                        "level": {"type": "string", "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], "default": "INFO"},
+                        "level": {
+                            "type": "string",
+                            "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+                            "default": "INFO",
+                        },
                         "file_logging": {"type": "boolean", "default": True},
                         "console_logging": {"type": "boolean", "default": True},
-                        "max_file_size": {"type": "integer", "minimum": 1024, "default": 10485760},
-                        "backup_count": {"type": "integer", "minimum": 1, "default": 5}
-                    }
-                }
+                        "max_file_size": {
+                            "type": "integer",
+                            "minimum": 1024,
+                            "default": 10485760,
+                        },
+                        "backup_count": {"type": "integer", "minimum": 1, "default": 5},
+                    },
+                },
             },
-            "required": ["app", "ui", "game", "experiment", "logging"]
+            "required": ["app", "ui", "game", "experiment", "logging"],
         }
         self._schema = ConfigSchema(schema)
 
@@ -288,7 +336,9 @@ class ConfigManager:
             if self._schema:
                 validation_result = self._schema.validate(self._config)
                 if not validation_result.is_valid:
-                    raise ConfigValidationError(f"配置验证失败: {validation_result.errors}")
+                    raise ConfigValidationError(
+                        f"配置验证失败: {validation_result.errors}"
+                    )
 
             with self.config_file.open("w", encoding="utf-8") as f:
                 json.dump(self._config, f, indent=2, ensure_ascii=False)
@@ -297,7 +347,9 @@ class ConfigManager:
             logger.error(f"保存配置失败: {e}")
             raise
 
-    def validate_config(self, config: dict[str, Any] | None = None) -> ConfigValidationResult:
+    def validate_config(
+        self, config: dict[str, Any] | None = None
+    ) -> ConfigValidationResult:
         """验证配置"""
         config_to_validate = config or self._config
 
@@ -361,7 +413,7 @@ class ConfigManager:
                         "file_logging": True,
                         "console_logging": True,
                         "max_file_size": 10485760,
-                        "backup_count": 5
+                        "backup_count": 5,
                     }
 
                 self._config.setdefault("app", {})["version"] = to_version

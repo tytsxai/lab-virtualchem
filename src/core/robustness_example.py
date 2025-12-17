@@ -13,6 +13,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+
 def enhance_robustness(
     operation_name: str = "",
     security_level: str = "medium",
@@ -21,6 +22,7 @@ def enhance_robustness(
     timeout: float = 30.0,
 ):
     """健壮性增强装饰器"""
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -33,47 +35,68 @@ def enhance_robustness(
             try:
                 result = func(*args, **kwargs)
                 duration = time.time() - start_time
-                logger.info(f"成功完成 {operation_name or func.__name__}，耗时: {duration:.2f}秒")
+                logger.info(
+                    f"成功完成 {operation_name or func.__name__}，耗时: {duration:.2f}秒"
+                )
                 return result
             except Exception as e:
                 duration = time.time() - start_time
-                logger.error(f"执行 {operation_name or func.__name__} 失败: {e}，耗时: {duration:.2f}秒")
+                logger.error(
+                    f"执行 {operation_name or func.__name__} 失败: {e}，耗时: {duration:.2f}秒"
+                )
                 raise
+
         return wrapper
+
     return decorator
+
 
 def validate_input(validation_rules: dict[str, Any] | None = None):
     """输入验证装饰器"""
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             if validation_rules:
-                logger.info(f"验证输入参数: {func.__name__} rules={list(validation_rules.keys())}")
+                logger.info(
+                    f"验证输入参数: {func.__name__} rules={list(validation_rules.keys())}"
+                )
             else:
                 logger.info(f"验证输入参数: {func.__name__}")
             return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
+
 
 def secure_operation(security_level: str = "medium"):
     """安全操作装饰器"""
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             logger.info(f"执行安全操作: {func.__name__} (级别: {security_level})")
             return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
+
 
 def log_operation(operation_name: str = ""):
     """操作日志装饰器"""
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             logger.info(f"记录操作: {operation_name or func.__name__}")
             return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
+
 
 # 模拟健壮性集成管理器
 class MockRobustnessIntegration:
@@ -81,19 +104,22 @@ class MockRobustnessIntegration:
         self.settings: RobustnessSettings | None = None
 
     def generate_comprehensive_report(self) -> str:
-        return "健壮性增强报告\n" + "="*50 + "\n" + "功能正常运行\n"
+        return "健壮性增强报告\n" + "=" * 50 + "\n" + "功能正常运行\n"
 
     def monitor_performance(self, operation_name: str) -> dict[str, Any]:
         """监控性能"""
         return {"operation": operation_name, "status": "monitored"}
 
+
 robustness_integration = MockRobustnessIntegration()
+
 
 class RobustnessSettings:
     def __init__(self, **kwargs):
-        self.integration_level = kwargs.get('integration_level', 'basic')
+        self.integration_level = kwargs.get("integration_level", "basic")
         for key, value in kwargs.items():
             setattr(self, key, value)
+
 
 class IntegrationLevel:
     BASIC = "basic"
@@ -107,7 +133,7 @@ class IntegrationLevel:
     security_level="high",
     enable_caching=True,
     enable_retry=True,
-    timeout=30.0
+    timeout=30.0,
 )
 def user_login(username: str, password: str) -> dict[str, Any]:
     """用户登录示例"""
@@ -119,18 +145,22 @@ def user_login(username: str, password: str) -> dict[str, Any]:
             "success": True,
             "user_id": "user_123",
             "session_token": "token_abc",
-            "permissions": ["read", "write", "admin"]
+            "permissions": ["read", "write", "admin"],
         }
     else:
         raise ValueError("用户名或密码错误")
 
 
 # 示例2: 输入验证增强
-@validate_input(validation_rules={
-    "experiment_data": {"type": dict, "required": True},
-    "temperature": {"type": float, "min": -273.15, "max": 1000.0}
-})
-def process_experiment(experiment_data: dict[str, Any], temperature: float) -> dict[str, Any]:
+@validate_input(
+    validation_rules={
+        "experiment_data": {"type": dict, "required": True},
+        "temperature": {"type": float, "min": -273.15, "max": 1000.0},
+    }
+)
+def process_experiment(
+    experiment_data: dict[str, Any], temperature: float
+) -> dict[str, Any]:
     """实验数据处理示例"""
     # 模拟实验处理
     time.sleep(0.05)
@@ -139,7 +169,7 @@ def process_experiment(experiment_data: dict[str, Any], temperature: float) -> d
         "experiment_id": experiment_data.get("id", "exp_001"),
         "temperature": temperature,
         "status": "completed",
-        "results": {"yield": 0.85, "purity": 0.92}
+        "results": {"yield": 0.85, "purity": 0.92},
     }
 
 
@@ -172,7 +202,7 @@ def analyze_data(data: list) -> dict[str, Any]:
         "data_count": len(data),
         "average": sum(data) / len(data) if data else 0,
         "min_value": min(data) if data else 0,
-        "max_value": max(data) if data else 0
+        "max_value": max(data) if data else 0,
     }
 
 
@@ -194,7 +224,7 @@ def comprehensive_example():
         enable_testing=False,
         auto_optimization=True,
         auto_security_scan=True,
-        detailed_reporting=True
+        detailed_reporting=True,
     )
 
     robustness_integration.settings = settings
@@ -260,9 +290,7 @@ def error_recovery_example():
     print("\n错误恢复测试")
 
     @enhance_robustness(
-        operation_name="risky_operation",
-        enable_retry=True,
-        timeout=5.0
+        operation_name="risky_operation", enable_retry=True, timeout=5.0
     )
     def risky_operation(should_fail: bool = False) -> str:
         """可能失败的操作"""
@@ -290,10 +318,7 @@ def performance_monitoring_example():
     """性能监控测试示例"""
     print("\n性能监控测试")
 
-    @enhance_robustness(
-        operation_name="slow_operation",
-        enable_caching=True
-    )
+    @enhance_robustness(operation_name="slow_operation", enable_caching=True)
     def slow_operation(data: str) -> str:
         """慢操作示例"""
         time.sleep(0.1)  # 模拟慢操作
@@ -302,7 +327,7 @@ def performance_monitoring_example():
     # 执行多次操作
     for i in range(5):
         result = slow_operation(f"数据_{i}")
-        print(f"操作 {i+1}: {result}")
+        print(f"操作 {i + 1}: {result}")
 
     # 获取性能统计
     try:

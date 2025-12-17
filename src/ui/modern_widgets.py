@@ -195,7 +195,9 @@ class CircularProgress(QWidget):
         # 计算绘制区域
         rect = self.rect()
         side = min(rect.width(), rect.height())
-        painter.setViewport((rect.width() - side) // 2, (rect.height() - side) // 2, side, side)
+        painter.setViewport(
+            (rect.width() - side) // 2, (rect.height() - side) // 2, side, side
+        )
         painter.setWindow(0, 0, 120, 120)
 
         # 绘制背景圆环
@@ -264,7 +266,9 @@ class FloatingActionButton(QPushButton):
 class Chip(QPushButton):
     """标签芯片"""
 
-    def __init__(self, text: str, closable: bool = False, parent: QWidget | None = None):
+    def __init__(
+        self, text: str, closable: bool = False, parent: QWidget | None = None
+    ):
         super().__init__(text, parent)
         self.closable = closable
 
@@ -330,7 +334,11 @@ class InfoBanner(QFrame):
         icon_label = QLabel(
             "ℹ️"
             if banner_type == "info"
-            else "✓" if banner_type == "success" else "⚠" if banner_type == "warning" else "✗"
+            else "✓"
+            if banner_type == "success"
+            else "⚠"
+            if banner_type == "warning"
+            else "✗"
         )
         icon_label.setStyleSheet(f"color: {text_color}; font-size: 16px;")
         layout.addWidget(icon_label)
@@ -482,16 +490,31 @@ class StepIndicator(QWidget):
             # 绘制连接线（除了最后一个）
             if i < self._steps - 1:
                 next_x = 20 + (i + 1) * step_width
-                color = self._completed_color if i < self._current_step else self._pending_color
+                color = (
+                    self._completed_color
+                    if i < self._current_step
+                    else self._pending_color
+                )
                 pen = QPen(color, 2)
                 painter.setPen(pen)
-                painter.drawLine(int(x + circle_radius), line_y, int(next_x - circle_radius), line_y)
+                painter.drawLine(
+                    int(x + circle_radius), line_y, int(next_x - circle_radius), line_y
+                )
 
             # 绘制圆圈
-            color = self._completed_color if i <= self._current_step else self._pending_color
+            color = (
+                self._completed_color
+                if i <= self._current_step
+                else self._pending_color
+            )
             painter.setBrush(QBrush(color))
             painter.setPen(Qt.NoPen)
-            painter.drawEllipse(int(x - circle_radius), line_y - circle_radius, circle_radius * 2, circle_radius * 2)
+            painter.drawEllipse(
+                int(x - circle_radius),
+                line_y - circle_radius,
+                circle_radius * 2,
+                circle_radius * 2,
+            )
 
             # 绘制步骤数字
             painter.setPen(QPen(QColor(255, 255, 255)))
@@ -510,7 +533,9 @@ class StepIndicator(QWidget):
 class EmptyState(QWidget):
     """空状态提示"""
 
-    def __init__(self, message: str = "暂无数据", icon: str = "📭", parent: QWidget | None = None):
+    def __init__(
+        self, message: str = "暂无数据", icon: str = "📭", parent: QWidget | None = None
+    ):
         super().__init__(parent)
 
         layout = QVBoxLayout(self)

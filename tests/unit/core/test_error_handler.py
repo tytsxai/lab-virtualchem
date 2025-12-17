@@ -19,7 +19,9 @@ def test_handle_virtual_error_updates_stats_and_triggers_callback() -> None:
         triggered.append(error.message)
 
     handler.register_callback(CoreCategory.SYSTEM, callback)
-    error = VirtualChemLabError("boom", category=CoreCategory.SYSTEM, severity=CoreSeverity.LOW)
+    error = VirtualChemLabError(
+        "boom", category=CoreCategory.SYSTEM, severity=CoreSeverity.LOW
+    )
 
     result = handler.handle_error(error)
 
@@ -43,14 +45,21 @@ def test_handle_legacy_error_records_context() -> None:
     assert stats["handled_errors"] == 1
 
 
-def test_safe_execute_returns_fallback_and_tracks_error(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_safe_execute_returns_fallback_and_tracks_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     local_handler = ErrorHandler()
     monkeypatch.setattr(error_handler_module, "_global_error_handler", local_handler)
 
     def boom() -> None:
         raise RuntimeError("unexpected")
 
-    result = safe_execute(boom, fallback_value="ok", category=CoreCategory.SYSTEM, severity=CoreSeverity.HIGH)
+    result = safe_execute(
+        boom,
+        fallback_value="ok",
+        category=CoreCategory.SYSTEM,
+        severity=CoreSeverity.HIGH,
+    )
 
     assert result == "ok"
     key = "system_high"

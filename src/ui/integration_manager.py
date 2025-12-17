@@ -100,7 +100,9 @@ class IntegrationManager(QObject):
                 error_handler.handle_error(e, "保存实验状态")
                 return None
 
-    def load_experiment_state(self, experiment_id: str, file_path: str | None = None) -> bool:
+    def load_experiment_state(
+        self, experiment_id: str, file_path: str | None = None
+    ) -> bool:
         """加载实验状态"""
         with ErrorContext(error_handler, "加载实验状态"):
             if not self.state_manager or not self.scene:
@@ -144,19 +146,30 @@ class IntegrationManager(QObject):
                 check_type = check_config.get("type")
 
                 if check_type == "drop":
-                    return self.validator.validate_drop_action(check_config, drop_actions)
+                    return self.validator.validate_drop_action(
+                        check_config, drop_actions
+                    )
                 elif check_type == "click":
-                    return self.validator.validate_click_action(check_config, click_counts)
+                    return self.validator.validate_click_action(
+                        check_config, click_counts
+                    )
                 elif check_type == "sequence":
                     # 获取最近的操作序列
-                    recent_actions = self.history.get_recent_actions(50)  # 获取最近50个操作
+                    recent_actions = self.history.get_recent_actions(
+                        50
+                    )  # 获取最近50个操作
                     # 转换为字符串序列
                     sequence_strings = [
-                        f"{action.action_type.value}:{action.details.get('item_id', '')}" for action in recent_actions
+                        f"{action.action_type.value}:{action.details.get('item_id', '')}"
+                        for action in recent_actions
                     ]
-                    return self.validator.validate_sequence_action(check_config, sequence_strings)
+                    return self.validator.validate_sequence_action(
+                        check_config, sequence_strings
+                    )
                 elif check_type == "combined":
-                    return self.validator.validate_combined_actions(check_config, drop_actions, click_counts)
+                    return self.validator.validate_combined_actions(
+                        check_config, drop_actions, click_counts
+                    )
                 else:
                     return True, "无验证要求"
             except Exception as e:
@@ -170,13 +183,23 @@ class IntegrationManager(QObject):
                 return
 
             if action_type == "drag":
-                self.history.record_drag(kwargs["item_id"], kwargs["from_pos"], kwargs["to_pos"], kwargs.get("step_id"))
+                self.history.record_drag(
+                    kwargs["item_id"],
+                    kwargs["from_pos"],
+                    kwargs["to_pos"],
+                    kwargs.get("step_id"),
+                )
             elif action_type == "drop":
                 self.history.record_drop(
-                    kwargs["item_id"], kwargs["zone_id"], kwargs["position"], kwargs.get("step_id")
+                    kwargs["item_id"],
+                    kwargs["zone_id"],
+                    kwargs["position"],
+                    kwargs.get("step_id"),
                 )
             elif action_type == "click":
-                self.history.record_click(kwargs["item_id"], kwargs.get("position"), kwargs.get("step_id"))
+                self.history.record_click(
+                    kwargs["item_id"], kwargs.get("position"), kwargs.get("step_id")
+                )
 
     def get_system_statistics(self) -> dict[str, Any]:
         """获取系统统计"""
@@ -213,7 +236,9 @@ class IntegrationManager(QObject):
             scene_expired_count = scene_cache_manager.cleanup_expired()
 
             if expired_count > 0 or scene_expired_count > 0:
-                logger.info(f"缓存清理完成: 通用缓存 {expired_count} 项, 场景缓存 {scene_expired_count} 项")
+                logger.info(
+                    f"缓存清理完成: 通用缓存 {expired_count} 项, 场景缓存 {scene_expired_count} 项"
+                )
 
     def cleanup(self) -> None:
         """清理资源"""

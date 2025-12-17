@@ -44,7 +44,9 @@ class ServiceAggregator:
         self._services[name] = service
         logger.info(f"注册服务: {name}")
 
-    async def aggregate(self, requests: dict[str, dict[str, Any]], parallel: bool = True) -> AggregatedResponse:
+    async def aggregate(
+        self, requests: dict[str, dict[str, Any]], parallel: bool = True
+    ) -> AggregatedResponse:
         """
         聚合多个服务请求
 
@@ -77,7 +79,9 @@ class ServiceAggregator:
                 task_results = await asyncio.gather(*tasks, return_exceptions=True)
 
                 # 收集结果
-                for service_name, result in zip(requests.keys(), task_results, strict=False):
+                for service_name, result in zip(
+                    requests.keys(), task_results, strict=False
+                ):
                     if isinstance(result, Exception):
                         errors.append(f"{service_name}: {str(result)}")
                         results[service_name] = None
@@ -89,7 +93,9 @@ class ServiceAggregator:
                     if service_name in self._services:
                         try:
                             service = self._services[service_name]
-                            result = await self._call_service(service_name, service, params)
+                            result = await self._call_service(
+                                service_name, service, params
+                            )
                             results[service_name] = result
                         except Exception as e:
                             errors.append(f"{service_name}: {str(e)}")
@@ -100,14 +106,24 @@ class ServiceAggregator:
             execution_time = time.time() - start_time
 
             return AggregatedResponse(
-                success=len(errors) == 0, data=results, errors=errors, execution_time=execution_time
+                success=len(errors) == 0,
+                data=results,
+                errors=errors,
+                execution_time=execution_time,
             )
 
         except Exception as e:
             logger.error(f"聚合请求失败: {e}", exc_info=True)
-            return AggregatedResponse(success=False, data={}, errors=[str(e)], execution_time=time.time() - start_time)
+            return AggregatedResponse(
+                success=False,
+                data={},
+                errors=[str(e)],
+                execution_time=time.time() - start_time,
+            )
 
-    async def _call_service(self, name: str, service: Callable, params: dict[str, Any]) -> Any:
+    async def _call_service(
+        self, name: str, service: Callable, params: dict[str, Any]
+    ) -> Any:
         """
         调用服务
 
@@ -285,7 +301,9 @@ class DataPrefetcher:
             # 后台执行预取
             asyncio.create_task(self._execute_prefetch(prefetch_func, context))
 
-    async def _execute_prefetch(self, prefetch_func: Callable, context: dict[str, Any]) -> None:
+    async def _execute_prefetch(
+        self, prefetch_func: Callable, context: dict[str, Any]
+    ) -> None:
         """
         执行预取
 
@@ -397,7 +415,10 @@ if __name__ == "__main__":
         aggregator.register_service("user_record", get_user_record)
 
         # 聚合请求
-        requests = {"experiment": {"id": "123"}, "user_record": {"experiment_id": "123"}}
+        requests = {
+            "experiment": {"id": "123"},
+            "user_record": {"experiment_id": "123"},
+        }
 
         response = await aggregator.aggregate(requests, parallel=True)
 

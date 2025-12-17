@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 class SecurityLevel(Enum):
     """安全级别"""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -36,6 +37,7 @@ class SecurityLevel(Enum):
 
 class Permission(Enum):
     """权限"""
+
     READ = "read"
     WRITE = "write"
     DELETE = "delete"
@@ -45,6 +47,7 @@ class Permission(Enum):
 
 class ThreatType(Enum):
     """威胁类型"""
+
     BRUTE_FORCE = "brute_force"
     SQL_INJECTION = "sql_injection"
     XSS = "xss"
@@ -58,6 +61,7 @@ class ThreatType(Enum):
 @dataclass
 class User:
     """用户"""
+
     id: str
     username: str
     email: str
@@ -85,13 +89,14 @@ class User:
             "failed_login_attempts": self.failed_login_attempts,
             "last_login": self.last_login,
             "created_at": self.created_at,
-            "updated_at": self.updated_at
+            "updated_at": self.updated_at,
         }
 
 
 @dataclass
 class SecurityEvent:
     """安全事件"""
+
     id: str
     event_type: str
     severity: SecurityLevel
@@ -113,13 +118,14 @@ class SecurityEvent:
             "user_agent": self.user_agent,
             "description": self.description,
             "timestamp": self.timestamp,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
 
 @dataclass
 class ThreatDetection:
     """威胁检测"""
+
     threat_type: ThreatType
     severity: SecurityLevel
     confidence: float
@@ -137,7 +143,7 @@ class ThreatDetection:
             "description": self.description,
             "mitigation": self.mitigation,
             "timestamp": self.timestamp,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
 
@@ -185,7 +191,7 @@ class SimpleEncryptionProvider(EncryptionProvider):
 
     def hash(self, data: str, salt: str) -> str:
         """哈希数据"""
-        return hashlib.pbkdf2_hmac('sha256', data.encode(), salt.encode(), 100000).hex()
+        return hashlib.pbkdf2_hmac("sha256", data.encode(), salt.encode(), 100000).hex()
 
 
 class SecurityManager:
@@ -219,7 +225,7 @@ class SecurityManager:
             "security_events": 0,
             "threat_detections": 0,
             "failed_logins": 0,
-            "successful_logins": 0
+            "successful_logins": 0,
         }
 
         # 线程安全
@@ -246,7 +252,7 @@ class SecurityManager:
             email="admin@example.com",
             password="admin123",
             roles=["admin"],
-            permissions=[Permission.ADMIN]
+            permissions=[Permission.ADMIN],
         )
 
         # 创建默认普通用户
@@ -255,7 +261,7 @@ class SecurityManager:
             email="user@example.com",
             password="user123",
             roles=["user"],
-            permissions=[Permission.READ, Permission.WRITE]
+            permissions=[Permission.READ, Permission.WRITE],
         )
 
     def create_user(
@@ -264,11 +270,13 @@ class SecurityManager:
         email: str,
         password: str,
         roles: list[str] | None = None,
-        permissions: list[Permission] | None = None
+        permissions: list[Permission] | None = None,
     ) -> User:
         """创建用户"""
         if len(password) < self._password_min_length:
-            raise SecurityError(f"Password must be at least {self._password_min_length} characters")
+            raise SecurityError(
+                f"Password must be at least {self._password_min_length} characters"
+            )
 
         # 生成盐
         salt = secrets.token_hex(16)
@@ -284,7 +292,7 @@ class SecurityManager:
             password_hash=password_hash,
             salt=salt,
             roles=roles or [],
-            permissions=permissions or []
+            permissions=permissions or [],
         )
 
         with self._lock:
@@ -293,15 +301,14 @@ class SecurityManager:
 
         # 记录安全事件
         self._log_security_event(
-            "user_created",
-            SecurityLevel.MEDIUM,
-            user.id,
-            f"User created: {username}"
+            "user_created", SecurityLevel.MEDIUM, user.id, f"User created: {username}"
         )
 
         return user
 
-    def authenticate_user(self, username: str, password: str, ip_address: str | None = None) -> str | None:
+    def authenticate_user(
+        self, username: str, password: str, ip_address: str | None = None
+    ) -> str | None:
         """用户认证"""
         # 查找用户
         user = None
@@ -317,7 +324,7 @@ class SecurityManager:
                 SecurityLevel.MEDIUM,
                 None,
                 f"Authentication failed for username: {username}",
-                ip_address=ip_address
+                ip_address=ip_address,
             )
             return None
 
@@ -328,7 +335,7 @@ class SecurityManager:
                 SecurityLevel.HIGH,
                 user.id,
                 f"Inactive user login attempt: {username}",
-                ip_address=ip_address
+                ip_address=ip_address,
             )
             return None
 
@@ -338,7 +345,7 @@ class SecurityManager:
                 SecurityLevel.HIGH,
                 user.id,
                 f"Locked user login attempt: {username}",
-                ip_address=ip_address
+                ip_address=ip_address,
             )
             return None
 
@@ -355,7 +362,7 @@ class SecurityManager:
                     SecurityLevel.HIGH,
                     user.id,
                     f"User locked due to too many failed attempts: {username}",
-                    ip_address=ip_address
+                    ip_address=ip_address,
                 )
 
             self._stats["failed_logins"] += 1
@@ -364,7 +371,7 @@ class SecurityManager:
                 SecurityLevel.MEDIUM,
                 user.id,
                 f"Authentication failed for user: {username}",
-                ip_address=ip_address
+                ip_address=ip_address,
             )
             return None
 
@@ -382,7 +389,7 @@ class SecurityManager:
             SecurityLevel.LOW,
             user.id,
             f"Authentication successful: {username}",
-            ip_address=ip_address
+            ip_address=ip_address,
         )
 
         return session_id
@@ -405,7 +412,7 @@ class SecurityManager:
             "created_at": time.time(),
             "last_activity": time.time(),
             "ip_address": ip_address,
-            "is_active": True
+            "is_active": True,
         }
 
         with self._lock:
@@ -443,10 +450,7 @@ class SecurityManager:
                 # 记录安全事件
                 user_id = self._sessions[session_id]["user_id"]
                 self._log_security_event(
-                    "user_logout",
-                    SecurityLevel.LOW,
-                    user_id,
-                    "User logged out"
+                    "user_logout", SecurityLevel.LOW, user_id, "User logged out"
                 )
 
                 return True
@@ -485,7 +489,9 @@ class SecurityManager:
             logger.error(f"Decryption failed: {e}")
             raise SecurityError("Decryption failed") from e
 
-    def detect_threat(self, threat_type: ThreatType, description: str, **metadata) -> None:
+    def detect_threat(
+        self, threat_type: ThreatType, description: str, **metadata
+    ) -> None:
         """检测威胁"""
         detection = ThreatDetection(
             threat_type=threat_type,
@@ -494,7 +500,7 @@ class SecurityManager:
             description=description,
             mitigation="Investigate and take appropriate action",
             timestamp=time.time(),
-            metadata=metadata
+            metadata=metadata,
         )
 
         with self._lock:
@@ -503,9 +509,7 @@ class SecurityManager:
 
         # 发布威胁检测事件
         publish_event(
-            "threat_detected",
-            detection.to_dict(),
-            priority=EventPriority.HIGH
+            "threat_detected", detection.to_dict(), priority=EventPriority.HIGH
         )
 
         # 记录安全事件
@@ -514,7 +518,7 @@ class SecurityManager:
             SecurityLevel.CRITICAL,
             None,
             f"Threat detected: {threat_type.value} - {description}",
-            metadata=metadata
+            metadata=metadata,
         )
 
     def _log_security_event(
@@ -525,7 +529,7 @@ class SecurityManager:
         description: str,
         ip_address: str | None = None,
         user_agent: str | None = None,
-        **metadata
+        **metadata,
     ) -> None:
         """记录安全事件"""
         event = SecurityEvent(
@@ -537,7 +541,7 @@ class SecurityManager:
             user_agent=user_agent,
             description=description,
             timestamp=time.time(),
-            metadata=metadata
+            metadata=metadata,
         )
 
         with self._lock:
@@ -545,19 +549,17 @@ class SecurityManager:
             self._stats["security_events"] += 1
 
         # 发布安全事件
-        publish_event(
-            "security_event",
-            event.to_dict(),
-            priority=EventPriority.HIGH
-        )
+        publish_event("security_event", event.to_dict(), priority=EventPriority.HIGH)
 
         # 记录日志
         self._observability.log(
-            LogLevel.WARNING if severity in [SecurityLevel.HIGH, SecurityLevel.CRITICAL] else LogLevel.INFO,
+            LogLevel.WARNING
+            if severity in [SecurityLevel.HIGH, SecurityLevel.CRITICAL]
+            else LogLevel.INFO,
             f"Security event: {event_type}",
             module="SecurityManager",
             function="_log_security_event",
-            extra_data=event.to_dict()
+            extra_data=event.to_dict(),
         )
 
     def get_user(self, user_id: str) -> User | None:
@@ -572,9 +574,7 @@ class SecurityManager:
         return None
 
     def get_security_events(
-        self,
-        severity: SecurityLevel | None = None,
-        limit: int | None = None
+        self, severity: SecurityLevel | None = None, limit: int | None = None
     ) -> list[SecurityEvent]:
         """获取安全事件"""
         events = self._security_events.copy()
@@ -590,16 +590,18 @@ class SecurityManager:
         return events
 
     def get_threat_detections(
-        self,
-        threat_type: ThreatType | None = None,
-        limit: int | None = None
+        self, threat_type: ThreatType | None = None, limit: int | None = None
     ) -> list[ThreatDetection]:
         """获取威胁检测"""
         detections = self._threat_detections.copy()
 
         # 过滤威胁类型
         if threat_type:
-            detections = [detection for detection in detections if detection.threat_type == threat_type]
+            detections = [
+                detection
+                for detection in detections
+                if detection.threat_type == threat_type
+            ]
 
         # 限制数量
         if limit:
@@ -624,7 +626,7 @@ class SecurityManager:
             publish_event(
                 "login_result",
                 {"success": session_id is not None, "session_id": session_id},
-                priority=EventPriority.NORMAL
+                priority=EventPriority.NORMAL,
             )
 
     def _handle_logout_request(self, event: Event) -> None:
@@ -636,9 +638,7 @@ class SecurityManager:
 
             # 发布登出结果
             publish_event(
-                "logout_result",
-                {"success": success},
-                priority=EventPriority.NORMAL
+                "logout_result", {"success": success}, priority=EventPriority.NORMAL
             )
 
     def _handle_permission_check(self, event: Event) -> None:
@@ -655,7 +655,7 @@ class SecurityManager:
                 publish_event(
                     "permission_check_result",
                     {"has_permission": has_permission},
-                    priority=EventPriority.NORMAL
+                    priority=EventPriority.NORMAL,
                 )
             except ValueError:
                 logger.error(f"Invalid permission: {permission}")
@@ -691,7 +691,7 @@ class SecurityManager:
             "security_audit",
             SecurityLevel.MEDIUM,
             None,
-            f"Security audit completed, cleaned {len(expired_sessions)} expired sessions"
+            f"Security audit completed, cleaned {len(expired_sessions)} expired sessions",
         )
 
     def _audit_user(self, user_id: str) -> None:
@@ -706,12 +706,13 @@ class SecurityManager:
                 "user_audit",
                 SecurityLevel.MEDIUM,
                 user_id,
-                f"User has {user.failed_login_attempts} failed login attempts"
+                f"User has {user.failed_login_attempts} failed login attempts",
             )
 
         # 检查会话
         user_sessions = [
-            session for session in self._sessions.values()
+            session
+            for session in self._sessions.values()
             if session["user_id"] == user_id and session["is_active"]
         ]
 
@@ -720,7 +721,7 @@ class SecurityManager:
                 "multiple_sessions",
                 SecurityLevel.MEDIUM,
                 user_id,
-                f"User has {len(user_sessions)} active sessions"
+                f"User has {len(user_sessions)} active sessions",
             )
 
     def export_security_data(self, output_dir: Path) -> None:
@@ -731,35 +732,37 @@ class SecurityManager:
         users_file = output_dir / "users.json"
         users_data = {
             "users": [user.to_dict() for user in self._users.values()],
-            "total_users": len(self._users)
+            "total_users": len(self._users),
         }
 
-        with open(users_file, 'w', encoding='utf-8') as f:
+        with open(users_file, "w", encoding="utf-8") as f:
             json.dump(users_data, f, indent=2, ensure_ascii=False)
 
         # 导出安全事件
         events_file = output_dir / "security_events.json"
         events_data = {
             "events": [event.to_dict() for event in self._security_events],
-            "total_events": len(self._security_events)
+            "total_events": len(self._security_events),
         }
 
-        with open(events_file, 'w', encoding='utf-8') as f:
+        with open(events_file, "w", encoding="utf-8") as f:
             json.dump(events_data, f, indent=2, ensure_ascii=False)
 
         # 导出威胁检测
         threats_file = output_dir / "threat_detections.json"
         threats_data = {
-            "detections": [detection.to_dict() for detection in self._threat_detections],
-            "total_detections": len(self._threat_detections)
+            "detections": [
+                detection.to_dict() for detection in self._threat_detections
+            ],
+            "total_detections": len(self._threat_detections),
         }
 
-        with open(threats_file, 'w', encoding='utf-8') as f:
+        with open(threats_file, "w", encoding="utf-8") as f:
             json.dump(threats_data, f, indent=2, ensure_ascii=False)
 
         # 导出统计信息
         stats_file = output_dir / "security_stats.json"
-        with open(stats_file, 'w', encoding='utf-8') as f:
+        with open(stats_file, "w", encoding="utf-8") as f:
             json.dump(self.get_stats(), f, indent=2, ensure_ascii=False)
 
 
@@ -772,7 +775,9 @@ def get_security_manager() -> SecurityManager:
     return _global_security_manager
 
 
-def authenticate_user(username: str, password: str, ip_address: str | None = None) -> str | None:
+def authenticate_user(
+    username: str, password: str, ip_address: str | None = None
+) -> str | None:
     """用户认证"""
     return _global_security_manager.authenticate_user(username, password, ip_address)
 

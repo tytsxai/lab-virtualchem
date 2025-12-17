@@ -68,14 +68,24 @@ class MonitoringConfig:
             enabled=monitoring_config.get("enabled", True),
             app_name=monitoring_config.get("app_name", "VirtualChemLab"),
             # 前端
-            frontend_enabled=frontend_config.get("error_tracking", {}).get("enabled", True),
-            frontend_max_errors=frontend_config.get("error_tracking", {}).get("max_errors", 1000),
-            frontend_max_events=frontend_config.get("behavior_tracking", {}).get("max_events", 10000),
+            frontend_enabled=frontend_config.get("error_tracking", {}).get(
+                "enabled", True
+            ),
+            frontend_max_errors=frontend_config.get("error_tracking", {}).get(
+                "max_errors", 1000
+            ),
+            frontend_max_events=frontend_config.get("behavior_tracking", {}).get(
+                "max_events", 10000
+            ),
             # 后端
             backend_enabled=backend_config.get("apm", {}).get("enabled", True),
             apm_enabled=backend_config.get("apm", {}).get("enabled", True),
-            resource_monitoring_enabled=backend_config.get("resource_monitoring", {}).get("enabled", True),
-            resource_monitoring_interval=backend_config.get("resource_monitoring", {}).get("interval_seconds", 60),
+            resource_monitoring_enabled=backend_config.get(
+                "resource_monitoring", {}
+            ).get("enabled", True),
+            resource_monitoring_interval=backend_config.get(
+                "resource_monitoring", {}
+            ).get("interval_seconds", 60),
             # 追踪
             tracing_enabled=tracing_config.get("enabled", True),
             tracing_sample_rate=tracing_config.get("sample_rate", 1.0),

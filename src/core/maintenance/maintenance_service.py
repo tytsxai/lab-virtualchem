@@ -89,7 +89,9 @@ class MaintenanceServiceImpl(MaintenanceService):
 
         try:
             # 获取缓存类型列表
-            cache_types = [ct.value for ct in request.cache_types if ct != CacheType.ALL]
+            cache_types = [
+                ct.value for ct in request.cache_types if ct != CacheType.ALL
+            ]
             if CacheType.ALL in request.cache_types:
                 cache_types = None
 
@@ -165,11 +167,19 @@ class MaintenanceServiceImpl(MaintenanceService):
                 IssueSeverity.INFO: 0,
             }
             threshold_level = severity_order[request.severity_threshold]
-            filtered_issues = [issue for issue in issues if severity_order[issue.severity] >= threshold_level]
+            filtered_issues = [
+                issue
+                for issue in issues
+                if severity_order[issue.severity] >= threshold_level
+            ]
 
             # 统计
             fixable_count = sum(1 for issue in filtered_issues if issue.fix_available)
-            critical_count = sum(1 for issue in filtered_issues if issue.severity == IssueSeverity.CRITICAL)
+            critical_count = sum(
+                1
+                for issue in filtered_issues
+                if issue.severity == IssueSeverity.CRITICAL
+            )
 
             # 计算健康评分
             health_score = self._calculate_health_score(filtered_issues)
@@ -276,8 +286,12 @@ class MaintenanceServiceImpl(MaintenanceService):
             # 错误状态
             error_status = {
                 "total_issues": len(issues),
-                "critical_issues": sum(1 for i in issues if i.severity == IssueSeverity.CRITICAL),
-                "high_issues": sum(1 for i in issues if i.severity == IssueSeverity.HIGH),
+                "critical_issues": sum(
+                    1 for i in issues if i.severity == IssueSeverity.CRITICAL
+                ),
+                "high_issues": sum(
+                    1 for i in issues if i.severity == IssueSeverity.HIGH
+                ),
                 "fixable_issues": sum(1 for i in issues if i.fix_available),
             }
 
@@ -308,7 +322,10 @@ class MaintenanceServiceImpl(MaintenanceService):
             recommendations = self._generate_recommendations(issues, cache_info)
 
             # 判断是否健康（没有严重或高优先级问题）
-            healthy = error_status["critical_issues"] == 0 and error_status["high_issues"] == 0
+            healthy = (
+                error_status["critical_issues"] == 0
+                and error_status["high_issues"] == 0
+            )
 
             response = HealthCheckResponse(
                 healthy=healthy,
@@ -335,7 +352,9 @@ class MaintenanceServiceImpl(MaintenanceService):
                 timestamp=datetime.now(),
             )
 
-    def run_maintenance(self, request: MaintenanceTaskRequest) -> MaintenanceTaskResponse:
+    def run_maintenance(
+        self, request: MaintenanceTaskRequest
+    ) -> MaintenanceTaskResponse:
         """
         运行维护任务
 
@@ -488,7 +507,9 @@ class MaintenanceServiceImpl(MaintenanceService):
             logger.error(f"导出报告失败: {e}", exc_info=True)
             return False
 
-    def _run_single_task(self, task_type: MaintenanceTaskType, request: MaintenanceTaskRequest) -> MaintenanceResult:
+    def _run_single_task(
+        self, task_type: MaintenanceTaskType, request: MaintenanceTaskRequest
+    ) -> MaintenanceResult:
         """
         运行单个任务
 
@@ -609,7 +630,9 @@ class MaintenanceServiceImpl(MaintenanceService):
         # 基于问题生成建议
         critical_issues = [i for i in issues if i.severity == IssueSeverity.CRITICAL]
         if critical_issues:
-            recommendations.append(f"发现{len(critical_issues)}个严重问题，建议立即修复")
+            recommendations.append(
+                f"发现{len(critical_issues)}个严重问题，建议立即修复"
+            )
 
         # 基于缓存大小生成建议
         total_size = cache_info.get("total", {}).get("size_bytes", 0)

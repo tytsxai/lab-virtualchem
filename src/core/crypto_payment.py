@@ -59,7 +59,9 @@ class IPaymentVerifier(ABC):
     """支付验证器接口"""
 
     @abstractmethod
-    def verify_payment(self, tx_hash: str, expected_amount: float, recipient_address: str) -> PaymentVerification:  # noqa: ARG002
+    def verify_payment(
+        self, tx_hash: str, expected_amount: float, recipient_address: str
+    ) -> PaymentVerification:  # noqa: ARG002
         """验证支付"""
         pass
 
@@ -83,7 +85,9 @@ class BlockchainAPIVerifier(IPaymentVerifier):
         self.api_key = api_key
         self.api_endpoints = self._get_api_endpoints()
 
-    def verify_payment(self, tx_hash: str, expected_amount: float, recipient_address: str) -> PaymentVerification:  # noqa: ARG002
+    def verify_payment(
+        self, tx_hash: str, expected_amount: float, recipient_address: str
+    ) -> PaymentVerification:  # noqa: ARG002
         """验证支付
 
         Args:
@@ -309,7 +313,9 @@ class ManualPaymentVerifier(IPaymentVerifier):
     def __init__(self):
         self.verified_transactions: dict[str, PaymentVerification] = {}
 
-    def verify_payment(self, tx_hash: str, expected_amount: float, recipient_address: str) -> PaymentVerification:  # noqa: ARG002
+    def verify_payment(
+        self, tx_hash: str, expected_amount: float, recipient_address: str
+    ) -> PaymentVerification:  # noqa: ARG002
         """验证支付 (从已验证列表中查找)"""
         if tx_hash in self.verified_transactions:
             return self.verified_transactions[tx_hash]
@@ -359,7 +365,9 @@ class CryptoPaymentManager:
         self.verifiers[currency.value] = verifier
         logger.info(f"添加验证器: {currency.value}")
 
-    def verify_payment(self, currency: str, tx_hash: str, expected_amount: float) -> PaymentVerification:
+    def verify_payment(
+        self, currency: str, tx_hash: str, expected_amount: float
+    ) -> PaymentVerification:
         """验证支付
 
         Args:
@@ -419,7 +427,9 @@ class CryptoPaymentProcessor:
     def __init__(self):
         self.payment_manager = CryptoPaymentManager()
 
-    def initialize(self, addresses: dict[str, str], networks: dict[str, str] | None = None) -> None:
+    def initialize(
+        self, addresses: dict[str, str], networks: dict[str, str] | None = None
+    ) -> None:
         """初始化支付处理器
 
         Args:
@@ -434,9 +444,7 @@ class CryptoPaymentProcessor:
                 network = networks.get(currency_str, "mainnet")
 
                 payment_address = PaymentAddress(
-                    currency=currency,
-                    address=address,
-                    network=network
+                    currency=currency, address=address, network=network
                 )
 
                 self.payment_manager.add_payment_address(payment_address)
@@ -444,7 +452,9 @@ class CryptoPaymentProcessor:
             except ValueError:
                 logger.warning(f"不支持的货币类型: {currency_str}")
 
-    def process_payment(self, currency: str, tx_hash: str, expected_amount: float) -> PaymentVerification:
+    def process_payment(
+        self, currency: str, tx_hash: str, expected_amount: float
+    ) -> PaymentVerification:
         """处理支付验证
 
         Args:

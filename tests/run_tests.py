@@ -193,7 +193,10 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(description="VirtualChemLab 测试运行器")
     parser.add_argument(
-        "--test", choices=["security", "performance", "integration", "all"], default="all", help="要运行的测试类型"
+        "--test",
+        choices=["security", "performance", "integration", "all"],
+        default="all",
+        help="要运行的测试类型",
     )
     parser.add_argument("--verbose", "-v", action="store_true", help="详细输出")
 

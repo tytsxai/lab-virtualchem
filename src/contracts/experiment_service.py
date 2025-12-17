@@ -202,7 +202,9 @@ class ExperimentService(ABC):
         pass
 
     @abstractmethod
-    def validate_experiment(self, template: ExperimentTemplate) -> tuple[bool, list[str]]:
+    def validate_experiment(
+        self, template: ExperimentTemplate
+    ) -> tuple[bool, list[str]]:
         """验证实验模板
 
         Args:

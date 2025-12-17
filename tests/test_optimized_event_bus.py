@@ -25,11 +25,12 @@ def test_basic_functionality():
 
     # 测试订阅和发布
     results = []
+
     def handler(event: Event):
         results.append(event.name)
 
     bus.subscribe("user.login", handler)
-    bus.publish(Event(name="user.login", data={'user_id': 1}))
+    bus.publish(Event(name="user.login", data={"user_id": 1}))
 
     assert len(results) == 1
     assert results[0] == "user.login"
@@ -38,7 +39,7 @@ def test_basic_functionality():
     # 测试通配符
     results.clear()
     bus.subscribe("user.*", handler)
-    bus.publish(Event(name="user.logout", data={'user_id': 1}))
+    bus.publish(Event(name="user.logout", data={"user_id": 1}))
 
     assert len(results) == 1
     print("[OK] 通配符订阅")
@@ -89,10 +90,14 @@ def test_priority():
     bus = OptimizedEventBus()
     results = []
 
-    bus.subscribe("test.event", lambda e: results.append("normal"), EventPriority.NORMAL)
+    bus.subscribe(
+        "test.event", lambda e: results.append("normal"), EventPriority.NORMAL
+    )
     bus.subscribe("test.event", lambda e: results.append("high"), EventPriority.HIGH)
     bus.subscribe("test.event", lambda e: results.append("low"), EventPriority.LOW)
-    bus.subscribe("test.event", lambda e: results.append("critical"), EventPriority.CRITICAL)
+    bus.subscribe(
+        "test.event", lambda e: results.append("critical"), EventPriority.CRITICAL
+    )
 
     bus.publish(Event(name="test.event"))
 
@@ -109,20 +114,18 @@ def test_filter():
     results = []
 
     def handler(event: Event):
-        results.append(event.data.get('value'))
+        results.append(event.data.get("value"))
 
     # 只处理value > 10的事件
     bus.subscribe(
-        "data.update",
-        handler,
-        filter_func=lambda e: e.data.get('value', 0) > 10
+        "data.update", handler, filter_func=lambda e: e.data.get("value", 0) > 10
     )
 
-    bus.publish(Event(name="data.update", data={'value': 5}))
+    bus.publish(Event(name="data.update", data={"value": 5}))
     assert len(results) == 0
     print("[OK] 过滤器拦截")
 
-    bus.publish(Event(name="data.update", data={'value': 15}))
+    bus.publish(Event(name="data.update", data={"value": 15}))
     assert len(results) == 1
     assert results[0] == 15
     print("[OK] 过滤器通过")
@@ -161,10 +164,10 @@ def test_statistics():
         bus.publish(Event(name=f"event.{i}"))
 
     stats = bus.get_stats()
-    assert stats['events_published'] == 10
-    assert stats['events_processed'] == 10
-    assert stats['subscribers_count'] == 1
-    assert stats['avg_match_time_ms'] >= 0
+    assert stats["events_published"] == 10
+    assert stats["events_processed"] == 10
+    assert stats["subscribers_count"] == 1
+    assert stats["avg_match_time_ms"] >= 0
     print(f"[OK] 统计: {stats}")
 
 
@@ -174,7 +177,7 @@ def benchmark_event_matching():
 
     # 测试配置
     num_patterns = 1000  # 订阅模式数量
-    num_events = 10000   # 发布事件数量
+    num_events = 10000  # 发布事件数量
 
     # 原始版本
     print("\n[TEST] 原始版本...")
@@ -306,5 +309,5 @@ def main():
         raise
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

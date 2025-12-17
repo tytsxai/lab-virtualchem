@@ -31,7 +31,11 @@ def _build_sample_tree():
             "text": "Root",
             "children": [
                 {"id": "child_1", "text": "Child 1"},
-                {"id": "child_2", "text": "Child 2", "children": [{"id": "grand", "text": "Grand Child"}]},
+                {
+                    "id": "child_2",
+                    "text": "Child 2",
+                    "children": [{"id": "grand", "text": "Grand Child"}],
+                },
             ],
         }
     ]

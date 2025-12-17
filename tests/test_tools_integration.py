@@ -1,4 +1,3 @@
-
 """
 工具集成测试
 验证所有工具能够正常工作
@@ -70,7 +69,9 @@ def run_command(cmd: Sequence[str], description: str) -> bool:
     print(f"{'=' * 60}")
 
     try:
-        result = subprocess.run(cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=30)
+        result = subprocess.run(
+            cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=30
+        )
     except subprocess.TimeoutExpired:
         print("⏱️  超时")
         return False
@@ -91,16 +92,23 @@ def run_command(cmd: Sequence[str], description: str) -> bool:
 
 
 def _check_generate_secrets() -> bool:
-    return run_command([sys.executable, "tools/generate_secrets.py", "--help"], "密钥生成器 - 帮助信息")
+    return run_command(
+        [sys.executable, "tools/generate_secrets.py", "--help"], "密钥生成器 - 帮助信息"
+    )
 
 
 def _check_coverage_tracker() -> bool:
-    return run_command([sys.executable, "tools/test_coverage_tracker.py", "--help"], "覆盖率追踪器 - 帮助信息")
+    return run_command(
+        [sys.executable, "tools/test_coverage_tracker.py", "--help"],
+        "覆盖率追踪器 - 帮助信息",
+    )
 
 
 def _check_config_management() -> bool:
     # Use module invocation so src imports resolve without manual PYTHONPATH hacks
-    return run_command([sys.executable, "-m", "config.schemas.app_config"], "配置管理 - 加载配置")
+    return run_command(
+        [sys.executable, "-m", "config.schemas.app_config"], "配置管理 - 加载配置"
+    )
 
 
 def _check_imports() -> bool:

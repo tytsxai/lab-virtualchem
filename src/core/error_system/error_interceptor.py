@@ -186,7 +186,10 @@ class ErrorInterceptor(QObject if HAS_PYQT else object):  # type: ignore
             # 查找主窗口
             if hasattr(app, "allWidgets"):
                 for widget in app.allWidgets():
-                    if isinstance(widget, QWidget) and widget.objectName() == "mainWindow":
+                    if (
+                        isinstance(widget, QWidget)
+                        and widget.objectName() == "mainWindow"
+                    ):
                         main_window = widget
                         break
             elif hasattr(app, "activeWindow"):
@@ -258,7 +261,9 @@ class ErrorInterceptor(QObject if HAS_PYQT else object):  # type: ignore
                 # 恢复成功，显示通知
                 from PySide6.QtWidgets import QMessageBox
 
-                QMessageBox.information(main_window, "重试成功", f"已成功恢复从错误: {exception.message}")
+                QMessageBox.information(
+                    main_window, "重试成功", f"已成功恢复从错误: {exception.message}"
+                )
                 logger.info("重试操作成功")
             else:
                 # 恢复失败，询问用户
@@ -283,7 +288,9 @@ class ErrorInterceptor(QObject if HAS_PYQT else object):  # type: ignore
             logger.error(f"处理重试失败: {e}", exc_info=True)
             from PySide6.QtWidgets import QMessageBox
 
-            QMessageBox.critical(main_window, "重试失败", f"重试操作时发生错误: {str(e)}")
+            QMessageBox.critical(
+                main_window, "重试失败", f"重试操作时发生错误: {str(e)}"
+            )
 
     def _handle_restart(self, main_window: Any) -> None:
         """
@@ -324,7 +331,9 @@ class ErrorInterceptor(QObject if HAS_PYQT else object):  # type: ignore
             logger.error(f"处理重启失败: {e}", exc_info=True)
             from PySide6.QtWidgets import QMessageBox
 
-            QMessageBox.critical(main_window, "重启失败", f"重启应用时发生错误: {str(e)}")
+            QMessageBox.critical(
+                main_window, "重启失败", f"重启应用时发生错误: {str(e)}"
+            )
 
     def _reload_current_view(self, main_window: Any) -> None:
         """
@@ -335,9 +344,14 @@ class ErrorInterceptor(QObject if HAS_PYQT else object):  # type: ignore
         """
         try:
             # 尝试重新加载当前实验
-            if hasattr(main_window, "current_experiment_view") and main_window.current_experiment_view:
+            if (
+                hasattr(main_window, "current_experiment_view")
+                and main_window.current_experiment_view
+            ):
                 logger.info("重新加载当前实验视图")
-                current_exp_id = getattr(main_window.current_experiment_view, "experiment_id", None)
+                current_exp_id = getattr(
+                    main_window.current_experiment_view, "experiment_id", None
+                )
                 if current_exp_id:
                     # 关闭当前视图
                     main_window.current_experiment_view.close()
@@ -382,7 +396,9 @@ class ErrorInterceptor(QObject if HAS_PYQT else object):  # type: ignore
             logger.error(f"重启应用失败: {e}", exc_info=True)
             raise
 
-    def _show_error_details(self, exception: BaseAppException, report_id: str, parent: Any) -> None:
+    def _show_error_details(
+        self, exception: BaseAppException, report_id: str, parent: Any
+    ) -> None:
         """显示错误详情"""
         try:
             from PySide6.QtWidgets import (
@@ -413,7 +429,9 @@ class ErrorInterceptor(QObject if HAS_PYQT else object):  # type: ignore
             details += f"错误名称: {exception.error_code.name}\n"
             details += f"错误描述: {exception.message}\n"
             details += f"严重程度: {exception.error_code.severity}\n"
-            details += f"是否可恢复: {'是' if exception.error_code.recoverable else '否'}\n"
+            details += (
+                f"是否可恢复: {'是' if exception.error_code.recoverable else '否'}\n"
+            )
             details += f"发生时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
 
             if hasattr(exception, "context") and exception.context:
@@ -586,7 +604,10 @@ class ConsoleErrorInterceptor:
             app_exception,
             "全局未捕获异常",
             notify=True,
-            notification_channels=[NotificationChannel.CONSOLE, NotificationChannel.LOG],
+            notification_channels=[
+                NotificationChannel.CONSOLE,
+                NotificationChannel.LOG,
+            ],
         )
 
         # 打印到stderr

@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class ThemeType(Enum):
     """主题类型"""
+
     LIGHT = "light"
     DARK = "dark"
     AUTO = "auto"
@@ -26,6 +27,7 @@ class ThemeType(Enum):
 
 class AnimationType(Enum):
     """动画类型"""
+
     FADE = "fade"
     SLIDE = "slide"
     ZOOM = "zoom"
@@ -36,6 +38,7 @@ class AnimationType(Enum):
 
 class LayoutType(Enum):
     """布局类型"""
+
     DESKTOP = "desktop"
     TABLET = "tablet"
     MOBILE = "mobile"
@@ -45,6 +48,7 @@ class LayoutType(Enum):
 @dataclass
 class ColorScheme:
     """配色方案"""
+
     primary: str = "#007ACC"
     secondary: str = "#6C757D"
     success: str = "#28A745"
@@ -64,6 +68,7 @@ class ColorScheme:
 @dataclass
 class Typography:
     """字体排版"""
+
     font_family: str = "system-ui, -apple-system, sans-serif"
     font_size_base: int = 16
     font_size_small: int = 14
@@ -78,6 +83,7 @@ class Typography:
 @dataclass
 class Spacing:
     """间距系统"""
+
     xs: int = 4
     sm: int = 8
     md: int = 16
@@ -89,6 +95,7 @@ class Spacing:
 @dataclass
 class Animation:
     """动画配置"""
+
     type: AnimationType
     duration: float = 0.3
     easing: str = "ease-in-out"
@@ -101,6 +108,7 @@ class Animation:
 @dataclass
 class Theme:
     """主题定义"""
+
     name: str
     type: ThemeType
     colors: ColorScheme
@@ -113,10 +121,11 @@ class Theme:
 @dataclass
 class UIComponent:
     """UI组件"""
+
     id: str
     type: str
     properties: dict[str, Any]
-    children: list['UIComponent'] = field(default_factory=list)
+    children: list["UIComponent"] = field(default_factory=list)
     styles: dict[str, Any] = field(default_factory=dict)
     animations: list[Animation] = field(default_factory=list)
     responsive: dict[str, dict[str, Any]] = field(default_factory=dict)
@@ -125,6 +134,7 @@ class UIComponent:
 @dataclass
 class LayoutConfig:
     """布局配置"""
+
     type: LayoutType
     breakpoints: dict[str, int]
     grid_columns: int = 12
@@ -167,15 +177,15 @@ class EnhancedUISystem:
                 text="#212529",
                 text_secondary="#6C757D",
                 border="#DEE2E6",
-                shadow="rgba(0, 0, 0, 0.1)"
+                shadow="rgba(0, 0, 0, 0.1)",
             ),
             typography=Typography(),
             spacing=Spacing(),
             animations={
                 "fade_in": Animation(AnimationType.FADE, 0.3),
                 "slide_up": Animation(AnimationType.SLIDE, 0.4),
-                "zoom_in": Animation(AnimationType.ZOOM, 0.2)
-            }
+                "zoom_in": Animation(AnimationType.ZOOM, 0.2),
+            },
         )
 
         # 深色主题
@@ -194,15 +204,15 @@ class EnhancedUISystem:
                 text="#FFFFFF",
                 text_secondary="#B3B3B3",
                 border="#333333",
-                shadow="rgba(0, 0, 0, 0.3)"
+                shadow="rgba(0, 0, 0, 0.3)",
             ),
             typography=Typography(),
             spacing=Spacing(),
             animations={
                 "fade_in": Animation(AnimationType.FADE, 0.3),
                 "slide_up": Animation(AnimationType.SLIDE, 0.4),
-                "zoom_in": Animation(AnimationType.ZOOM, 0.2)
-            }
+                "zoom_in": Animation(AnimationType.ZOOM, 0.2),
+            },
         )
 
         # 安全主题
@@ -221,22 +231,18 @@ class EnhancedUISystem:
                 text="#212529",
                 text_secondary="#6C757D",
                 border="#D4EDDA",
-                shadow="rgba(40, 167, 69, 0.1)"
+                shadow="rgba(40, 167, 69, 0.1)",
             ),
             typography=Typography(),
             spacing=Spacing(),
             custom_properties={
                 "safety_highlight": "#D4EDDA",
                 "safety_border": "#C3E6CB",
-                "safety_text": "#155724"
-            }
+                "safety_text": "#155724",
+            },
         )
 
-        self.themes = {
-            "light": light_theme,
-            "dark": dark_theme,
-            "safety": safety_theme
-        }
+        self.themes = {"light": light_theme, "dark": dark_theme, "safety": safety_theme}
 
         # 设置默认主题
         self.current_theme = light_theme
@@ -245,16 +251,12 @@ class EnhancedUISystem:
         """初始化布局系统"""
         self.layout_config = LayoutConfig(
             type=LayoutType.DESKTOP,
-            breakpoints={
-                "mobile": 768,
-                "tablet": 1024,
-                "desktop": 1200
-            },
+            breakpoints={"mobile": 768, "tablet": 1024, "desktop": 1200},
             grid_columns=12,
             container_max_width=1200,
             sidebar_width=250,
             header_height=60,
-            footer_height=80
+            footer_height=80,
         )
 
     def _initialize_components(self) -> None:
@@ -269,60 +271,40 @@ class EnhancedUISystem:
                 "height": 800,
                 "resizable": True,
                 "minimizable": True,
-                "maximizable": True
+                "maximizable": True,
             },
             styles={
                 "background": "var(--background)",
                 "color": "var(--text)",
-                "font-family": "var(--font-family)"
+                "font-family": "var(--font-family)",
             },
             responsive={
-                "mobile": {
-                    "width": "100%",
-                    "height": "100vh"
-                },
-                "tablet": {
-                    "width": "100%",
-                    "height": "100vh"
-                }
-            }
+                "mobile": {"width": "100%", "height": "100vh"},
+                "tablet": {"width": "100%", "height": "100vh"},
+            },
         )
 
         # 侧边栏组件
         sidebar = UIComponent(
             id="sidebar",
             type="sidebar",
-            properties={
-                "width": 250,
-                "collapsible": True,
-                "default_collapsed": False
-            },
+            properties={"width": 250, "collapsible": True, "default_collapsed": False},
             styles={
                 "background": "var(--surface)",
                 "border-right": "1px solid var(--border)",
-                "box-shadow": "var(--shadow)"
+                "box-shadow": "var(--shadow)",
             },
             responsive={
-                "mobile": {
-                    "width": "100%",
-                    "position": "fixed",
-                    "z-index": 1000
-                }
-            }
+                "mobile": {"width": "100%", "position": "fixed", "z-index": 1000}
+            },
         )
 
         # 主内容区域
         main_content = UIComponent(
             id="main_content",
             type="content",
-            properties={
-                "flex": 1,
-                "padding": 24
-            },
-            styles={
-                "background": "var(--background)",
-                "overflow": "auto"
-            }
+            properties={"flex": 1, "padding": 24},
+            styles={"background": "var(--background)", "overflow": "auto"},
         )
 
         # 实验面板
@@ -332,35 +314,31 @@ class EnhancedUISystem:
             properties={
                 "title": "实验面板",
                 "collapsible": True,
-                "default_expanded": True
+                "default_expanded": True,
             },
             styles={
                 "background": "var(--surface)",
                 "border": "1px solid var(--border)",
                 "border-radius": "8px",
-                "box-shadow": "var(--shadow)"
+                "box-shadow": "var(--shadow)",
             },
             animations=[
                 Animation(AnimationType.FADE, 0.3),
-                Animation(AnimationType.SLIDE, 0.4)
-            ]
+                Animation(AnimationType.SLIDE, 0.4),
+            ],
         )
 
         self.components = {
             "main_window": main_window,
             "sidebar": sidebar,
             "main_content": main_content,
-            "experiment_panel": experiment_panel
+            "experiment_panel": experiment_panel,
         }
 
     @enhance_robustness(
-        operation_name="set_theme",
-        security_level="low",
-        enable_caching=True
+        operation_name="set_theme", security_level="low", enable_caching=True
     )
-    @validate_input(validation_rules={
-        "theme_name": {"type": str, "required": True}
-    })
+    @validate_input(validation_rules={"theme_name": {"type": str, "required": True}})
     @log_operation(operation_name="set_theme")
     def set_theme(self, theme_name: str) -> bool:
         """设置主题"""
@@ -375,10 +353,13 @@ class EnhancedUISystem:
         self._apply_theme_to_components()
 
         # 记录主题切换事件
-        self._log_ui_event("theme_changed", {
-            "old_theme": old_theme.name if old_theme else None,
-            "new_theme": self.current_theme.name
-        })
+        self._log_ui_event(
+            "theme_changed",
+            {
+                "old_theme": old_theme.name if old_theme else None,
+                "new_theme": self.current_theme.name,
+            },
+        )
 
         return True
 
@@ -407,7 +388,7 @@ class EnhancedUISystem:
             "--spacing-sm": f"{self.current_theme.spacing.sm}px",
             "--spacing-md": f"{self.current_theme.spacing.md}px",
             "--spacing-lg": f"{self.current_theme.spacing.lg}px",
-            "--spacing-xl": f"{self.current_theme.spacing.xl}px"
+            "--spacing-xl": f"{self.current_theme.spacing.xl}px",
         }
 
         # 应用自定义属性
@@ -418,15 +399,15 @@ class EnhancedUISystem:
         logger.info(f"应用主题 {self.current_theme.name}: {css_variables}")
 
     @enhance_robustness(
-        operation_name="create_component",
-        security_level="medium",
-        enable_caching=True
+        operation_name="create_component", security_level="medium", enable_caching=True
     )
-    @validate_input(validation_rules={
-        "component_id": {"type": str, "required": True},
-        "component_type": {"type": str, "required": True},
-        "properties": {"type": dict, "required": True}
-    })
+    @validate_input(
+        validation_rules={
+            "component_id": {"type": str, "required": True},
+            "component_type": {"type": str, "required": True},
+            "properties": {"type": dict, "required": True},
+        }
+    )
     @log_operation(operation_name="create_component")
     def create_component(
         self,
@@ -434,7 +415,7 @@ class EnhancedUISystem:
         component_type: str,
         properties: dict[str, Any],
         styles: dict[str, Any] | None = None,
-        animations: list[Animation] | None = None
+        animations: list[Animation] | None = None,
     ) -> UIComponent:
         """创建UI组件"""
         component = UIComponent(
@@ -442,31 +423,28 @@ class EnhancedUISystem:
             type=component_type,
             properties=properties,
             styles=styles or {},
-            animations=animations or []
+            animations=animations or [],
         )
 
         self.components[component_id] = component
 
         # 记录组件创建事件
-        self._log_ui_event("component_created", {
-            "component_id": component_id,
-            "component_type": component_type,
-            "properties": properties
-        })
+        self._log_ui_event(
+            "component_created",
+            {
+                "component_id": component_id,
+                "component_type": component_type,
+                "properties": properties,
+            },
+        )
 
         return component
 
     @enhance_robustness(
-        operation_name="update_component",
-        security_level="low",
-        enable_caching=False
+        operation_name="update_component", security_level="low", enable_caching=False
     )
     @log_operation(operation_name="update_component")
-    def update_component(
-        self,
-        component_id: str,
-        updates: dict[str, Any]
-    ) -> bool:
+    def update_component(self, component_id: str, updates: dict[str, Any]) -> bool:
         """更新UI组件"""
         if component_id not in self.components:
             logger.warning(f"组件 {component_id} 不存在")
@@ -488,17 +466,14 @@ class EnhancedUISystem:
             component.responsive.update(updates["responsive"])
 
         # 记录组件更新事件
-        self._log_ui_event("component_updated", {
-            "component_id": component_id,
-            "updates": updates
-        })
+        self._log_ui_event(
+            "component_updated", {"component_id": component_id, "updates": updates}
+        )
 
         return True
 
     @enhance_robustness(
-        operation_name="animate_component",
-        security_level="low",
-        enable_caching=False
+        operation_name="animate_component", security_level="low", enable_caching=False
     )
     @log_operation(operation_name="animate_component")
     def animate_component(
@@ -506,7 +481,7 @@ class EnhancedUISystem:
         component_id: str,
         animation_type: AnimationType,
         duration: float = 0.3,
-        delay: float = 0.0
+        delay: float = 0.0,
     ) -> bool:
         """为组件添加动画"""
         if component_id not in self.components:
@@ -515,33 +490,30 @@ class EnhancedUISystem:
 
         component = self.components[component_id]
 
-        animation = Animation(
-            type=animation_type,
-            duration=duration,
-            delay=delay
-        )
+        animation = Animation(type=animation_type, duration=duration, delay=delay)
 
         component.animations.append(animation)
 
         # 记录动画事件
-        self._log_ui_event("component_animated", {
-            "component_id": component_id,
-            "animation_type": animation_type.value,
-            "duration": duration,
-            "delay": delay
-        })
+        self._log_ui_event(
+            "component_animated",
+            {
+                "component_id": component_id,
+                "animation_type": animation_type.value,
+                "duration": duration,
+                "delay": delay,
+            },
+        )
 
         return True
 
     @enhance_robustness(
         operation_name="get_responsive_styles",
         security_level="low",
-        enable_caching=True
+        enable_caching=True,
     )
     def get_responsive_styles(
-        self,
-        component_id: str,
-        screen_width: int
+        self, component_id: str, screen_width: int
     ) -> dict[str, Any]:
         """获取响应式样式"""
         if component_id not in self.components:
@@ -577,9 +549,7 @@ class EnhancedUISystem:
             return "desktop"
 
     @enhance_robustness(
-        operation_name="get_theme_css",
-        security_level="low",
-        enable_caching=True
+        operation_name="get_theme_css", security_level="low", enable_caching=True
     )
     def get_theme_css(self) -> str:
         """获取主题CSS"""
@@ -590,45 +560,51 @@ class EnhancedUISystem:
 
         # 颜色变量
         colors = self.current_theme.colors
-        css_variables.extend([
-            f"  --primary: {colors.primary};",
-            f"  --secondary: {colors.secondary};",
-            f"  --success: {colors.success};",
-            f"  --warning: {colors.warning};",
-            f"  --danger: {colors.danger};",
-            f"  --info: {colors.info};",
-            f"  --background: {colors.background};",
-            f"  --surface: {colors.surface};",
-            f"  --text: {colors.text};",
-            f"  --text-secondary: {colors.text_secondary};",
-            f"  --border: {colors.border};",
-            f"  --shadow: {colors.shadow};"
-        ])
+        css_variables.extend(
+            [
+                f"  --primary: {colors.primary};",
+                f"  --secondary: {colors.secondary};",
+                f"  --success: {colors.success};",
+                f"  --warning: {colors.warning};",
+                f"  --danger: {colors.danger};",
+                f"  --info: {colors.info};",
+                f"  --background: {colors.background};",
+                f"  --surface: {colors.surface};",
+                f"  --text: {colors.text};",
+                f"  --text-secondary: {colors.text_secondary};",
+                f"  --border: {colors.border};",
+                f"  --shadow: {colors.shadow};",
+            ]
+        )
 
         # 字体变量
         typography = self.current_theme.typography
-        css_variables.extend([
-            f"  --font-family: {typography.font_family};",
-            f"  --font-size-base: {typography.font_size_base}px;",
-            f"  --font-size-small: {typography.font_size_small}px;",
-            f"  --font-size-large: {typography.font_size_large}px;",
-            f"  --font-size-xlarge: {typography.font_size_xlarge}px;",
-            f"  --font-weight-normal: {typography.font_weight_normal};",
-            f"  --font-weight-bold: {typography.font_weight_bold};",
-            f"  --line-height: {typography.line_height};",
-            f"  --letter-spacing: {typography.letter_spacing}px;"
-        ])
+        css_variables.extend(
+            [
+                f"  --font-family: {typography.font_family};",
+                f"  --font-size-base: {typography.font_size_base}px;",
+                f"  --font-size-small: {typography.font_size_small}px;",
+                f"  --font-size-large: {typography.font_size_large}px;",
+                f"  --font-size-xlarge: {typography.font_size_xlarge}px;",
+                f"  --font-weight-normal: {typography.font_weight_normal};",
+                f"  --font-weight-bold: {typography.font_weight_bold};",
+                f"  --line-height: {typography.line_height};",
+                f"  --letter-spacing: {typography.letter_spacing}px;",
+            ]
+        )
 
         # 间距变量
         spacing = self.current_theme.spacing
-        css_variables.extend([
-            f"  --spacing-xs: {spacing.xs}px;",
-            f"  --spacing-sm: {spacing.sm}px;",
-            f"  --spacing-md: {spacing.md}px;",
-            f"  --spacing-lg: {spacing.lg}px;",
-            f"  --spacing-xl: {spacing.xl}px;",
-            f"  --spacing-xxl: {spacing.xxl}px;"
-        ])
+        css_variables.extend(
+            [
+                f"  --spacing-xs: {spacing.xs}px;",
+                f"  --spacing-sm: {spacing.sm}px;",
+                f"  --spacing-md: {spacing.md}px;",
+                f"  --spacing-lg: {spacing.lg}px;",
+                f"  --spacing-xl: {spacing.xl}px;",
+                f"  --spacing-xxl: {spacing.xxl}px;",
+            ]
+        )
 
         # 自定义属性
         for key, value in self.current_theme.custom_properties.items():
@@ -639,12 +615,11 @@ class EnhancedUISystem:
         return css
 
     @enhance_robustness(
-        operation_name="get_component_tree",
-        security_level="low",
-        enable_caching=True
+        operation_name="get_component_tree", security_level="low", enable_caching=True
     )
     def get_component_tree(self) -> dict[str, Any]:
         """获取组件树"""
+
         def serialize_component(component: UIComponent) -> dict[str, Any]:
             return {
                 "id": component.id,
@@ -656,12 +631,14 @@ class EnhancedUISystem:
                         "type": anim.type.value,
                         "duration": anim.duration,
                         "easing": anim.easing,
-                        "delay": anim.delay
+                        "delay": anim.delay,
                     }
                     for anim in component.animations
                 ],
                 "responsive": component.responsive,
-                "children": [serialize_component(child) for child in component.children]
+                "children": [
+                    serialize_component(child) for child in component.children
+                ],
             }
 
         return {
@@ -673,14 +650,14 @@ class EnhancedUISystem:
             "layout_config": {
                 "type": self.layout_config.type.value,
                 "breakpoints": self.layout_config.breakpoints,
-                "grid_columns": self.layout_config.grid_columns
-            } if self.layout_config else None
+                "grid_columns": self.layout_config.grid_columns,
+            }
+            if self.layout_config
+            else None,
         }
 
     @enhance_robustness(
-        operation_name="export_ui_config",
-        security_level="medium",
-        enable_caching=False
+        operation_name="export_ui_config", security_level="medium", enable_caching=False
     )
     def export_ui_config(self) -> str:
         """导出UI配置"""
@@ -704,7 +681,7 @@ class EnhancedUISystem:
                         "text": theme.colors.text,
                         "text_secondary": theme.colors.text_secondary,
                         "border": theme.colors.border,
-                        "shadow": theme.colors.shadow
+                        "shadow": theme.colors.shadow,
                     },
                     "typography": {
                         "font_family": theme.typography.font_family,
@@ -715,7 +692,7 @@ class EnhancedUISystem:
                         "font_weight_normal": theme.typography.font_weight_normal,
                         "font_weight_bold": theme.typography.font_weight_bold,
                         "line_height": theme.typography.line_height,
-                        "letter_spacing": theme.typography.letter_spacing
+                        "letter_spacing": theme.typography.letter_spacing,
                     },
                     "spacing": {
                         "xs": theme.spacing.xs,
@@ -723,9 +700,9 @@ class EnhancedUISystem:
                         "md": theme.spacing.md,
                         "lg": theme.spacing.lg,
                         "xl": theme.spacing.xl,
-                        "xxl": theme.spacing.xxl
+                        "xxl": theme.spacing.xxl,
                     },
-                    "custom_properties": theme.custom_properties
+                    "custom_properties": theme.custom_properties,
                 }
                 for theme_name, theme in self.themes.items()
             },
@@ -736,9 +713,11 @@ class EnhancedUISystem:
                 "container_max_width": self.layout_config.container_max_width,
                 "sidebar_width": self.layout_config.sidebar_width,
                 "header_height": self.layout_config.header_height,
-                "footer_height": self.layout_config.footer_height
-            } if self.layout_config else None,
-            "components": self.get_component_tree()["components"]
+                "footer_height": self.layout_config.footer_height,
+            }
+            if self.layout_config
+            else None,
+            "components": self.get_component_tree()["components"],
         }
 
         return json.dumps(config, ensure_ascii=False, indent=2)

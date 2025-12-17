@@ -4,6 +4,8 @@
 提供实验数据对比、分析和可视化功能
 """
 
+from __future__ import annotations
+
 import json
 import logging
 from dataclasses import asdict, dataclass
@@ -11,10 +13,23 @@ from datetime import datetime
 from pathlib import Path
 
 try:
-    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-except ImportError:
-    from matplotlib.backends.backend_qtagg import FigureCanvasQT as FigureCanvas
-from matplotlib.figure import Figure
+    from matplotlib.backends.backend_qt5agg import (
+        FigureCanvasQTAgg as FigureCanvas,  # type: ignore
+    )
+    from matplotlib.figure import Figure  # type: ignore
+
+    MATPLOTLIB_AVAILABLE = True
+except ImportError:  # pragma: no cover - optional dependency
+    try:
+        from matplotlib.backends.backend_qtagg import (
+            FigureCanvasQT as FigureCanvas,  # type: ignore
+        )
+        from matplotlib.figure import Figure  # type: ignore
+
+        MATPLOTLIB_AVAILABLE = True
+    except ImportError:
+        MATPLOTLIB_AVAILABLE = False
+
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
@@ -24,7 +39,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QMessageBox,
-    QProgressBar,
+    QProgressDialog,
     QPushButton,
     QSplitter,
     QTableWidget,
@@ -135,7 +150,9 @@ class ExperimentDataLoader(QThread):
             # 计算成功率
             steps_completed = len(record_data.get("step_records", []))
             total_steps = record_data.get("total_steps", steps_completed)
-            success_rate = (steps_completed / total_steps) * 100 if total_steps > 0 else 0
+            success_rate = (
+                (steps_completed / total_steps) * 100 if total_steps > 0 else 0
+            )
 
             # 计算持续时间
             started_at = record_data.get("started_at", "")
@@ -144,8 +161,12 @@ class ExperimentDataLoader(QThread):
 
             if started_at and completed_at:
                 try:
-                    start_time = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
-                    end_time = datetime.fromisoformat(completed_at.replace("Z", "+00:00"))
+                    start_time = datetime.fromisoformat(
+                        started_at.replace("Z", "+00:00")
+                    )
+                    end_time = datetime.fromisoformat(
+                        completed_at.replace("Z", "+00:00")
+                    )
                     duration = (end_time - start_time).total_seconds()
                 except Exception:
                     duration = 0
@@ -230,7 +251,9 @@ class ExperimentComparisonWidget(QWidget):
         # 对比类型选择
         layout.addWidget(QLabel("对比类型:"))
         self.comparison_type_combo = QComboBox()
-        self.comparison_type_combo.addItems(["性能对比", "数据对比", "参数对比", "结果对比", "综合对比"])
+        self.comparison_type_combo.addItems(
+            ["性能对比", "数据对比", "参数对比", "结果对比", "综合对比"]
+        )
         layout.addWidget(self.comparison_type_combo)
 
         # 开始对比按钮
@@ -255,7 +278,9 @@ class ExperimentComparisonWidget(QWidget):
         layout.addWidget(QLabel("可用实验:"))
         self.experiment_table = QTableWidget()
         self.experiment_table.setColumnCount(4)
-        self.experiment_table.setHorizontalHeaderLabels(["选择", "实验名称", "用户", "完成时间"])
+        self.experiment_table.setHorizontalHeaderLabels(
+            ["选择", "实验名称", "用户", "完成时间"]
+        )
         self.experiment_table.setSelectionBehavior(QTableWidget.SelectRows)
         layout.addWidget(self.experiment_table)
 
@@ -286,7 +311,9 @@ class ExperimentComparisonWidget(QWidget):
         # 对比结果表格
         self.results_table = QTableWidget()
         self.results_table.setColumnCount(6)
-        self.results_table.setHorizontalHeaderLabels(["指标", "实验1", "实验2", "差异", "百分比", "状态"])
+        self.results_table.setHorizontalHeaderLabels(
+            ["指标", "实验1", "实验2", "差异", "百分比", "状态"]
+        )
         results_layout.addWidget(self.results_table)
 
         panel.addTab(self.results_tab, "对比结果")
@@ -296,9 +323,19 @@ class ExperimentComparisonWidget(QWidget):
         chart_layout = QVBoxLayout(self.chart_tab)
 
         # 图表画布
-        self.figure = Figure(figsize=(10, 6))
-        self.canvas = FigureCanvas(self.figure)
-        chart_layout.addWidget(self.canvas)
+        if MATPLOTLIB_AVAILABLE:
+            self.figure = Figure(figsize=(10, 6))
+            self.canvas = FigureCanvas(self.figure)
+            chart_layout.addWidget(self.canvas)
+        else:
+            self.figure = None
+            self.canvas = None
+            missing_label = QLabel(
+                "对比图表需要 matplotlib（打包构建可能已排除该依赖）。"
+            )
+            missing_label.setWordWrap(True)
+            missing_label.setStyleSheet("color: #666; padding: 12px;")
+            chart_layout.addWidget(missing_label)
 
         panel.addTab(self.chart_tab, "对比图表")
 
@@ -396,9 +433,11 @@ class ExperimentComparisonWidget(QWidget):
         comparison_type = self.comparison_type_combo.currentText()
 
         # 显示进度
-        progress = QProgressBar()
+        progress = QProgressDialog("正在对比实验...", "取消", 0, 100, self)
         progress.setWindowTitle("正在对比实验...")
-        progress.setModal(True)
+        progress.setWindowModality(Qt.WindowModality.ApplicationModal)
+        progress.setAutoClose(False)
+        progress.setAutoReset(False)
         progress.show()
 
         # 创建加载线程
@@ -466,7 +505,9 @@ class ExperimentComparisonWidget(QWidget):
             for j, exp in enumerate(self.experiments):
                 value = getattr(exp, metric_key, 0)
                 values.append(value)
-                self.results_table.setItem(i, j + 1, QTableWidgetItem(f"{value:.2f} {unit}"))
+                self.results_table.setItem(
+                    i, j + 1, QTableWidgetItem(f"{value:.2f} {unit}")
+                )
 
             # 计算差异
             if len(values) >= 2:
@@ -556,6 +597,9 @@ class ExperimentComparisonWidget(QWidget):
     def _create_performance_chart(self):
         """创建性能对比图表"""
         try:
+            if not MATPLOTLIB_AVAILABLE or self.figure is None or self.canvas is None:
+                return
+
             self.figure.clear()
 
             if len(self.experiments) < 2:
@@ -609,16 +653,22 @@ class ExperimentComparisonWidget(QWidget):
 
                 # 成功率对比建议
                 if exp2.success_rate < exp1.success_rate - 10:
-                    recommendations.append("实验2成功率较低，建议检查实验步骤和参数设置")
+                    recommendations.append(
+                        "实验2成功率较低，建议检查实验步骤和参数设置"
+                    )
                 elif exp2.success_rate > exp1.success_rate + 10:
                     recommendations.append("实验2成功率较高，可以推广其成功经验")
 
                 # 步骤对比建议
                 if exp2.steps_completed < exp1.steps_completed:
-                    recommendations.append("实验2完成步骤较少，建议检查是否有遗漏的步骤")
+                    recommendations.append(
+                        "实验2完成步骤较少，建议检查是否有遗漏的步骤"
+                    )
 
             # 显示建议
-            self.recommendations_text.setPlainText("\n".join(recommendations) if recommendations else "暂无特殊建议")
+            self.recommendations_text.setPlainText(
+                "\n".join(recommendations) if recommendations else "暂无特殊建议"
+            )
 
         except Exception as e:
             logger.error(f"生成建议失败: {e}")
@@ -654,7 +704,9 @@ class ExperimentComparisonWidget(QWidget):
                 with open(file_path, "w", encoding="utf-8") as f:
                     json.dump(export_data, f, ensure_ascii=False, indent=2)
 
-                QMessageBox.information(self, "导出成功", f"对比结果已导出到: {file_path}")
+                QMessageBox.information(
+                    self, "导出成功", f"对比结果已导出到: {file_path}"
+                )
                 logger.info(f"对比结果导出成功: {file_path}")
 
         except Exception as e:

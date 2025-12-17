@@ -161,7 +161,9 @@ class AuditLogger:
         elif level == AuditLevel.CRITICAL:
             logger.critical(log_message)
 
-    def log_license_generated(self, license_key: str, user_info: dict[str, Any], details: dict[str, Any]) -> None:
+    def log_license_generated(
+        self, license_key: str, user_info: dict[str, Any], details: dict[str, Any]
+    ) -> None:
         """记录许可证生成"""
         self.log_event(
             event_type=AuditEventType.LICENSE_GENERATED,
@@ -172,7 +174,9 @@ class AuditLogger:
             details=details,
         )
 
-    def log_license_activated(self, license_key: str, device_id: str, ip_address: str | None = None) -> None:
+    def log_license_activated(
+        self, license_key: str, device_id: str, ip_address: str | None = None
+    ) -> None:
         """记录许可证激活"""
         self.log_event(
             event_type=AuditEventType.LICENSE_ACTIVATED,
@@ -202,7 +206,9 @@ class AuditLogger:
             ip_address=ip_address,
         )
 
-    def log_device_blocked(self, device_id: str, reason: str, operator: str | None = None) -> None:
+    def log_device_blocked(
+        self, device_id: str, reason: str, operator: str | None = None
+    ) -> None:
         """记录设备封控"""
         self.log_event(
             event_type=AuditEventType.DEVICE_BLOCKED,
@@ -337,7 +343,9 @@ class AuditLogger:
 
         return events[-limit:]
 
-    def get_statistics(self, start_date: datetime | None = None, end_date: datetime | None = None) -> dict[str, Any]:
+    def get_statistics(
+        self, start_date: datetime | None = None, end_date: datetime | None = None
+    ) -> dict[str, Any]:
         """获取统计信息
 
         Args:
@@ -401,12 +409,16 @@ class AuditLogger:
         filename = f"audit_{date.strftime('%Y%m%d')}.jsonl"
         return self.storage_path / filename
 
-    def _get_log_files_in_range(self, start_date: datetime | None, end_date: datetime | None) -> list[Path]:
+    def _get_log_files_in_range(
+        self, start_date: datetime | None, end_date: datetime | None
+    ) -> list[Path]:
         """获取日期范围内的日志文件"""
         log_files = []
 
         if start_date is None:
-            start_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            start_date = datetime.now().replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
         if end_date is None:
             end_date = datetime.now()
 
@@ -414,7 +426,9 @@ class AuditLogger:
         end = end_date.date()
 
         while current_date <= end:
-            log_file = self._get_log_file(datetime.combine(current_date, datetime.min.time()))
+            log_file = self._get_log_file(
+                datetime.combine(current_date, datetime.min.time())
+            )
             if log_file.exists():
                 log_files.append(log_file)
 

@@ -74,7 +74,9 @@ class KeyboardNavigationManager(QObject):
         self.navigation_mode_changed.emit(mode)
         logger.info(f"导航模式已设置: {mode.value}")
 
-    def register_shortcut(self, key_sequence: str | QKeySequence, name: str, callback: Callable[[], None]):
+    def register_shortcut(
+        self, key_sequence: str | QKeySequence, name: str, callback: Callable[[], None]
+    ):
         """注册快捷键
 
         Args:
@@ -238,7 +240,11 @@ class KeyboardNavigationManager(QObject):
         focusable = []
 
         for child in parent.findChildren(QWidget):
-            if child.focusPolicy() != Qt.FocusPolicy.NoFocus and child.isVisible() and child.isEnabled():
+            if (
+                child.focusPolicy() != Qt.FocusPolicy.NoFocus
+                and child.isVisible()
+                and child.isEnabled()
+            ):
                 focusable.append(child)
 
         return focusable
@@ -256,7 +262,9 @@ class KeyboardNavigationManager(QObject):
 
         self.setup_tab_order(focusable)
 
-    def add_focus_indicator(self, widget: QWidget, color: str = "#0066CC", thickness: int = 2):
+    def add_focus_indicator(
+        self, widget: QWidget, color: str = "#0066CC", thickness: int = 2
+    ):
         """添加焦点指示器
 
         Args:

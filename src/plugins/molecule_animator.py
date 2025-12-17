@@ -22,7 +22,9 @@ class MoleculeAnimator:
         self._simulation = None
 
     @require_plugin("openmm")
-    def setup_simple_system(self, pdb_file: Path, temperature: float = 300.0, timestep: float = 2.0) -> bool:
+    def setup_simple_system(
+        self, pdb_file: Path, temperature: float = 300.0, timestep: float = 2.0
+    ) -> bool:
         """设置简单分子系统
 
         Args:
@@ -45,10 +47,14 @@ class MoleculeAnimator:
             forcefield = ForceField("amber14-all.xml", "amber14/tip3p.xml")
 
             # 创建系统
-            self._system = forcefield.createSystem(pdb.topology, nonbondedMethod=forcefield.NoCutoff)
+            self._system = forcefield.createSystem(
+                pdb.topology, nonbondedMethod=forcefield.NoCutoff
+            )
 
             # 创建积分器
-            integrator = LangevinIntegrator(temperature * kelvin, 1.0 / picoseconds, timestep * femtoseconds)
+            integrator = LangevinIntegrator(
+                temperature * kelvin, 1.0 / picoseconds, timestep * femtoseconds
+            )
 
             # 创建模拟
             self._simulation = Simulation(pdb.topology, self._system, integrator)
@@ -65,7 +71,9 @@ class MoleculeAnimator:
             return False
 
     @require_plugin("openmm")
-    def generate_trajectory(self, num_frames: int = 100, frame_interval: int = 100) -> list[np.ndarray] | None:
+    def generate_trajectory(
+        self, num_frames: int = 100, frame_interval: int = 100
+    ) -> list[np.ndarray] | None:
         """生成轨迹帧
 
         Args:
@@ -123,7 +131,9 @@ class MoleculeAnimator:
             return None
 
     @require_plugin("openmm")
-    def save_trajectory(self, output_file: Path, trajectory: list[np.ndarray], format: str = "pdb") -> bool:
+    def save_trajectory(
+        self, output_file: Path, trajectory: list[np.ndarray], format: str = "pdb"
+    ) -> bool:
         """保存轨迹到文件
 
         Args:
@@ -144,7 +154,11 @@ class MoleculeAnimator:
             elif format.lower() == "dcd":
                 # 保存为DCD轨迹
                 with open(str(output_file), "wb") as f:
-                    dcd = DCDFile(f, self._simulation.topology, self._simulation.integrator.getStepSize())
+                    dcd = DCDFile(
+                        f,
+                        self._simulation.topology,
+                        self._simulation.integrator.getStepSize(),
+                    )
                     for positions in trajectory:
                         dcd.writeModel(positions)
 
@@ -157,7 +171,9 @@ class MoleculeAnimator:
 
 
 # 回退实现：简单的随机运动模拟
-def _fallback_generate_trajectory(num_frames: int = 100, num_atoms: int = 10) -> list[np.ndarray]:
+def _fallback_generate_trajectory(
+    num_frames: int = 100, num_atoms: int = 10
+) -> list[np.ndarray]:
     """回退：生成随机运动轨迹"""
     logger.warning("OpenMM未安装，生成模拟轨迹")
 

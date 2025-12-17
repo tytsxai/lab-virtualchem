@@ -55,7 +55,9 @@ class CacheInfo:
 class CleanupRequest:
     """清理请求DTO"""
 
-    cache_types: list[CacheType] = field(default_factory=lambda: [CacheType.ALL])  # 缓存类型
+    cache_types: list[CacheType] = field(
+        default_factory=lambda: [CacheType.ALL]
+    )  # 缓存类型
     include_expired_only: bool = False  # 仅清理过期项
     max_age_hours: int | None = None  # 最大年龄(小时)
     dry_run: bool = False  # 试运行(不实际删除)
@@ -219,7 +221,9 @@ class MaintenanceService(ABC):
         pass
 
     @abstractmethod
-    def run_maintenance(self, request: MaintenanceTaskRequest) -> MaintenanceTaskResponse:
+    def run_maintenance(
+        self, request: MaintenanceTaskRequest
+    ) -> MaintenanceTaskResponse:
         """
         运行维护任务
 

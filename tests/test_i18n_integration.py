@@ -167,7 +167,9 @@ class TestI18nIntegration:
                 # 错误提示
                 hint_key = f"{key}_hint"
                 hint_msg = self.i18n.t(hint_key)
-                assert len(hint_msg) > 0, f"错误提示 {hint_key} 在语言 {lang} 中应该有翻译"
+                assert len(hint_msg) > 0, (
+                    f"错误提示 {hint_key} 在语言 {lang} 中应该有翻译"
+                )
 
     def test_ui_text_manager_integration(self):
         """测试UI文案管理器集成"""
@@ -229,4 +231,3 @@ def test_i18n_files_exist():
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

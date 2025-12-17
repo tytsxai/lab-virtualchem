@@ -168,7 +168,9 @@ class LicenseManager:
         logger.info(f"生成许可证: {license_key} for {email}")
         return license_obj
 
-    def validate_license(self, license_obj: License, machine_id: str) -> tuple[LicenseStatus, str | None]:
+    def validate_license(
+        self, license_obj: License, machine_id: str
+    ) -> tuple[LicenseStatus, str | None]:
         """验证许可证
 
         Args:
@@ -200,7 +202,9 @@ class LicenseManager:
 
         return LicenseStatus.VALID, None
 
-    def activate_license(self, license_obj: License, machine_id: str) -> tuple[bool, str | None]:
+    def activate_license(
+        self, license_obj: License, machine_id: str
+    ) -> tuple[bool, str | None]:
         """激活许可证
 
         Args:

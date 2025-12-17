@@ -134,7 +134,9 @@ class SettingsDialog(QDialog):
         # 连接语言切换信号
         self.language_combo.currentIndexChanged.connect(self.on_language_changed)
 
-        lang_layout.addRow(self.i18n.t("settings.interface_language") + ":", self.language_combo)
+        lang_layout.addRow(
+            self.i18n.t("settings.interface_language") + ":", self.language_combo
+        )
 
         layout.addWidget(lang_group)
 
@@ -142,8 +144,12 @@ class SettingsDialog(QDialog):
         startup_group = QGroupBox(self.i18n.t("settings.startup"))
         startup_layout = QVBoxLayout(startup_group)
 
-        self.auto_load_last_cb = QCheckBox(self.i18n.t("settings.auto_load_last_experiment"))
-        self.auto_load_last_cb.setChecked(self.settings.get("auto_load_last_experiment", False))
+        self.auto_load_last_cb = QCheckBox(
+            self.i18n.t("settings.auto_load_last_experiment")
+        )
+        self.auto_load_last_cb.setChecked(
+            self.settings.get("auto_load_last_experiment", False)
+        )
         startup_layout.addWidget(self.auto_load_last_cb)
 
         self.show_welcome_cb = QCheckBox(self.i18n.t("settings.show_welcome_screen"))
@@ -177,7 +183,9 @@ class SettingsDialog(QDialog):
         # 连接主题切换信号
         self.theme_combo.currentIndexChanged.connect(self.on_theme_changed)
 
-        theme_layout.addRow(self.i18n.t("settings.color_scheme") + ":", self.theme_combo)
+        theme_layout.addRow(
+            self.i18n.t("settings.color_scheme") + ":", self.theme_combo
+        )
 
         layout.addWidget(theme_group)
 
@@ -201,7 +209,9 @@ class SettingsDialog(QDialog):
         animation_layout = QVBoxLayout(animation_group)
 
         self.enable_animations_cb = QCheckBox(self.i18n.t("settings.enable_animations"))
-        self.enable_animations_cb.setChecked(self.settings.get("enable_animations", True))
+        self.enable_animations_cb.setChecked(
+            self.settings.get("enable_animations", True)
+        )
 
         # 连接动画设置变化信号
         self.enable_animations_cb.toggled.connect(self.on_animation_changed)
@@ -235,7 +245,9 @@ class SettingsDialog(QDialog):
         # 连接渲染质量变化信号
         self.quality_combo.currentIndexChanged.connect(self.on_render_quality_changed)
 
-        render_layout.addRow(self.i18n.t("settings.graphics_quality") + ":", self.quality_combo)
+        render_layout.addRow(
+            self.i18n.t("settings.graphics_quality") + ":", self.quality_combo
+        )
 
         layout.addWidget(render_group)
 
@@ -251,7 +263,9 @@ class SettingsDialog(QDialog):
         # 连接缓存大小变化信号
         self.cache_size_spin.valueChanged.connect(self.on_cache_size_changed)
 
-        cache_layout.addRow(self.i18n.t("settings.cache_size") + ":", self.cache_size_spin)
+        cache_layout.addRow(
+            self.i18n.t("settings.cache_size") + ":", self.cache_size_spin
+        )
 
         layout.addWidget(cache_group)
 
@@ -266,11 +280,15 @@ class SettingsDialog(QDialog):
         self.autosave_interval_spin = QSpinBox()
         self.autosave_interval_spin.setRange(1, 30)
         self.autosave_interval_spin.setSuffix(" " + self.i18n.t("settings.minutes"))
-        self.autosave_interval_spin.setValue(self.settings.get("autosave_interval_min", 5))
+        self.autosave_interval_spin.setValue(
+            self.settings.get("autosave_interval_min", 5)
+        )
         self.autosave_interval_spin.setEnabled(self.autosave_cb.isChecked())
         self.autosave_cb.toggled.connect(self.autosave_interval_spin.setEnabled)
 
-        autosave_layout.addRow(self.i18n.t("settings.save_interval") + ":", self.autosave_interval_spin)
+        autosave_layout.addRow(
+            self.i18n.t("settings.save_interval") + ":", self.autosave_interval_spin
+        )
 
         layout.addWidget(autosave_group)
 
@@ -290,11 +308,17 @@ class SettingsDialog(QDialog):
         self.debug_mode_cb.setChecked(self.settings.get("debug_mode", False))
         dev_layout.addWidget(self.debug_mode_cb)
 
-        self.experimental_features_cb = QCheckBox(self.i18n.t("settings.enable_experimental_features"))
-        self.experimental_features_cb.setChecked(self.settings.get("experimental_features", False))
+        self.experimental_features_cb = QCheckBox(
+            self.i18n.t("settings.enable_experimental_features")
+        )
+        self.experimental_features_cb.setChecked(
+            self.settings.get("experimental_features", False)
+        )
         dev_layout.addWidget(self.experimental_features_cb)
 
-        self.verbose_logging_cb = QCheckBox(self.i18n.t("settings.enable_verbose_logging"))
+        self.verbose_logging_cb = QCheckBox(
+            self.i18n.t("settings.enable_verbose_logging")
+        )
         self.verbose_logging_cb.setChecked(self.settings.get("verbose_logging", False))
         dev_layout.addWidget(self.verbose_logging_cb)
 
@@ -311,16 +335,22 @@ class SettingsDialog(QDialog):
         self.backup_frequency_spin = QSpinBox()
         self.backup_frequency_spin.setRange(1, 30)
         self.backup_frequency_spin.setSuffix(" " + self.i18n.t("settings.days"))
-        self.backup_frequency_spin.setValue(self.settings.get("backup_frequency_days", 7))
+        self.backup_frequency_spin.setValue(
+            self.settings.get("backup_frequency_days", 7)
+        )
         self.backup_frequency_spin.setEnabled(self.auto_backup_cb.isChecked())
         self.auto_backup_cb.toggled.connect(self.backup_frequency_spin.setEnabled)
-        data_layout.addRow(self.i18n.t("settings.backup_frequency") + ":", self.backup_frequency_spin)
+        data_layout.addRow(
+            self.i18n.t("settings.backup_frequency") + ":", self.backup_frequency_spin
+        )
 
         self.data_retention_spin = QSpinBox()
         self.data_retention_spin.setRange(30, 365)
         self.data_retention_spin.setSuffix(" " + self.i18n.t("settings.days"))
         self.data_retention_spin.setValue(self.settings.get("data_retention_days", 90))
-        data_layout.addRow(self.i18n.t("settings.data_retention") + ":", self.data_retention_spin)
+        data_layout.addRow(
+            self.i18n.t("settings.data_retention") + ":", self.data_retention_spin
+        )
 
         layout.addWidget(data_group)
 
@@ -328,7 +358,9 @@ class SettingsDialog(QDialog):
         network_group = QGroupBox(self.i18n.t("settings.network"))
         network_layout = QVBoxLayout(network_group)
 
-        self.check_updates_cb = QCheckBox(self.i18n.t("settings.check_updates_automatically"))
+        self.check_updates_cb = QCheckBox(
+            self.i18n.t("settings.check_updates_automatically")
+        )
         self.check_updates_cb.setChecked(self.settings.get("check_updates", True))
         network_layout.addWidget(self.check_updates_cb)
 
@@ -358,8 +390,12 @@ class SettingsDialog(QDialog):
         self.large_text_cb.setChecked(self.settings.get("large_text", False))
         visual_layout.addWidget(self.large_text_cb)
 
-        self.color_blind_support_cb = QCheckBox(self.i18n.t("settings.enable_color_blind_support"))
-        self.color_blind_support_cb.setChecked(self.settings.get("color_blind_support", False))
+        self.color_blind_support_cb = QCheckBox(
+            self.i18n.t("settings.enable_color_blind_support")
+        )
+        self.color_blind_support_cb.setChecked(
+            self.settings.get("color_blind_support", False)
+        )
         visual_layout.addWidget(self.color_blind_support_cb)
 
         layout.addWidget(visual_group)
@@ -368,15 +404,25 @@ class SettingsDialog(QDialog):
         interaction_group = QGroupBox(self.i18n.t("settings.interaction_accessibility"))
         interaction_layout = QVBoxLayout(interaction_group)
 
-        self.keyboard_navigation_cb = QCheckBox(self.i18n.t("settings.enable_keyboard_navigation"))
-        self.keyboard_navigation_cb.setChecked(self.settings.get("keyboard_navigation", True))
+        self.keyboard_navigation_cb = QCheckBox(
+            self.i18n.t("settings.enable_keyboard_navigation")
+        )
+        self.keyboard_navigation_cb.setChecked(
+            self.settings.get("keyboard_navigation", True)
+        )
         interaction_layout.addWidget(self.keyboard_navigation_cb)
 
-        self.screen_reader_cb = QCheckBox(self.i18n.t("settings.enable_screen_reader_support"))
-        self.screen_reader_cb.setChecked(self.settings.get("screen_reader_support", False))
+        self.screen_reader_cb = QCheckBox(
+            self.i18n.t("settings.enable_screen_reader_support")
+        )
+        self.screen_reader_cb.setChecked(
+            self.settings.get("screen_reader_support", False)
+        )
         interaction_layout.addWidget(self.screen_reader_cb)
 
-        self.focus_indicators_cb = QCheckBox(self.i18n.t("settings.enable_focus_indicators"))
+        self.focus_indicators_cb = QCheckBox(
+            self.i18n.t("settings.enable_focus_indicators")
+        )
         self.focus_indicators_cb.setChecked(self.settings.get("focus_indicators", True))
         interaction_layout.addWidget(self.focus_indicators_cb)
 
@@ -386,18 +432,28 @@ class SettingsDialog(QDialog):
         notification_group = QGroupBox(self.i18n.t("settings.notifications"))
         notification_layout = QVBoxLayout(notification_group)
 
-        self.experiment_complete_notifications_cb = QCheckBox(self.i18n.t("settings.experiment_complete_notifications"))
+        self.experiment_complete_notifications_cb = QCheckBox(
+            self.i18n.t("settings.experiment_complete_notifications")
+        )
         self.experiment_complete_notifications_cb.setChecked(
             self.settings.get("experiment_complete_notifications", True)
         )
         notification_layout.addWidget(self.experiment_complete_notifications_cb)
 
-        self.error_notifications_cb = QCheckBox(self.i18n.t("settings.error_notifications"))
-        self.error_notifications_cb.setChecked(self.settings.get("error_notifications", True))
+        self.error_notifications_cb = QCheckBox(
+            self.i18n.t("settings.error_notifications")
+        )
+        self.error_notifications_cb.setChecked(
+            self.settings.get("error_notifications", True)
+        )
         notification_layout.addWidget(self.error_notifications_cb)
 
-        self.update_notifications_cb = QCheckBox(self.i18n.t("settings.update_notifications"))
-        self.update_notifications_cb.setChecked(self.settings.get("update_notifications", True))
+        self.update_notifications_cb = QCheckBox(
+            self.i18n.t("settings.update_notifications")
+        )
+        self.update_notifications_cb.setChecked(
+            self.settings.get("update_notifications", True)
+        )
         notification_layout.addWidget(self.update_notifications_cb)
 
         layout.addWidget(notification_group)
@@ -504,17 +560,23 @@ class SettingsDialog(QDialog):
         try:
             # 验证字体大小
             if not (8 <= settings.get("font_size", 10) <= 24):
-                QMessageBox.warning(self, self.i18n.t("ui.warning"), "字体大小必须在8-24之间")
+                QMessageBox.warning(
+                    self, self.i18n.t("ui.warning"), "字体大小必须在8-24之间"
+                )
                 return False
 
             # 验证缓存大小
             if not (50 <= settings.get("cache_size_mb", 200) <= 1000):
-                QMessageBox.warning(self, self.i18n.t("ui.warning"), "缓存大小必须在50-1000MB之间")
+                QMessageBox.warning(
+                    self, self.i18n.t("ui.warning"), "缓存大小必须在50-1000MB之间"
+                )
                 return False
 
             # 验证自动保存间隔
             if not (1 <= settings.get("autosave_interval_min", 5) <= 30):
-                QMessageBox.warning(self, self.i18n.t("ui.warning"), "自动保存间隔必须在1-30分钟之间")
+                QMessageBox.warning(
+                    self, self.i18n.t("ui.warning"), "自动保存间隔必须在1-30分钟之间"
+                )
                 return False
 
             # 验证语言
@@ -529,7 +591,9 @@ class SettingsDialog(QDialog):
 
             # 验证渲染质量
             if settings.get("render_quality") not in ["low", "medium", "high"]:
-                QMessageBox.warning(self, self.i18n.t("ui.warning"), "请选择有效的渲染质量")
+                QMessageBox.warning(
+                    self, self.i18n.t("ui.warning"), "请选择有效的渲染质量"
+                )
                 return False
 
             return True
@@ -564,10 +628,18 @@ class SettingsDialog(QDialog):
             self.settings = new_settings
             if self.save_settings():
                 self.settings_changed.emit(self.settings)
-                QMessageBox.information(self, self.i18n.t("ui.success"), self.i18n.t("settings.save_success"))
+                QMessageBox.information(
+                    self,
+                    self.i18n.t("ui.success"),
+                    self.i18n.t("settings.save_success"),
+                )
                 self.accept()
             else:
-                QMessageBox.critical(self, self.i18n.t("error.title"), self.i18n.t("settings.save_failed"))
+                QMessageBox.critical(
+                    self,
+                    self.i18n.t("error.title"),
+                    self.i18n.t("settings.save_failed"),
+                )
         else:
             self.accept()
 
@@ -618,14 +690,19 @@ class SettingsDialog(QDialog):
             self.settings = self.get_default_settings()
             self.save_settings()
             self.settings_changed.emit(self.settings)
-            QMessageBox.information(self, self.i18n.t("ui.success"), self.i18n.t("settings.reset_success"))
+            QMessageBox.information(
+                self, self.i18n.t("ui.success"), self.i18n.t("settings.reset_success")
+            )
             self.accept()
 
     def on_import_settings(self) -> None:
         """导入设置"""
         try:
             file_path, _ = QFileDialog.getOpenFileName(
-                self, self.i18n.t("settings.import_title"), "", "JSON Files (*.json);;All Files (*)"
+                self,
+                self.i18n.t("settings.import_title"),
+                "",
+                "JSON Files (*.json);;All Files (*)",
             )
 
             if file_path:
@@ -636,9 +713,17 @@ class SettingsDialog(QDialog):
                 if self.validate_imported_settings(imported_settings):
                     self.settings.update(imported_settings)
                     self.load_settings_to_ui()
-                    QMessageBox.information(self, self.i18n.t("ui.success"), self.i18n.t("settings.import_success"))
+                    QMessageBox.information(
+                        self,
+                        self.i18n.t("ui.success"),
+                        self.i18n.t("settings.import_success"),
+                    )
                 else:
-                    QMessageBox.warning(self, self.i18n.t("ui.warning"), self.i18n.t("settings.import_invalid"))
+                    QMessageBox.warning(
+                        self,
+                        self.i18n.t("ui.warning"),
+                        self.i18n.t("settings.import_invalid"),
+                    )
 
         except Exception as e:
             logger.error(f"导入设置失败: {e}")
@@ -648,7 +733,10 @@ class SettingsDialog(QDialog):
         """导出设置"""
         try:
             file_path, _ = QFileDialog.getSaveFileName(
-                self, self.i18n.t("settings.export_title"), "settings_backup.json", "JSON Files (*.json);;All Files (*)"
+                self,
+                self.i18n.t("settings.export_title"),
+                "settings_backup.json",
+                "JSON Files (*.json);;All Files (*)",
             )
 
             if file_path:
@@ -657,9 +745,17 @@ class SettingsDialog(QDialog):
                     with open(file_path, "w", encoding="utf-8") as f:
                         json.dump(current_settings, f, indent=2, ensure_ascii=False)
 
-                    QMessageBox.information(self, self.i18n.t("ui.success"), self.i18n.t("settings.export_success"))
+                    QMessageBox.information(
+                        self,
+                        self.i18n.t("ui.success"),
+                        self.i18n.t("settings.export_success"),
+                    )
                 else:
-                    QMessageBox.warning(self, self.i18n.t("ui.warning"), self.i18n.t("settings.export_failed"))
+                    QMessageBox.warning(
+                        self,
+                        self.i18n.t("ui.warning"),
+                        self.i18n.t("settings.export_failed"),
+                    )
 
         except Exception as e:
             logger.error(f"导出设置失败: {e}")
@@ -696,8 +792,12 @@ class SettingsDialog(QDialog):
             if index >= 0:
                 self.language_combo.setCurrentIndex(index)
 
-            self.auto_load_last_cb.setChecked(self.settings.get("auto_load_last_experiment", False))
-            self.show_welcome_cb.setChecked(self.settings.get("show_welcome_screen", True))
+            self.auto_load_last_cb.setChecked(
+                self.settings.get("auto_load_last_experiment", False)
+            )
+            self.show_welcome_cb.setChecked(
+                self.settings.get("show_welcome_screen", True)
+            )
 
             # 外观设置
             current_theme = self.settings.get("theme", "light")
@@ -706,7 +806,9 @@ class SettingsDialog(QDialog):
                 self.theme_combo.setCurrentIndex(index)
 
             self.font_size_spin.setValue(self.settings.get("font_size", 10))
-            self.enable_animations_cb.setChecked(self.settings.get("enable_animations", True))
+            self.enable_animations_cb.setChecked(
+                self.settings.get("enable_animations", True)
+            )
 
             # 性能设置
             current_quality = self.settings.get("render_quality", "medium")
@@ -716,32 +818,54 @@ class SettingsDialog(QDialog):
 
             self.cache_size_spin.setValue(self.settings.get("cache_size_mb", 200))
             self.autosave_cb.setChecked(self.settings.get("enable_auto_save", True))
-            self.autosave_interval_spin.setValue(self.settings.get("autosave_interval_min", 5))
+            self.autosave_interval_spin.setValue(
+                self.settings.get("autosave_interval_min", 5)
+            )
 
             # 高级设置
             self.debug_mode_cb.setChecked(self.settings.get("debug_mode", False))
-            self.experimental_features_cb.setChecked(self.settings.get("experimental_features", False))
-            self.verbose_logging_cb.setChecked(self.settings.get("verbose_logging", False))
+            self.experimental_features_cb.setChecked(
+                self.settings.get("experimental_features", False)
+            )
+            self.verbose_logging_cb.setChecked(
+                self.settings.get("verbose_logging", False)
+            )
             self.auto_backup_cb.setChecked(self.settings.get("auto_backup", True))
-            self.backup_frequency_spin.setValue(self.settings.get("backup_frequency_days", 7))
-            self.data_retention_spin.setValue(self.settings.get("data_retention_days", 90))
+            self.backup_frequency_spin.setValue(
+                self.settings.get("backup_frequency_days", 7)
+            )
+            self.data_retention_spin.setValue(
+                self.settings.get("data_retention_days", 90)
+            )
             self.check_updates_cb.setChecked(self.settings.get("check_updates", True))
             self.analytics_cb.setChecked(self.settings.get("enable_analytics", False))
 
             # 无障碍设置
             self.high_contrast_cb.setChecked(self.settings.get("high_contrast", False))
             self.large_text_cb.setChecked(self.settings.get("large_text", False))
-            self.color_blind_support_cb.setChecked(self.settings.get("color_blind_support", False))
-            self.keyboard_navigation_cb.setChecked(self.settings.get("keyboard_navigation", True))
-            self.screen_reader_cb.setChecked(self.settings.get("screen_reader_support", False))
-            self.focus_indicators_cb.setChecked(self.settings.get("focus_indicators", True))
+            self.color_blind_support_cb.setChecked(
+                self.settings.get("color_blind_support", False)
+            )
+            self.keyboard_navigation_cb.setChecked(
+                self.settings.get("keyboard_navigation", True)
+            )
+            self.screen_reader_cb.setChecked(
+                self.settings.get("screen_reader_support", False)
+            )
+            self.focus_indicators_cb.setChecked(
+                self.settings.get("focus_indicators", True)
+            )
 
             # 通知设置
             self.experiment_complete_notifications_cb.setChecked(
                 self.settings.get("experiment_complete_notifications", True)
             )
-            self.error_notifications_cb.setChecked(self.settings.get("error_notifications", True))
-            self.update_notifications_cb.setChecked(self.settings.get("update_notifications", True))
+            self.error_notifications_cb.setChecked(
+                self.settings.get("error_notifications", True)
+            )
+            self.update_notifications_cb.setChecked(
+                self.settings.get("update_notifications", True)
+            )
 
         except Exception as e:
             logger.error(f"加载设置到UI失败: {e}")

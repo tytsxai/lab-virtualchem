@@ -108,7 +108,9 @@ class ParticleEffect(QGraphicsItem):
         self.update()
         return True
 
-    def paint(self, painter: QPainter, _option: Any, _widget: Any | None = None) -> None:
+    def paint(
+        self, painter: QPainter, _option: Any, _widget: Any | None = None
+    ) -> None:
         """绘制粒子"""
         painter.setOpacity(self._opacity)
 
@@ -151,7 +153,9 @@ class ParticleEffect(QGraphicsItem):
         # 创建径向渐变
         gradient = QRadialGradient(self.size, self.size, self.size)
         gradient.setColorAt(0, self.color)
-        gradient.setColorAt(1, QColor(self.color.red(), self.color.green(), self.color.blue(), 0))
+        gradient.setColorAt(
+            1, QColor(self.color.red(), self.color.green(), self.color.blue(), 0)
+        )
 
         painter.setBrush(QBrush(gradient))
         painter.setPen(Qt.PenStyle.NoPen)
@@ -185,21 +189,32 @@ class ParticleEffect(QGraphicsItem):
     def _paint_bubble(self, painter: QPainter) -> None:
         """绘制气泡效果"""
         painter.setPen(QPen(self.color, 2))
-        painter.setBrush(QBrush(QColor(self.color.red(), self.color.green(), self.color.blue(), 100)))
+        painter.setBrush(
+            QBrush(QColor(self.color.red(), self.color.green(), self.color.blue(), 100))
+        )
 
         # 绘制气泡
         painter.drawEllipse(0, 0, int(self.size), int(self.size))
 
         # 绘制高光
         painter.setPen(QPen(QColor(255, 255, 255, 150), 1))
-        painter.drawEllipse(int(self.size * 0.3), int(self.size * 0.3), int(self.size * 0.2), int(self.size * 0.2))
+        painter.drawEllipse(
+            int(self.size * 0.3),
+            int(self.size * 0.3),
+            int(self.size * 0.2),
+            int(self.size * 0.2),
+        )
 
     def _paint_smoke(self, painter: QPainter) -> None:
         """绘制烟雾效果"""
         # 创建线性渐变
         gradient = QLinearGradient(0, 0, 0, self.size * 2)
-        gradient.setColorAt(0, QColor(self.color.red(), self.color.green(), self.color.blue(), 100))
-        gradient.setColorAt(1, QColor(self.color.red(), self.color.green(), self.color.blue(), 0))
+        gradient.setColorAt(
+            0, QColor(self.color.red(), self.color.green(), self.color.blue(), 100)
+        )
+        gradient.setColorAt(
+            1, QColor(self.color.red(), self.color.green(), self.color.blue(), 0)
+        )
 
         painter.setBrush(QBrush(gradient))
         painter.setPen(Qt.PenStyle.NoPen)
@@ -231,7 +246,9 @@ class ParticleEffect(QGraphicsItem):
     def _paint_water(self, painter: QPainter) -> None:
         """绘制水花效果"""
         painter.setPen(QPen(self.color, 2))
-        painter.setBrush(QBrush(QColor(self.color.red(), self.color.green(), self.color.blue(), 150)))
+        painter.setBrush(
+            QBrush(QColor(self.color.red(), self.color.green(), self.color.blue(), 150))
+        )
 
         # 绘制水滴
         painter.drawEllipse(0, 0, int(self.size), int(self.size))
@@ -415,7 +432,9 @@ class ParticleSystem(QObject):
         if velocity_range[1] > 0:
             angle = random.uniform(0, 2 * math.pi)
             speed = random.uniform(velocity_range[0], velocity_range[1])
-            particle.velocity = QPointF(speed * math.cos(angle), speed * math.sin(angle))
+            particle.velocity = QPointF(
+                speed * math.cos(angle), speed * math.sin(angle)
+            )
 
         # 设置加速度
         particle.acceleration = config.get("acceleration", QPointF(0, 0))
@@ -441,7 +460,10 @@ class ParticleSystem(QObject):
             angle = random.uniform(0, 2 * math.pi)
             distance = random.uniform(20, 60) * intensity
 
-            offset_pos = QPointF(position.x() + distance * math.cos(angle), position.y() + distance * math.sin(angle))
+            offset_pos = QPointF(
+                position.x() + distance * math.cos(angle),
+                position.y() + distance * math.sin(angle),
+            )
 
             self.create_particle(ParticleType.EXPLOSION, offset_pos)
 
@@ -451,11 +473,16 @@ class ParticleSystem(QObject):
             angle = random.uniform(0, 2 * math.pi)
             distance = random.uniform(10, 30)
 
-            offset_pos = QPointF(position.x() + distance * math.cos(angle), position.y() + distance * math.sin(angle))
+            offset_pos = QPointF(
+                position.x() + distance * math.cos(angle),
+                position.y() + distance * math.sin(angle),
+            )
 
             self.create_particle(ParticleType.SPARKLE, offset_pos)
 
-    def create_glow_effect(self, position: QPointF, color: QColor | None = None) -> None:
+    def create_glow_effect(
+        self, position: QPointF, color: QColor | None = None
+    ) -> None:
         """创建发光效果"""
         config = {}
         if color:
@@ -478,7 +505,9 @@ class ParticleSystem(QObject):
         # 创建多个轨迹粒子
         for i in range(5):
             t = i / 4.0
-            pos = QPointF(start_pos.x() + t * norm_x * 20.0, start_pos.y() + t * norm_y * 20.0)
+            pos = QPointF(
+                start_pos.x() + t * norm_x * 20.0, start_pos.y() + t * norm_y * 20.0
+            )
 
             particle = self.create_particle(ParticleType.TRAIL, pos)
             particle.velocity = QPointF(norm_x * 10.0, norm_y * 10.0)
@@ -486,21 +515,30 @@ class ParticleSystem(QObject):
     def create_bubble_effect(self, position: QPointF, count: int = 3) -> None:
         """创建气泡效果"""
         for _ in range(count):
-            offset_pos = QPointF(position.x() + random.uniform(-10, 10), position.y() + random.uniform(-10, 10))
+            offset_pos = QPointF(
+                position.x() + random.uniform(-10, 10),
+                position.y() + random.uniform(-10, 10),
+            )
 
             self.create_particle(ParticleType.BUBBLE, offset_pos)
 
     def create_smoke_effect(self, position: QPointF, count: int = 4) -> None:
         """创建烟雾效果"""
         for _ in range(count):
-            offset_pos = QPointF(position.x() + random.uniform(-15, 15), position.y() + random.uniform(-15, 15))
+            offset_pos = QPointF(
+                position.x() + random.uniform(-15, 15),
+                position.y() + random.uniform(-15, 15),
+            )
 
             self.create_particle(ParticleType.SMOKE, offset_pos)
 
     def create_fire_effect(self, position: QPointF, count: int = 3) -> None:
         """创建火焰效果"""
         for _ in range(count):
-            offset_pos = QPointF(position.x() + random.uniform(-8, 8), position.y() + random.uniform(-8, 8))
+            offset_pos = QPointF(
+                position.x() + random.uniform(-8, 8),
+                position.y() + random.uniform(-8, 8),
+            )
 
             self.create_particle(ParticleType.FIRE, offset_pos)
 
@@ -510,7 +548,10 @@ class ParticleSystem(QObject):
             angle = random.uniform(0, 2 * math.pi)
             distance = random.uniform(15, 40)
 
-            offset_pos = QPointF(position.x() + distance * math.cos(angle), position.y() + distance * math.sin(angle))
+            offset_pos = QPointF(
+                position.x() + distance * math.cos(angle),
+                position.y() + distance * math.sin(angle),
+            )
 
             self.create_particle(ParticleType.WATER, offset_pos)
 
@@ -529,7 +570,9 @@ class ParticleSystem(QObject):
         """获取当前粒子数量"""
         return len(self.active_particles)
 
-    def update_particle_config(self, particle_type: ParticleType, config: dict[str, Any]) -> None:
+    def update_particle_config(
+        self, particle_type: ParticleType, config: dict[str, Any]
+    ) -> None:
         """更新粒子配置"""
         if particle_type in self.particle_configs:
             self.particle_configs[particle_type].update(config)
@@ -575,17 +618,23 @@ class ParticleEffectManager:
         particle_system = self.get_particle_system(scene)
         return particle_system.create_particle(particle_type, position, custom_config)
 
-    def create_explosion(self, scene: QGraphicsScene, position: QPointF, intensity: float = 1.0) -> None:
+    def create_explosion(
+        self, scene: QGraphicsScene, position: QPointF, intensity: float = 1.0
+    ) -> None:
         """创建爆炸效果"""
         particle_system = self.get_particle_system(scene)
         particle_system.create_explosion(position, intensity)
 
-    def create_sparkle_burst(self, scene: QGraphicsScene, position: QPointF, count: int = 6) -> None:
+    def create_sparkle_burst(
+        self, scene: QGraphicsScene, position: QPointF, count: int = 6
+    ) -> None:
         """创建闪烁爆发效果"""
         particle_system = self.get_particle_system(scene)
         particle_system.create_sparkle_burst(position, count)
 
-    def create_glow_effect(self, scene: QGraphicsScene, position: QPointF, color: QColor | None = None) -> None:
+    def create_glow_effect(
+        self, scene: QGraphicsScene, position: QPointF, color: QColor | None = None
+    ) -> None:
         """创建发光效果"""
         particle_system = self.get_particle_system(scene)
         particle_system.create_glow_effect(position, color)

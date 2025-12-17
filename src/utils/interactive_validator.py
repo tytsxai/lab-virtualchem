@@ -46,7 +46,9 @@ class InteractiveValidator:
             return True, msg
         elif actual_zone:
             msg = f"✗ 错误！{required_item} 应该放到 {required_zone}，而不是 {actual_zone}"
-            logger.info(f"拖拽验证失败: {required_item} -> {actual_zone} (期望: {required_zone})")
+            logger.info(
+                f"拖拽验证失败: {required_item} -> {actual_zone} (期望: {required_zone})"
+            )
             self._record_validation("drop", False, check_config)
             return False, msg
         else:
@@ -86,7 +88,9 @@ class InteractiveValidator:
             return True, msg
         else:
             msg = f"✗ 请点击 {required_item}（还需点击 {required_times - actual_times} 次）"
-            logger.info(f"点击验证失败: {required_item} 点击 {actual_times}/{required_times} 次")
+            logger.info(
+                f"点击验证失败: {required_item} 点击 {actual_times}/{required_times} 次"
+            )
             self._record_validation("click", False, check_config)
             return False, msg
 
@@ -179,7 +183,9 @@ class InteractiveValidator:
             self._record_validation("combined", False, check_config)
             return False, msg
 
-    def _record_validation(self, check_type: str, passed: bool, config: dict[str, Any]) -> None:
+    def _record_validation(
+        self, check_type: str, passed: bool, config: dict[str, Any]
+    ) -> None:
         """记录验证结果"""
         self.validation_history.append(
             {

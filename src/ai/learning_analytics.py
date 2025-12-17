@@ -81,7 +81,9 @@ class LearningAnalytics:
         """初始化学习分析器"""
         self.patterns: dict[str, LearningPattern] = {}
 
-    def analyze_user_behavior(self, user_id: str, activity_data: list[dict[str, Any]]) -> LearningPattern:
+    def analyze_user_behavior(
+        self, user_id: str, activity_data: list[dict[str, Any]]
+    ) -> LearningPattern:
         """分析用户学习行为
 
         Args:
@@ -109,8 +111,14 @@ class LearningAnalytics:
         preferred_difficulty = self._detect_preferred_difficulty(activity_data)
 
         # 计算平均完成时间
-        completion_times = [a.get("completion_time", 30) for a in activity_data if "completion_time" in a]
-        avg_time = sum(completion_times) / len(completion_times) if completion_times else 30.0
+        completion_times = [
+            a.get("completion_time", 30)
+            for a in activity_data
+            if "completion_time" in a
+        ]
+        avg_time = (
+            sum(completion_times) / len(completion_times) if completion_times else 30.0
+        )
 
         # 计算成功率
         successes = sum(1 for a in activity_data if a.get("success", False))
@@ -137,21 +145,31 @@ class LearningAnalytics:
         self.patterns[user_id] = pattern
         return pattern
 
-    def _detect_learning_style(self, activity_data: list[dict[str, Any]]) -> LearningStyle:
+    def _detect_learning_style(
+        self, activity_data: list[dict[str, Any]]
+    ) -> LearningStyle:
         """检测学习风格"""
         # 简单实现：基于用户交互类型
-        visual_count = sum(1 for a in activity_data if a.get("interaction_type") == "visual")
-        kinesthetic_count = sum(1 for a in activity_data if a.get("interaction_type") == "interactive")
+        visual_count = sum(
+            1 for a in activity_data if a.get("interaction_type") == "visual"
+        )
+        kinesthetic_count = sum(
+            1 for a in activity_data if a.get("interaction_type") == "interactive"
+        )
 
         if visual_count > kinesthetic_count:
             return LearningStyle.VISUAL
         else:
             return LearningStyle.KINESTHETIC
 
-    def _detect_preferred_difficulty(self, activity_data: list[dict[str, Any]]) -> DifficultyLevel:
+    def _detect_preferred_difficulty(
+        self, activity_data: list[dict[str, Any]]
+    ) -> DifficultyLevel:
         """检测偏好难度"""
         # 基于用户选择的实验难度
-        difficulties = [a.get("difficulty", "beginner") for a in activity_data if "difficulty" in a]
+        difficulties = [
+            a.get("difficulty", "beginner") for a in activity_data if "difficulty" in a
+        ]
 
         if not difficulties:
             return DifficultyLevel.BEGINNER
@@ -172,7 +190,9 @@ class LearningAnalytics:
 
         return difficulty_map.get(most_common, DifficultyLevel.BEGINNER)
 
-    def _identify_common_mistakes(self, activity_data: list[dict[str, Any]]) -> list[str]:
+    def _identify_common_mistakes(
+        self, activity_data: list[dict[str, Any]]
+    ) -> list[str]:
         """识别常见错误"""
         mistakes = []
         for activity in activity_data:
@@ -184,10 +204,14 @@ class LearningAnalytics:
         for mistake in mistakes:
             mistake_counts[mistake] = mistake_counts.get(mistake, 0) + 1
 
-        sorted_mistakes = sorted(mistake_counts.items(), key=lambda x: x[1], reverse=True)
+        sorted_mistakes = sorted(
+            mistake_counts.items(), key=lambda x: x[1], reverse=True
+        )
         return [m[0] for m in sorted_mistakes[:5]]
 
-    def _identify_strengths_weaknesses(self, activity_data: list[dict[str, Any]]) -> tuple[list[str], list[str]]:
+    def _identify_strengths_weaknesses(
+        self, activity_data: list[dict[str, Any]]
+    ) -> tuple[list[str], list[str]]:
         """识别强项和弱项"""
         topic_performance = {}
 
@@ -206,7 +230,9 @@ class LearningAnalytics:
         # 计算成功率
         topic_rates = {}
         for topic, data in topic_performance.items():
-            topic_rates[topic] = data["success"] / data["total"] if data["total"] > 0 else 0
+            topic_rates[topic] = (
+                data["success"] / data["total"] if data["total"] > 0 else 0
+            )
 
         # 排序
         sorted_topics = sorted(topic_rates.items(), key=lambda x: x[1], reverse=True)

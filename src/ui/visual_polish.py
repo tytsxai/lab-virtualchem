@@ -66,8 +66,8 @@ def apply_modern_style(widget: QWidget) -> None:
 def enhance_accessibility(widget: QWidget) -> None:
     """增强可访问性
 
-        Args:
-        widget: 要增强的控件
+    Args:
+    widget: 要增强的控件
     """
     try:
         # 设置可访问性属性

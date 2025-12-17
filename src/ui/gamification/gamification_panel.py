@@ -247,7 +247,9 @@ class GamificationPanel(QWidget):
             if child.widget():
                 child.widget().deleteLater()
 
-    def add_achievement_card(self, achievement_data: dict[str, Any], unlocked: bool = False) -> AchievementCard:  # noqa: ARG002
+    def add_achievement_card(
+        self, achievement_data: dict[str, Any], unlocked: bool = False
+    ) -> AchievementCard:  # noqa: ARG002
         """添加成就卡片"""
         card = AchievementCard(achievement_data)
         self.achievements_layout.addWidget(card)

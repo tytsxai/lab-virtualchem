@@ -19,7 +19,9 @@ class TestReagentDatabase:
             type=KnowledgeType.REAGENT,
             content="盐酸是氯化氢的水溶液",
             cas="7647-01-0",
-            hazards=[Hazard(type="corrosive", level=HazardLevel.WARNING, hint="腐蚀性")],
+            hazards=[
+                Hazard(type="corrosive", level=HazardLevel.WARNING, hint="腐蚀性")
+            ],
         )
 
         self.mock_naoh = KnowledgeCard(
@@ -28,7 +30,9 @@ class TestReagentDatabase:
             type=KnowledgeType.REAGENT,
             content="氢氧化钠是强碱",
             cas="1310-73-2",
-            hazards=[Hazard(type="corrosive", level=HazardLevel.SEVERE, hint="强腐蚀性")],
+            hazards=[
+                Hazard(type="corrosive", level=HazardLevel.SEVERE, hint="强腐蚀性")
+            ],
         )
 
         self.mock_h2so4 = KnowledgeCard(
@@ -37,7 +41,13 @@ class TestReagentDatabase:
             type=KnowledgeType.REAGENT,
             content="浓硫酸具有强腐蚀性",
             cas="7664-93-9",
-            hazards=[Hazard(type="oxidizing", level=HazardLevel.CRITICAL, hint="强氧化性和脱水性")],
+            hazards=[
+                Hazard(
+                    type="oxidizing",
+                    level=HazardLevel.CRITICAL,
+                    hint="强氧化性和脱水性",
+                )
+            ],
         )
 
     def test_initialization(self):
@@ -198,7 +208,13 @@ class TestReagentDatabaseEdgeCases:
 
     def test_get_hazardous_with_no_hazards(self):
         """测试获取危险试剂但试剂无危害信息"""
-        safe_reagent = KnowledgeCard(id="water", title="水", type=KnowledgeType.REAGENT, content="纯水", hazards=[])
+        safe_reagent = KnowledgeCard(
+            id="water",
+            title="水",
+            type=KnowledgeType.REAGENT,
+            content="纯水",
+            hazards=[],
+        )
 
         db = ReagentDatabase.__new__(ReagentDatabase)
         db._reagents = {"water": safe_reagent}
@@ -221,7 +237,11 @@ class TestReagentDatabaseEdgeCases:
     def test_get_reagent_by_cas_with_multiple_matches(self):
         """测试CAS号查询(虽然CAS应该唯一,但测试第一个匹配)"""
         reagent1 = KnowledgeCard(
-            id="reagent1", title="试剂1", type=KnowledgeType.REAGENT, content="测试", cas="123-45-6"
+            id="reagent1",
+            title="试剂1",
+            type=KnowledgeType.REAGENT,
+            content="测试",
+            cas="123-45-6",
         )
         reagent2 = KnowledgeCard(
             id="reagent2",
@@ -274,7 +294,9 @@ class TestReagentDatabaseIntegration:
                 type=KnowledgeType.REAGENT,
                 content="盐酸溶液",
                 cas="7647-01-0",
-                hazards=[Hazard(type="corrosive", level=HazardLevel.WARNING, hint="腐蚀性")],
+                hazards=[
+                    Hazard(type="corrosive", level=HazardLevel.WARNING, hint="腐蚀性")
+                ],
             ),
             KnowledgeCard(
                 id="naoh",
@@ -282,7 +304,9 @@ class TestReagentDatabaseIntegration:
                 type=KnowledgeType.REAGENT,
                 content="强碱",
                 cas="1310-73-2",
-                hazards=[Hazard(type="corrosive", level=HazardLevel.SEVERE, hint="强腐蚀")],
+                hazards=[
+                    Hazard(type="corrosive", level=HazardLevel.SEVERE, hint="强腐蚀")
+                ],
             ),
         ]
 
@@ -291,7 +315,9 @@ class TestReagentDatabaseIntegration:
         mock_loader.search_cards.return_value = [reagents[0]]
 
         # 创建数据库
-        with patch("src.knowledge.reagent_db.KnowledgeLoader", return_value=mock_loader):
+        with patch(
+            "src.knowledge.reagent_db.KnowledgeLoader", return_value=mock_loader
+        ):
             db = ReagentDatabase(Path("data/knowledge"))
 
         # 测试各种操作

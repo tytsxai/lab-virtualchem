@@ -35,7 +35,17 @@ def validate_expression(expression: str) -> tuple[bool, str]:
             return False, f"表达式包含禁止的关键字: {keyword}"
 
     # 检查是否包含函数调用(除了白名单)
-    allowed_functions = ["abs", "min", "max", "len", "range", "round", "int", "float", "str"]
+    allowed_functions = [
+        "abs",
+        "min",
+        "max",
+        "len",
+        "range",
+        "round",
+        "int",
+        "float",
+        "str",
+    ]
     function_pattern = r"\b([a-zA-Z_]\w*)\s*\("
     functions = re.findall(function_pattern, expression)
 

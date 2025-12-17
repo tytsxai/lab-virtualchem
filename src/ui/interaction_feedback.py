@@ -51,7 +51,9 @@ class AnimationHelper:
         logger.debug(f"淡入动画: {widget}")
 
     @staticmethod
-    def fade_out(widget: QWidget, duration: int = 300, callback: Callable[[], None] | None = None) -> None:
+    def fade_out(
+        widget: QWidget, duration: int = 300, callback: Callable[[], None] | None = None
+    ) -> None:
         """淡出动画"""
         effect = QGraphicsOpacityEffect(widget)
         widget.setGraphicsEffect(effect)
@@ -171,7 +173,9 @@ class AnimationHelper:
         logger.debug(f"脉冲动画: {widget}")
 
     @staticmethod
-    def highlight_flash(widget: QWidget, color: QColor = QColor(255, 255, 0), duration: int = 600) -> None:
+    def highlight_flash(
+        widget: QWidget, color: QColor = QColor(255, 255, 0), duration: int = 600
+    ) -> None:
         """高亮闪烁效果"""
         effect = QGraphicsColorizeEffect(widget)
         widget.setGraphicsEffect(effect)
@@ -196,7 +200,9 @@ class GraphicsItemAnimator:
     """QGraphicsItem动画器"""
 
     @staticmethod
-    def move_to(item: QGraphicsItem, target_pos: tuple[float, float], duration: int = 500) -> None:
+    def move_to(
+        item: QGraphicsItem, target_pos: tuple[float, float], duration: int = 500
+    ) -> None:
         """移动到指定位置"""
         from PySide6.QtCore import QPointF
 
@@ -375,11 +381,19 @@ class FeedbackManager:
                     "drop": "SystemDefault",
                 }
                 sound_map.get(sound_type, "SystemDefault")
-                subprocess.run(["powershell", "-c", "[console]::beep(800, 100)"], capture_output=True)
+                subprocess.run(
+                    ["powershell", "-c", "[console]::beep(800, 100)"],
+                    capture_output=True,
+                )
             elif system == "Darwin":  # macOS
-                subprocess.run(["afplay", "/System/Library/Sounds/Glass.aiff"], capture_output=True)
+                subprocess.run(
+                    ["afplay", "/System/Library/Sounds/Glass.aiff"], capture_output=True
+                )
             else:  # Linux
-                subprocess.run(["paplay", "/usr/share/sounds/alsa/Front_Left.wav"], capture_output=True)
+                subprocess.run(
+                    ["paplay", "/usr/share/sounds/alsa/Front_Left.wav"],
+                    capture_output=True,
+                )
 
             logger.debug(f"播放系统音效: {sound_type}")
 
@@ -427,7 +441,12 @@ class VisualEffects:
                 particle.setPos(x, y)
 
                 # 随机颜色
-                color = QColor(random.randint(100, 255), random.randint(100, 255), random.randint(100, 255), 150)
+                color = QColor(
+                    random.randint(100, 255),
+                    random.randint(100, 255),
+                    random.randint(100, 255),
+                    150,
+                )
                 particle.setBrush(QBrush(color))
 
                 scene.addItem(particle)
@@ -544,7 +563,9 @@ class VisualEffects:
             logger.error(f"创建拖尾效果失败: {e}")
 
     @staticmethod
-    def create_glow_effect(widget: QWidget, color: QColor = QColor(0, 255, 255)) -> None:
+    def create_glow_effect(
+        widget: QWidget, color: QColor = QColor(0, 255, 255)
+    ) -> None:
         """创建发光效果"""
         # 使用阴影效果模拟发光
         from PySide6.QtWidgets import QGraphicsDropShadowEffect

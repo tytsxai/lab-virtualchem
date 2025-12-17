@@ -250,7 +250,9 @@ class PerformanceDialog(QDialog):
         self.metrics_table.setColumnCount(2)
         self.metrics_table.setHorizontalHeaderLabels(["指标", "值"])
         self.metrics_table.setAlternatingRowColors(True)
-        self.metrics_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.metrics_table.setSelectionBehavior(
+            QTableWidget.SelectionBehavior.SelectRows
+        )
 
         metrics_layout.addWidget(self.metrics_table)
         layout.addWidget(metrics_group)
@@ -263,7 +265,9 @@ class PerformanceDialog(QDialog):
         self.average_table.setColumnCount(2)
         self.average_table.setHorizontalHeaderLabels(["指标", "平均值"])
         self.average_table.setAlternatingRowColors(True)
-        self.average_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.average_table.setSelectionBehavior(
+            QTableWidget.SelectionBehavior.SelectRows
+        )
 
         average_layout.addWidget(self.average_table)
         layout.addWidget(average_group)
@@ -282,9 +286,13 @@ class PerformanceDialog(QDialog):
 
         self.optimization_table = QTableWidget()
         self.optimization_table.setColumnCount(5)
-        self.optimization_table.setHorizontalHeaderLabels(["类别", "优先级", "标题", "描述", "影响"])
+        self.optimization_table.setHorizontalHeaderLabels(
+            ["类别", "优先级", "标题", "描述", "影响"]
+        )
         self.optimization_table.setAlternatingRowColors(True)
-        self.optimization_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.optimization_table.setSelectionBehavior(
+            QTableWidget.SelectionBehavior.SelectRows
+        )
 
         optimization_layout.addWidget(self.optimization_table)
         layout.addWidget(optimization_group)
@@ -326,7 +334,9 @@ class PerformanceDialog(QDialog):
             ["时间", "CPU%", "内存%", "FPS", "帧时间", "物理时间", "粒子数", "物品数"]
         )
         self.history_table.setAlternatingRowColors(True)
-        self.history_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.history_table.setSelectionBehavior(
+            QTableWidget.SelectionBehavior.SelectRows
+        )
 
         history_layout.addWidget(self.history_table)
         layout.addWidget(history_group)
@@ -355,11 +365,17 @@ class PerformanceDialog(QDialog):
         try:
             # 如果性能监控器有信号，连接它们
             if hasattr(self.performance_monitor, "metrics_updated"):
-                self.performance_monitor.metrics_updated.connect(self.on_metrics_updated)
+                self.performance_monitor.metrics_updated.connect(
+                    self.on_metrics_updated
+                )
             if hasattr(self.performance_monitor, "performance_warning"):
-                self.performance_monitor.performance_warning.connect(self.on_performance_warning)
+                self.performance_monitor.performance_warning.connect(
+                    self.on_performance_warning
+                )
             if hasattr(self.performance_monitor, "optimization_suggested"):
-                self.performance_monitor.optimization_suggested.connect(self.on_optimization_suggested)
+                self.performance_monitor.optimization_suggested.connect(
+                    self.on_optimization_suggested
+                )
 
             logger.debug("性能监控信号连接完成")
         except Exception as e:
@@ -475,7 +491,9 @@ class PerformanceDialog(QDialog):
             self.optimization_table.setItem(i, 0, QTableWidgetItem(suggestion.category))
             self.optimization_table.setItem(i, 1, QTableWidgetItem(suggestion.priority))
             self.optimization_table.setItem(i, 2, QTableWidgetItem(suggestion.title))
-            self.optimization_table.setItem(i, 3, QTableWidgetItem(suggestion.description))
+            self.optimization_table.setItem(
+                i, 3, QTableWidgetItem(suggestion.description)
+            )
             self.optimization_table.setItem(i, 4, QTableWidgetItem(suggestion.impact))
 
     def update_history_table(self) -> None:
@@ -484,14 +502,28 @@ class PerformanceDialog(QDialog):
 
         self.history_table.setRowCount(len(history))
         for i, metrics in enumerate(history):
-            self.history_table.setItem(i, 0, QTableWidgetItem(metrics.timestamp.strftime("%H:%M:%S")))
-            self.history_table.setItem(i, 1, QTableWidgetItem(f"{metrics.cpu_percent:.1f}"))
-            self.history_table.setItem(i, 2, QTableWidgetItem(f"{metrics.memory_percent:.1f}"))
+            self.history_table.setItem(
+                i, 0, QTableWidgetItem(metrics.timestamp.strftime("%H:%M:%S"))
+            )
+            self.history_table.setItem(
+                i, 1, QTableWidgetItem(f"{metrics.cpu_percent:.1f}")
+            )
+            self.history_table.setItem(
+                i, 2, QTableWidgetItem(f"{metrics.memory_percent:.1f}")
+            )
             self.history_table.setItem(i, 3, QTableWidgetItem(f"{metrics.fps:.1f}"))
-            self.history_table.setItem(i, 4, QTableWidgetItem(f"{metrics.frame_time_ms:.1f}"))
-            self.history_table.setItem(i, 5, QTableWidgetItem(f"{metrics.physics_update_time_ms:.1f}"))
-            self.history_table.setItem(i, 6, QTableWidgetItem(str(metrics.particle_count)))
-            self.history_table.setItem(i, 7, QTableWidgetItem(str(metrics.active_items)))
+            self.history_table.setItem(
+                i, 4, QTableWidgetItem(f"{metrics.frame_time_ms:.1f}")
+            )
+            self.history_table.setItem(
+                i, 5, QTableWidgetItem(f"{metrics.physics_update_time_ms:.1f}")
+            )
+            self.history_table.setItem(
+                i, 6, QTableWidgetItem(str(metrics.particle_count))
+            )
+            self.history_table.setItem(
+                i, 7, QTableWidgetItem(str(metrics.active_items))
+            )
 
     def start_monitoring(self) -> None:
         """开始监控"""
@@ -543,7 +575,9 @@ class PerformanceDialog(QDialog):
                 # 强制垃圾回收
                 self.performance_monitor.force_garbage_collection()
 
-                logger.info(f"粒子优化完成: 强度从 {current_intensity:.2f} 降低到 {new_intensity:.2f}")
+                logger.info(
+                    f"粒子优化完成: 强度从 {current_intensity:.2f} 降低到 {new_intensity:.2f}"
+                )
 
                 # 显示优化结果
                 from PySide6.QtWidgets import QMessageBox
@@ -557,7 +591,11 @@ class PerformanceDialog(QDialog):
                 logger.info("粒子数量正常，无需优化")
                 from PySide6.QtWidgets import QMessageBox
 
-                QMessageBox.information(self, "无需优化", f"当前粒子数量: {particle_count}\n性能良好，无需优化")
+                QMessageBox.information(
+                    self,
+                    "无需优化",
+                    f"当前粒子数量: {particle_count}\n性能良好，无需优化",
+                )
 
         except Exception as e:
             logger.error(f"粒子优化失败: {e}")
@@ -590,9 +628,15 @@ class PerformanceDialog(QDialog):
                 optimizations = {
                     "physics_enabled": True,  # 保持物理启用
                     "collision_detection": True,  # 保持碰撞检测
-                    "gravity_strength": min(0.8, game_config.get("gravity_strength", 0.5) * 1.2),  # 稍微增加重力
-                    "friction": min(0.95, game_config.get("friction", 0.9) * 1.05),  # 稍微增加摩擦力
-                    "bounce_factor": max(0.3, game_config.get("bounce_factor", 0.6) * 0.8),  # 减少弹跳
+                    "gravity_strength": min(
+                        0.8, game_config.get("gravity_strength", 0.5) * 1.2
+                    ),  # 稍微增加重力
+                    "friction": min(
+                        0.95, game_config.get("friction", 0.9) * 1.05
+                    ),  # 稍微增加摩擦力
+                    "bounce_factor": max(
+                        0.3, game_config.get("bounce_factor", 0.6) * 0.8
+                    ),  # 减少弹跳
                 }
 
                 # 应用优化
@@ -608,13 +652,19 @@ class PerformanceDialog(QDialog):
                 from PySide6.QtWidgets import QMessageBox
 
                 QMessageBox.information(
-                    self, "优化完成", f"物理引擎已优化\n更新时间: {physics_time:.2f}ms\n调整了重力、摩擦力和弹跳参数"
+                    self,
+                    "优化完成",
+                    f"物理引擎已优化\n更新时间: {physics_time:.2f}ms\n调整了重力、摩擦力和弹跳参数",
                 )
             else:
                 logger.info("物理性能正常，无需优化")
                 from PySide6.QtWidgets import QMessageBox
 
-                QMessageBox.information(self, "无需优化", f"当前物理更新时间: {physics_time:.2f}ms\n性能良好，无需优化")
+                QMessageBox.information(
+                    self,
+                    "无需优化",
+                    f"当前物理更新时间: {physics_time:.2f}ms\n性能良好，无需优化",
+                )
 
         except Exception as e:
             logger.error(f"物理优化失败: {e}")
@@ -646,7 +696,9 @@ class PerformanceDialog(QDialog):
                 if success:
                     from PySide6.QtWidgets import QMessageBox
 
-                    QMessageBox.information(self, "成功", f"性能数据已导出到:\n{file_path}")
+                    QMessageBox.information(
+                        self, "成功", f"性能数据已导出到:\n{file_path}"
+                    )
                 else:
                     from PySide6.QtWidgets import QMessageBox
 

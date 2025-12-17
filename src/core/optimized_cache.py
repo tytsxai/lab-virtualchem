@@ -13,6 +13,7 @@ from typing import Any
 @dataclass
 class CacheEntry:
     """缓存条目"""
+
     key: str
     value: Any
     created_at: datetime
@@ -61,10 +62,7 @@ class OptimizedLRUCache:
         expires_at = datetime.now() + timedelta(seconds=ttl) if ttl > 0 else None
 
         entry = CacheEntry(
-            key=key,
-            value=value,
-            created_at=datetime.now(),
-            expires_at=expires_at
+            key=key, value=value, created_at=datetime.now(), expires_at=expires_at
         )
 
         with self._lock:
@@ -162,10 +160,7 @@ class OptimizedLFUCache:
         expires_at = datetime.now() + timedelta(seconds=ttl) if ttl > 0 else None
 
         entry = CacheEntry(
-            key=key,
-            value=value,
-            created_at=datetime.now(),
-            expires_at=expires_at
+            key=key, value=value, created_at=datetime.now(), expires_at=expires_at
         )
 
         with self._lock:
@@ -272,7 +267,9 @@ class OptimizedLFUCache:
             }
 
 
-def create_optimized_cache(strategy: str = "lru", max_size: int = 1000, default_ttl: int = 3600):
+def create_optimized_cache(
+    strategy: str = "lru", max_size: int = 1000, default_ttl: int = 3600
+):
     """创建优化的缓存实例"""
     if strategy.lower() == "lru":
         return OptimizedLRUCache(max_size, default_ttl)

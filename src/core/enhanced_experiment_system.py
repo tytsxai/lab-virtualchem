@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class ExperimentDifficulty(Enum):
     """实验难度级别"""
+
     BEGINNER = "beginner"
     INTERMEDIATE = "intermediate"
     ADVANCED = "advanced"
@@ -26,6 +27,7 @@ class ExperimentDifficulty(Enum):
 
 class ExperimentStatus(Enum):
     """实验状态"""
+
     NOT_STARTED = "not_started"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -36,6 +38,7 @@ class ExperimentStatus(Enum):
 @dataclass
 class ExperimentMetrics:
     """实验指标"""
+
     experiment_id: str
     user_id: str
     start_time: datetime
@@ -56,6 +59,7 @@ class ExperimentMetrics:
 @dataclass
 class LearningRecommendation:
     """学习建议"""
+
     type: str  # "improvement", "practice", "theory", "safety"
     priority: int  # 1-5, 5为最高优先级
     title: str
@@ -68,6 +72,7 @@ class LearningRecommendation:
 @dataclass
 class ExperimentAnalysis:
     """实验分析结果"""
+
     experiment_id: str
     user_id: str
     analysis_time: datetime
@@ -89,46 +94,45 @@ class EnhancedExperimentSystem:
         self.performance_baselines: dict[str, dict[str, float]] = {}
 
     @enhance_robustness(
-        operation_name="start_experiment",
-        security_level="medium",
-        enable_caching=True
+        operation_name="start_experiment", security_level="medium", enable_caching=True
     )
-    @validate_input(validation_rules={
-        "experiment_id": {"type": str, "required": True},
-        "user_id": {"type": str, "required": True},
-        "template": {"type": dict, "required": True}
-    })
+    @validate_input(
+        validation_rules={
+            "experiment_id": {"type": str, "required": True},
+            "user_id": {"type": str, "required": True},
+            "template": {"type": dict, "required": True},
+        }
+    )
     @log_operation(operation_name="start_experiment")
     def start_experiment(
-        self,
-        experiment_id: str,
-        user_id: str,
-        template: dict[str, Any]
+        self, experiment_id: str, user_id: str, template: dict[str, Any]
     ) -> ExperimentMetrics:
         """开始实验"""
         logger.info(f"开始实验 {experiment_id}，用户 {user_id}")
 
         metrics = ExperimentMetrics(
-            experiment_id=experiment_id,
-            user_id=user_id,
-            start_time=datetime.now()
+            experiment_id=experiment_id, user_id=user_id, start_time=datetime.now()
         )
 
         self.experiments[experiment_id] = metrics
 
         # 记录实验开始事件
-        self._log_experiment_event(experiment_id, "started", {
-            "template_id": template.get("id"),
-            "difficulty": template.get("difficulty", "beginner"),
-            "estimated_duration": template.get("estimated_duration", 30)
-        })
+        self._log_experiment_event(
+            experiment_id,
+            "started",
+            {
+                "template_id": template.get("id"),
+                "difficulty": template.get("difficulty", "beginner"),
+                "estimated_duration": template.get("estimated_duration", 30),
+            },
+        )
 
         return metrics
 
     @enhance_robustness(
         operation_name="update_experiment_progress",
         security_level="low",
-        enable_caching=False
+        enable_caching=False,
     )
     @log_operation(operation_name="update_progress")
     def update_experiment_progress(
@@ -136,7 +140,7 @@ class EnhancedExperimentSystem:
         experiment_id: str,
         step_id: str,
         step_data: dict[str, Any],
-        performance_data: dict[str, Any] | None = None
+        performance_data: dict[str, Any] | None = None,
     ) -> bool:
         """更新实验进度"""
         if experiment_id not in self.experiments:
@@ -164,25 +168,27 @@ class EnhancedExperimentSystem:
             metrics.hints_used += 1
 
         # 记录实验事件
-        self._log_experiment_event(experiment_id, "step_completed", {
-            "step_id": step_id,
-            "duration": step_duration,
-            "has_error": step_data.get("has_error", False),
-            "hint_used": step_data.get("hint_used", False)
-        })
+        self._log_experiment_event(
+            experiment_id,
+            "step_completed",
+            {
+                "step_id": step_id,
+                "duration": step_duration,
+                "has_error": step_data.get("has_error", False),
+                "hint_used": step_data.get("hint_used", False),
+            },
+        )
 
         return True
 
     @enhance_robustness(
         operation_name="complete_experiment",
         security_level="medium",
-        enable_caching=True
+        enable_caching=True,
     )
     @log_operation(operation_name="complete_experiment")
     def complete_experiment(
-        self,
-        experiment_id: str,
-        final_data: dict[str, Any]
+        self, experiment_id: str, final_data: dict[str, Any]
     ) -> ExperimentMetrics:
         """完成实验"""
         if experiment_id not in self.experiments:
@@ -200,13 +206,17 @@ class EnhancedExperimentSystem:
         metrics.learning_progress = self._calculate_learning_progress(metrics)
 
         # 记录实验完成事件
-        self._log_experiment_event(experiment_id, "completed", {
-            "duration": metrics.duration,
-            "accuracy": metrics.accuracy,
-            "efficiency": metrics.efficiency,
-            "safety_score": metrics.safety_score,
-            "mistakes_count": metrics.mistakes_count
-        })
+        self._log_experiment_event(
+            experiment_id,
+            "completed",
+            {
+                "duration": metrics.duration,
+                "accuracy": metrics.accuracy,
+                "efficiency": metrics.efficiency,
+                "safety_score": metrics.safety_score,
+                "mistakes_count": metrics.mistakes_count,
+            },
+        )
 
         # 生成分析报告
         analysis = self._generate_experiment_analysis(metrics)
@@ -225,12 +235,16 @@ class EnhancedExperimentSystem:
             return 0.0
 
         # 基于步骤完成时间和错误数量计算效率
-        avg_step_time = sum(metrics.step_completion_times) / len(metrics.step_completion_times)
+        avg_step_time = sum(metrics.step_completion_times) / len(
+            metrics.step_completion_times
+        )
         error_penalty = metrics.mistakes_count * 0.1
         hint_penalty = metrics.hints_used * 0.05
 
         # 效率 = 1 - (平均时间惩罚 + 错误惩罚 + 提示惩罚)
-        efficiency = max(0.0, 1.0 - (avg_step_time * 0.01 + error_penalty + hint_penalty))
+        efficiency = max(
+            0.0, 1.0 - (avg_step_time * 0.01 + error_penalty + hint_penalty)
+        )
         return min(1.0, efficiency)
 
     def _calculate_learning_progress(self, metrics: ExperimentMetrics) -> float:
@@ -241,19 +255,23 @@ class EnhancedExperimentSystem:
         safety_weight = 0.3
 
         progress = (
-            metrics.accuracy * accuracy_weight +
-            metrics.efficiency * efficiency_weight +
-            metrics.safety_score * safety_weight
+            metrics.accuracy * accuracy_weight
+            + metrics.efficiency * efficiency_weight
+            + metrics.safety_score * safety_weight
         )
 
         return min(1.0, progress)
 
-    def _generate_experiment_analysis(self, metrics: ExperimentMetrics) -> ExperimentAnalysis:
+    def _generate_experiment_analysis(
+        self, metrics: ExperimentMetrics
+    ) -> ExperimentAnalysis:
         """生成实验分析"""
         analysis_time = datetime.now()
 
         # 计算总体得分
-        overall_score = (metrics.accuracy + metrics.efficiency + metrics.safety_score) / 3
+        overall_score = (
+            metrics.accuracy + metrics.efficiency + metrics.safety_score
+        ) / 3
 
         # 分析优势和劣势
         strengths = []
@@ -275,7 +293,9 @@ class EnhancedExperimentSystem:
             weaknesses.append("需要加强安全操作")
 
         # 生成学习建议
-        recommendations = self._generate_learning_recommendations(metrics, strengths, weaknesses)
+        recommendations = self._generate_learning_recommendations(
+            metrics, strengths, weaknesses
+        )
 
         # 计算进度趋势
         progress_trend = self._calculate_progress_trend(metrics.user_id)
@@ -288,79 +308,80 @@ class EnhancedExperimentSystem:
             strengths=strengths,
             weaknesses=weaknesses,
             recommendations=recommendations,
-            progress_trend=progress_trend
+            progress_trend=progress_trend,
         )
 
     def _generate_learning_recommendations(
-        self,
-        metrics: ExperimentMetrics,
-        strengths: list[str],
-        _weaknesses: list[str]
+        self, metrics: ExperimentMetrics, strengths: list[str], _weaknesses: list[str]
     ) -> list[LearningRecommendation]:
         """生成学习建议"""
         recommendations = []
 
         # 基于错误模式生成建议
         if metrics.mistakes_count > 3:
-            recommendations.append(LearningRecommendation(
-                type="improvement",
-                priority=4,
-                title="减少操作错误",
-                description=f"本次实验出现了 {metrics.mistakes_count} 次错误，建议加强基础操作练习",
-                action_items=[
-                    "复习实验步骤",
-                    "练习基础操作",
-                    "注意操作细节"
-                ],
-                resources=["基础操作教程", "实验步骤详解"],
-                estimated_time=30
-            ))
+            recommendations.append(
+                LearningRecommendation(
+                    type="improvement",
+                    priority=4,
+                    title="减少操作错误",
+                    description=f"本次实验出现了 {metrics.mistakes_count} 次错误，建议加强基础操作练习",
+                    action_items=["复习实验步骤", "练习基础操作", "注意操作细节"],
+                    resources=["基础操作教程", "实验步骤详解"],
+                    estimated_time=30,
+                )
+            )
 
         # 基于效率生成建议
         if metrics.efficiency < 0.6:
-            recommendations.append(LearningRecommendation(
-                type="practice",
-                priority=3,
-                title="提高操作效率",
-                description="操作效率有待提高，建议多练习以提高熟练度",
-                action_items=[
-                    "重复练习实验步骤",
-                    "优化操作流程",
-                    "减少不必要的停顿"
-                ],
-                estimated_time=45
-            ))
+            recommendations.append(
+                LearningRecommendation(
+                    type="practice",
+                    priority=3,
+                    title="提高操作效率",
+                    description="操作效率有待提高，建议多练习以提高熟练度",
+                    action_items=[
+                        "重复练习实验步骤",
+                        "优化操作流程",
+                        "减少不必要的停顿",
+                    ],
+                    estimated_time=45,
+                )
+            )
 
         # 基于安全性生成建议
         if metrics.safety_score < 0.8:
-            recommendations.append(LearningRecommendation(
-                type="safety",
-                priority=5,
-                title="加强安全操作",
-                description="安全意识需要加强，安全操作是实验的基础",
-                action_items=[
-                    "学习安全操作规程",
-                    "练习安全操作技能",
-                    "建立安全意识"
-                ],
-                resources=["安全操作手册", "安全视频教程"],
-                estimated_time=60
-            ))
+            recommendations.append(
+                LearningRecommendation(
+                    type="safety",
+                    priority=5,
+                    title="加强安全操作",
+                    description="安全意识需要加强，安全操作是实验的基础",
+                    action_items=[
+                        "学习安全操作规程",
+                        "练习安全操作技能",
+                        "建立安全意识",
+                    ],
+                    resources=["安全操作手册", "安全视频教程"],
+                    estimated_time=60,
+                )
+            )
 
         # 基于优势生成鼓励建议
         if strengths:
-            recommendations.append(LearningRecommendation(
-                type="improvement",
-                priority=2,
-                title="保持优势",
-                description=f"在以下方面表现优秀：{', '.join(strengths)}",
-                action_items=[
-                    "继续保持良好习惯",
-                    "将优势应用到其他实验",
-                    "分享经验给其他学习者"
-                ],
-                estimated_time=15
-            ))
+            recommendations.append(
+                LearningRecommendation(
+                    type="improvement",
+                    priority=2,
+                    title="保持优势",
+                    description=f"在以下方面表现优秀：{', '.join(strengths)}",
+                    action_items=[
+                        "继续保持良好习惯",
+                        "将优势应用到其他实验",
+                        "分享经验给其他学习者",
+                    ],
+                    estimated_time=15,
+                )
+            )
 
         return recommendations
 
@@ -378,21 +399,23 @@ class EnhancedExperimentSystem:
 
         trends = {}
         for i in range(1, len(recent_analyses)):
-            prev_score = recent_analyses[i-1].overall_score
+            prev_score = recent_analyses[i - 1].overall_score
             curr_score = recent_analyses[i].overall_score
             improvement = curr_score - prev_score
             trends[f"experiment_{i}"] = improvement
 
         return trends
 
-    def _log_experiment_event(self, experiment_id: str, event_type: str, data: dict[str, Any]) -> None:
+    def _log_experiment_event(
+        self, experiment_id: str, event_type: str, data: dict[str, Any]
+    ) -> None:
         """记录实验事件"""
         logger.info(f"实验事件: {experiment_id} - {event_type}: {data}")
 
     @enhance_robustness(
         operation_name="get_experiment_analysis",
         security_level="low",
-        enable_caching=True
+        enable_caching=True,
     )
     def get_experiment_analysis(self, experiment_id: str) -> ExperimentAnalysis | None:
         """获取实验分析"""
@@ -401,7 +424,7 @@ class EnhancedExperimentSystem:
     @enhance_robustness(
         operation_name="get_user_learning_history",
         security_level="low",
-        enable_caching=True
+        enable_caching=True,
     )
     def get_user_learning_history(self, user_id: str) -> list[ExperimentAnalysis]:
         """获取用户学习历史"""
@@ -410,9 +433,11 @@ class EnhancedExperimentSystem:
     @enhance_robustness(
         operation_name="get_learning_recommendations",
         security_level="low",
-        enable_caching=True
+        enable_caching=True,
     )
-    def get_learning_recommendations(self, user_id: str) -> list[LearningRecommendation]:
+    def get_learning_recommendations(
+        self, user_id: str
+    ) -> list[LearningRecommendation]:
         """获取学习建议"""
         if user_id not in self.learning_history:
             return []
@@ -428,7 +453,7 @@ class EnhancedExperimentSystem:
     @enhance_robustness(
         operation_name="get_performance_statistics",
         security_level="low",
-        enable_caching=True
+        enable_caching=True,
     )
     def get_performance_statistics(self, user_id: str) -> dict[str, Any]:
         """获取性能统计"""
@@ -457,7 +482,7 @@ class EnhancedExperimentSystem:
             "max_score": max_score,
             "min_score": min_score,
             "recent_trend": recent_trend,
-            "improvement_rate": self._calculate_improvement_rate(scores)
+            "improvement_rate": self._calculate_improvement_rate(scores),
         }
 
     def _calculate_improvement_rate(self, scores: list[float]) -> float:
@@ -467,7 +492,7 @@ class EnhancedExperimentSystem:
 
         improvements = 0
         for i in range(1, len(scores)):
-            if scores[i] > scores[i-1]:
+            if scores[i] > scores[i - 1]:
                 improvements += 1
 
         return improvements / (len(scores) - 1)
@@ -475,7 +500,7 @@ class EnhancedExperimentSystem:
     @enhance_robustness(
         operation_name="export_experiment_data",
         security_level="medium",
-        enable_caching=False
+        enable_caching=False,
     )
     def export_experiment_data(self, user_id: str, format: str = "json") -> str:
         """导出实验数据"""
@@ -489,7 +514,7 @@ class EnhancedExperimentSystem:
                 "user_id": user_id,
                 "export_time": datetime.now().isoformat(),
                 "total_experiments": len(history),
-                "experiments": []
+                "experiments": [],
             }
 
             for analysis in history:
@@ -507,11 +532,11 @@ class EnhancedExperimentSystem:
                             "description": rec.description,
                             "action_items": rec.action_items,
                             "resources": rec.resources,
-                            "estimated_time": rec.estimated_time
+                            "estimated_time": rec.estimated_time,
                         }
                         for rec in analysis.recommendations
                     ],
-                    "progress_trend": analysis.progress_trend
+                    "progress_trend": analysis.progress_trend,
                 }
                 data["experiments"].append(experiment_data)
 

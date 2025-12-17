@@ -152,11 +152,15 @@ class MistakeBook:
         # 保存
         try:
             with open(student_mistakes_file, "w", encoding="utf-8") as f:
-                json.dump([m.to_dict() for m in mistakes], f, indent=2, ensure_ascii=False)
+                json.dump(
+                    [m.to_dict() for m in mistakes], f, indent=2, ensure_ascii=False
+                )
         except Exception as e:
             logger.error(f"保存错误失败: {e}")
 
-    def get_student_mistakes(self, student_id: str, reviewed: bool = None, mistake_type: str = None) -> list[Mistake]:
+    def get_student_mistakes(
+        self, student_id: str, reviewed: bool = None, mistake_type: str = None
+    ) -> list[Mistake]:
         """
         获取学生的错误
 
@@ -190,7 +194,9 @@ class MistakeBook:
             logger.error(f"加载学生错误失败: {e}")
             return []
 
-    def mark_as_reviewed(self, mistake_id: str, student_id: str, mastered: bool = False) -> bool:
+    def mark_as_reviewed(
+        self, mistake_id: str, student_id: str, mastered: bool = False
+    ) -> bool:
         """
         标记为已复习
 
@@ -270,7 +276,13 @@ class MistakeBook:
         mistakes = self.get_student_mistakes(student_id)
 
         if not mistakes:
-            return {"total": 0, "reviewed": 0, "mastered": 0, "by_type": {}, "by_experiment": {}}
+            return {
+                "total": 0,
+                "reviewed": 0,
+                "mastered": 0,
+                "by_type": {},
+                "by_experiment": {},
+            }
 
         total = len(mistakes)
         reviewed = len([m for m in mistakes if m.reviewed])
@@ -307,14 +319,20 @@ class MistakeBook:
 
         if not mistakes:
             # 如果没有未复习的，返回已复习但未掌握的
-            mistakes = [m for m in self.get_student_mistakes(student_id) if m.reviewed and not m.mastered]
+            mistakes = [
+                m
+                for m in self.get_student_mistakes(student_id)
+                if m.reviewed and not m.mastered
+            ]
 
         # 按时间排序，优先复习旧的错误
         mistakes.sort(key=lambda m: m.occurred_at)
 
         return mistakes[:limit]
 
-    def create_review_session(self, student_id: str, mistake_ids: list[str]) -> ReviewRecord:
+    def create_review_session(
+        self, student_id: str, mistake_ids: list[str]
+    ) -> ReviewRecord:
         """
         创建复习会话
 
@@ -387,7 +405,9 @@ class MistakeBook:
         # 保存
         try:
             with open(student_reviews_file, "w", encoding="utf-8") as f:
-                json.dump([r.to_dict() for r in records], f, indent=2, ensure_ascii=False)
+                json.dump(
+                    [r.to_dict() for r in records], f, indent=2, ensure_ascii=False
+                )
         except Exception as e:
             logger.error(f"保存复习记录失败: {e}")
 
@@ -406,7 +426,9 @@ class MistakeBook:
             logger.error(f"加载复习记录失败: {e}")
             return []
 
-    def export_mistakes(self, student_id: str, output_path: Path, format: str = "json") -> bool:
+    def export_mistakes(
+        self, student_id: str, output_path: Path, format: str = "json"
+    ) -> bool:
         """
         导出错题
 
@@ -423,7 +445,9 @@ class MistakeBook:
         try:
             if format == "json":
                 with open(output_path, "w", encoding="utf-8") as f:
-                    json.dump([m.to_dict() for m in mistakes], f, indent=2, ensure_ascii=False)
+                    json.dump(
+                        [m.to_dict() for m in mistakes], f, indent=2, ensure_ascii=False
+                    )
             elif format == "csv":
                 import csv
 

@@ -358,7 +358,9 @@ class CommandPalette(QDialog):
         if not query:
             # 显示最近使用的动作
             self.filtered_actions = sorted(
-                self.actions.values(), key=lambda a: (a.use_count, a.last_used or datetime.min), reverse=True
+                self.actions.values(),
+                key=lambda a: (a.use_count, a.last_used or datetime.min),
+                reverse=True,
             )
         else:
             # 搜索匹配

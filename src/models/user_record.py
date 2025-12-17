@@ -14,7 +14,9 @@ class Mistake(BaseModel):
     error_type: str = Field(..., description="错误类型")
     description: str = Field(..., description="错误描述")
     hint: str = Field(default="", description="提示信息")
-    severity: str = Field(default="warning", description="严重程度: info/warning/severe/critical")
+    severity: str = Field(
+        default="warning", description="严重程度: info/warning/severe/critical"
+    )
 
 
 class StepRecord(BaseModel):
@@ -56,13 +58,19 @@ class UserRecord(BaseModel):
     experiment_title: str = Field(..., description="实验名称")
     started_at: datetime = Field(default_factory=datetime.now, description="开始时间")
     completed_at: datetime | None = Field(default=None, description="完成时间")
-    status: str = Field(default="in_progress", description="状态: in_progress/completed/abandoned")
+    status: str = Field(
+        default="in_progress", description="状态: in_progress/completed/abandoned"
+    )
     current_step_index: int = Field(default=0, description="当前步骤索引")
-    step_records: list[StepRecord] = Field(default_factory=list, description="步骤记录列表")
+    step_records: list[StepRecord] = Field(
+        default_factory=list, description="步骤记录列表"
+    )
     score: ExperimentScore = Field(default_factory=ExperimentScore, description="评分")
     context: dict[str, Any] = Field(default_factory=dict, description="上下文变量")
     curve_data: dict[str, Any] = Field(default_factory=dict, description="曲线数据")
-    mistakes_summary: list[Mistake] = Field(default_factory=list, description="错误汇总")
+    mistakes_summary: list[Mistake] = Field(
+        default_factory=list, description="错误汇总"
+    )
     version: str = Field(default="1.0.0", description="记录格式版本")
 
     @property

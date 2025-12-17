@@ -143,13 +143,17 @@ class IntegratedPerformanceOptimizer(QObject):
 
         # 实验加载优化
         if high_freq_config.get("experiment_loading", {}).get("enabled", True):
-            cache_size = high_freq_config.get("experiment_loading", {}).get("cache_size", 10)
+            cache_size = high_freq_config.get("experiment_loading", {}).get(
+                "cache_size", 10
+            )
             self.experiment_optimizer.max_cache_size = cache_size
             logger.info(f"  启用实验加载优化 (缓存: {cache_size})")
 
         # 粒子系统优化
         if high_freq_config.get("particle_system", {}).get("enabled", True):
-            max_particles = high_freq_config.get("particle_system", {}).get("max_particles", 2000)
+            max_particles = high_freq_config.get("particle_system", {}).get(
+                "max_particles", 2000
+            )
             self.particle_optimizer.max_particles = max_particles
             logger.info(f"  启用粒子系统优化 (最大粒子: {max_particles})")
 
@@ -186,7 +190,9 @@ class IntegratedPerformanceOptimizer(QObject):
         }
 
         # 计算总体性能分数
-        overall_score = self._calculate_performance_score(frontend_stats, backend_stats, high_freq_stats)
+        overall_score = self._calculate_performance_score(
+            frontend_stats, backend_stats, high_freq_stats
+        )
 
         # 创建报告
         report = PerformanceReport(
@@ -226,8 +232,12 @@ class IntegratedPerformanceOptimizer(QObject):
         score -= 20 - cache_score
 
         # 高频操作评分
-        exp_cache_rate = high_freq_stats.get("experiment_load_stats", {}).get("cache_hit_rate", 0)
-        particle_util = high_freq_stats.get("particle_stats", {}).get("pool_utilization", 0)
+        exp_cache_rate = high_freq_stats.get("experiment_load_stats", {}).get(
+            "cache_hit_rate", 0
+        )
+        particle_util = high_freq_stats.get("particle_stats", {}).get(
+            "pool_utilization", 0
+        )
 
         # 高频操作效率影响分数（最多扣20分）
         high_freq_score = (exp_cache_rate + (1 - particle_util)) / 2 * 20
@@ -283,27 +293,39 @@ class IntegratedPerformanceOptimizer(QObject):
         recommendations = []
 
         # 检查查询缓存命中率
-        query_hit_rate = report.backend_stats.get("query_stats", {}).get("cache_hit_rate", 0)
+        query_hit_rate = report.backend_stats.get("query_stats", {}).get(
+            "cache_hit_rate", 0
+        )
         if query_hit_rate < 0.5:
             recommendations.append("查询缓存命中率较低，建议增加缓存TTL或预热常用查询")
 
         # 检查API缓存
-        api_hit_rate = report.backend_stats.get("api_cache_stats", {}).get("hit_rate", 0)
+        api_hit_rate = report.backend_stats.get("api_cache_stats", {}).get(
+            "hit_rate", 0
+        )
         if api_hit_rate < 0.5:
             recommendations.append("API缓存命中率较低，建议检查缓存策略")
 
         # 检查实验加载
-        exp_cache_rate = report.high_freq_stats.get("experiment_load_stats", {}).get("cache_hit_rate", 0)
+        exp_cache_rate = report.high_freq_stats.get("experiment_load_stats", {}).get(
+            "cache_hit_rate", 0
+        )
         if exp_cache_rate < 0.6:
             recommendations.append("实验缓存命中率较低，建议启用预加载相关实验")
 
         # 检查粒子系统
-        particle_util = report.high_freq_stats.get("particle_stats", {}).get("pool_utilization", 0)
+        particle_util = report.high_freq_stats.get("particle_stats", {}).get(
+            "pool_utilization", 0
+        )
         if particle_util > 0.9:
-            recommendations.append("粒子系统接近容量上限，建议增加粒子池大小或优化粒子回收")
+            recommendations.append(
+                "粒子系统接近容量上限，建议增加粒子池大小或优化粒子回收"
+            )
 
         # 检查渲染FPS
-        current_fps = report.high_freq_stats.get("rendering_stats", {}).get("current_fps", 60)
+        current_fps = report.high_freq_stats.get("rendering_stats", {}).get(
+            "current_fps", 60
+        )
         if current_fps < 30:
             recommendations.append("渲染帧率较低，建议启用视锥剔除或减少渲染对象")
 
@@ -354,7 +376,9 @@ class IntegratedPerformanceOptimizer(QObject):
 _integrated_optimizer: IntegratedPerformanceOptimizer | None = None
 
 
-def get_integrated_optimizer(config: dict[str, Any] | None = None) -> IntegratedPerformanceOptimizer:
+def get_integrated_optimizer(
+    config: dict[str, Any] | None = None,
+) -> IntegratedPerformanceOptimizer:
     """获取集成性能优化器"""
     global _integrated_optimizer
     if _integrated_optimizer is None:

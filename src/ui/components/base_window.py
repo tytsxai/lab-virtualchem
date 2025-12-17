@@ -77,7 +77,7 @@ class BaseWindowComponent(QWidget):
             message=f"Failed to initialize {self.__class__.__name__}: {str(error)}",
             widget=self.__class__.__name__,
             action="initialize",
-            cause=error
+            cause=error,
         )
         self._error_handler.handle_error(ui_error)
         self.component_error.emit(str(error))
@@ -85,13 +85,14 @@ class BaseWindowComponent(QWidget):
     def safe_execute(self, func: Callable[..., Any], *args, **kwargs) -> Any:
         """安全执行函数"""
         from ...core.common_exceptions import ErrorCategory, ErrorSeverity
+
         return safe_execute(
             func,
             *args,
             error_class=UIError,
             category=ErrorCategory.UI,
             severity=ErrorSeverity.MEDIUM,
-            **kwargs
+            **kwargs,
         )
 
     def set_component_data(self, key: str, value: Any) -> None:
@@ -128,7 +129,7 @@ class BaseWindowComponent(QWidget):
         callback: Callable[[Event], None],
         priority: EventPriority = EventPriority.NORMAL,
         tags_filter: dict[str, str] | None = None,
-        once: bool = False
+        once: bool = False,
     ) -> None:
         """订阅事件"""
         subscription = subscribe_event(
@@ -141,7 +142,7 @@ class BaseWindowComponent(QWidget):
         event_name: str,
         data: Any = None,
         priority: EventPriority = EventPriority.NORMAL,
-        tags: dict[str, str] | None = None
+        tags: dict[str, str] | None = None,
     ) -> None:
         """发布事件"""
         publish_event(event_name, data, self.__class__.__name__, priority, tags)
@@ -212,7 +213,9 @@ class ComponentRegistry:
         self._components[name] = component_class
         logger.debug(f"Component class {name} registered")
 
-    def create_component(self, name: str, parent: QWidget | None = None) -> BaseWindowComponent | None:
+    def create_component(
+        self, name: str, parent: QWidget | None = None
+    ) -> BaseWindowComponent | None:
         """创建组件实例"""
         if name not in self._components:
             logger.error(f"Component {name} not registered")
@@ -256,6 +259,8 @@ def register_component(name: str, component_class: type) -> None:
     _global_registry.register_component(name, component_class)
 
 
-def create_component(name: str, parent: QWidget | None = None) -> BaseWindowComponent | None:
+def create_component(
+    name: str, parent: QWidget | None = None
+) -> BaseWindowComponent | None:
     """创建组件"""
     return _global_registry.create_component(name, parent)

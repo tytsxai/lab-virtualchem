@@ -48,7 +48,9 @@ class StubTraceManager:
         self.events: list[dict[str, Any]] = []
         self.tags: list[dict[str, Any]] = []
 
-    def start_trace(self, operation_name: str, context: StubTraceContext | None = None, **tags: Any) -> StubTraceContext:
+    def start_trace(
+        self, operation_name: str, context: StubTraceContext | None = None, **tags: Any
+    ) -> StubTraceContext:
         ctx = StubTraceContext(
             trace_id=context.trace_id if context else uuid.uuid4().hex,
             parent_span_id=context.span_id if context else None,
@@ -56,13 +58,19 @@ class StubTraceManager:
         self.started.append({"operation": operation_name, "tags": tags, "context": ctx})
         return ctx
 
-    def log_event(self, event: str, context: StubTraceContext | None = None, **fields: Any) -> None:
+    def log_event(
+        self, event: str, context: StubTraceContext | None = None, **fields: Any
+    ) -> None:
         self.events.append({"event": event, "context": context, "fields": fields})
 
-    def set_tag(self, key: str, value: Any, context: StubTraceContext | None = None) -> None:
+    def set_tag(
+        self, key: str, value: Any, context: StubTraceContext | None = None
+    ) -> None:
         self.tags.append({"key": key, "value": value, "context": context})
 
-    def finish_span(self, context: StubTraceContext, status: str = "ok", **tags: Any) -> None:
+    def finish_span(
+        self, context: StubTraceContext, status: str = "ok", **tags: Any
+    ) -> None:
         self.finished.append({"context": context, "status": status, "tags": tags})
 
 
@@ -76,6 +84,8 @@ class StubMetricsCollector:
         self.recorded.append(payload)
 
 
-def build_monitoring_stubs() -> tuple[StubMonitor, StubTraceManager, StubMetricsCollector]:
+def build_monitoring_stubs() -> tuple[
+    StubMonitor, StubTraceManager, StubMetricsCollector
+]:
     """创建一组监控桩供测试注入使用。"""
     return StubMonitor(), StubTraceManager(), StubMetricsCollector()

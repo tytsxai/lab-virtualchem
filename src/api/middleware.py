@@ -41,7 +41,9 @@ class RateLimiter:
         cutoff = now - self.time_window
 
         # 清理过期记录
-        self._requests[client_id] = [req_time for req_time in self._requests[client_id] if req_time > cutoff]
+        self._requests[client_id] = [
+            req_time for req_time in self._requests[client_id] if req_time > cutoff
+        ]
 
         # 检查是否超限
         if len(self._requests[client_id]) >= self.max_requests:
@@ -56,7 +58,9 @@ class RateLimiter:
         now = time.time()
         cutoff = now - self.time_window
 
-        current_count = sum(1 for req_time in self._requests.get(client_id, []) if req_time > cutoff)
+        current_count = sum(
+            1 for req_time in self._requests.get(client_id, []) if req_time > cutoff
+        )
 
         return max(0, self.max_requests - current_count)
 
@@ -114,7 +118,9 @@ class RequestValidator:
     """请求验证器"""
 
     @staticmethod
-    def validate_content_type(content_type: str, expected: str = "application/json") -> bool:
+    def validate_content_type(
+        content_type: str, expected: str = "application/json"
+    ) -> bool:
         """验证Content-Type
 
         Args:
@@ -127,7 +133,9 @@ class RequestValidator:
         return content_type.startswith(expected)
 
     @staticmethod
-    def validate_body_size(content_length: int, max_size: int = 10 * 1024 * 1024) -> bool:
+    def validate_body_size(
+        content_length: int, max_size: int = 10 * 1024 * 1024
+    ) -> bool:
         """验证请求体大小
 
         Args:
@@ -140,7 +148,9 @@ class RequestValidator:
         return content_length <= max_size
 
     @staticmethod
-    def validate_required_fields(data: dict, required_fields: list) -> tuple[bool, str | None]:
+    def validate_required_fields(
+        data: dict, required_fields: list
+    ) -> tuple[bool, str | None]:
         """验证必填字段
 
         Args:
@@ -167,9 +177,9 @@ def require_auth(auth_middleware: AuthMiddleware):
         @wraps(func)
         def wrapper(handler, *args, **kwargs):
             # 提取API密钥
-            api_key = handler.headers.get("X-API-Key") or handler.headers.get("Authorization", "").replace(
-                "Bearer ", ""
-            )
+            api_key = handler.headers.get("X-API-Key") or handler.headers.get(
+                "Authorization", ""
+            ).replace("Bearer ", "")
 
             # 验证API密钥
             client_info = auth_middleware.verify_api_key(api_key)
@@ -204,7 +214,9 @@ def rate_limit(limiter: RateLimiter):
             # 检查速率限制
             if not limiter.is_allowed(client_id):
                 remaining = limiter.get_remaining(client_id)
-                handler._send_error(429, f"请求过于频繁,请稍后再试。剩余次数: {remaining}")
+                handler._send_error(
+                    429, f"请求过于频繁,请稍后再试。剩余次数: {remaining}"
+                )
                 return
 
             # 调用原函数
@@ -273,7 +285,9 @@ if __name__ == "__main__":
     for i in range(7):
         allowed = limiter.is_allowed("client_1")
         remaining = limiter.get_remaining("client_1")
-        logger.info(f"请求 {i + 1}: {'允许' if allowed else '拒绝'}, 剩余次数: {remaining}")
+        logger.info(
+            f"请求 {i + 1}: {'允许' if allowed else '拒绝'}, 剩余次数: {remaining}"
+        )
         time.sleep(1)
 
     logger.info("\n" + "=" * 50 + "\n")

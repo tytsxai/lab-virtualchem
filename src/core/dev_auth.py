@@ -45,13 +45,15 @@ class DevSession:
 class DeveloperAuth:
     """开发者模式认证管理器"""
 
-    def __init__(self, config_path: str = "config.json"):
+    def __init__(self, config_path: str = "config.json", config: object | None = None):
         """初始化开发者认证管理器
 
         Args:
             config_path: 配置文件路径
+            config: 已加载的配置对象（优先于 config_path；用于统一使用 config_loader）
         """
         self.config_path = config_path
+        self._config_obj = config
         self._current_session: DevSession | None = None
         self._failed_attempts = 0
         self._max_attempts = 5
@@ -65,22 +67,56 @@ class DeveloperAuth:
         # 加载配置
         self._load_config()
 
+    @staticmethod
+    def _coerce_mapping(value: object | None) -> dict[str, object]:
+        """Best-effort convert a config object into a dict."""
+        if value is None:
+            return {}
+        if isinstance(value, dict):
+            return value
+        # Pydantic v2
+        if hasattr(value, "model_dump"):
+            try:
+                dumped = value.model_dump()
+                return dumped if isinstance(dumped, dict) else {}
+            except Exception:
+                return {}
+        # Pydantic v1
+        if hasattr(value, "dict"):
+            try:
+                dumped = value.dict()
+                return dumped if isinstance(dumped, dict) else {}
+            except Exception:
+                return {}
+        return {}
+
     def _load_config(self):
         """加载配置"""
         self.dev_config: dict[str, object] = {}
         try:
-            with open(self.config_path, encoding="utf-8") as f:
-                config = json.load(f)
+            if self._config_obj is not None:
+                config = self._coerce_mapping(self._config_obj)
+            else:
+                with open(self.config_path, encoding="utf-8") as f:
+                    config = json.load(f)
 
-            self.dev_config = config.get("developer", {})
-            app_config = config.get("app", {})
-            self._app_environment = app_config.get("environment", self._app_environment)
+            raw_dev_config = config.get("developer", {})
+            self.dev_config = raw_dev_config if isinstance(raw_dev_config, dict) else {}
+            raw_app_config = config.get("app", {})
+            app_config = raw_app_config if isinstance(raw_app_config, dict) else {}
+            self._app_environment = str(
+                app_config.get("environment", self._app_environment)
+            )
 
             # 获取开发者密钥哈希（优先环境变量）
             self.dev_key_hash = self._resolve_dev_key_hash()
 
             # 会话超时时间(小时)
             self.session_timeout = self.dev_config.get("session_timeout_hours", 24)
+            try:
+                self.session_timeout = int(self.session_timeout)
+            except Exception:
+                self.session_timeout = 24
 
             # 启用的功能列表
             self.enabled_features = self.dev_config.get(
@@ -102,6 +138,21 @@ class DeveloperAuth:
                 )
                 self.dev_config["enabled"] = False
 
+            # 安全策略（允许通过配置覆盖）
+            try:
+                self._max_attempts = int(
+                    self.dev_config.get("max_login_attempts", self._max_attempts)
+                )
+            except Exception:
+                self._max_attempts = 5
+            try:
+                lockout_minutes = int(
+                    self.dev_config.get("lockout_duration_minutes", 15)
+                )
+                self._lockout_duration = timedelta(minutes=max(1, lockout_minutes))
+            except Exception:
+                self._lockout_duration = timedelta(minutes=15)
+
         except FileNotFoundError:
             logger.warning(f"配置文件不存在: {self.config_path}, 使用默认配置")
             self.session_timeout = 24
@@ -121,9 +172,13 @@ class DeveloperAuth:
         else:
             self.dev_mode_enabled = _env_flag("DEVELOPER_MODE_ENABLED", base_enabled)
 
-        self._secret_sequences = [s.strip().upper() for s in self.dev_config.get("secret_sequences", []) if s]
+        self._secret_sequences = [
+            s.strip().upper() for s in self.dev_config.get("secret_sequences", []) if s
+        ]
         self._allow_secret_sequences = (
-            self.dev_mode_enabled and env != "production" and bool(self._secret_sequences)
+            self.dev_mode_enabled
+            and env != "production"
+            and bool(self._secret_sequences)
         )
 
     def _resolve_dev_key_hash(self) -> str:
@@ -132,7 +187,9 @@ class DeveloperAuth:
         if env_key_hash:
             return env_key_hash
 
-        file_key_hash = self.dev_config.get("key_hash", "") if hasattr(self, "dev_config") else ""
+        file_key_hash = (
+            self.dev_config.get("key_hash", "") if hasattr(self, "dev_config") else ""
+        )
         if file_key_hash:
             logger.warning(
                 "检测到开发者密钥哈希存储在 config.json 中。"
@@ -171,7 +228,9 @@ class DeveloperAuth:
         """
         if "$" not in stored_hash:
             # 如果没有盐值，直接比较（兼容旧配置）
-            return key == stored_hash or self._hash_key(key).split("$")[0] == stored_hash
+            return (
+                key == stored_hash or self._hash_key(key).split("$")[0] == stored_hash
+            )
 
         hash_part, salt = stored_hash.split("$", 1)
         computed_hash = self._hash_key(key, salt).split("$")[0]
@@ -228,12 +287,16 @@ class DeveloperAuth:
         else:
             # 认证失败
             self._failed_attempts += 1
-            logger.warning(f"开发者密钥验证失败 (尝试 {self._failed_attempts}/{self._max_attempts})")
+            logger.warning(
+                f"开发者密钥验证失败 (尝试 {self._failed_attempts}/{self._max_attempts})"
+            )
 
             # 达到最大尝试次数，锁定
             if self._failed_attempts >= self._max_attempts:
                 self._lockout_until = datetime.now() + self._lockout_duration
-                logger.error(f"开发者模式已锁定 {self._lockout_duration.total_seconds() / 60} 分钟")
+                logger.error(
+                    f"开发者模式已锁定 {self._lockout_duration.total_seconds() / 60} 分钟"
+                )
 
             return False
 
@@ -332,7 +395,9 @@ class DeveloperAuth:
         """检查当前环境是否允许启用开发者模式"""
         if not self.dev_mode_enabled:
             return False
-        if self._app_environment.lower() == "production" and not _env_flag("DEVELOPER_MODE_ENABLED", False):
+        if self._app_environment.lower() == "production" and not _env_flag(
+            "DEVELOPER_MODE_ENABLED", False
+        ):
             return False
         return True
 
@@ -342,7 +407,9 @@ class DeveloperAuth:
         return secrets.token_urlsafe(32)
 
     @classmethod
-    def setup_dev_key(cls, config_path: str = "config.json", new_key: str = None) -> str:
+    def setup_dev_key(
+        cls, config_path: str = "config.json", new_key: str = None
+    ) -> str:
         """设置开发者密钥
 
         Args:

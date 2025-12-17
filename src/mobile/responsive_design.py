@@ -231,7 +231,11 @@ class ResponsiveDesign(QObject):
         Returns:
             屏幕方向
         """
-        return Orientation.LANDSCAPE if size.width() > size.height() else Orientation.PORTRAIT
+        return (
+            Orientation.LANDSCAPE
+            if size.width() > size.height()
+            else Orientation.PORTRAIT
+        )
 
     def _update_responsive_widgets(self) -> None:
         """更新所有响应式组件"""

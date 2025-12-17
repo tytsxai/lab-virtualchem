@@ -252,7 +252,11 @@ class UndoRedoHelper:
 
     @staticmethod
     def create_value_change_action(
-        history: ActionHistory, name: str, setter: Callable[[Any], None], old_value: Any, new_value: Any
+        history: ActionHistory,
+        name: str,
+        setter: Callable[[Any], None],
+        old_value: Any,
+        new_value: Any,
     ) -> str:
         """创建值更改操作
 
@@ -283,7 +287,9 @@ class UndoRedoHelper:
         )
 
     @staticmethod
-    def create_list_add_action(history: ActionHistory, name: str, list_obj: list, item: Any, index: int = -1) -> str:
+    def create_list_add_action(
+        history: ActionHistory, name: str, list_obj: list, item: Any, index: int = -1
+    ) -> str:
         """创建列表添加操作
 
         Args:
@@ -318,7 +324,11 @@ class UndoRedoHelper:
 
     @staticmethod
     def create_list_remove_action(
-        history: ActionHistory, name: str, list_obj: list, item: Any, index: int | None = None
+        history: ActionHistory,
+        name: str,
+        list_obj: list,
+        item: Any,
+        index: int | None = None,
     ) -> str:
         """创建列表移除操作
 
@@ -356,7 +366,12 @@ class UndoRedoHelper:
 
     @staticmethod
     def create_dict_change_action(
-        history: ActionHistory, name: str, dict_obj: dict, key: Any, old_value: Any, new_value: Any
+        history: ActionHistory,
+        name: str,
+        dict_obj: dict,
+        key: Any,
+        old_value: Any,
+        new_value: Any,
     ) -> str:
         """创建字典更改操作
 

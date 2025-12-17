@@ -239,7 +239,9 @@ class InputValidator:
                 # 验证步骤ID
                 if "id" in step:
                     step_id = step["id"]
-                    if not isinstance(step_id, str) or not re.match(r"^[a-zA-Z0-9_-]+$", step_id):
+                    if not isinstance(step_id, str) or not re.match(
+                        r"^[a-zA-Z0-9_-]+$", step_id
+                    ):
                         errors.append(f"步骤 {i + 1}: ID格式不正确")
 
                 # 验证步骤描述
@@ -271,7 +273,9 @@ class InputValidator:
                     (
                         self.sanitize_experiment_data(item)
                         if isinstance(item, dict)
-                        else self.sanitize_string(item) if isinstance(item, str) else item
+                        else self.sanitize_string(item)
+                        if isinstance(item, str)
+                        else item
                     )
                     for item in value
                 ]
@@ -285,7 +289,9 @@ class InputValidator:
 input_validator = InputValidator()
 
 
-def validate_and_sanitize_input(data: Any, input_type: str = "general") -> tuple[bool, str, Any]:
+def validate_and_sanitize_input(
+    data: Any, input_type: str = "general"
+) -> tuple[bool, str, Any]:
     """验证和清理输入的便捷函数
 
     Args:

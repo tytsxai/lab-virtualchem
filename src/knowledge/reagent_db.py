@@ -69,7 +69,9 @@ class ReagentDatabase:
         """
         return self.loader.search_cards(query, KnowledgeType.REAGENT)
 
-    def get_hazardous_reagents(self, min_level: HazardLevel = HazardLevel.WARNING) -> list[KnowledgeCard]:
+    def get_hazardous_reagents(
+        self, min_level: HazardLevel = HazardLevel.WARNING
+    ) -> list[KnowledgeCard]:
         """获取危险试剂列表
 
         Args:
@@ -95,7 +97,9 @@ class ReagentDatabase:
 
         return sorted(
             hazardous,
-            key=lambda r: level_priority[r.get_highest_hazard_level() or HazardLevel.INFO],
+            key=lambda r: level_priority[
+                r.get_highest_hazard_level() or HazardLevel.INFO
+            ],
             reverse=True,
         )
 
@@ -112,7 +116,12 @@ class ReagentDatabase:
             import json
             from pathlib import Path
 
-            safety_file = Path(__file__).parent.parent.parent / "assets" / "knowledge" / "safety.json"
+            safety_file = (
+                Path(__file__).parent.parent.parent
+                / "assets"
+                / "knowledge"
+                / "safety.json"
+            )
 
             if not safety_file.exists():
                 logger.warning("安全知识库文件不存在，返回默认配伍禁忌")
@@ -165,7 +174,9 @@ class ReagentDatabase:
             ("p_white", "air", "极高", "白磷在空气中会自燃"),
         ]
 
-    def check_compatibility(self, reagent1_id: str, reagent2_id: str) -> tuple[bool, str]:
+    def check_compatibility(
+        self, reagent1_id: str, reagent2_id: str
+    ) -> tuple[bool, str]:
         """检查两种试剂是否兼容
 
         Args:
@@ -179,7 +190,9 @@ class ReagentDatabase:
 
         for r1, r2, risk, desc in incompatible_pairs:
             # 检查双向匹配
-            if (r1 == reagent1_id and r2 == reagent2_id) or (r1 == reagent2_id and r2 == reagent1_id):
+            if (r1 == reagent1_id and r2 == reagent2_id) or (
+                r1 == reagent2_id and r2 == reagent1_id
+            ):
                 return False, f"风险等级: {risk} - {desc}"
 
         return True, "未发现配伍禁忌"

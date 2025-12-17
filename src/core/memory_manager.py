@@ -22,9 +22,11 @@ from weakref import WeakSet
 
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
+
     # psutil 不可用时的占位符
     class psutil:  # type: ignore
         @staticmethod
@@ -46,6 +48,7 @@ except ImportError:
         def virtual_memory() -> Any:
             class VirtualMemory:
                 available = 0
+
             return VirtualMemory()
 
 
@@ -133,7 +136,9 @@ class MemoryManager:
         # 缓存管理
         self.caches: dict[str, Any] = {}
         self.cache_max_sizes: dict[str, int] = {}
-        self.cache_access_times: dict[str, deque[float]] = defaultdict(lambda: deque(maxlen=100))
+        self.cache_access_times: dict[str, deque[float]] = defaultdict(
+            lambda: deque(maxlen=100)
+        )
 
         # 弱引用管理 - 增加大小限制防止无限增长
         self.weak_refs: set[weakref.ref[Any]] = set()
@@ -337,7 +342,9 @@ class MemoryManager:
             if avg_change == 0:
                 return 0.0
 
-            variance = sum((change - avg_change) ** 2 for change in memory_changes) / len(memory_changes)
+            variance = sum(
+                (change - avg_change) ** 2 for change in memory_changes
+            ) / len(memory_changes)
             std_dev = variance**0.5
 
             return min(100.0, (std_dev / avg_change) * 100)
@@ -391,11 +398,17 @@ class MemoryManager:
 
             with self._lock:
                 # 1. 垃圾回收
-                if self.strategy in [MemoryStrategy.AGGRESSIVE, MemoryStrategy.BALANCED]:
+                if self.strategy in [
+                    MemoryStrategy.AGGRESSIVE,
+                    MemoryStrategy.BALANCED,
+                ]:
                     cleanup_stats["gc_collected"] = self._perform_garbage_collection()
 
                 # 2. 清理缓存
-                if self.strategy in [MemoryStrategy.AGGRESSIVE, MemoryStrategy.BALANCED]:
+                if self.strategy in [
+                    MemoryStrategy.AGGRESSIVE,
+                    MemoryStrategy.BALANCED,
+                ]:
                     cleanup_stats["cache_cleared"] = self._cleanup_caches()
 
                 # 3. 清理弱引用
@@ -437,7 +450,9 @@ class MemoryManager:
             self.gc_count += 1
             self.gc_time_total += gc_time
 
-            logger.debug(f"垃圾回收完成: 回收了 {collected} 个对象, 耗时: {gc_time:.3f}秒")
+            logger.debug(
+                f"垃圾回收完成: 回收了 {collected} 个对象, 耗时: {gc_time:.3f}秒"
+            )
 
             return collected
 
@@ -510,7 +525,7 @@ class MemoryManager:
             leaks_detected = 0
 
             # 分析内存增长趋势
-            recent_metrics = list(self.memory_history)[-self.growth_detection_window:]
+            recent_metrics = list(self.memory_history)[-self.growth_detection_window :]
             memory_values = [m.rss_mb for m in recent_metrics]
 
             # 计算增长趋势
@@ -540,7 +555,9 @@ class MemoryManager:
             # 检测弱引用数量异常
             if len(self.weak_refs) > self.max_weak_refs * 0.8:  # 超过80%阈值
                 leaks_detected += 1
-                logger.warning(f"弱引用数量过多: {len(self.weak_refs)}/{self.max_weak_refs}")
+                logger.warning(
+                    f"弱引用数量过多: {len(self.weak_refs)}/{self.max_weak_refs}"
+                )
 
             if leaks_detected > 0:
                 self.leak_detections += 1
@@ -554,7 +571,12 @@ class MemoryManager:
     def optimize_memory_usage(self) -> dict[str, Any]:
         """优化内存使用"""
         try:
-            optimization_stats = {"before_mb": 0.0, "after_mb": 0.0, "saved_mb": 0.0, "optimizations": []}
+            optimization_stats = {
+                "before_mb": 0.0,
+                "after_mb": 0.0,
+                "saved_mb": 0.0,
+                "optimizations": [],
+            }
 
             # 获取优化前内存
             before_metrics = self.get_memory_metrics()
@@ -581,7 +603,9 @@ class MemoryManager:
             # 获取优化后内存
             after_metrics = self.get_memory_metrics()
             optimization_stats["after_mb"] = after_metrics.rss_mb
-            optimization_stats["saved_mb"] = optimization_stats["before_mb"] - optimization_stats["after_mb"]
+            optimization_stats["saved_mb"] = (
+                optimization_stats["before_mb"] - optimization_stats["after_mb"]
+            )
             optimization_stats["optimizations"] = optimizations
 
             logger.info(f"内存优化完成: 节省了 {optimization_stats['saved_mb']:.2f} MB")
@@ -807,7 +831,9 @@ class MemoryManager:
 
         return alerts
 
-    def add_monitoring_callback(self, callback: Callable[[MemoryMetrics], None]) -> None:
+    def add_monitoring_callback(
+        self, callback: Callable[[MemoryMetrics], None]
+    ) -> None:
         """添加监控回调（测试使用）"""
         self._monitoring_callbacks.append(callback)
 

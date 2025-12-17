@@ -12,17 +12,21 @@ logger = logging.getLogger(__name__)
 
 # 全局恢复管理器实例 - 将在文件末尾定义
 
+
 class RecoveryStrategy(Enum):
     """恢复策略"""
+
     RETRY = "retry"
     FALLBACK = "fallback"
     IGNORE = "ignore"
     ESCALATE = "escalate"
     RESTART = "restart"
 
+
 @dataclass
 class ErrorContext:
     """错误上下文"""
+
     error_type: str
     error_message: str
     stack_trace: str
@@ -33,15 +37,18 @@ class ErrorContext:
     session_id: str | None = None
     additional_data: dict[str, Any] | None = None
 
+
 @dataclass
 class RecoveryAction:
     """恢复动作"""
+
     strategy: RecoveryStrategy
     action: Callable[[], Any]
     max_attempts: int = 3
     delay: float = 1.0
     backoff_factor: float = 2.0
     timeout: float = 30.0
+
 
 class ErrorRecoverySystem:
     """错误恢复系统"""
@@ -66,8 +73,8 @@ class ErrorRecoverySystem:
                 action=self._retry_network_operation,
                 max_attempts=3,
                 delay=1.0,
-                backoff_factor=2.0
-            )
+                backoff_factor=2.0,
+            ),
         )
 
         # 数据库错误恢复规则
@@ -77,8 +84,8 @@ class ErrorRecoverySystem:
                 strategy=RecoveryStrategy.RETRY,
                 action=self._retry_database_operation,
                 max_attempts=2,
-                delay=2.0
-            )
+                delay=2.0,
+            ),
         )
 
         # 文件系统错误恢复规则
@@ -87,8 +94,8 @@ class ErrorRecoverySystem:
             RecoveryAction(
                 strategy=RecoveryStrategy.FALLBACK,
                 action=self._fallback_file_operation,
-                max_attempts=1
-            )
+                max_attempts=1,
+            ),
         )
 
         # 内存错误恢复规则
@@ -97,8 +104,8 @@ class ErrorRecoverySystem:
             RecoveryAction(
                 strategy=RecoveryStrategy.ESCALATE,
                 action=self._escalate_memory_error,
-                max_attempts=1
-            )
+                max_attempts=1,
+            ),
         )
 
     def add_recovery_rule(self, error_type: str, action: RecoveryAction):
@@ -112,7 +119,8 @@ class ErrorRecoverySystem:
         """移除恢复规则"""
         if error_type in self.recovery_rules:
             self.recovery_rules[error_type] = [
-                rule for rule in self.recovery_rules[error_type]
+                rule
+                for rule in self.recovery_rules[error_type]
                 if rule.strategy != strategy
             ]
 
@@ -150,9 +158,11 @@ class ErrorRecoverySystem:
 
         # 保持历史记录大小
         if len(self.error_history) > self.max_history:
-            self.error_history = self.error_history[-self.max_history:]
+            self.error_history = self.error_history[-self.max_history :]
 
-    def _find_recovery_actions(self, error: Exception, _context: ErrorContext) -> list[RecoveryAction]:
+    def _find_recovery_actions(
+        self, error: Exception, _context: ErrorContext
+    ) -> list[RecoveryAction]:
         """查找恢复动作"""
         error_type = error.__class__.__name__
         actions = []
@@ -169,7 +179,9 @@ class ErrorRecoverySystem:
 
         return actions
 
-    def _execute_recovery_action(self, action: RecoveryAction, context: ErrorContext) -> Any:
+    def _execute_recovery_action(
+        self, action: RecoveryAction, context: ErrorContext
+    ) -> Any:
         """执行恢复动作"""
         logger.info(f"执行恢复动作: {action.strategy.value}")
 
@@ -197,7 +209,7 @@ class ErrorRecoverySystem:
                     raise e
 
                 # 计算延迟时间
-                delay = action.delay * (action.backoff_factor ** attempt)
+                delay = action.delay * (action.backoff_factor**attempt)
                 logger.info(f"重试延迟: {delay}秒")
                 time.sleep(delay)
 
@@ -272,17 +284,18 @@ class ErrorRecoverySystem:
 
         # 按时间统计
         recent_errors = [
-            context for context in self.error_history
+            context
+            for context in self.error_history
             if time.time() - context.timestamp < 3600  # 最近1小时
         ]
 
         return {
-            'total_errors': len(self.error_history),
-            'recent_errors': len(recent_errors),
-            'error_types': error_types,
-            'components': components,
-            'recovery_rules': len(self.recovery_rules),
-            'is_enabled': self.is_enabled
+            "total_errors": len(self.error_history),
+            "recent_errors": len(recent_errors),
+            "error_types": error_types,
+            "components": components,
+            "recovery_rules": len(self.recovery_rules),
+            "is_enabled": self.is_enabled,
         }
 
     def clear_error_history(self):
@@ -297,7 +310,9 @@ class ErrorRecoverySystem:
         """禁用恢复系统"""
         self.is_enabled = False
 
-    def create_error_context(self, error: Exception, component: str, operation: str, **kwargs) -> ErrorContext:
+    def create_error_context(
+        self, error: Exception, component: str, operation: str, **kwargs
+    ) -> ErrorContext:
         """创建错误上下文"""
         return ErrorContext(
             error_type=error.__class__.__name__,
@@ -306,7 +321,7 @@ class ErrorRecoverySystem:
             timestamp=time.time(),
             component=component,
             operation=operation,
-            **kwargs
+            **kwargs,
         )
 
     def __enter__(self):
@@ -332,18 +347,23 @@ recovery_manager = ErrorRecoverySystem()
 # 便捷函数
 def auto_recover(func):
     """自动恢复装饰器"""
+
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            context = recovery_manager.create_error_context(e, func.__name__, "auto_recover")
+            context = recovery_manager.create_error_context(
+                e, func.__name__, "auto_recover"
+            )
             recovery_manager.handle_error(e, context)
             return None
+
     return wrapper
 
 
 def retry(max_attempts: int = 3, delay: float = 1.0):
     """重试装饰器"""
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             for attempt in range(max_attempts):
@@ -354,17 +374,22 @@ def retry(max_attempts: int = 3, delay: float = 1.0):
                         raise
                     time.sleep(delay)
             return None
+
         return wrapper
+
     return decorator
 
 
 def fallback(default_value=None):
     """回退装饰器"""
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
             except Exception:
                 return default_value
+
         return wrapper
+
     return decorator

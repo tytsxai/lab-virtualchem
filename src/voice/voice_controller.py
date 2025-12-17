@@ -108,8 +108,12 @@ class VoiceController:
             if not self.model_path.exists():
                 logger.error(f"Vosk模型不存在: {self.model_path}")
                 logger.info("请下载模型:")
-                logger.info("  中文: https://alphacephei.com/vosk/models/vosk-model-cn-0.22.zip")
-                logger.info("  英文: https://alphacephei.com/vosk/models/vosk-model-en-us-0.22.zip")
+                logger.info(
+                    "  中文: https://alphacephei.com/vosk/models/vosk-model-cn-0.22.zip"
+                )
+                logger.info(
+                    "  英文: https://alphacephei.com/vosk/models/vosk-model-en-us-0.22.zip"
+                )
                 raise FileNotFoundError(f"模型不存在: {self.model_path}")
 
             self.model = Model(str(self.model_path))
@@ -149,7 +153,9 @@ class VoiceController:
         except Exception as e:
             logger.error(f"初始化TTS失败: {e}")
 
-    def register_command(self, command_text: str, callback: Callable, aliases: list[str] | None = None):
+    def register_command(
+        self, command_text: str, callback: Callable, aliases: list[str] | None = None
+    ):
         """注册语音指令
 
         Args:
@@ -297,7 +303,9 @@ class VoiceController:
 
         import time
 
-        with sd.RawInputStream(samplerate=16000, blocksize=8000, dtype="int16", channels=1) as stream:
+        with sd.RawInputStream(
+            samplerate=16000, blocksize=8000, dtype="int16", channels=1
+        ) as stream:
             start_time = time.time()
 
             while time.time() - start_time < duration:
@@ -367,7 +375,9 @@ if __name__ == "__main__":
         logger.info("\n请安装依赖:")
         logger.info("  pip install vosk sounddevice pyttsx3")
         logger.info("\n然后下载模型:")
-        logger.info("  中文: https://alphacephei.com/vosk/models/vosk-model-cn-0.22.zip")
+        logger.info(
+            "  中文: https://alphacephei.com/vosk/models/vosk-model-cn-0.22.zip"
+        )
         logger.info("  解压到: models/vosk/vosk-model-cn-0.22/")
         sys.exit(1)
 

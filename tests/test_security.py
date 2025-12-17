@@ -103,7 +103,10 @@ class TestInputValidator(unittest.TestCase):
         valid_data = {
             "name": "测试实验",
             "description": "测试描述",
-            "steps": [{"id": "step1", "text": "步骤1"}, {"id": "step2", "text": "步骤2"}],
+            "steps": [
+                {"id": "step1", "text": "步骤1"},
+                {"id": "step2", "text": "步骤2"},
+            ],
         }
 
         is_valid, errors = self.validator.validate_experiment_data(valid_data)
@@ -127,11 +130,15 @@ class TestRBACManager(unittest.TestCase):
 
     def setUp(self):
         self.rbac = RBACManager()
-        self.user = self.rbac.create_user(user_id="test_user", username="testuser", role=Role.STUDENT)
+        self.user = self.rbac.create_user(
+            user_id="test_user", username="testuser", role=Role.STUDENT
+        )
 
     def test_create_user(self):
         """测试用户创建"""
-        user = self.rbac.create_user(user_id="new_user", username="newuser", role=Role.ADMIN)
+        user = self.rbac.create_user(
+            user_id="new_user", username="newuser", role=Role.ADMIN
+        )
 
         self.assertEqual(user.user_id, "new_user")
         self.assertEqual(user.username, "newuser")
@@ -144,7 +151,9 @@ class TestRBACManager(unittest.TestCase):
         self.assertTrue(self.rbac.has_permission(self.user, Permission.VIEW_EXPERIMENT))
 
         # 学生没有删除实验权限
-        self.assertFalse(self.rbac.has_permission(self.user, Permission.DELETE_EXPERIMENT))
+        self.assertFalse(
+            self.rbac.has_permission(self.user, Permission.DELETE_EXPERIMENT)
+        )
 
     def test_add_permission(self):
         """测试添加权限"""
@@ -153,7 +162,9 @@ class TestRBACManager(unittest.TestCase):
         self.assertTrue(result)
 
         # 检查权限是否存在
-        self.assertTrue(self.rbac.has_permission(self.user, Permission.DELETE_EXPERIMENT))
+        self.assertTrue(
+            self.rbac.has_permission(self.user, Permission.DELETE_EXPERIMENT)
+        )
 
     def test_change_user_role(self):
         """测试更改用户角色"""
@@ -163,7 +174,9 @@ class TestRBACManager(unittest.TestCase):
         self.assertEqual(self.user.role, Role.ADMIN)
 
         # 检查权限是否更新
-        self.assertTrue(self.rbac.has_permission(self.user, Permission.DELETE_EXPERIMENT))
+        self.assertTrue(
+            self.rbac.has_permission(self.user, Permission.DELETE_EXPERIMENT)
+        )
 
     def test_session_management(self):
         """测试会话管理"""
@@ -324,7 +337,9 @@ class TestProtectedDataEncryption(unittest.TestCase):
 
     def setUp(self):
         self.encryption = ProtectedDataEncryption()
-        self.key_id = self.encryption.generate_key(EncryptionAlgorithm.AES256, key_id="test_aes_key")
+        self.key_id = self.encryption.generate_key(
+            EncryptionAlgorithm.AES256, key_id="test_aes_key"
+        )
 
     def test_aes_gcm_round_trip(self):
         """密文应可还原"""

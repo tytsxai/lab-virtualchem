@@ -204,7 +204,9 @@ class EventBus:
             event: 事件
         """
         # 找到可以处理此事件的处理器
-        eligible_handlers = [handler for handler in self.handlers.values() if handler.can_handle(event)]
+        eligible_handlers = [
+            handler for handler in self.handlers.values() if handler.can_handle(event)
+        ]
 
         # 按优先级排序
         eligible_handlers.sort(key=lambda h: h.priority)
@@ -349,14 +351,20 @@ class EventStore:
 
             # 按事件类型过滤
             if event_type:
-                filtered_events = [e for e in filtered_events if e.event_type == event_type]
+                filtered_events = [
+                    e for e in filtered_events if e.event_type == event_type
+                ]
 
             # 按时间过滤
             if start_time:
-                filtered_events = [e for e in filtered_events if e.timestamp >= start_time]
+                filtered_events = [
+                    e for e in filtered_events if e.timestamp >= start_time
+                ]
 
             if end_time:
-                filtered_events = [e for e in filtered_events if e.timestamp <= end_time]
+                filtered_events = [
+                    e for e in filtered_events if e.timestamp <= end_time
+                ]
 
             # 限制数量
             if limit:
@@ -459,7 +467,9 @@ class EventSaga:
 
                 # 发布事件
                 event = Event(
-                    event_type=step["event_type"], data=step["data"], metadata={"saga_id": self.saga_id, "step": i}
+                    event_type=step["event_type"],
+                    data=step["data"],
+                    metadata={"saga_id": self.saga_id, "step": i},
                 )
 
                 self.event_bus.publish_sync(event)
@@ -495,7 +505,11 @@ class EventSaga:
                     event = Event(
                         event_type=step["compensation_event_type"],
                         data=step["compensation_data"],
-                        metadata={"saga_id": self.saga_id, "step": i, "compensation": True},
+                        metadata={
+                            "saga_id": self.saga_id,
+                            "step": i,
+                            "compensation": True,
+                        },
                     )
 
                     self.event_bus.publish_sync(event)
@@ -566,7 +580,9 @@ def publish_event(
     Returns:
         是否成功发布
     """
-    event = Event(event_type=event_type, data=data or {}, source=source, metadata=metadata or {})
+    event = Event(
+        event_type=event_type, data=data or {}, source=source, metadata=metadata or {}
+    )
 
     # 存储事件
     event_store.store(event)

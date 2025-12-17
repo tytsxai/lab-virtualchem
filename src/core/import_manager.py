@@ -90,7 +90,9 @@ class ImportManager:
         try:
             return getattr(module, function_name)
         except AttributeError as e:
-            logger.error(f"Function {function_name} not found in module {module_name}: {e}")
+            logger.error(
+                f"Function {function_name} not found in module {module_name}: {e}"
+            )
             return None
 
     def safe_import(self, module_name: str, default: Any = None) -> Any:
@@ -99,7 +101,7 @@ class ImportManager:
             self.get_module,
             module_name,
             error_class=SystemError,
-            fallback_value=default
+            fallback_value=default,
         )
 
     def clear_cache(self) -> None:

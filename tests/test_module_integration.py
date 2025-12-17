@@ -80,7 +80,9 @@ class TestModuleIntegration(unittest.TestCase):
         self.assertIsNotNone(event_bus)
 
         # 测试事件发布
-        event = Event("test.integration", {"test": "data"}, priority=EventPriority.NORMAL)
+        event = Event(
+            "test.integration", {"test": "data"}, priority=EventPriority.NORMAL
+        )
         results = event_bus.publish(event)
 
         # 应该有处理器响应（至少是系统默认处理器）
@@ -182,7 +184,9 @@ class TestEventCommunication(unittest.TestCase):
         normal_priority_handler = Mock()
 
         # 订阅事件（注意：先订阅低优先级，后订阅高优先级）
-        event_bus.subscribe("test.priority", normal_priority_handler, EventPriority.NORMAL)
+        event_bus.subscribe(
+            "test.priority", normal_priority_handler, EventPriority.NORMAL
+        )
         event_bus.subscribe("test.priority", high_priority_handler, EventPriority.HIGH)
 
         # 发布事件

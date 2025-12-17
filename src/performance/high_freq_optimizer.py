@@ -279,7 +279,9 @@ class PhysicsEngineOptimizer:
         return {
             "grid_cells": len(self.spatial_grid),
             "total_objects": total_objects,
-            "avg_objects_per_cell": (total_objects / len(self.spatial_grid) if self.spatial_grid else 0),
+            "avg_objects_per_cell": (
+                total_objects / len(self.spatial_grid) if self.spatial_grid else 0
+            ),
         }
 
 
@@ -306,7 +308,9 @@ class RenderingOptimizer:
         # 检查是否相交
         return not (x1 + w1 < x2 or x2 + w2 < x1 or y1 + h1 < y2 or y2 + h2 < y1)
 
-    def update_visible_objects(self, all_objects: list[Any], viewport_rect: tuple[int, int, int, int]):
+    def update_visible_objects(
+        self, all_objects: list[Any], viewport_rect: tuple[int, int, int, int]
+    ):
         """更新可见对象列表"""
         self.visible_objects.clear()
 
@@ -329,7 +333,11 @@ class RenderingOptimizer:
 
     def get_render_stats(self) -> dict[str, Any]:
         """获取渲染统计"""
-        current_fps = 1.0 / (time.time() - self.last_render_time) if self.last_render_time > 0 else 0
+        current_fps = (
+            1.0 / (time.time() - self.last_render_time)
+            if self.last_render_time > 0
+            else 0
+        )
 
         return {
             "visible_objects": len(self.visible_objects),

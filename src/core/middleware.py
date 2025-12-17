@@ -64,7 +64,9 @@ class Middleware(ABC):
     """中间件基类"""
 
     @abstractmethod
-    async def invoke(self, context: MiddlewareContext, next_middleware: Callable) -> Any:
+    async def invoke(
+        self, context: MiddlewareContext, next_middleware: Callable
+    ) -> Any:
         """
         调用中间件
 
@@ -158,7 +160,9 @@ class LoggingMiddleware(Middleware):
     def __init__(self, logger: Callable | None = None):
         self.logger = logger or print
 
-    async def invoke(self, context: MiddlewareContext, next_middleware: Callable) -> Any:
+    async def invoke(
+        self, context: MiddlewareContext, next_middleware: Callable
+    ) -> Any:
         start_time = time.time()
 
         self.logger(f"[Middleware] Request started: {context.request}")
@@ -180,7 +184,9 @@ class ErrorHandlingMiddleware(Middleware):
     def __init__(self, error_handler: Callable | None = None):
         self.error_handler = error_handler
 
-    async def invoke(self, context: MiddlewareContext, next_middleware: Callable) -> Any:
+    async def invoke(
+        self, context: MiddlewareContext, next_middleware: Callable
+    ) -> Any:
         try:
             return await next_middleware()
         except Exception as e:
@@ -204,7 +210,9 @@ class PerformanceMiddleware(Middleware):
     def __init__(self, threshold_ms: float = 1000):
         self.threshold_ms = threshold_ms
 
-    async def invoke(self, context: MiddlewareContext, next_middleware: Callable) -> Any:
+    async def invoke(
+        self, context: MiddlewareContext, next_middleware: Callable
+    ) -> Any:
         start_time = time.time()
 
         result = await next_middleware()
@@ -213,7 +221,9 @@ class PerformanceMiddleware(Middleware):
         context.set("elapsed_ms", elapsed_ms)
 
         if elapsed_ms > self.threshold_ms:
-            print(f"⚠️ Performance warning: Request took {elapsed_ms:.2f}ms (threshold: {self.threshold_ms}ms)")
+            print(
+                f"⚠️ Performance warning: Request took {elapsed_ms:.2f}ms (threshold: {self.threshold_ms}ms)"
+            )
 
         return result
 
@@ -225,7 +235,9 @@ class CachingMiddleware(Middleware):
         self.cache_key_func = cache_key_func
         self.cache: dict[str, Any] = {}
 
-    async def invoke(self, context: MiddlewareContext, next_middleware: Callable) -> Any:
+    async def invoke(
+        self, context: MiddlewareContext, next_middleware: Callable
+    ) -> Any:
         cache_key = self.cache_key_func(context.request)
 
         # 检查缓存
@@ -251,7 +263,9 @@ class ValidationMiddleware(Middleware):
     def __init__(self, validator: Callable[[Any], bool]):
         self.validator = validator
 
-    async def invoke(self, context: MiddlewareContext, next_middleware: Callable) -> Any:
+    async def invoke(
+        self, context: MiddlewareContext, next_middleware: Callable
+    ) -> Any:
         if not self.validator(context.request):
             raise ValueError("Validation failed")
 
@@ -272,7 +286,9 @@ class RateLimitMiddleware(Middleware):
         self.key_func = key_func or (lambda _req: "global")
         self.requests: dict[str, list[float]] = {}
 
-    async def invoke(self, context: MiddlewareContext, next_middleware: Callable) -> Any:
+    async def invoke(
+        self, context: MiddlewareContext, next_middleware: Callable
+    ) -> Any:
         key = self.key_func(context.request)
         now = time.time()
 
@@ -303,7 +319,9 @@ class AuthenticationMiddleware(Middleware):
     def __init__(self, auth_func: Callable[[Any], bool]):
         self.auth_func = auth_func
 
-    async def invoke(self, context: MiddlewareContext, next_middleware: Callable) -> Any:
+    async def invoke(
+        self, context: MiddlewareContext, next_middleware: Callable
+    ) -> Any:
         if not self.auth_func(context.request):
             raise PermissionError("Authentication failed")
 
@@ -314,11 +332,17 @@ class AuthenticationMiddleware(Middleware):
 class TransformMiddleware(Middleware):
     """转换中间件"""
 
-    def __init__(self, request_transform: Callable | None = None, response_transform: Callable | None = None):
+    def __init__(
+        self,
+        request_transform: Callable | None = None,
+        response_transform: Callable | None = None,
+    ):
         self.request_transform = request_transform
         self.response_transform = response_transform
 
-    async def invoke(self, context: MiddlewareContext, next_middleware: Callable) -> Any:
+    async def invoke(
+        self, context: MiddlewareContext, next_middleware: Callable
+    ) -> Any:
         # 转换请求
         if self.request_transform:
             context.request = self.request_transform(context.request)
@@ -337,7 +361,9 @@ class TransformMiddleware(Middleware):
 if __name__ == "__main__":
     # 自定义中间件
     class CustomMiddleware(Middleware):
-        async def invoke(self, context: MiddlewareContext, next_middleware: Callable) -> Any:
+        async def invoke(
+            self, context: MiddlewareContext, next_middleware: Callable
+        ) -> Any:
             logger.info(f"Before: {context.request}")
             result = await next_middleware()
             logger.info(f"After: {result}")

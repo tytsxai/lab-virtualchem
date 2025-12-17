@@ -36,12 +36,15 @@ class Achievement(BaseModel):
     type: AchievementType = Field(..., description="成就类型")
     icon: str = Field(default="🏆", description="图标")
     exp_reward: int = Field(default=0, ge=0, description="经验奖励")
-    rarity: str = Field(default="common", description="稀有度: common/rare/epic/legendary")
+    rarity: str = Field(
+        default="common", description="稀有度: common/rare/epic/legendary"
+    )
     hidden: bool = Field(default=False, description="是否隐藏成就")
 
     # 完成条件
     condition_key: str = Field(..., description="条件键名")
     condition_value: Any = Field(..., description="条件目标值")
+
 
 class UserAchievement(BaseModel):
     """用户成就记录"""
@@ -247,7 +250,9 @@ class AchievementManager:
             achievements = [a for a in achievements if not a.hidden]
         return achievements
 
-    def check_achievement_unlock(self, achievement_id: str, user_stats: dict[str, Any]) -> tuple[bool, float]:
+    def check_achievement_unlock(
+        self, achievement_id: str, user_stats: dict[str, Any]
+    ) -> tuple[bool, float]:
         """检查成就是否解锁
 
         Args:
@@ -276,7 +281,9 @@ class AchievementManager:
 
         return unlocked, progress
 
-    def check_all_achievements(self, user_stats: dict[str, Any], unlocked_ids: set[str]) -> list[Achievement]:
+    def check_all_achievements(
+        self, user_stats: dict[str, Any], unlocked_ids: set[str]
+    ) -> list[Achievement]:
         """检查所有成就，返回新解锁的成就
 
         Args:

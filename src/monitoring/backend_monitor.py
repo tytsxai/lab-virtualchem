@@ -10,6 +10,8 @@
 
 import json
 import logging
+import os
+import sys
 import threading
 import time
 from collections import deque
@@ -22,6 +24,18 @@ from typing import Any
 import psutil
 
 logger = logging.getLogger(__name__)
+
+
+def _should_start_background_threads() -> bool:
+    if os.environ.get("VCL_DISABLE_BACKGROUND_THREADS") == "1":
+        return False
+    if os.environ.get("VCL_TEST_MODE") == "1":
+        return False
+    if os.environ.get("PYTEST_CURRENT_TEST"):
+        return False
+    if "pytest" in sys.modules:
+        return False
+    return True
 
 
 class MetricType(Enum):
@@ -78,7 +92,9 @@ class Span:
 
     def log(self, message: str, **fields) -> None:
         """添加日志"""
-        self.logs.append({"timestamp": datetime.now().isoformat(), "message": message, **fields})
+        self.logs.append(
+            {"timestamp": datetime.now().isoformat(), "message": message, **fields}
+        )
 
     def set_tag(self, key: str, value: Any) -> None:
         """设置标签"""
@@ -152,12 +168,16 @@ class APMCollector:
                 try:
                     result = func(*args, **kwargs)
                     duration_ms = (time.time() - start) * 1000
-                    self.record_histogram(f"{operation_name}.duration", duration_ms, **tags)
+                    self.record_histogram(
+                        f"{operation_name}.duration", duration_ms, **tags
+                    )
                     self.increment_counter(f"{operation_name}.success", **tags)
                     return result
                 except Exception:
                     duration_ms = (time.time() - start) * 1000
-                    self.record_histogram(f"{operation_name}.duration", duration_ms, **tags)
+                    self.record_histogram(
+                        f"{operation_name}.duration", duration_ms, **tags
+                    )
                     self.increment_counter(f"{operation_name}.error", **tags)
                     raise
 
@@ -186,7 +206,9 @@ class APMCollector:
 
         return metrics[-limit:]
 
-    def get_metric_stats(self, name: str, since: datetime | None = None) -> dict[str, Any]:
+    def get_metric_stats(
+        self, name: str, since: datetime | None = None
+    ) -> dict[str, Any]:
         """获取指标统计"""
         metrics = self.get_metrics(name=name, since=since)
 
@@ -202,9 +224,17 @@ class APMCollector:
             "sum": sum(values),
         }
 
-    def _record_metric(self, name: str, metric_type: MetricType, value: float, tags: dict[str, str]) -> None:
+    def _record_metric(
+        self, name: str, metric_type: MetricType, value: float, tags: dict[str, str]
+    ) -> None:
         """记录指标"""
-        metric = Metric(name=name, metric_type=metric_type, value=value, timestamp=datetime.now(), tags=tags)
+        metric = Metric(
+            name=name,
+            metric_type=metric_type,
+            value=value,
+            timestamp=datetime.now(),
+            tags=tags,
+        )
 
         with self._lock:
             self._metrics.append(metric)
@@ -220,7 +250,9 @@ class APMCollector:
     def _write_metric_log(self, metric: Metric) -> None:
         """写入指标日志"""
         try:
-            log_file = self.log_dir / f"metrics_{datetime.now().strftime('%Y%m%d')}.jsonl"
+            log_file = (
+                self.log_dir / f"metrics_{datetime.now().strftime('%Y%m%d')}.jsonl"
+            )
             with open(log_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(metric.to_dict(), ensure_ascii=False) + "\n")
         except Exception:
@@ -230,7 +262,9 @@ class APMCollector:
 class BackendMonitor:
     """后端监控器"""
 
-    def __init__(self, app_name: str = "VirtualChemLab", enable_resource_monitoring: bool = True):
+    def __init__(
+        self, app_name: str = "VirtualChemLab", enable_resource_monitoring: bool = True
+    ):
         self.app_name = app_name
         self.apm = APMCollector(app_name)
 
@@ -238,7 +272,7 @@ class BackendMonitor:
         self._resource_monitor_thread: threading.Thread | None = None
         self._resource_monitor_running = False
 
-        if enable_resource_monitoring:
+        if enable_resource_monitoring and _should_start_background_threads():
             self.start_resource_monitoring()
 
     def start_resource_monitoring(self, interval_seconds: int = 60) -> None:
@@ -289,7 +323,9 @@ class BackendMonitor:
         # 进程
         process = psutil.Process()
         self.apm.set_gauge("process.cpu.percent", process.cpu_percent())
-        self.apm.set_gauge("process.memory.rss_mb", process.memory_info().rss / 1024 / 1024)
+        self.apm.set_gauge(
+            "process.memory.rss_mb", process.memory_info().rss / 1024 / 1024
+        )
         self.apm.set_gauge("process.threads", process.num_threads())
 
     def get_health_status(self) -> dict[str, Any]:
@@ -352,4 +388,6 @@ class BackendMonitor:
 
 
 # 全局监控实例
-backend_monitor = BackendMonitor()
+backend_monitor = BackendMonitor(
+    enable_resource_monitoring=_should_start_background_threads()
+)

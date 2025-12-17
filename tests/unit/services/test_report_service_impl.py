@@ -29,8 +29,15 @@ class DummyGenerator(IReportGenerator):
         }
         self.generate_calls: list[dict[str, Any]] = []
 
-    def generate(self, record: UserRecord, template: str | None = None, options: dict[str, Any] | None = None) -> str:
-        self.generate_calls.append({"record": record, "template": template, "options": options})
+    def generate(
+        self,
+        record: UserRecord,
+        template: str | None = None,
+        options: dict[str, Any] | None = None,
+    ) -> str:
+        self.generate_calls.append(
+            {"record": record, "template": template, "options": options}
+        )
         resolved_template = template or next(iter(self.templates))
         return self.templates.get(resolved_template, "{title}")
 
@@ -67,7 +74,9 @@ class DummyExporter(IReportExporter):
     def get_supported_formats(self) -> list[GeneratorReportFormat]:
         return [GeneratorReportFormat.HTML, GeneratorReportFormat.JSON]
 
-    def validate_export(self, output_path: Path, format: GeneratorReportFormat) -> tuple[bool, str]:
+    def validate_export(
+        self, output_path: Path, format: GeneratorReportFormat
+    ) -> tuple[bool, str]:
         return True, ""
 
 
@@ -83,12 +92,18 @@ class FakeRepository:
         return None
 
 
-def _build_service(tmp_path: Path, generator: DummyGenerator | None = None) -> ReportServiceImpl:
+def _build_service(
+    tmp_path: Path, generator: DummyGenerator | None = None
+) -> ReportServiceImpl:
     template_dir = tmp_path / "templates"
     template_dir.mkdir(parents=True, exist_ok=True)
     output_dir = tmp_path / "outputs"
-    config = ReportServiceConfig(template_dir=str(template_dir), output_dir=str(output_dir))
-    return ReportServiceImpl(generator or DummyGenerator(), DummyExporter(), None, config)
+    config = ReportServiceConfig(
+        template_dir=str(template_dir), output_dir=str(output_dir)
+    )
+    return ReportServiceImpl(
+        generator or DummyGenerator(), DummyExporter(), None, config
+    )
 
 
 def test_get_available_templates_filters_by_report_type(tmp_path: Path) -> None:
@@ -138,7 +153,9 @@ def test_generate_report_uses_template_name(tmp_path: Path) -> None:
     repository = FakeRepository(record)
     template_dir = tmp_path / "templates"
     template_dir.mkdir()
-    config = ReportServiceConfig(template_dir=str(template_dir), output_dir=str(tmp_path / "outputs"))
+    config = ReportServiceConfig(
+        template_dir=str(template_dir), output_dir=str(tmp_path / "outputs")
+    )
     service = ReportServiceImpl(generator, DummyExporter(), repository, config)
     request = ReportRequest(
         report_type=ReportType.EXPERIMENT,

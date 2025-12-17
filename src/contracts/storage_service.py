@@ -257,7 +257,9 @@ class InMemoryStorageService(StorageService):
         if operator == QueryOperator.LTE:
             return value <= expected
         if operator == QueryOperator.IN:
-            return value in expected if isinstance(expected, (list, tuple, set)) else False
+            return (
+                value in expected if isinstance(expected, (list, tuple, set)) else False
+            )
         if operator == QueryOperator.LIKE:
             return str(expected).lower() in str(value).lower()
         if operator == QueryOperator.BETWEEN:
@@ -266,10 +268,14 @@ class InMemoryStorageService(StorageService):
         return False
 
     def save(self, request: SaveRequest) -> SaveResponse:
-        entity_id = getattr(request.entity, "id", None) or self._resolve_id(request.entity)
+        entity_id = getattr(request.entity, "id", None) or self._resolve_id(
+            request.entity
+        )
         bucket = self._store.setdefault(request.entity_type, {})
         if not request.overwrite and entity_id in bucket:
-            return SaveResponse(success=False, entity_id=entity_id, message="实体已存在且不允许覆盖")
+            return SaveResponse(
+                success=False, entity_id=entity_id, message="实体已存在且不允许覆盖"
+            )
         bucket[entity_id] = request.entity
         return SaveResponse(success=True, entity_id=entity_id, message="保存成功")
 
@@ -279,7 +285,11 @@ class InMemoryStorageService(StorageService):
 
         def _apply_filters(item: Any) -> bool:
             for f in request.filters:
-                value = getattr(item, f.field, None) if not isinstance(item, dict) else item.get(f.field)
+                value = (
+                    getattr(item, f.field, None)
+                    if not isinstance(item, dict)
+                    else item.get(f.field)
+                )
                 if not self._match(value, f.operator, f.value):
                     return False
             return True
@@ -298,9 +308,15 @@ class InMemoryStorageService(StorageService):
             data.sort(key=key_fn, reverse=reverse)
 
         if request.offset or request.limit is not None:
-            data = data[request.offset : request.offset + request.limit if request.limit else None]
+            data = data[
+                request.offset : request.offset + request.limit
+                if request.limit
+                else None
+            ]
 
-        return QueryResponse(success=True, data=data, total_count=total, has_more=len(data) < total)
+        return QueryResponse(
+            success=True, data=data, total_count=total, has_more=len(data) < total
+        )
 
     def get_by_id(self, entity_type: str, entity_id: str) -> Any | None:
         return self._store.get(entity_type, {}).get(entity_id)

@@ -78,10 +78,20 @@ class CacheCleaner(ICacheCleaner):
 
             # 计算总计
             cache_info["total"] = {
-                "item_count": sum(info.get("item_count", 0) for info in cache_info.values() if isinstance(info, dict)),
-                "size_bytes": sum(info.get("size_bytes", 0) for info in cache_info.values() if isinstance(info, dict)),
+                "item_count": sum(
+                    info.get("item_count", 0)
+                    for info in cache_info.values()
+                    if isinstance(info, dict)
+                ),
+                "size_bytes": sum(
+                    info.get("size_bytes", 0)
+                    for info in cache_info.values()
+                    if isinstance(info, dict)
+                ),
                 "expired_count": sum(
-                    info.get("expired_count", 0) for info in cache_info.values() if isinstance(info, dict)
+                    info.get("expired_count", 0)
+                    for info in cache_info.values()
+                    if isinstance(info, dict)
                 ),
             }
 
@@ -111,7 +121,9 @@ class CacheCleaner(ICacheCleaner):
             if cache_types is None or CacheType.ALL.value in cache_types:
                 types_to_clear = [t for t in CacheType if t != CacheType.ALL]
             else:
-                types_to_clear = [CacheType(t) for t in cache_types if t != CacheType.ALL.value]
+                types_to_clear = [
+                    CacheType(t) for t in cache_types if t != CacheType.ALL.value
+                ]
 
             # 清理各类缓存
             for cache_type in types_to_clear:
@@ -129,7 +141,9 @@ class CacheCleaner(ICacheCleaner):
 
             return MaintenanceResult(
                 task_type=MaintenanceTaskType.CACHE_CLEAR,
-                status=MaintenanceStatus.COMPLETED if success else MaintenanceStatus.FAILED,
+                status=MaintenanceStatus.COMPLETED
+                if success
+                else MaintenanceStatus.FAILED,
                 success=success,
                 message=f"缓存清理完成，处理{items_processed}项，释放{self._format_bytes(bytes_freed)}",
                 items_processed=items_processed,
@@ -191,7 +205,9 @@ class CacheCleaner(ICacheCleaner):
 
             return MaintenanceResult(
                 task_type=MaintenanceTaskType.CACHE_CLEAR,
-                status=MaintenanceStatus.COMPLETED if success else MaintenanceStatus.FAILED,
+                status=MaintenanceStatus.COMPLETED
+                if success
+                else MaintenanceStatus.FAILED,
                 success=success,
                 message=f"过期缓存清理完成，处理{items_processed}项，释放{self._format_bytes(bytes_freed)}",
                 items_processed=items_processed,
@@ -311,7 +327,9 @@ class CacheCleaner(ICacheCleaner):
             shutil.rmtree(cache_path)
             cache_path.mkdir(parents=True, exist_ok=True)
 
-            logger.info(f"清理磁盘缓存 {cache_path}: {item_count}项, {self._format_bytes(size_before)}")
+            logger.info(
+                f"清理磁盘缓存 {cache_path}: {item_count}项, {self._format_bytes(size_before)}"
+            )
             return {"items": item_count, "bytes": size_before}
 
         except Exception as e:
@@ -362,7 +380,9 @@ class CacheCleaner(ICacheCleaner):
                         items_cleared += 1
                         bytes_cleared += size
 
-            logger.info(f"清理旧文件 {directory}: {items_cleared}项, {self._format_bytes(bytes_cleared)}")
+            logger.info(
+                f"清理旧文件 {directory}: {items_cleared}项, {self._format_bytes(bytes_cleared)}"
+            )
             return {"items": items_cleared, "bytes": bytes_cleared}
 
         except Exception as e:

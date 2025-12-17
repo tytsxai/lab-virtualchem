@@ -85,7 +85,9 @@ class LayoutRatioManager(QObject):
                 "timestamp": analysis_result.get("timestamp"),
                 "screen_info": analysis_result.get("screen_info"),
                 "accessibility_score": analysis_result.get("accessibility_score", 0),
-                "golden_ratio_compliance": analysis_result.get("golden_ratio_compliance", 0),
+                "golden_ratio_compliance": analysis_result.get(
+                    "golden_ratio_compliance", 0
+                ),
                 "responsive_score": analysis_result.get("responsive_score", 0),
             }
 
@@ -125,7 +127,9 @@ class LayoutRatioManager(QObject):
             self.layout_optimized.emit(name, {"status": "error", "error": str(e)})
             return False
 
-    def analyze_and_optimize_component(self, name: str, _widget: QWidget) -> dict[str, Any]:
+    def analyze_and_optimize_component(
+        self, name: str, _widget: QWidget
+    ) -> dict[str, Any]:
         """分析并优化组件"""
         try:
             # 先分析
@@ -182,9 +186,13 @@ class LayoutRatioManager(QObject):
 
             # 发出优化完成信号
             for name, success in results.items():
-                self.layout_optimized.emit(name, {"status": "success" if success else "failed"})
+                self.layout_optimized.emit(
+                    name, {"status": "success" if success else "failed"}
+                )
 
-            logger.info(f"所有组件优化完成，成功: {sum(results.values())}/{len(results)}")
+            logger.info(
+                f"所有组件优化完成，成功: {sum(results.values())}/{len(results)}"
+            )
             return results
 
         except Exception as e:

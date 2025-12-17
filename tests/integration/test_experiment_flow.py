@@ -117,7 +117,10 @@ class TestExperimentFlow:
         validator = RuleValidator(hazard_checker=hazard_checker)
 
         controller = ExperimentController(
-            template=template, validator=validator, storage=temp_storage, user_id="test_user"
+            template=template,
+            validator=validator,
+            storage=temp_storage,
+            user_id="test_user",
         )
         return controller
 
@@ -221,10 +224,16 @@ class TestExperimentFlow:
 
         # 创建两个控制器
         controller1 = ExperimentController(
-            template=template, validator=validator, storage=temp_storage, user_id="user1"
+            template=template,
+            validator=validator,
+            storage=temp_storage,
+            user_id="user1",
         )
         controller2 = ExperimentController(
-            template=template, validator=validator, storage=temp_storage, user_id="user2"
+            template=template,
+            validator=validator,
+            storage=temp_storage,
+            user_id="user2",
         )
 
         # 两个用户独立进行实验

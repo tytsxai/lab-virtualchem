@@ -17,9 +17,9 @@ class TaskWorker(QObject):
 
     # 信号定义
     progress = Signal(int)  # 进度信号 (0-100)
-    message = Signal(str)   # 消息信号
+    message = Signal(str)  # 消息信号
     finished = Signal(object)  # 完成信号
-    error = Signal(str)      # 错误信号
+    error = Signal(str)  # 错误信号
 
     def __init__(self, task_func, *args, **kwargs):
         """初始化任务工作器
@@ -73,5 +73,5 @@ class TaskWorker(QObject):
     def cleanup(self):
         """清理资源"""
         self.stop()
-        if hasattr(self, 'thread'):
+        if hasattr(self, "thread"):
             self.thread.deleteLater()

@@ -10,26 +10,32 @@ import numpy as np
 # 尝试导入Numba
 try:
     from numba import jit
+
     NUMBA_AVAILABLE = True
 except ImportError:
     NUMBA_AVAILABLE = False
+
     # 如果Numba不可用，定义一个空装饰器
     def jit(*_args: Any, **_kwargs: Any):
         def decorator(func: Any):
             return func
+
         return decorator
+
 
 logger = logging.getLogger(__name__)
 
 
 class CurveGenerationError(Exception):
     """曲线生成错误"""
+
     pass
 
 
 # ============================================================================
 # Numba加速的核心计算函数
 # ============================================================================
+
 
 @jit(nopython=True, cache=True)
 def _strong_acid_strong_base_titration_numba(
@@ -122,7 +128,7 @@ def _heating_curve_numba(
     power_W: float,
     mass_g: float,
     specific_heat: float,
-    boiling_point: float
+    boiling_point: float,
 ) -> np.ndarray:
     """加热曲线计算（Numba加速）
 
@@ -141,10 +147,7 @@ def _heating_curve_numba(
 
 @jit(nopython=True, cache=True)
 def _cooling_curve_numba(
-    t: np.ndarray,
-    initial_temp: float,
-    ambient_temp: float,
-    k: float
+    t: np.ndarray, initial_temp: float, ambient_temp: float, k: float
 ) -> np.ndarray:
     """冷却曲线计算（Numba加速）
 
@@ -157,6 +160,7 @@ def _cooling_curve_numba(
 # ============================================================================
 # 主类
 # ============================================================================
+
 
 class CurveGenerator:
     """曲线生成器（Numba加速版本）
@@ -186,10 +190,7 @@ class CurveGenerator:
             logger.warning("⚠ Numba不可用，使用纯Python实现")
 
     def generate(
-        self,
-        curve_type: str,
-        params: dict[str, Any],
-        num_points: int = 100
+        self, curve_type: str, params: dict[str, Any], num_points: int = 100
     ) -> tuple[np.ndarray, np.ndarray]:
         """生成曲线数据
 

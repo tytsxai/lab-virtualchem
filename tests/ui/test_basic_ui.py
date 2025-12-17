@@ -9,14 +9,8 @@ from src.models.experiment import ExperimentTemplate, Step
 def sample_experiment():
     """创建示例实验"""
     # 添加步骤 - 使用完整的必需字段
-    step1 = Step(
-        id="step1",
-        text="准备实验器材 - 检查并准备所需器材"
-    )
-    step2 = Step(
-        id="step2",
-        text="进行实验 - 按照步骤进行实验"
-    )
+    step1 = Step(id="step1", text="准备实验器材 - 检查并准备所需器材")
+    step2 = Step(id="step2", text="进行实验 - 按照步骤进行实验")
 
     exp = ExperimentTemplate(
         id="test_exp",
@@ -24,7 +18,7 @@ def sample_experiment():
         description="这是一个测试实验",
         category="酸碱滴定",
         level="basic",
-        steps=[step1, step2]
+        steps=[step1, step2],
     )
 
     return exp
@@ -70,10 +64,7 @@ class TestStepModel:
 
     def test_step_creation(self):
         """测试步骤创建"""
-        step = Step(
-            id="test_step",
-            text="这是测试步骤的说明"
-        )
+        step = Step(id="test_step", text="这是测试步骤的说明")
         assert step.id == "test_step"
         assert step.text == "这是测试步骤的说明"
 
@@ -82,7 +73,7 @@ class TestStepModel:
         step = Step(
             id="test_step",
             text="说明文本",
-            media={"image": "test.png", "video": "test.mp4"}
+            media={"image": "test.png", "video": "test.mp4"},
         )
         assert step.media is not None
         assert step.media["image"] == "test.png"
@@ -90,11 +81,7 @@ class TestStepModel:
 
     def test_step_safety_level(self):
         """测试步骤安全等级"""
-        step = Step(
-            id="test_step",
-            text="说明文本",
-            safety_level="warning"
-        )
+        step = Step(id="test_step", text="说明文本", safety_level="warning")
         assert step.safety_level == "warning"
 
 
@@ -106,10 +93,7 @@ class TestExperimentTemplateValidation:
         # 有效的等级
         for level in ["basic", "intermediate", "advanced"]:
             exp = ExperimentTemplate(
-                id="test",
-                title="测试",
-                level=level,
-                steps=[Step(id="s1", text="文本")]
+                id="test", title="测试", level=level, steps=[Step(id="s1", text="文本")]
             )
             assert exp.level == level
 
@@ -121,7 +105,7 @@ class TestExperimentTemplateValidation:
             ExperimentTemplate(
                 id="test",
                 title="测试",
-                steps=[]  # 空步骤列表应该失败
+                steps=[],  # 空步骤列表应该失败
             )
 
         assert "steps" in str(exc_info.value)
@@ -135,11 +119,7 @@ class TestExperimentTemplateValidation:
         step2 = Step(id="same_id", text="文本2")
 
         with pytest.raises(ValidationError) as exc_info:
-            ExperimentTemplate(
-                id="test",
-                title="测试",
-                steps=[step1, step2]
-            )
+            ExperimentTemplate(id="test", title="测试", steps=[step1, step2])
 
         assert "步骤ID必须唯一" in str(exc_info.value)
 

@@ -181,7 +181,11 @@ class TinyDBStore(StorageInterface):
             condition = Record[key] == value
             query = condition if query is None else (query & condition)
 
-        results = self.records_table.all() if query is None else self.records_table.search(query)
+        results = (
+            self.records_table.all()
+            if query is None
+            else self.records_table.search(query)
+        )
 
         # 转换为UserRecord对象
         records = []
@@ -217,7 +221,9 @@ class TinyDBStore(StorageInterface):
             return []
 
         Record = Query()
-        results = self.records_table.search((Record.start_time >= start_date) & (Record.start_time <= end_date))
+        results = self.records_table.search(
+            (Record.start_time >= start_date) & (Record.start_time <= end_date)
+        )
 
         records = []
         for r in results:

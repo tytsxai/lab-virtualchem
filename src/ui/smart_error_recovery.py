@@ -107,7 +107,9 @@ class SmartErrorRecovery(QObject):
         if error_type not in self.recovery_strategies:
             self.recovery_strategies[error_type] = []
 
-        recovery = RecoveryAction(strategy=strategy, description=description, action=action, auto_execute=auto)
+        recovery = RecoveryAction(
+            strategy=strategy, description=description, action=action, auto_execute=auto
+        )
 
         self.recovery_strategies[error_type].append(recovery)
         logger.info(f"注册恢复策略: {error_type} -> {strategy.value}")
@@ -145,7 +147,9 @@ class SmartErrorRecovery(QObject):
 
         # 记录错误
         self.error_history.append(context)
-        self.error_counts[context.error_type] = self.error_counts.get(context.error_type, 0) + 1
+        self.error_counts[context.error_type] = (
+            self.error_counts.get(context.error_type, 0) + 1
+        )
 
         # 发送信号
         self.error_occurred.emit(context)
@@ -159,7 +163,9 @@ class SmartErrorRecovery(QObject):
         # 尝试恢复
         return self._attempt_recovery(context, parent_widget)
 
-    def _attempt_recovery(self, context: ErrorContext, parent_widget: QWidget | None = None) -> bool:
+    def _attempt_recovery(
+        self, context: ErrorContext, parent_widget: QWidget | None = None
+    ) -> bool:
         """尝试恢复
 
         Args:
@@ -217,12 +223,17 @@ class SmartErrorRecovery(QObject):
         # 添加建议
         suggestions = self._get_error_suggestions(context)
         if suggestions:
-            msg.setText(msg.text() + "\n\n建议：\n" + "\n".join(f"• {s}" for s in suggestions))
+            msg.setText(
+                msg.text() + "\n\n建议：\n" + "\n".join(f"• {s}" for s in suggestions)
+            )
 
         msg.exec()
 
     def _show_recovery_dialog(
-        self, context: ErrorContext, strategies: list[RecoveryAction], parent: QWidget | None = None
+        self,
+        context: ErrorContext,
+        strategies: list[RecoveryAction],
+        parent: QWidget | None = None,
     ) -> bool:
         """显示恢复选项对话框"""
         from PySide6.QtWidgets import QDialog, QLabel, QPushButton, QVBoxLayout
@@ -248,7 +259,9 @@ class SmartErrorRecovery(QObject):
 
         for recovery in strategies:
             btn = QPushButton(f"{recovery.strategy.value}: {recovery.description}")
-            btn.clicked.connect(lambda _checked, r=recovery: self._execute_recovery(r, dialog))
+            btn.clicked.connect(
+                lambda _checked, r=recovery: self._execute_recovery(r, dialog)
+            )
             layout.addWidget(btn)
 
         # 取消按钮
@@ -271,7 +284,9 @@ class SmartErrorRecovery(QObject):
                 dialog.accept()
             else:
                 logger.warning(f"恢复失败: {recovery.strategy.value}")
-                QMessageBox.warning(dialog, "恢复失败", "恢复操作未成功，请尝试其他方式")
+                QMessageBox.warning(
+                    dialog, "恢复失败", "恢复操作未成功，请尝试其他方式"
+                )
 
         except Exception as e:
             logger.error(f"执行恢复动作时出错: {e}")
@@ -353,7 +368,9 @@ class RecoveryStrategyFactory:
     """恢复策略工厂"""
 
     @staticmethod
-    def create_retry_strategy(action: Callable[[], Any], max_retries: int = 3) -> Callable[[], bool]:
+    def create_retry_strategy(
+        action: Callable[[], Any], max_retries: int = 3
+    ) -> Callable[[], bool]:
         """创建重试策略"""
 
         def retry():
@@ -370,7 +387,9 @@ class RecoveryStrategyFactory:
         return retry
 
     @staticmethod
-    def create_rollback_strategy(backup_state: Any, restore_func: Callable[[Any], None]) -> Callable[[], bool]:
+    def create_rollback_strategy(
+        backup_state: Any, restore_func: Callable[[Any], None]
+    ) -> Callable[[], bool]:
         """创建回滚策略"""
 
         def rollback():

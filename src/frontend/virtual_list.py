@@ -103,7 +103,10 @@ class VirtualListWidget(QScrollArea):
         # 计算可见索引范围(带缓冲)
         buffer = 3  # 上下各缓冲3项
         start_index = max(0, (scroll_y // self._item_height) - buffer)
-        end_index = min(len(self._data), ((scroll_y + viewport_height) // self._item_height) + buffer + 1)
+        end_index = min(
+            len(self._data),
+            ((scroll_y + viewport_height) // self._item_height) + buffer + 1,
+        )
 
         return start_index, end_index
 
@@ -165,7 +168,9 @@ class VirtualListWidget(QScrollArea):
         widget.show()
 
         # 绑定点击事件
-        widget.mousePressEvent = lambda _e, i=index, d=data: self.item_clicked.emit(i, d)
+        widget.mousePressEvent = lambda _e, i=index, d=data: self.item_clicked.emit(
+            i, d
+        )
 
         self._visible_items[index] = widget
 

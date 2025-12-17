@@ -13,22 +13,27 @@ from typing import Any
 
 class LogLevel(Enum):
     """日志级别"""
+
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
     ERROR = "ERROR"
     CRITICAL = "CRITICAL"
 
+
 class LogFormat(Enum):
     """日志格式"""
+
     SIMPLE = "simple"
     DETAILED = "detailed"
     JSON = "json"
     STRUCTURED = "structured"
 
+
 @dataclass
 class LogEntry:
     """日志条目"""
+
     timestamp: float
     level: str
     message: str
@@ -39,6 +44,7 @@ class LogEntry:
     process_id: int
     extra_data: dict[str, Any] | None = None
     exception_info: str | None = None
+
 
 class EnhancedLogger:
     """增强日志器"""
@@ -56,13 +62,13 @@ class EnhancedLogger:
         # 日志格式
         self.formats = {
             LogFormat.SIMPLE: logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
             ),
             LogFormat.DETAILED: logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(module)s - %(funcName)s - %(lineno)d - %(message)s'
+                "%(asctime)s - %(name)s - %(levelname)s - %(module)s - %(funcName)s - %(lineno)d - %(message)s"
             ),
             LogFormat.JSON: self._create_json_formatter(),
-            LogFormat.STRUCTURED: self._create_structured_formatter()
+            LogFormat.STRUCTURED: self._create_structured_formatter(),
         }
 
         # 处理器
@@ -75,13 +81,13 @@ class EnhancedLogger:
 
         # 性能统计
         self.stats = {
-            'total_logs': 0,
-            'debug_count': 0,
-            'info_count': 0,
-            'warning_count': 0,
-            'error_count': 0,
-            'critical_count': 0,
-            'last_log_time': 0
+            "total_logs": 0,
+            "debug_count": 0,
+            "info_count": 0,
+            "warning_count": 0,
+            "error_count": 0,
+            "critical_count": 0,
+            "last_log_time": 0,
         }
 
         # 初始化默认处理器
@@ -89,24 +95,25 @@ class EnhancedLogger:
 
     def _create_json_formatter(self):
         """创建JSON格式化器"""
+
         class JSONFormatter(logging.Formatter):
             def format(self, record):
                 log_data = {
-                    'timestamp': record.created,
-                    'level': record.levelname,
-                    'message': record.getMessage(),
-                    'module': record.module,
-                    'function': record.funcName,
-                    'line': record.lineno,
-                    'thread_id': record.thread,
-                    'process_id': record.process,
+                    "timestamp": record.created,
+                    "level": record.levelname,
+                    "message": record.getMessage(),
+                    "module": record.module,
+                    "function": record.funcName,
+                    "line": record.lineno,
+                    "thread_id": record.thread,
+                    "process_id": record.process,
                 }
 
-                if hasattr(record, 'extra_data'):
-                    log_data['extra_data'] = record.extra_data
+                if hasattr(record, "extra_data"):
+                    log_data["extra_data"] = record.extra_data
 
                 if record.exc_info:
-                    log_data['exception_info'] = self.formatException(record.exc_info)
+                    log_data["exception_info"] = self.formatException(record.exc_info)
 
                 return json.dumps(log_data, ensure_ascii=False)
 
@@ -114,6 +121,7 @@ class EnhancedLogger:
 
     def _create_structured_formatter(self):
         """创建结构化格式化器"""
+
         class StructuredFormatter(logging.Formatter):
             def format(self, record):
                 # 基础信息
@@ -123,16 +131,20 @@ class EnhancedLogger:
                     f"[{record.module}:{record.funcName}:{record.lineno}]",
                     f"[T{record.thread}]",
                     f"[P{record.process}]",
-                    record.getMessage()
+                    record.getMessage(),
                 ]
 
                 # 额外数据
-                if hasattr(record, 'extra_data') and record.extra_data:
-                    parts.append(f"[EXTRA: {json.dumps(record.extra_data, ensure_ascii=False)}]")
+                if hasattr(record, "extra_data") and record.extra_data:
+                    parts.append(
+                        f"[EXTRA: {json.dumps(record.extra_data, ensure_ascii=False)}]"
+                    )
 
                 # 异常信息
                 if record.exc_info:
-                    parts.append(f"[EXCEPTION: {self.formatException(record.exc_info)}]")
+                    parts.append(
+                        f"[EXCEPTION: {self.formatException(record.exc_info)}]"
+                    )
 
                 return " ".join(parts)
 
@@ -149,9 +161,9 @@ class EnhancedLogger:
         # 文件处理器
         file_handler = logging.handlers.RotatingFileHandler(
             self.log_dir / "app.log",
-            maxBytes=10*1024*1024,  # 10MB
+            maxBytes=10 * 1024 * 1024,  # 10MB
             backupCount=5,
-            encoding='utf-8'
+            encoding="utf-8",
         )
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(self.formats[LogFormat.DETAILED])
@@ -160,9 +172,9 @@ class EnhancedLogger:
         # 错误文件处理器
         error_handler = logging.handlers.RotatingFileHandler(
             self.log_dir / "error.log",
-            maxBytes=5*1024*1024,  # 5MB
+            maxBytes=5 * 1024 * 1024,  # 5MB
             backupCount=3,
-            encoding='utf-8'
+            encoding="utf-8",
         )
         error_handler.setLevel(logging.ERROR)
         error_handler.setFormatter(self.formats[LogFormat.JSON])
@@ -171,9 +183,9 @@ class EnhancedLogger:
         # 性能日志处理器
         performance_handler = logging.handlers.RotatingFileHandler(
             self.log_dir / "performance.log",
-            maxBytes=5*1024*1024,  # 5MB
+            maxBytes=5 * 1024 * 1024,  # 5MB
             backupCount=3,
-            encoding='utf-8'
+            encoding="utf-8",
         )
         performance_handler.setLevel(logging.INFO)
         performance_handler.setFormatter(self.formats[LogFormat.JSON])
@@ -202,7 +214,9 @@ class EnhancedLogger:
         if name in self.handlers and format_type in self.formats:
             self.handlers[name].setFormatter(self.formats[format_type])
 
-    def debug(self, message: str, *args, extra_data: dict[str, Any] | None = None, **kwargs):
+    def debug(
+        self, message: str, *args, extra_data: dict[str, Any] | None = None, **kwargs
+    ):
         """记录调试日志 (兼容标准logging接口)"""
         # 支持 logger.debug("msg %s", arg) 调用风格
         if args:
@@ -224,34 +238,46 @@ class EnhancedLogger:
         """记录错误日志"""
         self._log(logging.ERROR, message, extra_data, **kwargs)
 
-    def critical(self, message: str, extra_data: dict[str, Any] | None = None, **kwargs):
+    def critical(
+        self, message: str, extra_data: dict[str, Any] | None = None, **kwargs
+    ):
         """记录严重错误日志"""
         self._log(logging.CRITICAL, message, extra_data, **kwargs)
 
-    def exception(self, message: str, extra_data: dict[str, Any] | None = None, **kwargs):
+    def exception(
+        self, message: str, extra_data: dict[str, Any] | None = None, **kwargs
+    ):
         """记录异常日志"""
         self._log(logging.ERROR, message, extra_data, exc_info=True, **kwargs)
 
-    def performance(self, message: str, extra_data: dict[str, Any] | None = None, **_kwargs):
+    def performance(
+        self, message: str, extra_data: dict[str, Any] | None = None, **_kwargs
+    ):
         """记录性能日志"""
         # 使用性能处理器记录
         performance_logger = logging.getLogger(f"{self.name}.performance")
-        performance_logger.info(message, extra={'extra_data': extra_data})
+        performance_logger.info(message, extra={"extra_data": extra_data})
 
-    def _log(self, level: int, message: str, extra_data: dict[str, Any] | None = None, **kwargs):
+    def _log(
+        self,
+        level: int,
+        message: str,
+        extra_data: dict[str, Any] | None = None,
+        **kwargs,
+    ):
         """内部日志记录方法"""
         # 创建日志条目
         entry = LogEntry(
             timestamp=time.time(),
             level=logging.getLevelName(level),
             message=message,
-            module=kwargs.get('module', 'unknown'),
-            function=kwargs.get('function', 'unknown'),
-            line=kwargs.get('line', 0),
+            module=kwargs.get("module", "unknown"),
+            function=kwargs.get("function", "unknown"),
+            line=kwargs.get("line", 0),
             thread_id=threading.get_ident(),
-            process_id=kwargs.get('process_id', 0),
+            process_id=kwargs.get("process_id", 0),
             extra_data=extra_data,
-            exception_info=kwargs.get('exc_info')
+            exception_info=kwargs.get("exc_info"),
         )
 
         # 存储日志条目
@@ -260,32 +286,34 @@ class EnhancedLogger:
 
             # 保持条目数量限制
             if len(self.log_entries) > self.max_entries:
-                self.log_entries = self.log_entries[-self.max_entries:]
+                self.log_entries = self.log_entries[-self.max_entries :]
 
         # 更新统计
         self._update_stats(level)
 
         # 记录到标准日志器
-        self.logger.log(level, message, extra={'extra_data': extra_data}, **kwargs)
+        self.logger.log(level, message, extra={"extra_data": extra_data}, **kwargs)
 
     def _update_stats(self, level: int):
         """更新统计信息"""
-        self.stats['total_logs'] += 1
-        self.stats['last_log_time'] = time.time()
+        self.stats["total_logs"] += 1
+        self.stats["last_log_time"] = time.time()
 
         level_name = logging.getLevelName(level)
-        if level_name == 'DEBUG':
-            self.stats['debug_count'] += 1
-        elif level_name == 'INFO':
-            self.stats['info_count'] += 1
-        elif level_name == 'WARNING':
-            self.stats['warning_count'] += 1
-        elif level_name == 'ERROR':
-            self.stats['error_count'] += 1
-        elif level_name == 'CRITICAL':
-            self.stats['critical_count'] += 1
+        if level_name == "DEBUG":
+            self.stats["debug_count"] += 1
+        elif level_name == "INFO":
+            self.stats["info_count"] += 1
+        elif level_name == "WARNING":
+            self.stats["warning_count"] += 1
+        elif level_name == "ERROR":
+            self.stats["error_count"] += 1
+        elif level_name == "CRITICAL":
+            self.stats["critical_count"] += 1
 
-    def get_log_entries(self, level: str | None = None, limit: int = 100) -> list[LogEntry]:
+    def get_log_entries(
+        self, level: str | None = None, limit: int = 100
+    ) -> list[LogEntry]:
         """获取日志条目"""
         with self.entries_lock:
             entries = self.log_entries.copy()
@@ -299,11 +327,11 @@ class EnhancedLogger:
         """获取统计信息"""
         with self.entries_lock:
             return {
-                'stats': self.stats.copy(),
-                'total_entries': len(self.log_entries),
-                'handlers': list(self.handlers.keys()),
-                'log_dir': str(self.log_dir),
-                'max_entries': self.max_entries
+                "stats": self.stats.copy(),
+                "total_entries": len(self.log_entries),
+                "handlers": list(self.handlers.keys()),
+                "log_dir": str(self.log_dir),
+                "max_entries": self.max_entries,
             }
 
     def clear_entries(self):
@@ -311,7 +339,9 @@ class EnhancedLogger:
         with self.entries_lock:
             self.log_entries.clear()
 
-    def export_logs(self, file_path: str | Path, format_type: LogFormat = LogFormat.JSON):
+    def export_logs(
+        self, file_path: str | Path, format_type: LogFormat = LogFormat.JSON
+    ):
         """导出日志"""
         file_path = Path(file_path)
 
@@ -320,10 +350,10 @@ class EnhancedLogger:
 
         if format_type == LogFormat.JSON:
             data = [asdict(entry) for entry in entries]
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
         else:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 for entry in entries:
                     f.write(f"{entry.timestamp} - {entry.level} - {entry.message}\n")
 

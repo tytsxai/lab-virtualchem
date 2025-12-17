@@ -103,7 +103,9 @@ class GuideOverlay(QWidget):
         self.theme_manager = ThemeManager()
 
         # 覆盖层设置
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
+        )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
 
@@ -278,9 +280,13 @@ class GuideOverlay(QWidget):
 
         if step.position == GuidePosition.AUTO:
             # 自动选择最佳位置
-            position = self.calculate_best_position(target_global_pos, tooltip_size, screen_geometry)
+            position = self.calculate_best_position(
+                target_global_pos, tooltip_size, screen_geometry
+            )
         else:
-            position = self.calculate_position(step.position, target_global_pos, tooltip_size, screen_geometry)
+            position = self.calculate_position(
+                step.position, target_global_pos, tooltip_size, screen_geometry
+            )
 
         # 设置位置
         self.tooltip_widget.move(position)
@@ -288,7 +294,9 @@ class GuideOverlay(QWidget):
         # 创建高亮效果
         self.create_highlight_effect(target_rect)
 
-    def calculate_best_position(self, target_pos: QPoint, tooltip_size: QSize, screen_geometry: QRect) -> QPoint:
+    def calculate_best_position(
+        self, target_pos: QPoint, tooltip_size: QSize, screen_geometry: QRect
+    ) -> QPoint:
         """计算最佳位置"""
         # 尝试不同位置，选择最合适的
         positions = [
@@ -299,7 +307,9 @@ class GuideOverlay(QWidget):
         ]
 
         for pos in positions:
-            position = self.calculate_position(pos, target_pos, tooltip_size, screen_geometry)
+            position = self.calculate_position(
+                pos, target_pos, tooltip_size, screen_geometry
+            )
             if self.is_position_valid(position, tooltip_size, screen_geometry):
                 return position
 
@@ -307,19 +317,33 @@ class GuideOverlay(QWidget):
         return self.center_tooltip()
 
     def calculate_position(
-        self, position: GuidePosition, target_pos: QPoint, tooltip_size: QSize, _screen_geometry: QRect
+        self,
+        position: GuidePosition,
+        target_pos: QPoint,
+        tooltip_size: QSize,
+        _screen_geometry: QRect,
     ) -> QPoint:
         """计算指定位置"""
         margin = 20
 
         if position == GuidePosition.BOTTOM:
-            return QPoint(target_pos.x() - tooltip_size.width() // 2, target_pos.y() + margin)
+            return QPoint(
+                target_pos.x() - tooltip_size.width() // 2, target_pos.y() + margin
+            )
         elif position == GuidePosition.TOP:
-            return QPoint(target_pos.x() - tooltip_size.width() // 2, target_pos.y() - tooltip_size.height() - margin)
+            return QPoint(
+                target_pos.x() - tooltip_size.width() // 2,
+                target_pos.y() - tooltip_size.height() - margin,
+            )
         elif position == GuidePosition.RIGHT:
-            return QPoint(target_pos.x() + margin, target_pos.y() - tooltip_size.height() // 2)
+            return QPoint(
+                target_pos.x() + margin, target_pos.y() - tooltip_size.height() // 2
+            )
         elif position == GuidePosition.LEFT:
-            return QPoint(target_pos.x() - tooltip_size.width() - margin, target_pos.y() - tooltip_size.height() // 2)
+            return QPoint(
+                target_pos.x() - tooltip_size.width() - margin,
+                target_pos.y() - tooltip_size.height() // 2,
+            )
         else:  # CENTER
             return self.center_tooltip()
 
@@ -334,7 +358,9 @@ class GuideOverlay(QWidget):
             (screen_geometry.height() - tooltip_size.height()) // 2,
         )
 
-    def is_position_valid(self, position: QPoint, tooltip_size: QSize, screen_geometry: QRect) -> bool:
+    def is_position_valid(
+        self, position: QPoint, tooltip_size: QSize, screen_geometry: QRect
+    ) -> bool:
         """检查位置是否有效"""
         return (
             position.x() >= 0
@@ -354,7 +380,9 @@ class GuideOverlay(QWidget):
 
         # 设置高亮样式
         highlight_color = (
-            self.current_tour.steps[self.current_step_index].highlight_color if self.current_tour else "#4a90e2"
+            self.current_tour.steps[self.current_step_index].highlight_color
+            if self.current_tour
+            else "#4a90e2"
         )
         highlight_widget.setStyleSheet(
             f"""
@@ -715,7 +743,10 @@ class UserGuidanceManager:
         available = []
 
         for tour in self.tours.values():
-            if tour.target_audience in ["all", user_level] and tour.id not in self.completed_tours:
+            if (
+                tour.target_audience in ["all", user_level]
+                and tour.id not in self.completed_tours
+            ):
                 available.append(tour)
 
         return available
@@ -849,10 +880,16 @@ def show_guide_menu(parent: QWidget) -> bool:
         tours = manager.get_all_tours()
 
         for tour in tours:
-            duration_text = f"{tour.estimated_duration}秒" if tour.estimated_duration > 0 else "未知"
+            duration_text = (
+                f"{tour.estimated_duration}秒"
+                if tour.estimated_duration > 0
+                else "未知"
+            )
             item_text = f"📚 {tour.title}\n   {tour.description}\n   预计时长: {duration_text} | 目标用户: {tour.target_audience}"
             guide_list.addItem(item_text)
-            guide_list.item(guide_list.count() - 1).setData(Qt.ItemDataRole.UserRole, tour.id)
+            guide_list.item(guide_list.count() - 1).setData(
+                Qt.ItemDataRole.UserRole, tour.id
+            )
 
         guide_list.setMinimumHeight(300)
         layout.addWidget(guide_list)
@@ -881,7 +918,9 @@ def show_guide_menu(parent: QWidget) -> bool:
                     <p><b>版本：</b>{tour.version}</p>
                     """
                     if tour.prerequisites:
-                        detail_html += f"<p><b>前置要求：</b>{', '.join(tour.prerequisites)}</p>"
+                        detail_html += (
+                            f"<p><b>前置要求：</b>{', '.join(tour.prerequisites)}</p>"
+                        )
                     detail_text.setHtml(detail_html)
 
         guide_list.currentItemChanged.connect(lambda: update_detail())

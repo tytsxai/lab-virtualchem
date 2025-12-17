@@ -66,7 +66,9 @@ class ContextHelpTooltip(QWidget):
 
         # 设置窗口属性
         self.setWindowFlags(
-            Qt.WindowType.ToolTip | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
+            Qt.WindowType.ToolTip
+            | Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.WindowStaysOnTopHint
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setMaximumWidth(400)
@@ -113,7 +115,9 @@ class ContextHelpTooltip(QWidget):
         # 示例
         if self.help_topic.examples:
             examples_label = QLabel("📝 示例：")
-            examples_label.setStyleSheet("color: #88c0d0; font-weight: bold; margin-top: 5px;")
+            examples_label.setStyleSheet(
+                "color: #88c0d0; font-weight: bold; margin-top: 5px;"
+            )
             container_layout.addWidget(examples_label)
 
             for example in self.help_topic.examples[:2]:  # 最多显示2个示例
@@ -125,7 +129,9 @@ class ContextHelpTooltip(QWidget):
         # 提示
         if self.help_topic.tips:
             tips_label = QLabel("💡 提示：")
-            tips_label.setStyleSheet("color: #ebcb8b; font-weight: bold; margin-top: 5px;")
+            tips_label.setStyleSheet(
+                "color: #ebcb8b; font-weight: bold; margin-top: 5px;"
+            )
             container_layout.addWidget(tips_label)
 
             for tip in self.help_topic.tips[:2]:  # 最多显示2个提示
@@ -243,7 +249,10 @@ class ContextHelpManager:
                 content="选择一个实验模板，然后点击'开始实验'按钮。系统会引导你完成实验的各个步骤。",
                 level=HelpLevel.BEGINNER,
                 keywords=["实验", "开始", "模板", "选择"],
-                examples=["从左侧列表中选择'酸碱滴定'实验", "点击'开始'按钮进入实验界面"],
+                examples=[
+                    "从左侧列表中选择'酸碱滴定'实验",
+                    "点击'开始'按钮进入实验界面",
+                ],
                 tips=["首次使用建议从简单实验开始", "实验会自动保存进度，可随时继续"],
             )
         )
@@ -255,7 +264,11 @@ class ContextHelpManager:
                 content="每个实验分为多个步骤。按照提示完成当前步骤后，点击'下一步'继续。",
                 level=HelpLevel.BEGINNER,
                 keywords=["步骤", "操作", "提示", "下一步"],
-                examples=["阅读当前步骤的说明", "按照要求进行操作", "确认无误后点击'下一步'"],
+                examples=[
+                    "阅读当前步骤的说明",
+                    "按照要求进行操作",
+                    "确认无误后点击'下一步'",
+                ],
                 tips=["每步都有详细的操作提示", "不确定时可以查看帮助"],
             )
         )
@@ -305,7 +318,11 @@ class ContextHelpManager:
                 content="探索游戏模式、数据分析、报告生成等高级功能。",
                 level=HelpLevel.ADVANCED,
                 keywords=["高级", "游戏", "分析", "报告"],
-                examples=["启用游戏模式进行趣味实验", "使用数据分析工具查看趋势", "一键生成实验报告"],
+                examples=[
+                    "启用游戏模式进行趣味实验",
+                    "使用数据分析工具查看趋势",
+                    "一键生成实验报告",
+                ],
                 tips=["游戏模式下有成就系统", "可以导出数据进行深入分析"],
             )
         )
@@ -318,7 +335,9 @@ class ContextHelpManager:
         """获取帮助主题"""
         return self.help_topics.get(topic_id)
 
-    def register_widget_help(self, widget: QWidget, topic_id: str, trigger: HelpTrigger = HelpTrigger.HOVER):
+    def register_widget_help(
+        self, widget: QWidget, topic_id: str, trigger: HelpTrigger = HelpTrigger.HOVER
+    ):
         """注册控件帮助
 
         Args:
@@ -330,7 +349,9 @@ class ContextHelpManager:
 
         # 根据触发方式添加事件处理
         if trigger == HelpTrigger.HOVER:
-            original_enter = widget.enterEvent if hasattr(widget, "enterEvent") else None
+            original_enter = (
+                widget.enterEvent if hasattr(widget, "enterEvent") else None
+            )
 
             def enter_event(event):
                 if original_enter:
@@ -340,7 +361,9 @@ class ContextHelpManager:
             widget.enterEvent = enter_event
 
         elif trigger == HelpTrigger.FOCUS:
-            original_focus_in = widget.focusInEvent if hasattr(widget, "focusInEvent") else None
+            original_focus_in = (
+                widget.focusInEvent if hasattr(widget, "focusInEvent") else None
+            )
 
             def focus_in_event(event):
                 if original_focus_in:

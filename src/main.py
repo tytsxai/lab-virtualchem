@@ -154,7 +154,9 @@ def test_core_only() -> int:
         # 测试曲线生成
         curve_gen = container.resolve(CurveGenerator)
         logger.info("\n📊 测试滴定曲线生成...")
-        curve_data = curve_gen.generate_titration_curve(acid_type="strong", acid_M=0.1, acid_V_ml=25.0, base_M=0.1)
+        curve_data = curve_gen.generate_titration_curve(
+            acid_type="strong", acid_M=0.1, acid_V_ml=25.0, base_M=0.1
+        )
         V = curve_data[0]
         logger.info("  ✅ 成功生成 %d 个数据点", len(V))
 

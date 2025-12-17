@@ -9,6 +9,7 @@ import logging
 import time
 from collections.abc import Callable
 from enum import Enum
+from types import SimpleNamespace
 
 try:
     import requests
@@ -16,6 +17,36 @@ try:
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
+    # Provide a stub so callers/tests can monkeypatch `safe_network.requests`
+    # even when `requests` isn't installed.
+    class _RequestError(Exception):
+        pass
+
+    class _ConnectionError(_RequestError):
+        pass
+
+    class _Timeout(_RequestError):
+        pass
+
+    class _HTTPError(_RequestError):
+        pass
+
+    class _SSLError(_RequestError):
+        pass
+
+    def _missing(*_args, **_kwargs):
+        raise ImportError("requests库未安装，无法发送网络请求")
+
+    requests = SimpleNamespace(
+        request=_missing,
+        get=_missing,
+        exceptions=SimpleNamespace(
+            ConnectionError=_ConnectionError,
+            Timeout=_Timeout,
+            HTTPError=_HTTPError,
+            SSLError=_SSLError,
+        ),
+    )
 
 from .enhanced_error_handler import (
     ErrorSeverity,
@@ -120,12 +151,16 @@ class SafeNetworkClient:
             except requests.exceptions.ConnectionError as e:
                 last_error = e
                 error_type = NetworkErrorType.CONNECTION_ERROR
-                logger.warning(f"连接错误 (尝试 {attempt + 1}/{self.retry_strategy.max_retries}): {e}")
+                logger.warning(
+                    f"连接错误 (尝试 {attempt + 1}/{self.retry_strategy.max_retries}): {e}"
+                )
 
             except requests.exceptions.Timeout as e:
                 last_error = e
                 error_type = NetworkErrorType.TIMEOUT
-                logger.warning(f"请求超时 (尝试 {attempt + 1}/{self.retry_strategy.max_retries}): {e}")
+                logger.warning(
+                    f"请求超时 (尝试 {attempt + 1}/{self.retry_strategy.max_retries}): {e}"
+                )
 
             except requests.exceptions.HTTPError as e:
                 # HTTP错误通常不重试
@@ -150,7 +185,9 @@ class SafeNetworkClient:
             except Exception as e:
                 last_error = e
                 error_type = NetworkErrorType.UNKNOWN
-                logger.warning(f"未知错误 (尝试 {attempt + 1}/{self.retry_strategy.max_retries}): {e}")
+                logger.warning(
+                    f"未知错误 (尝试 {attempt + 1}/{self.retry_strategy.max_retries}): {e}"
+                )
 
             # 如果还有重试机会，等待后重试
             if attempt < self.retry_strategy.max_retries - 1:
@@ -164,7 +201,9 @@ class SafeNetworkClient:
 
         return None
 
-    def _create_friendly_http_error(self, status_code: int, original_error: Exception) -> Exception:
+    def _create_friendly_http_error(
+        self, status_code: int, original_error: Exception
+    ) -> Exception:
         """创建友好的HTTP错误"""
         error_messages = {
             400: "请求参数错误",
@@ -183,7 +222,9 @@ class SafeNetworkClient:
         message = error_messages.get(status_code, f"HTTP错误 {status_code}")
         return ValueError(f"{message}: {original_error}")
 
-    def _create_friendly_network_error(self, error_type: NetworkErrorType, original_error: Exception) -> Exception:
+    def _create_friendly_network_error(
+        self, error_type: NetworkErrorType, original_error: Exception
+    ) -> Exception:
         """创建友好的网络错误"""
         error_messages = {
             NetworkErrorType.CONNECTION_ERROR: "无法连接到服务器，请检查网络连接",
@@ -200,11 +241,15 @@ class SafeNetworkClient:
         """GET请求"""
         return self.request("GET", url, params=params, **kwargs)
 
-    def post(self, url: str, data: dict = None, json: dict = None, **kwargs) -> dict | None:
+    def post(
+        self, url: str, data: dict = None, json: dict = None, **kwargs
+    ) -> dict | None:
         """POST请求"""
         return self.request("POST", url, data=data, json=json, **kwargs)
 
-    def put(self, url: str, data: dict = None, json: dict = None, **kwargs) -> dict | None:
+    def put(
+        self, url: str, data: dict = None, json: dict = None, **kwargs
+    ) -> dict | None:
         """PUT请求"""
         return self.request("PUT", url, data=data, json=json, **kwargs)
 

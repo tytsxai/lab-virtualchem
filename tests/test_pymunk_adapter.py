@@ -43,11 +43,7 @@ def test_create_circle():
     engine = PyMunkPhysicsEngine()
 
     body = engine.create_circle_body(
-        radius=10,
-        mass=1.0,
-        position=(100, 100),
-        friction=0.5,
-        elasticity=0.8
+        radius=10, mass=1.0, position=(100, 100), friction=0.5, elasticity=0.8
     )
 
     assert body is not None
@@ -64,12 +60,7 @@ def test_create_box():
     engine = PyMunkPhysicsEngine()
 
     body = engine.create_box_body(
-        width=20,
-        height=30,
-        mass=2.0,
-        position=(50, 50),
-        friction=0.3,
-        elasticity=0.6
+        width=20, height=30, mass=2.0, position=(50, 50), friction=0.3, elasticity=0.6
     )
 
     assert body is not None
@@ -85,10 +76,7 @@ def test_create_segment():
     engine = PyMunkPhysicsEngine()
 
     body = engine.create_segment_body(
-        point_a=(0, 0),
-        point_b=(200, 0),
-        thickness=5,
-        body_type=BodyType.STATIC
+        point_a=(0, 0), point_b=(200, 0), thickness=5, body_type=BodyType.STATIC
     )
 
     assert body is not None
@@ -103,11 +91,7 @@ def test_create_polygon():
 
     # 创建三角形
     vertices = [(0, 0), (20, 0), (10, 20)]
-    body = engine.create_polygon_body(
-        vertices=vertices,
-        mass=1.5,
-        position=(100, 100)
-    )
+    body = engine.create_polygon_body(vertices=vertices, mass=1.5, position=(100, 100))
 
     assert body is not None
     assert engine.body_count == 1
@@ -151,11 +135,7 @@ def test_simulation():
     engine.gravity = (0, -100)  # 设置较小的重力便于测试
 
     # 创建一个球
-    ball = engine.create_circle_body(
-        radius=10,
-        mass=1.0,
-        position=(100, 100)
-    )
+    ball = engine.create_circle_body(radius=10, mass=1.0, position=(100, 100))
 
     initial_y = ball.position[1]
 
@@ -176,18 +156,12 @@ def test_collision():
 
     # 创建地面
     ground = engine.create_segment_body(
-        point_a=(0, 10),
-        point_b=(200, 10),
-        thickness=5,
-        body_type=BodyType.STATIC
+        point_a=(0, 10), point_b=(200, 10), thickness=5, body_type=BodyType.STATIC
     )
 
     # 创建球（在地面上方较近的位置）
     ball = engine.create_circle_body(
-        radius=10,
-        mass=1.0,
-        position=(100, 30),
-        elasticity=0.8
+        radius=10, mass=1.0, position=(100, 30), elasticity=0.8
     )
 
     initial_velocity = ball.velocity[1]
@@ -217,12 +191,7 @@ def test_spring_constraint():
     ball2 = engine.create_circle_body(radius=10, position=(150, 100))
 
     # 添加弹簧
-    spring = engine.add_spring(
-        ball1, ball2,
-        rest_length=100,
-        stiffness=50,
-        damping=5
-    )
+    spring = engine.add_spring(ball1, ball2, rest_length=100, stiffness=50, damping=5)
 
     assert spring is not None
     assert engine.constraint_count == 1
@@ -235,8 +204,10 @@ def test_spring_constraint():
         engine.step()
 
     # 球应该被弹簧拉近
-    distance = ((ball1.position[0] - ball2.position[0])**2 +
-                (ball1.position[1] - ball2.position[1])**2)**0.5
+    distance = (
+        (ball1.position[0] - ball2.position[0]) ** 2
+        + (ball1.position[1] - ball2.position[1]) ** 2
+    ) ** 0.5
 
     print(f"✓ 弹簧约束正常工作，当前距离: {distance:.2f}")
 
@@ -264,19 +235,13 @@ def test_ray_cast():
     engine = PyMunkPhysicsEngine()
 
     # 创建一个球
-    ball = engine.create_circle_body(
-        radius=10,
-        position=(100, 100)
-    )
+    ball = engine.create_circle_body(radius=10, position=(100, 100))
 
     # 从左边射线到右边，应该击中球
-    hit = engine.ray_cast(
-        start=(0, 100),
-        end=(200, 100)
-    )
+    hit = engine.ray_cast(start=(0, 100), end=(200, 100))
 
     assert hit is not None
-    assert hit['body'] == ball
+    assert hit["body"] == ball
     print(f"✓ 射线检测正常，击中点: {hit['point']}")
 
 
@@ -285,16 +250,10 @@ def test_point_query():
     engine = PyMunkPhysicsEngine()
 
     # 创建一个球
-    ball = engine.create_circle_body(
-        radius=10,
-        position=(100, 100)
-    )
+    ball = engine.create_circle_body(radius=10, position=(100, 100))
 
     # 查询球中心点
-    results = engine.point_query(
-        point=(100, 100),
-        max_distance=50
-    )
+    results = engine.point_query(point=(100, 100), max_distance=50)
 
     assert len(results) > 0
     print(f"✓ 点查询正常，找到 {len(results)} 个形状")
@@ -306,7 +265,7 @@ def test_clear():
 
     # 创建多个刚体
     for i in range(5):
-        engine.create_circle_body(radius=10, position=(i*20, 100))
+        engine.create_circle_body(radius=10, position=(i * 20, 100))
 
     assert engine.body_count == 5
 
@@ -322,17 +281,10 @@ def test_apply_force():
     engine = PyMunkPhysicsEngine()
     engine.gravity = (0, 0)  # 无重力
 
-    ball = engine.create_circle_body(
-        radius=10,
-        position=(100, 100),
-        mass=1.0
-    )
+    ball = engine.create_circle_body(radius=10, position=(100, 100), mass=1.0)
 
     # 施加向上的力
-    ball.apply_force_at_world_point(
-        force=(0, 1000),
-        point=(100, 100)
-    )
+    ball.apply_force_at_world_point(force=(0, 1000), point=(100, 100))
 
     # 模拟几帧
     for i in range(30):
@@ -352,19 +304,12 @@ def test_performance():
 
     # 创建地面
     engine.create_segment_body(
-        point_a=(0, 0),
-        point_b=(1000, 0),
-        thickness=5,
-        body_type=BodyType.STATIC
+        point_a=(0, 0), point_b=(1000, 0), thickness=5, body_type=BodyType.STATIC
     )
 
     # 创建100个球
     for i in range(100):
-        engine.create_circle_body(
-            radius=5,
-            mass=1.0,
-            position=(i * 10, 100 + i * 5)
-        )
+        engine.create_circle_body(radius=5, mass=1.0, position=(i * 10, 100 + i * 5))
 
     # 测试模拟性能
     frames = 300  # 5秒
@@ -381,9 +326,9 @@ def test_performance():
     assert fps > 30, f"性能不足，FPS仅为 {fps:.1f}"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("=" * 60)
     print("PyMunk适配器测试")
     print("=" * 60)
 
-    pytest.main([__file__, '-v', '--tb=short'])
+    pytest.main([__file__, "-v", "--tb=short"])

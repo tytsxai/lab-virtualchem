@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 class CacheStrategy(Enum):
     """缓存策略"""
+
     LRU = "lru"  # 最近最少使用
     LFU = "lfu"  # 最少使用
     FIFO = "fifo"  # 先进先出
@@ -30,6 +31,7 @@ class CacheStrategy(Enum):
 
 class MemoryLevel(Enum):
     """内存级别"""
+
     LOW = "low"
     NORMAL = "normal"
     HIGH = "high"
@@ -38,6 +40,7 @@ class MemoryLevel(Enum):
 
 class OptimizationLevel(Enum):
     """优化级别"""
+
     BASIC = "basic"
     ADVANCED = "advanced"
     AGGRESSIVE = "aggressive"
@@ -47,6 +50,7 @@ class OptimizationLevel(Enum):
 @dataclass
 class CacheEntry:
     """缓存条目"""
+
     key: str
     value: Any
     created_at: datetime
@@ -60,6 +64,7 @@ class CacheEntry:
 @dataclass
 class PerformanceMetrics:
     """性能指标"""
+
     timestamp: datetime
     cpu_usage: float
     memory_usage: float
@@ -76,6 +81,7 @@ class PerformanceMetrics:
 @dataclass
 class OptimizationRule:
     """优化规则"""
+
     name: str
     condition: str
     action: str
@@ -88,6 +94,7 @@ class OptimizationRule:
 @dataclass
 class ResourceUsage:
     """资源使用情况"""
+
     cpu_percent: float
     memory_percent: float
     memory_used_mb: float
@@ -103,12 +110,7 @@ class EnhancedPerformanceSystem:
 
     def __init__(self):
         self.cache: dict[str, CacheEntry] = {}
-        self.cache_stats = {
-            "hits": 0,
-            "misses": 0,
-            "evictions": 0,
-            "size": 0
-        }
+        self.cache_stats = {"hits": 0, "misses": 0, "evictions": 0, "size": 0}
         self.performance_history: deque = deque(maxlen=1000)
         self.optimization_rules: list[OptimizationRule] = []
         self.resource_monitor: threading.Thread | None = None
@@ -122,7 +124,7 @@ class EnhancedPerformanceSystem:
             "memory_usage": 85.0,
             "response_time": 1.0,
             "cache_hit_rate": 0.7,
-            "error_rate": 0.05
+            "error_rate": 0.05,
         }
 
         # 初始化系统
@@ -146,26 +148,26 @@ class EnhancedPerformanceSystem:
                 name="memory_cleanup",
                 condition="memory_usage > 80",
                 action="trigger_gc",
-                priority=1
+                priority=1,
             ),
             OptimizationRule(
                 name="cache_optimization",
                 condition="cache_hit_rate < 0.7",
                 action="optimize_cache",
-                priority=2
+                priority=2,
             ),
             OptimizationRule(
                 name="response_time_optimization",
                 condition="response_time > 1.0",
                 action="optimize_queries",
-                priority=3
+                priority=3,
             ),
             OptimizationRule(
                 name="error_rate_optimization",
                 condition="error_rate > 0.05",
                 action="increase_timeout",
-                priority=4
-            )
+                priority=4,
+            ),
         ]
 
         self.optimization_rules = rules
@@ -175,8 +177,7 @@ class EnhancedPerformanceSystem:
         """启动性能监控"""
         self.monitoring_active = True
         self.resource_monitor = threading.Thread(
-            target=self._monitoring_loop,
-            daemon=True
+            target=self._monitoring_loop, daemon=True
         )
         self.resource_monitor.start()
         logger.info("性能监控已启动")
@@ -212,7 +213,9 @@ class EnhancedPerformanceSystem:
 
         # 计算缓存命中率
         total_requests = self.cache_stats["hits"] + self.cache_stats["misses"]
-        cache_hit_rate = self.cache_stats["hits"] / total_requests if total_requests > 0 else 0.0
+        cache_hit_rate = (
+            self.cache_stats["hits"] / total_requests if total_requests > 0 else 0.0
+        )
         cache_miss_rate = 1.0 - cache_hit_rate
 
         # 模拟响应时间
@@ -235,7 +238,7 @@ class EnhancedPerformanceSystem:
             throughput=throughput,
             error_rate=error_rate,
             active_connections=50,
-            queue_length=10
+            queue_length=10,
         )
 
     def _check_optimization_rules(self, metrics: PerformanceMetrics) -> None:
@@ -272,7 +275,9 @@ class EnhancedPerformanceSystem:
             logger.error(f"条件评估错误: {e}")
             return False
 
-    def _execute_optimization_action(self, action: str, _metrics: PerformanceMetrics) -> None:
+    def _execute_optimization_action(
+        self, action: str, _metrics: PerformanceMetrics
+    ) -> None:
         """执行优化动作"""
         try:
             if action == "trigger_gc":
@@ -315,7 +320,10 @@ class EnhancedPerformanceSystem:
         expired_keys = []
 
         for key, entry in self.cache.items():
-            if entry.ttl and (current_time - entry.created_at).total_seconds() > entry.ttl:
+            if (
+                entry.ttl
+                and (current_time - entry.created_at).total_seconds() > entry.ttl
+            ):
                 expired_keys.append(key)
 
         for key in expired_keys:
@@ -339,10 +347,7 @@ class EnhancedPerformanceSystem:
     def _evict_lru_entries(self) -> None:
         """清理最近最少使用的条目"""
         # 按最后访问时间排序
-        sorted_entries = sorted(
-            self.cache.items(),
-            key=lambda x: x[1].last_accessed
-        )
+        sorted_entries = sorted(self.cache.items(), key=lambda x: x[1].last_accessed)
 
         # 清理最旧的条目
         evict_count = len(self.cache) - self.max_cache_size
@@ -354,10 +359,7 @@ class EnhancedPerformanceSystem:
     def _evict_lfu_entries(self) -> None:
         """清理最少使用的条目"""
         # 按访问次数排序
-        sorted_entries = sorted(
-            self.cache.items(),
-            key=lambda x: x[1].access_count
-        )
+        sorted_entries = sorted(self.cache.items(), key=lambda x: x[1].access_count)
 
         # 清理访问次数最少的条目
         evict_count = len(self.cache) - self.max_cache_size
@@ -369,10 +371,7 @@ class EnhancedPerformanceSystem:
     def _evict_fifo_entries(self) -> None:
         """清理先进先出的条目"""
         # 按创建时间排序
-        sorted_entries = sorted(
-            self.cache.items(),
-            key=lambda x: x[1].created_at
-        )
+        sorted_entries = sorted(self.cache.items(), key=lambda x: x[1].created_at)
 
         # 清理最旧的条目
         evict_count = len(self.cache) - self.max_cache_size
@@ -382,9 +381,7 @@ class EnhancedPerformanceSystem:
             self.cache_stats["evictions"] += 1
 
     @enhance_robustness(
-        operation_name="cache_get",
-        security_level="low",
-        enable_caching=False
+        operation_name="cache_get", security_level="low", enable_caching=False
     )
     @log_operation(operation_name="cache_get")
     def cache_get(self, key: str) -> Any | None:
@@ -396,7 +393,10 @@ class EnhancedPerformanceSystem:
         entry = self.cache[key]
 
         # 检查是否过期
-        if entry.ttl and (datetime.now() - entry.created_at).total_seconds() > entry.ttl:
+        if (
+            entry.ttl
+            and (datetime.now() - entry.created_at).total_seconds() > entry.ttl
+        ):
             del self.cache[key]
             self.cache_stats["misses"] += 1
             self.cache_stats["evictions"] += 1
@@ -410,17 +410,11 @@ class EnhancedPerformanceSystem:
         return entry.value
 
     @enhance_robustness(
-        operation_name="cache_set",
-        security_level="low",
-        enable_caching=False
+        operation_name="cache_set", security_level="low", enable_caching=False
     )
     @log_operation(operation_name="cache_set")
     def cache_set(
-        self,
-        key: str,
-        value: Any,
-        ttl: float | None = None,
-        priority: int = 0
+        self, key: str, value: Any, ttl: float | None = None, priority: int = 0
     ) -> bool:
         """设置缓存值"""
         try:
@@ -435,7 +429,7 @@ class EnhancedPerformanceSystem:
                 last_accessed=datetime.now(),
                 size=value_size,
                 ttl=ttl or self.default_ttl,
-                priority=priority
+                priority=priority,
             )
 
             # 检查缓存大小限制
@@ -452,9 +446,7 @@ class EnhancedPerformanceSystem:
             return False
 
     @enhance_robustness(
-        operation_name="cache_delete",
-        security_level="low",
-        enable_caching=False
+        operation_name="cache_delete", security_level="low", enable_caching=False
     )
     @log_operation(operation_name="cache_delete")
     def cache_delete(self, key: str) -> bool:
@@ -467,9 +459,7 @@ class EnhancedPerformanceSystem:
         return False
 
     @enhance_robustness(
-        operation_name="cache_clear",
-        security_level="medium",
-        enable_caching=False
+        operation_name="cache_clear", security_level="medium", enable_caching=False
     )
     @log_operation(operation_name="cache_clear")
     def cache_clear(self) -> int:
@@ -483,21 +473,21 @@ class EnhancedPerformanceSystem:
     @enhance_robustness(
         operation_name="get_performance_metrics",
         security_level="low",
-        enable_caching=True
+        enable_caching=True,
     )
     def get_performance_metrics(self, limit: int = 100) -> list[PerformanceMetrics]:
         """获取性能指标"""
         return list(self.performance_history)[-limit:]
 
     @enhance_robustness(
-        operation_name="get_cache_stats",
-        security_level="low",
-        enable_caching=True
+        operation_name="get_cache_stats", security_level="low", enable_caching=True
     )
     def get_cache_stats(self) -> dict[str, Any]:
         """获取缓存统计"""
         total_requests = self.cache_stats["hits"] + self.cache_stats["misses"]
-        hit_rate = self.cache_stats["hits"] / total_requests if total_requests > 0 else 0.0
+        hit_rate = (
+            self.cache_stats["hits"] / total_requests if total_requests > 0 else 0.0
+        )
 
         return {
             "hits": self.cache_stats["hits"],
@@ -507,13 +497,11 @@ class EnhancedPerformanceSystem:
             "hit_rate": hit_rate,
             "miss_rate": 1.0 - hit_rate,
             "total_entries": len(self.cache),
-            "max_size": self.max_cache_size
+            "max_size": self.max_cache_size,
         }
 
     @enhance_robustness(
-        operation_name="get_resource_usage",
-        security_level="low",
-        enable_caching=True
+        operation_name="get_resource_usage", security_level="low", enable_caching=True
     )
     def get_resource_usage(self) -> ResourceUsage:
         """获取资源使用情况"""
@@ -527,26 +515,31 @@ class EnhancedPerformanceSystem:
             disk_usage_percent=30.0 + (time.time() % 10),
             network_io_mb=10.0 + (time.time() % 5),
             active_threads=threading.active_count(),
-            gc_collections=gc.get_count()[0]
+            gc_collections=gc.get_count()[0],
         )
 
     @enhance_robustness(
-        operation_name="optimize_system",
-        security_level="medium",
-        enable_caching=False
+        operation_name="optimize_system", security_level="medium", enable_caching=False
     )
     @log_operation(operation_name="optimize_system")
-    def optimize_system(self, level: OptimizationLevel = OptimizationLevel.BASIC) -> dict[str, Any]:
+    def optimize_system(
+        self, level: OptimizationLevel = OptimizationLevel.BASIC
+    ) -> dict[str, Any]:
         """优化系统性能"""
         optimization_results = {
             "level": level.value,
             "timestamp": datetime.now().isoformat(),
             "actions_taken": [],
-            "improvements": {}
+            "improvements": {},
         }
 
         try:
-            if level in [OptimizationLevel.BASIC, OptimizationLevel.ADVANCED, OptimizationLevel.AGGRESSIVE, OptimizationLevel.MAXIMUM]:
+            if level in [
+                OptimizationLevel.BASIC,
+                OptimizationLevel.ADVANCED,
+                OptimizationLevel.AGGRESSIVE,
+                OptimizationLevel.MAXIMUM,
+            ]:
                 # 基础优化
                 self._trigger_garbage_collection()
                 optimization_results["actions_taken"].append("垃圾回收")
@@ -555,7 +548,11 @@ class EnhancedPerformanceSystem:
                 self._optimize_cache()
                 optimization_results["actions_taken"].append("缓存优化")
 
-            if level in [OptimizationLevel.ADVANCED, OptimizationLevel.AGGRESSIVE, OptimizationLevel.MAXIMUM]:
+            if level in [
+                OptimizationLevel.ADVANCED,
+                OptimizationLevel.AGGRESSIVE,
+                OptimizationLevel.MAXIMUM,
+            ]:
                 # 高级优化
                 self._optimize_memory()
                 optimization_results["actions_taken"].append("内存优化")
@@ -620,13 +617,13 @@ class EnhancedPerformanceSystem:
             "memory_usage_reduction": 5.0,
             "response_time_improvement": 0.1,
             "cache_hit_rate_improvement": 0.05,
-            "throughput_increase": 10.0
+            "throughput_increase": 10.0,
         }
 
     @enhance_robustness(
         operation_name="get_optimization_report",
         security_level="low",
-        enable_caching=True
+        enable_caching=True,
     )
     def get_optimization_report(self) -> dict[str, Any]:
         """获取优化报告"""
@@ -644,25 +641,27 @@ class EnhancedPerformanceSystem:
                 "memory_usage": latest_metrics.memory_usage,
                 "response_time": latest_metrics.response_time,
                 "throughput": latest_metrics.throughput,
-                "error_rate": latest_metrics.error_rate
+                "error_rate": latest_metrics.error_rate,
             },
             "cache_performance": cache_stats,
             "resource_usage": {
                 "cpu_percent": resource_usage.cpu_percent,
                 "memory_percent": resource_usage.memory_percent,
                 "active_threads": resource_usage.active_threads,
-                "gc_collections": resource_usage.gc_collections
+                "gc_collections": resource_usage.gc_collections,
             },
             "optimization_rules": [
                 {
                     "name": rule.name,
                     "enabled": rule.enabled,
                     "trigger_count": rule.trigger_count,
-                    "last_triggered": rule.last_triggered.isoformat() if rule.last_triggered else None
+                    "last_triggered": rule.last_triggered.isoformat()
+                    if rule.last_triggered
+                    else None,
                 }
                 for rule in self.optimization_rules
             ],
-            "recommendations": self._generate_recommendations(latest_metrics)
+            "recommendations": self._generate_recommendations(latest_metrics),
         }
 
     def _generate_recommendations(self, metrics: PerformanceMetrics) -> list[str]:

@@ -80,10 +80,10 @@ class TestSecretGenerator:
         # 使用临时目录
         monkeypatch.setattr(
             SecretGenerator,
-            '__init__',
-            lambda self: setattr(self, 'project_root', tmp_path) or
-                        setattr(self, 'env_file', tmp_path / ".env") or
-                        setattr(self, 'env_example', tmp_path / ".env.example")
+            "__init__",
+            lambda self: setattr(self, "project_root", tmp_path)
+            or setattr(self, "env_file", tmp_path / ".env")
+            or setattr(self, "env_example", tmp_path / ".env.example"),
         )
 
         generator = SecretGenerator()
@@ -98,7 +98,7 @@ class TestSecretGenerator:
         assert generator.env_example.exists()
 
         # 验证内容
-        content = generator.env_file.read_text(encoding='utf-8')
+        content = generator.env_file.read_text(encoding="utf-8")
         assert "JWT_SECRET_KEY=" in content
 
     def test_create_env_file_exists(self, tmp_path, monkeypatch):
@@ -109,17 +109,17 @@ class TestSecretGenerator:
 
         monkeypatch.setattr(
             SecretGenerator,
-            '__init__',
-            lambda self: setattr(self, 'project_root', tmp_path) or
-                        setattr(self, 'env_file', env_file) or
-                        setattr(self, 'env_example', tmp_path / ".env.example")
+            "__init__",
+            lambda self: setattr(self, "project_root", tmp_path)
+            or setattr(self, "env_file", env_file)
+            or setattr(self, "env_example", tmp_path / ".env.example"),
         )
 
         generator = SecretGenerator()
         secrets = generator.generate_all_secrets()
 
         # 模拟用户输入"no"
-        with patch('builtins.input', return_value='no'):
+        with patch("builtins.input", return_value="no"):
             result = generator.create_env_file(secrets, force=False)
             assert not result
 
@@ -134,18 +134,21 @@ class TestSecretGenerator:
         src_dir.mkdir()
 
         test_file = src_dir / "test.py"
-        test_file.write_text("""
+        test_file.write_text(
+            """
 secret_key = "this-is-a-hardcoded-secret-key-12345"
 password = "hardcoded-password"
 api_key = "sk-1234567890abcdef"
-""", encoding='utf-8')
+""",
+            encoding="utf-8",
+        )
 
         monkeypatch.setattr(
             SecretGenerator,
-            '__init__',
-            lambda self: setattr(self, 'project_root', tmp_path) or
-                        setattr(self, 'env_file', tmp_path / ".env") or
-                        setattr(self, 'env_example', tmp_path / ".env.example")
+            "__init__",
+            lambda self: setattr(self, "project_root", tmp_path)
+            or setattr(self, "env_file", tmp_path / ".env")
+            or setattr(self, "env_example", tmp_path / ".env.example"),
         )
 
         generator = SecretGenerator()
@@ -158,17 +161,20 @@ api_key = "sk-1234567890abcdef"
         """测试显示当前密钥"""
         # 创建测试.env文件
         env_file = tmp_path / ".env"
-        env_file.write_text("""
+        env_file.write_text(
+            """
 JWT_SECRET_KEY=test-jwt-key-12345678
 DEVELOPER_SECRET_KEY=test-dev-key-12345678
-""", encoding='utf-8')
+""",
+            encoding="utf-8",
+        )
 
         monkeypatch.setattr(
             SecretGenerator,
-            '__init__',
-            lambda self: setattr(self, 'project_root', tmp_path) or
-                        setattr(self, 'env_file', env_file) or
-                        setattr(self, 'env_example', tmp_path / ".env.example")
+            "__init__",
+            lambda self: setattr(self, "project_root", tmp_path)
+            or setattr(self, "env_file", env_file)
+            or setattr(self, "env_example", tmp_path / ".env.example"),
         )
 
         generator = SecretGenerator()
@@ -185,10 +191,10 @@ DEVELOPER_SECRET_KEY=test-dev-key-12345678
 
         monkeypatch.setattr(
             SecretGenerator,
-            '__init__',
-            lambda self: setattr(self, 'project_root', tmp_path) or
-                        setattr(self, 'env_file', tmp_path / ".env") or
-                        setattr(self, 'env_example', tmp_path / ".env.example")
+            "__init__",
+            lambda self: setattr(self, "project_root", tmp_path)
+            or setattr(self, "env_file", tmp_path / ".env")
+            or setattr(self, "env_example", tmp_path / ".env.example"),
         )
 
         generator = SecretGenerator()
@@ -202,16 +208,16 @@ DEVELOPER_SECRET_KEY=test-dev-key-12345678
 
         monkeypatch.setattr(
             SecretGenerator,
-            '__init__',
-            lambda self: setattr(self, 'project_root', tmp_path) or
-                        setattr(self, 'env_file', tmp_path / ".env") or
-                        setattr(self, 'env_example', tmp_path / ".env.example")
+            "__init__",
+            lambda self: setattr(self, "project_root", tmp_path)
+            or setattr(self, "env_file", tmp_path / ".env")
+            or setattr(self, "env_example", tmp_path / ".env.example"),
         )
 
         generator = SecretGenerator()
 
         # 模拟用户输入"yes"
-        with patch('builtins.input', return_value='yes'):
+        with patch("builtins.input", return_value="yes"):
             result = generator.check_gitignore()
             assert result
 
@@ -247,4 +253,3 @@ class TestSecretSecurity:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

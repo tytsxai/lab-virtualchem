@@ -52,9 +52,17 @@ class AsyncServiceManager:
         self.task_counter = 0
         self._lock = threading.Lock()
 
-        logger.info(f"异步服务管理器已初始化 (线程池: {max_workers}, 进程池: {max_processes})")
+        logger.info(
+            f"异步服务管理器已初始化 (线程池: {max_workers}, 进程池: {max_processes})"
+        )
 
-    def submit_task(self, func: Callable[..., Any], *args: Any, use_process: bool = False, **kwargs: Any) -> str:
+    def submit_task(
+        self,
+        func: Callable[..., Any],
+        *args: Any,
+        use_process: bool = False,
+        **kwargs: Any,
+    ) -> str:
         """提交异步任务
 
         Args:
@@ -70,7 +78,13 @@ class AsyncServiceManager:
             self.task_counter += 1
             task_id = f"task_{self.task_counter}_{int(time.time())}"
 
-        task = AsyncTask(task_id=task_id, func=func, args=args, kwargs=kwargs, created_at=datetime.now())
+        task = AsyncTask(
+            task_id=task_id,
+            func=func,
+            args=args,
+            kwargs=kwargs,
+            created_at=datetime.now(),
+        )
 
         self.tasks[task_id] = task
 
@@ -192,7 +206,10 @@ class AsyncServiceManager:
         tasks_to_remove = []
 
         for task_id, task in self.tasks.items():
-            if task.status in ["completed", "failed", "cancelled"] and task.created_at.timestamp() < cutoff_time:
+            if (
+                task.status in ["completed", "failed", "cancelled"]
+                and task.created_at.timestamp() < cutoff_time
+            ):
                 tasks_to_remove.append(task_id)
 
         for task_id in tasks_to_remove:
@@ -222,7 +239,9 @@ class AsyncServiceManager:
         return {
             "total_tasks": len(self.tasks),
             "status_counts": status_counts,
-            "average_execution_time": total_execution_time / completed_tasks if completed_tasks > 0 else 0,
+            "average_execution_time": total_execution_time / completed_tasks
+            if completed_tasks > 0
+            else 0,
             "total_execution_time": total_execution_time,
             "completed_tasks": completed_tasks,
         }
@@ -237,7 +256,9 @@ class AsyncServiceManager:
 
         if wait:
             # 等待所有任务完成
-            while any(task.status in ["pending", "running"] for task in self.tasks.values()):
+            while any(
+                task.status in ["pending", "running"] for task in self.tasks.values()
+            ):
                 time.sleep(0.1)
 
         self.thread_pool.shutdown(wait=wait)
@@ -250,7 +271,9 @@ class AsyncServiceManager:
 async_service_manager = AsyncServiceManager()
 
 
-def async_task(use_process: bool = False) -> Callable[[Callable[..., Any]], Callable[..., str]]:
+def async_task(
+    use_process: bool = False,
+) -> Callable[[Callable[..., Any]], Callable[..., str]]:
     """异步任务装饰器
 
     Args:
@@ -260,7 +283,9 @@ def async_task(use_process: bool = False) -> Callable[[Callable[..., Any]], Call
     def decorator(func: Callable[..., Any]) -> Callable[..., str]:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> str:
-            task_id = async_service_manager.submit_task(func, *args, use_process=use_process, **kwargs)
+            task_id = async_service_manager.submit_task(
+                func, *args, use_process=use_process, **kwargs
+            )
             return task_id
 
         return wrapper
@@ -268,7 +293,9 @@ def async_task(use_process: bool = False) -> Callable[[Callable[..., Any]], Call
     return decorator
 
 
-def async_method(use_process: bool = False) -> Callable[[Callable[..., Any]], Callable[..., str]]:
+def async_method(
+    use_process: bool = False,
+) -> Callable[[Callable[..., Any]], Callable[..., str]]:
     """异步方法装饰器
 
     Args:
@@ -278,7 +305,9 @@ def async_method(use_process: bool = False) -> Callable[[Callable[..., Any]], Ca
     def decorator(func: Callable[..., Any]) -> Callable[..., str]:
         @wraps(func)
         def wrapper(self: Any, *args: Any, **kwargs: Any) -> str:
-            task_id = async_service_manager.submit_task(func, self, *args, use_process=use_process, **kwargs)
+            task_id = async_service_manager.submit_task(
+                func, self, *args, use_process=use_process, **kwargs
+            )
             return task_id
 
         return wrapper
@@ -333,7 +362,9 @@ class AsyncCache:
             # 检查缓存大小
             if len(self.cache) >= self.max_size:
                 # 删除最旧的条目
-                oldest_key = min(self.cache.keys(), key=lambda k: self.cache[k]["timestamp"])
+                oldest_key = min(
+                    self.cache.keys(), key=lambda k: self.cache[k]["timestamp"]
+                )
                 del self.cache[oldest_key]
 
             self.cache[key] = {"value": value, "timestamp": time.time()}
@@ -414,7 +445,9 @@ class AsyncRateLimiter:
         self.requests: dict[str, list[float]] = {}
         self._lock = threading.Lock()
 
-        logger.info(f"速率限制器已初始化 (最大请求: {max_requests}, 时间窗口: {time_window}秒)")
+        logger.info(
+            f"速率限制器已初始化 (最大请求: {max_requests}, 时间窗口: {time_window}秒)"
+        )
 
     def is_allowed(self, key: str) -> bool:
         """检查请求是否被允许
@@ -433,7 +466,9 @@ class AsyncRateLimiter:
 
             # 清理过期请求
             self.requests[key] = [
-                req_time for req_time in self.requests[key] if current_time - req_time < self.time_window
+                req_time
+                for req_time in self.requests[key]
+                if current_time - req_time < self.time_window
             ]
 
             # 检查是否超过限制
@@ -461,7 +496,9 @@ class AsyncRateLimiter:
 
             # 清理过期请求
             self.requests[key] = [
-                req_time for req_time in self.requests[key] if current_time - req_time < self.time_window
+                req_time
+                for req_time in self.requests[key]
+                if current_time - req_time < self.time_window
             ]
 
             return max(0, self.max_requests - len(self.requests[key]))

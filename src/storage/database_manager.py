@@ -40,10 +40,10 @@ class DatabaseManager:
 
     def __init__(
         self,
-        db_path: str = 'data/virtualchemlab.db',
+        db_path: str = "data/virtualchemlab.db",
         echo: bool = False,
         pool_size: int = 10,
-        max_overflow: int = 20
+        max_overflow: int = 20,
     ):
         """初始化数据库管理器
 
@@ -57,7 +57,7 @@ class DatabaseManager:
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
 
         # 创建引擎
-        db_url = f'sqlite:///{db_path}'
+        db_url = f"sqlite:///{db_path}"
         self.engine = create_engine(
             db_url,
             echo=echo,
@@ -65,14 +65,12 @@ class DatabaseManager:
             pool_size=pool_size,
             max_overflow=max_overflow,
             pool_pre_ping=True,  # 连接池预检测
-            connect_args={'check_same_thread': False}  # SQLite多线程支持
+            connect_args={"check_same_thread": False},  # SQLite多线程支持
         )
 
         # 创建会话工厂
         self.SessionLocal = sessionmaker(
-            autocommit=False,
-            autoflush=False,
-            bind=self.engine
+            autocommit=False, autoflush=False, bind=self.engine
         )
 
         # 创建所有表
@@ -89,8 +87,7 @@ class DatabaseManager:
             version_count = session.query(DatabaseVersion).count()
             if version_count == 0:
                 version = DatabaseVersion(
-                    version=APP_VERSION,
-                    description='初始化数据库'
+                    version=APP_VERSION, description="初始化数据库"
                 )
                 session.add(version)
                 session.commit()
@@ -138,8 +135,8 @@ class DatabaseManager:
         user_id: str,
         username: str,
         email: str,
-        role: str = 'student',
-        preferences: dict[str, Any] | None = None
+        role: str = "student",
+        preferences: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """创建用户
 
@@ -159,7 +156,7 @@ class DatabaseManager:
                 username=username,
                 email=email,
                 role=role,
-                preferences=preferences or {}
+                preferences=preferences or {},
             )
             session.add(user)
             session.commit()
@@ -167,13 +164,13 @@ class DatabaseManager:
 
             # 转换为字典避免分离问题
             user_dict = {
-                'id': user.id,
-                'user_id': user.user_id,
-                'username': user.username,
-                'email': user.email,
-                'role': user.role,
-                'preferences': user.preferences,
-                'created_at': user.created_at
+                "id": user.id,
+                "user_id": user.user_id,
+                "username": user.username,
+                "email": user.email,
+                "role": user.role,
+                "preferences": user.preferences,
+                "created_at": user.created_at,
             }
 
             logger.info(f"创建用户: {user_id}")
@@ -194,13 +191,13 @@ class DatabaseManager:
                 return None
 
             return {
-                'id': user.id,
-                'user_id': user.user_id,
-                'username': user.username,
-                'email': user.email,
-                'role': user.role,
-                'preferences': user.preferences,
-                'created_at': user.created_at
+                "id": user.id,
+                "user_id": user.user_id,
+                "username": user.username,
+                "email": user.email,
+                "role": user.role,
+                "preferences": user.preferences,
+                "created_at": user.created_at,
             }
 
     def update_user(self, user_id: str, **kwargs) -> bool:
@@ -250,7 +247,7 @@ class DatabaseManager:
         role: str | None = None,
         is_active: bool | None = None,
         limit: int = 100,
-        offset: int = 0
+        offset: int = 0,
     ) -> list[dict[str, Any]]:
         """列出用户
 
@@ -275,15 +272,18 @@ class DatabaseManager:
             users = query.limit(safe_limit).offset(safe_offset).all()
 
             # 转换为字典列表
-            return [{
-                'id': u.id,
-                'user_id': u.user_id,
-                'username': u.username,
-                'email': u.email,
-                'role': u.role,
-                'is_active': u.is_active,
-                'created_at': u.created_at
-            } for u in users]
+            return [
+                {
+                    "id": u.id,
+                    "user_id": u.user_id,
+                    "username": u.username,
+                    "email": u.email,
+                    "role": u.role,
+                    "is_active": u.is_active,
+                    "created_at": u.created_at,
+                }
+                for u in users
+            ]
 
     # ========================================================================
     # 实验记录操作
@@ -300,9 +300,11 @@ class DatabaseManager:
         """
         with self.get_session() as session:
             # 检查是否已存在
-            existing = session.query(ExperimentRecord).filter(
-                ExperimentRecord.record_id == record.record_id
-            ).first()
+            existing = (
+                session.query(ExperimentRecord)
+                .filter(ExperimentRecord.record_id == record.record_id)
+                .first()
+            )
 
             if existing:
                 # 更新
@@ -317,7 +319,9 @@ class DatabaseManager:
                 existing.step_records = [r.model_dump() for r in record.step_records]
                 existing.context = record.context
                 existing.curve_data = record.curve_data
-                existing.mistakes_summary = [m.model_dump() for m in record.mistakes_summary]
+                existing.mistakes_summary = [
+                    m.model_dump() for m in record.mistakes_summary
+                ]
 
                 session.commit()
                 session.refresh(existing)
@@ -344,7 +348,7 @@ class DatabaseManager:
                     context=record.context,
                     curve_data=record.curve_data,
                     mistakes_summary=[m.model_dump() for m in record.mistakes_summary],
-                    version=record.version
+                    version=record.version,
                 )
                 session.add(db_record)
                 session.commit()
@@ -363,9 +367,11 @@ class DatabaseManager:
             记录字典或None
         """
         with self.get_session() as session:
-            record = session.query(ExperimentRecord).filter(
-                ExperimentRecord.record_id == record_id
-            ).first()
+            record = (
+                session.query(ExperimentRecord)
+                .filter(ExperimentRecord.record_id == record_id)
+                .first()
+            )
 
             if not record:
                 return None
@@ -373,11 +379,7 @@ class DatabaseManager:
             return record.to_dict()
 
     def list_user_experiments(
-        self,
-        user_id: str,
-        status: str | None = None,
-        limit: int = 100,
-        offset: int = 0
+        self, user_id: str, status: str | None = None, limit: int = 100, offset: int = 0
     ) -> list[dict[str, Any]]:
         """列出用户的实验记录
 
@@ -399,9 +401,12 @@ class DatabaseManager:
                 query = query.filter(ExperimentRecord.status == status)
 
             safe_limit, safe_offset = self._normalize_pagination(limit, offset)
-            records = query.order_by(
-                ExperimentRecord.started_at.desc()
-            ).limit(safe_limit).offset(safe_offset).all()
+            records = (
+                query.order_by(ExperimentRecord.started_at.desc())
+                .limit(safe_limit)
+                .offset(safe_offset)
+                .all()
+            )
 
             # 转换为字典列表
             return [r.to_dict() for r in records]
@@ -416,9 +421,11 @@ class DatabaseManager:
             是否成功
         """
         with self.get_session() as session:
-            record = session.query(ExperimentRecord).filter(
-                ExperimentRecord.record_id == record_id
-            ).first()
+            record = (
+                session.query(ExperimentRecord)
+                .filter(ExperimentRecord.record_id == record_id)
+                .first()
+            )
 
             if not record:
                 return False
@@ -433,12 +440,7 @@ class DatabaseManager:
     # ========================================================================
 
     def save_template(
-        self,
-        template_id: str,
-        name: str,
-        category: str,
-        content: str,
-        **kwargs
+        self, template_id: str, name: str, category: str, content: str, **kwargs
     ) -> Template:
         """保存模板
 
@@ -454,9 +456,11 @@ class DatabaseManager:
         """
         with self.get_session() as session:
             # 检查是否已存在
-            existing = session.query(Template).filter(
-                Template.template_id == template_id
-            ).first()
+            existing = (
+                session.query(Template)
+                .filter(Template.template_id == template_id)
+                .first()
+            )
 
             if existing:
                 # 更新
@@ -480,7 +484,7 @@ class DatabaseManager:
                     name=name,
                     category=category,
                     content=content,
-                    **kwargs
+                    **kwargs,
                 )
                 session.add(template)
                 session.commit()
@@ -493,27 +497,29 @@ class DatabaseManager:
     def get_template(self, template_id: str) -> dict[str, Any] | None:
         """获取模板"""
         with self.get_session() as session:
-            template = session.query(Template).filter(
-                Template.template_id == template_id
-            ).first()
+            template = (
+                session.query(Template)
+                .filter(Template.template_id == template_id)
+                .first()
+            )
 
             if not template:
                 return None
 
             return {
-                'template_id': template.template_id,
-                'name': template.name,
-                'category': template.category,
-                'content': template.content,
-                'difficulty': template.difficulty,
-                'version': template.version
+                "template_id": template.template_id,
+                "name": template.name,
+                "category": template.category,
+                "content": template.content,
+                "difficulty": template.difficulty,
+                "version": template.version,
             }
 
     def list_templates(
         self,
         category: str | None = None,
         difficulty: str | None = None,
-        limit: int = 100
+        limit: int = 100,
     ) -> list[dict[str, Any]]:
         """列出模板"""
         with self.get_session() as session:
@@ -525,15 +531,20 @@ class DatabaseManager:
                 query = query.filter(Template.difficulty == difficulty)
 
             safe_limit, _ = self._normalize_pagination(limit, 0)
-            templates = query.order_by(Template.usage_count.desc()).limit(safe_limit).all()
+            templates = (
+                query.order_by(Template.usage_count.desc()).limit(safe_limit).all()
+            )
 
-            return [{
-                'template_id': t.template_id,
-                'name': t.name,
-                'category': t.category,
-                'difficulty': t.difficulty,
-                'usage_count': t.usage_count
-            } for t in templates]
+            return [
+                {
+                    "template_id": t.template_id,
+                    "name": t.name,
+                    "category": t.category,
+                    "difficulty": t.difficulty,
+                    "usage_count": t.usage_count,
+                }
+                for t in templates
+            ]
 
     # ========================================================================
     # 配置操作
@@ -543,33 +554,34 @@ class DatabaseManager:
         self,
         key: str,
         value: Any,
-        category: str = 'general',
-        description: str | None = None
+        category: str = "general",
+        description: str | None = None,
     ) -> Configuration:
         """设置配置"""
         with self.get_session() as session:
             # 确定值类型
             if isinstance(value, bool):
-                value_type = 'bool'
+                value_type = "bool"
                 value_str = str(value)
             elif isinstance(value, int):
-                value_type = 'int'
+                value_type = "int"
                 value_str = str(value)
             elif isinstance(value, float):
-                value_type = 'float'
+                value_type = "float"
                 value_str = str(value)
             elif isinstance(value, (dict, list)):
-                value_type = 'json'
+                value_type = "json"
                 import json
+
                 value_str = json.dumps(value)
             else:
-                value_type = 'string'
+                value_type = "string"
                 value_str = str(value)
 
             # 检查是否已存在
-            existing = session.query(Configuration).filter(
-                Configuration.key == key
-            ).first()
+            existing = (
+                session.query(Configuration).filter(Configuration.key == key).first()
+            )
 
             if existing:
                 existing.value = value_str
@@ -582,7 +594,7 @@ class DatabaseManager:
                     value=value_str,
                     value_type=value_type,
                     category=category,
-                    description=description
+                    description=description,
                 )
                 session.add(existing)
 
@@ -595,9 +607,9 @@ class DatabaseManager:
     def get_config(self, key: str, default: Any = None) -> Any:
         """获取配置"""
         with self.get_session() as session:
-            config = session.query(Configuration).filter(
-                Configuration.key == key
-            ).first()
+            config = (
+                session.query(Configuration).filter(Configuration.key == key).first()
+            )
 
             if not config:
                 return default
@@ -607,9 +619,11 @@ class DatabaseManager:
     def get_configs_by_category(self, category: str) -> dict[str, Any]:
         """获取某分类的所有配置"""
         with self.get_session() as session:
-            configs = session.query(Configuration).filter(
-                Configuration.category == category
-            ).all()
+            configs = (
+                session.query(Configuration)
+                .filter(Configuration.category == category)
+                .all()
+            )
 
             return {c.key: c.get_value() for c in configs}
 
@@ -625,32 +639,43 @@ class DatabaseManager:
                 return {}
 
             # 统计实验记录
-            total_experiments = session.query(func.count(ExperimentRecord.id)).filter(
-                ExperimentRecord.user_id == user_id
-            ).scalar()
+            total_experiments = (
+                session.query(func.count(ExperimentRecord.id))
+                .filter(ExperimentRecord.user_id == user_id)
+                .scalar()
+            )
 
-            completed_experiments = session.query(func.count(ExperimentRecord.id)).filter(
-                and_(
-                    ExperimentRecord.user_id == user_id,
-                    ExperimentRecord.status == 'completed'
+            completed_experiments = (
+                session.query(func.count(ExperimentRecord.id))
+                .filter(
+                    and_(
+                        ExperimentRecord.user_id == user_id,
+                        ExperimentRecord.status == "completed",
+                    )
                 )
-            ).scalar()
+                .scalar()
+            )
 
-            avg_score = session.query(func.avg(ExperimentRecord.total_score)).filter(
-                and_(
-                    ExperimentRecord.user_id == user_id,
-                    ExperimentRecord.status == 'completed'
+            avg_score = (
+                session.query(func.avg(ExperimentRecord.total_score))
+                .filter(
+                    and_(
+                        ExperimentRecord.user_id == user_id,
+                        ExperimentRecord.status == "completed",
+                    )
                 )
-            ).scalar() or 0.0
+                .scalar()
+                or 0.0
+            )
 
             return {
-                'user_id': user_id,
-                'username': user.username,
-                'total_experiments': total_experiments,
-                'completed_experiments': completed_experiments,
-                'average_score': float(avg_score),
-                'created_at': user.created_at.isoformat(),
-                'last_login': user.last_login.isoformat() if user.last_login else None
+                "user_id": user_id,
+                "username": user.username,
+                "total_experiments": total_experiments,
+                "completed_experiments": completed_experiments,
+                "average_score": float(avg_score),
+                "created_at": user.created_at.isoformat(),
+                "last_login": user.last_login.isoformat() if user.last_login else None,
             }
 
     def get_experiment_statistics(self) -> dict[str, Any]:
@@ -658,31 +683,42 @@ class DatabaseManager:
         with self.get_session() as session:
             total_records = session.query(func.count(ExperimentRecord.id)).scalar()
 
-            completed_records = session.query(func.count(ExperimentRecord.id)).filter(
-                ExperimentRecord.status == 'completed'
-            ).scalar()
+            completed_records = (
+                session.query(func.count(ExperimentRecord.id))
+                .filter(ExperimentRecord.status == "completed")
+                .scalar()
+            )
 
-            avg_score = session.query(func.avg(ExperimentRecord.total_score)).filter(
-                ExperimentRecord.status == 'completed'
-            ).scalar() or 0.0
+            avg_score = (
+                session.query(func.avg(ExperimentRecord.total_score))
+                .filter(ExperimentRecord.status == "completed")
+                .scalar()
+                or 0.0
+            )
 
             # 最受欢迎的实验
-            popular_experiments = session.query(
-                ExperimentRecord.experiment_id,
-                func.count(ExperimentRecord.id).label('count')
-            ).group_by(ExperimentRecord.experiment_id).order_by(
-                func.count(ExperimentRecord.id).desc()
-            ).limit(10).all()
+            popular_experiments = (
+                session.query(
+                    ExperimentRecord.experiment_id,
+                    func.count(ExperimentRecord.id).label("count"),
+                )
+                .group_by(ExperimentRecord.experiment_id)
+                .order_by(func.count(ExperimentRecord.id).desc())
+                .limit(10)
+                .all()
+            )
 
             return {
-                'total_records': total_records,
-                'completed_records': completed_records,
-                'completion_rate': (completed_records / total_records * 100) if total_records > 0 else 0,
-                'average_score': float(avg_score),
-                'popular_experiments': [
-                    {'experiment_id': exp_id, 'count': count}
+                "total_records": total_records,
+                "completed_records": completed_records,
+                "completion_rate": (completed_records / total_records * 100)
+                if total_records > 0
+                else 0,
+                "average_score": float(avg_score),
+                "popular_experiments": [
+                    {"experiment_id": exp_id, "count": count}
                     for exp_id, count in popular_experiments
-                ]
+                ],
             }
 
     # ========================================================================
@@ -719,8 +755,10 @@ class DatabaseManager:
                         step_records=[r.model_dump() for r in record.step_records],
                         context=record.context,
                         curve_data=record.curve_data,
-                        mistakes_summary=[m.model_dump() for m in record.mistakes_summary],
-                        version=record.version
+                        mistakes_summary=[
+                            m.model_dump() for m in record.mistakes_summary
+                        ],
+                        version=record.version,
                     )
                     session.add(db_record)
                     count += 1

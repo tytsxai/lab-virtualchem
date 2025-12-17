@@ -159,7 +159,9 @@ class ErrorHandler(QObject):
         self.warning_count = 0
         logger.info("错误统计已重置")
 
-    def safe_execute(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> tuple[bool, Any]:
+    def safe_execute(
+        self, func: Callable[..., Any], *args: Any, **kwargs: Any
+    ) -> tuple[bool, Any]:
         """安全执行函数"""
         try:
             result = func(*args, **kwargs)

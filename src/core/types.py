@@ -357,7 +357,9 @@ class TypedList(list[T], Generic[T]):
     def append(self, item: T) -> None:
         """添加项目"""
         if not isinstance(item, self.item_type):
-            raise TypeError(f"Expected {self.item_type.__name__}, got {type(item).__name__}")
+            raise TypeError(
+                f"Expected {self.item_type.__name__}, got {type(item).__name__}"
+            )
         super().append(item)
 
     def extend(self, items: list[T]) -> None:
@@ -377,9 +379,13 @@ class TypedDict(dict[K, V], Generic[K, V]):
     def __setitem__(self, key: K, value: V) -> None:
         """设置项目"""
         if not isinstance(key, self.key_type):
-            raise TypeError(f"Expected key type {self.key_type.__name__}, got {type(key).__name__}")
+            raise TypeError(
+                f"Expected key type {self.key_type.__name__}, got {type(key).__name__}"
+            )
         if not isinstance(value, self.value_type):
-            raise TypeError(f"Expected value type {self.value_type.__name__}, got {type(value).__name__}")
+            raise TypeError(
+                f"Expected value type {self.value_type.__name__}, got {type(value).__name__}"
+            )
         super().__setitem__(key, value)
 
 
@@ -401,8 +407,12 @@ def validate_types(**type_map: type) -> Callable[[Callable[..., R]], Callable[..
         def wrapper(*args, **kwargs):
             # 验证参数类型
             for param_name, expected_type in type_map.items():
-                if param_name in kwargs and not isinstance(kwargs[param_name], expected_type):
-                    raise TypeError(f"Parameter '{param_name}' must be of type {expected_type.__name__}")
+                if param_name in kwargs and not isinstance(
+                    kwargs[param_name], expected_type
+                ):
+                    raise TypeError(
+                        f"Parameter '{param_name}' must be of type {expected_type.__name__}"
+                    )
             return func(*args, **kwargs)
 
         return wrapper

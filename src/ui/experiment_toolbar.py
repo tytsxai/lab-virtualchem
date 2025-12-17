@@ -80,7 +80,12 @@ class ExperimentToolbar(QFrame):
             tools_layout,
             "选择工具",
             [
-                {"id": "select", "name": "选择", "icon": "➤", "tooltip": "选择和移动物品"},
+                {
+                    "id": "select",
+                    "name": "选择",
+                    "icon": "➤",
+                    "tooltip": "选择和移动物品",
+                },
                 {"id": "hand", "name": "手", "icon": "✋", "tooltip": "拖拽和交互"},
             ],
         )
@@ -90,7 +95,12 @@ class ExperimentToolbar(QFrame):
             "测量工具",
             [
                 {"id": "ruler", "name": "尺子", "icon": "📏", "tooltip": "测量长度"},
-                {"id": "thermometer", "name": "温度计", "icon": "🌡️", "tooltip": "测量温度"},
+                {
+                    "id": "thermometer",
+                    "name": "温度计",
+                    "icon": "🌡️",
+                    "tooltip": "测量温度",
+                },
                 {"id": "ph_meter", "name": "pH计", "icon": "📊", "tooltip": "测量pH值"},
             ],
         )
@@ -99,8 +109,18 @@ class ExperimentToolbar(QFrame):
             tools_layout,
             "操作工具",
             [
-                {"id": "dropper", "name": "滴管", "icon": "💧", "tooltip": "精确滴加液体"},
-                {"id": "stirrer", "name": "搅拌棒", "icon": "🔄", "tooltip": "搅拌溶液"},
+                {
+                    "id": "dropper",
+                    "name": "滴管",
+                    "icon": "💧",
+                    "tooltip": "精确滴加液体",
+                },
+                {
+                    "id": "stirrer",
+                    "name": "搅拌棒",
+                    "icon": "🔄",
+                    "tooltip": "搅拌溶液",
+                },
                 {"id": "clamp", "name": "铁夹", "icon": "🔧", "tooltip": "固定器材"},
             ],
         )
@@ -141,12 +161,16 @@ class ExperimentToolbar(QFrame):
         ]
 
         for btn_data in action_buttons:
-            btn = self._create_action_button(btn_data["id"], btn_data["name"], btn_data["icon"])
+            btn = self._create_action_button(
+                btn_data["id"], btn_data["name"], btn_data["icon"]
+            )
             actions_layout.addWidget(btn)
 
         main_layout.addLayout(actions_layout)
 
-    def _add_tool_section(self, parent_layout: QVBoxLayout, section_name: str, tools: list[dict[str, str]]) -> None:
+    def _add_tool_section(
+        self, parent_layout: QVBoxLayout, section_name: str, tools: list[dict[str, str]]
+    ) -> None:
         """添加工具部分"""
         # 部分标题
         section_label = QLabel(section_name)
@@ -167,12 +191,17 @@ class ExperimentToolbar(QFrame):
         # 工具按钮
         for tool_data in tools:
             btn = self._create_tool_button(
-                tool_data["id"], tool_data["name"], tool_data["icon"], tool_data.get("tooltip", "")
+                tool_data["id"],
+                tool_data["name"],
+                tool_data["icon"],
+                tool_data.get("tooltip", ""),
             )
             parent_layout.addWidget(btn)
             self.tools[tool_data["id"]] = btn
 
-    def _create_tool_button(self, tool_id: str, name: str, icon: str, tooltip: str) -> QToolButton:
+    def _create_tool_button(
+        self, tool_id: str, name: str, icon: str, tooltip: str
+    ) -> QToolButton:
         """创建工具按钮"""
         btn = QToolButton()
         btn.setText(f"{icon}  {name}")
@@ -207,7 +236,9 @@ class ExperimentToolbar(QFrame):
 
         return btn
 
-    def _create_action_button(self, action_id: str, name: str, icon: str) -> QPushButton:
+    def _create_action_button(
+        self, action_id: str, name: str, icon: str
+    ) -> QPushButton:
         """创建操作按钮"""
         btn = QPushButton(f"{icon}  {name}")
         btn.setStyleSheet(
@@ -300,7 +331,9 @@ class CompactToolbar(QFrame):
         ]
 
         for tool_data in tools:
-            btn = self._create_compact_button(tool_data["id"], tool_data["icon"], tool_data["tooltip"])
+            btn = self._create_compact_button(
+                tool_data["id"], tool_data["icon"], tool_data["tooltip"]
+            )
             main_layout.addWidget(btn)
             self.tools[tool_data["id"]] = btn
 
@@ -318,12 +351,16 @@ class CompactToolbar(QFrame):
         ]
 
         for action_data in actions:
-            btn = self._create_compact_action_button(action_data["id"], action_data["icon"], action_data["tooltip"])
+            btn = self._create_compact_action_button(
+                action_data["id"], action_data["icon"], action_data["tooltip"]
+            )
             main_layout.addWidget(btn)
 
         main_layout.addStretch()
 
-    def _create_compact_button(self, tool_id: str, icon: str, tooltip: str) -> QToolButton:
+    def _create_compact_button(
+        self, tool_id: str, icon: str, tooltip: str
+    ) -> QToolButton:
         """创建紧凑工具按钮"""
         btn = QToolButton()
         btn.setText(icon)
@@ -354,7 +391,9 @@ class CompactToolbar(QFrame):
 
         return btn
 
-    def _create_compact_action_button(self, action_id: str, icon: str, tooltip: str) -> QPushButton:
+    def _create_compact_action_button(
+        self, action_id: str, icon: str, tooltip: str
+    ) -> QPushButton:
         """创建紧凑操作按钮"""
         btn = QPushButton(icon)
         btn.setToolTip(tooltip)
@@ -389,7 +428,11 @@ class FloatingToolPalette(QFrame):
 
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
-        self.setWindowFlags(Qt.WindowType.Tool | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(
+            Qt.WindowType.Tool
+            | Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.WindowStaysOnTopHint
+        )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         self._dragging = False
@@ -493,7 +536,9 @@ class FloatingToolPalette(QFrame):
                 }
             """
             )
-            btn.clicked.connect(lambda _checked, tid=tool_data["id"]: self.tool_selected.emit(tid))
+            btn.clicked.connect(
+                lambda _checked, tid=tool_data["id"]: self.tool_selected.emit(tid)
+            )
 
             row = i // 2
             col = i % 2
@@ -505,7 +550,9 @@ class FloatingToolPalette(QFrame):
         """鼠标按下"""
         if event.button() == Qt.MouseButton.LeftButton:
             self._dragging = True
-            self._drag_position = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            self._drag_position = (
+                event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            )
             event.accept()
 
     def mouseMoveEvent(self, event: Qt.MouseMoveEvent) -> None:

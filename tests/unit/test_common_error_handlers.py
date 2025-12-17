@@ -26,6 +26,7 @@ class TestCommonErrorHandlers:
 
     def test_safe_execute_with_default_success(self):
         """测试安全执行成功"""
+
         def test_func():
             return "success"
 
@@ -34,6 +35,7 @@ class TestCommonErrorHandlers:
 
     def test_safe_execute_with_default_failure(self):
         """测试安全执行失败"""
+
         def test_func():
             raise ValueError("test error")
 
@@ -42,14 +44,18 @@ class TestCommonErrorHandlers:
 
     def test_safe_execute_with_default_virtualchemlab_error(self):
         """测试VirtualChemLabError不被捕获"""
+
         def test_func():
-            raise VirtualChemLabError("VCL error", ErrorCategory.SYSTEM, ErrorSeverity.MEDIUM)
+            raise VirtualChemLabError(
+                "VCL error", ErrorCategory.SYSTEM, ErrorSeverity.MEDIUM
+            )
 
         with pytest.raises(VirtualChemLabError):
             CommonErrorHandlers.safe_execute_with_default(test_func, "default")
 
     def test_retry_on_failure_success(self):
         """测试重试装饰器成功"""
+
         @CommonErrorHandlers.retry_on_failure(max_retries=2, delay=0.1)
         def test_func():
             return "success"
@@ -90,7 +96,7 @@ class TestCommonErrorHandlers:
 
     def test_log_and_continue(self):
         """测试记录错误但继续执行"""
-        with patch('src.core.common_error_handlers.logger') as mock_logger:
+        with patch("src.core.common_error_handlers.logger") as mock_logger:
             error = ValueError("test error")
             CommonErrorHandlers.log_and_continue(error, "test message")
 
@@ -101,7 +107,7 @@ class TestCommonErrorHandlers:
 
     def test_log_and_raise(self):
         """测试记录错误并重新抛出"""
-        with patch('src.core.common_error_handlers.logger') as mock_logger:
+        with patch("src.core.common_error_handlers.logger") as mock_logger:
             error = ValueError("test error")
 
             with pytest.raises(VirtualChemLabError):
@@ -111,6 +117,7 @@ class TestCommonErrorHandlers:
 
     def test_handle_file_operation_success(self):
         """测试文件操作装饰器成功"""
+
         @CommonErrorHandlers.handle_file_operation("read", "/test/path")
         def test_func():
             return "success"
@@ -120,6 +127,7 @@ class TestCommonErrorHandlers:
 
     def test_handle_file_operation_file_not_found(self):
         """测试文件操作装饰器文件未找到"""
+
         @CommonErrorHandlers.handle_file_operation("read", "/test/path")
         def test_func():
             raise FileNotFoundError("file not found")
@@ -132,6 +140,7 @@ class TestCommonErrorHandlers:
 
     def test_handle_file_operation_permission_error(self):
         """测试文件操作装饰器权限错误"""
+
         @CommonErrorHandlers.handle_file_operation("write", "/test/path")
         def test_func():
             raise PermissionError("permission denied")
@@ -144,6 +153,7 @@ class TestCommonErrorHandlers:
 
     def test_handle_database_operation(self):
         """测试数据库操作装饰器"""
+
         @CommonErrorHandlers.handle_database_operation("query")
         def test_func():
             raise Exception("database error")
@@ -156,6 +166,7 @@ class TestCommonErrorHandlers:
 
     def test_handle_network_operation(self):
         """测试网络操作装饰器"""
+
         @CommonErrorHandlers.handle_network_operation("request", "http://example.com")
         def test_func():
             raise Exception("network error")
@@ -172,6 +183,7 @@ class TestConvenienceFunctions:
 
     def test_safe_execute_with_default_function(self):
         """测试safe_execute_with_default函数"""
+
         def test_func():
             raise ValueError("test error")
 
@@ -196,6 +208,7 @@ class TestConvenienceFunctions:
 
     def test_handle_file_operation_function(self):
         """测试handle_file_operation函数"""
+
         @handle_file_operation("read", "/test/path")
         def test_func():
             raise FileNotFoundError("file not found")
@@ -205,6 +218,7 @@ class TestConvenienceFunctions:
 
     def test_handle_database_operation_function(self):
         """测试handle_database_operation函数"""
+
         @handle_database_operation("query")
         def test_func():
             raise Exception("database error")
@@ -214,6 +228,7 @@ class TestConvenienceFunctions:
 
     def test_handle_network_operation_function(self):
         """测试handle_network_operation函数"""
+
         @handle_network_operation("request", "http://example.com")
         def test_func():
             raise Exception("network error")
@@ -223,6 +238,7 @@ class TestConvenienceFunctions:
 
     def test_backward_compatibility_aliases(self):
         """测试向后兼容的别名"""
+
         def test_func():
             raise ValueError("test error")
 
@@ -253,7 +269,7 @@ class TestPerformance:
     """性能测试"""
 
     def test_retry_performance(self):
-        """测试重试性能"""
+        """测试重试逻辑不会引入不必要等待"""
         call_count = 0
 
         @retry_on_failure(max_retries=3, delay=0.01)
@@ -264,16 +280,17 @@ class TestPerformance:
                 raise ValueError("temporary error")
             return "success"
 
-        start_time = time.time()
-        result = test_func()
-        elapsed_time = time.time() - start_time
+        with patch("time.sleep") as mock_sleep:
+            result = test_func()
 
         assert result == "success"
-        assert elapsed_time < 0.1  # 应该在0.1秒内完成
         assert call_count == 2
+        mock_sleep.assert_called_once()
+        assert mock_sleep.call_args[0][0] == pytest.approx(0.01)
 
     def test_safe_execute_performance(self):
         """测试安全执行性能"""
+
         def test_func():
             return "success"
 

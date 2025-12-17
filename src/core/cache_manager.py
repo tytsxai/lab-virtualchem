@@ -10,6 +10,7 @@ from typing import Any
 
 try:
     import redis
+
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False
@@ -71,7 +72,12 @@ class CacheManager:
         if max_size <= 0:
             raise ValueError("max_size must be positive")
 
-        valid_strategies = {CacheStrategy.LRU, CacheStrategy.LFU, CacheStrategy.FIFO, CacheStrategy.TTL}
+        valid_strategies = {
+            CacheStrategy.LRU,
+            CacheStrategy.LFU,
+            CacheStrategy.FIFO,
+            CacheStrategy.TTL,
+        }
         if strategy not in valid_strategies:
             raise ValueError("Invalid cache strategy")
 
@@ -102,7 +108,11 @@ class CacheManager:
                 if redis_url:
                     config = {"url": redis_url} | (redis_config or {})
                 else:
-                    config = redis_config or {"host": "localhost", "port": 6379, "db": 0}
+                    config = redis_config or {
+                        "host": "localhost",
+                        "port": 6379,
+                        "db": 0,
+                    }
                 config = base_config | config
                 self.redis_client = redis.Redis(**config)
                 # 测试连接
@@ -238,7 +248,7 @@ class CacheManager:
                     key_to_evict = key
         elif self.strategy == CacheStrategy.LFU:
             # 最少使用 - O(n) 查找
-            min_count = float('inf')
+            min_count = float("inf")
             key_to_evict = None
             for key, entry in self.cache.items():
                 if entry.access_count < min_count:
@@ -280,7 +290,9 @@ class CacheManager:
                 else:
                     break
 
-            logger.debug(f"强制清理完成，当前内存使用: {self._current_memory_mb:.2f} MB")
+            logger.debug(
+                f"强制清理完成，当前内存使用: {self._current_memory_mb:.2f} MB"
+            )
 
         except Exception as e:
             logger.error(f"强制清理失败: {e}")
@@ -343,12 +355,18 @@ class CacheManager:
         size_bytes = self._calculate_size(value)
 
         entry = CacheEntry(
-            key=cache_key, value=value, created_at=datetime.now(), expires_at=expires_at, size_bytes=size_bytes
+            key=cache_key,
+            value=value,
+            created_at=datetime.now(),
+            expires_at=expires_at,
+            size_bytes=size_bytes,
         )
 
         with self._lock:
             # 检查内存使用限制
-            new_memory_mb = (self._current_memory_mb * 1024 * 1024 + size_bytes) / (1024 * 1024)
+            new_memory_mb = (self._current_memory_mb * 1024 * 1024 + size_bytes) / (
+                1024 * 1024
+            )
             if new_memory_mb > self.max_memory_mb and cache_key not in self.cache:
                 # 内存超限，强制清理
                 self._force_cleanup()
@@ -622,7 +640,9 @@ class CacheMiddleware:
         cache_key = f"request:{hashlib.sha256(str(request_data).encode()).hexdigest()}"
         return self.cache_manager.get(cache_key)
 
-    def process_response(self, request_data: dict[str, Any], response_data: Any, ttl: int = 300) -> None:
+    def process_response(
+        self, request_data: dict[str, Any], response_data: Any, ttl: int = 300
+    ) -> None:
         """处理响应，缓存结果
 
         Args:

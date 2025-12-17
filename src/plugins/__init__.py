@@ -100,7 +100,9 @@ class PluginRegistry:
         try:
             # 检查依赖
             if plugin.dependencies:
-                missing_deps = [dep for dep in plugin.dependencies if not self.is_available(dep)]
+                missing_deps = [
+                    dep for dep in plugin.dependencies if not self.is_available(dep)
+                ]
                 if missing_deps:
                     plugin.status = PluginStatus.ERROR
                     plugin.error_msg = f"缺少依赖: {', '.join(missing_deps)}"
@@ -118,7 +120,9 @@ class PluginRegistry:
             self._loaded_modules[name] = module
 
             load_duration = (datetime.now() - start_time).total_seconds()
-            logger.info(f"✅ 插件 {name} 加载成功 (版本: {plugin.version}, 耗时: {load_duration:.2f}s)")
+            logger.info(
+                f"✅ 插件 {name} 加载成功 (版本: {plugin.version}, 耗时: {load_duration:.2f}s)"
+            )
             return True
 
         except ImportError as e:
@@ -169,14 +173,22 @@ class PluginRegistry:
 
     def get_health_report(self) -> dict[str, Any]:
         """获取插件系统健康报告"""
-        available = sum(1 for p in self._plugins.values() if p.status == PluginStatus.AVAILABLE)
+        available = sum(
+            1 for p in self._plugins.values() if p.status == PluginStatus.AVAILABLE
+        )
         total = len(self._plugins)
 
         return {
             "total_plugins": total,
             "available": available,
-            "missing": sum(1 for p in self._plugins.values() if p.status == PluginStatus.NOT_INSTALLED),
-            "errors": sum(1 for p in self._plugins.values() if p.status == PluginStatus.ERROR),
+            "missing": sum(
+                1
+                for p in self._plugins.values()
+                if p.status == PluginStatus.NOT_INSTALLED
+            ),
+            "errors": sum(
+                1 for p in self._plugins.values() if p.status == PluginStatus.ERROR
+            ),
             "health_percentage": (available / total * 100) if total > 0 else 0,
             "conflicts_detected": len(self._conflict_warnings),
             "conflict_warnings": self._conflict_warnings,
@@ -200,7 +212,9 @@ class PluginRegistry:
         print("=" * 60 + "\n")
 
         logger.info(f"总插件数: {report['total_plugins']}")
-        logger.info(f"可用插件: {report['available']} ({report['health_percentage']:.1f}%)")
+        logger.info(
+            f"可用插件: {report['available']} ({report['health_percentage']:.1f}%)"
+        )
         logger.info(f"未安装: {report['missing']}")
         logger.info(f"加载错误: {report['errors']}")
 

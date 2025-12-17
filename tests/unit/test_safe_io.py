@@ -76,7 +76,10 @@ def test_delete_file_and_missing_behaviour(tmp_path):
     assert not file_path.exists()
 
     assert SafeFileIO.delete_file(tmp_path / "missing.txt", missing_ok=True)
-    assert SafeFileIO.delete_file(tmp_path / "missing_strict.txt", missing_ok=False) is False
+    assert (
+        SafeFileIO.delete_file(tmp_path / "missing_strict.txt", missing_ok=False)
+        is False
+    )
 
 
 def test_create_directory_success(tmp_path):

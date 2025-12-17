@@ -131,7 +131,9 @@ class PerformanceChartWidget(QWidget):
                 points.append((x, y))
 
             for i in range(len(points) - 1):
-                painter.drawLine(points[i][0], points[i][1], points[i + 1][0], points[i + 1][1])
+                painter.drawLine(
+                    points[i][0], points[i][1], points[i + 1][0], points[i + 1][1]
+                )
 
         except Exception as e:
             logger.error(f"绘制数据线失败: {e}", exc_info=True)
@@ -145,7 +147,11 @@ class PerformanceChartWidget(QWidget):
             painter.setFont(font)
 
             title_rect = self.rect().adjusted(10, 10, -10, -10)
-            painter.drawText(title_rect, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft, self._title)
+            painter.drawText(
+                title_rect,
+                Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft,
+                self._title,
+            )
 
         except Exception as e:
             logger.error(f"绘制标题失败: {e}", exc_info=True)
@@ -329,7 +335,9 @@ class PerformanceMonitorDialog(QDialog):
     def connect_signals(self) -> None:
         """连接信号"""
         self.performance_monitor.metrics_updated.connect(self.on_metrics_updated)
-        self.performance_monitor.optimization_suggested.connect(self.on_optimization_suggested)
+        self.performance_monitor.optimization_suggested.connect(
+            self.on_optimization_suggested
+        )
 
     def apply_theme(self) -> None:
         """应用主题"""
@@ -424,9 +432,7 @@ class PerformanceMonitorDialog(QDialog):
     def on_optimization_suggested(self, suggestion: OptimizationSuggestion) -> None:
         """处理优化建议"""
         try:
-            suggestion_text = (
-                f"建议: {suggestion.description}\n优先级: {suggestion.priority}\n类型: {suggestion.category}"
-            )
+            suggestion_text = f"建议: {suggestion.description}\n优先级: {suggestion.priority}\n类型: {suggestion.category}"
             self.suggestions_label.setText(suggestion_text)
 
         except Exception as e:

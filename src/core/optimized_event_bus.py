@@ -4,6 +4,7 @@
 """
 
 import asyncio
+import inspect
 import logging
 import threading
 from collections import deque
@@ -18,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class EventPriority(Enum):
     """事件优先级"""
+
     LOW = 0
     NORMAL = 1
     HIGH = 2
@@ -27,6 +29,7 @@ class EventPriority(Enum):
 @dataclass
 class Event:
     """事件"""
+
     name: str
     data: dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
@@ -36,17 +39,18 @@ class Event:
     def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
-            'name': self.name,
-            'data': self.data,
-            'timestamp': self.timestamp.isoformat(),
-            'priority': self.priority.value,
-            'source': self.source
+            "name": self.name,
+            "data": self.data,
+            "timestamp": self.timestamp.isoformat(),
+            "priority": self.priority.value,
+            "source": self.source,
         }
 
 
 @dataclass
 class EventSubscriber:
     """事件订阅者"""
+
     handler: Callable
     event_pattern: str
     priority: EventPriority = EventPriority.NORMAL
@@ -77,7 +81,7 @@ class TrieNode:
 
     def add_subscriber(self, subscriber: EventSubscriber):
         """添加订阅者"""
-        if subscriber.event_pattern.endswith('*'):
+        if subscriber.event_pattern.endswith("*"):
             self.wildcard_subscribers.append(subscriber)
         else:
             self.subscribers.append(subscriber)
@@ -119,15 +123,17 @@ class EventBusTrie:
         """
         with self._lock:
             # 按"."分割事件名称
-            parts = event_pattern.split('.')
+            parts = event_pattern.split(".")
             node = self.root
 
             for i, part in enumerate(parts):
-                if part == '*':
+                if part == "*":
                     # 通配符标记 - 在当前节点标记并添加订阅者
                     node.is_wildcard = True
                     # 将订阅者添加为通配符订阅者
-                    subscriber.event_pattern = '.'.join(parts[:i]) + '.*' if i > 0 else '*'
+                    subscriber.event_pattern = (
+                        ".".join(parts[:i]) + ".*" if i > 0 else "*"
+                    )
                     node.add_subscriber(subscriber)
                     return
 
@@ -148,7 +154,7 @@ class EventBusTrie:
             匹配的订阅者列表
         """
         with self._lock:
-            parts = event_name.split('.')
+            parts = event_name.split(".")
             subscribers = []
 
             # 深度优先搜索
@@ -164,7 +170,7 @@ class EventBusTrie:
         node: TrieNode,
         parts: list[str],
         index: int,
-        subscribers: list[EventSubscriber]
+        subscribers: list[EventSubscriber],
     ):
         """深度优先搜索"""
         # 如果当前节点有通配符订阅者，添加它们（匹配剩余所有部分）
@@ -204,6 +210,7 @@ class EventBusTrie:
 @dataclass
 class EventBusStats:
     """事件总线统计"""
+
     events_published: int = 0
     events_processed: int = 0
     subscribers_count: int = 0
@@ -222,11 +229,7 @@ class OptimizedEventBus:
     - 详细统计
     """
 
-    def __init__(
-        self,
-        max_history: int = 500,
-        enable_async: bool = True
-    ):
+    def __init__(self, max_history: int = 500, enable_async: bool = True):
         """初始化事件总线
 
         Args:
@@ -261,7 +264,7 @@ class OptimizedEventBus:
         event_pattern: str,
         handler: Callable,
         priority: EventPriority = EventPriority.NORMAL,
-        filter_func: Callable[[Event], bool] | None = None
+        filter_func: Callable[[Event], bool] | None = None,
     ) -> str:
         """订阅事件
 
@@ -277,21 +280,23 @@ class OptimizedEventBus:
         Returns:
             订阅者ID
         """
-        is_async = asyncio.iscoroutinefunction(handler)
+        is_async = inspect.iscoroutinefunction(handler)
 
         subscriber = EventSubscriber(
             handler=handler,
             event_pattern=event_pattern,
             priority=priority,
             filter_func=filter_func,
-            is_async=is_async
+            is_async=is_async,
         )
 
         with self._lock:
             # 全局订阅
-            if event_pattern == '*':
+            if event_pattern == "*":
                 self._global_subscribers.append(subscriber)
-                self._global_subscribers.sort(key=lambda s: s.priority.value, reverse=True)
+                self._global_subscribers.sort(
+                    key=lambda s: s.priority.value, reverse=True
+                )
             else:
                 # 插入Trie树
                 self._trie.insert(event_pattern, subscriber)
@@ -404,11 +409,11 @@ class OptimizedEventBus:
         """获取统计信息"""
         with self._lock:
             return {
-                'events_published': self._stats.events_published,
-                'events_processed': self._stats.events_processed,
-                'subscribers_count': self._stats.subscribers_count,
-                'avg_match_time_ms': self._stats.avg_match_time_ms,
-                'history_size': len(self._history)
+                "events_published": self._stats.events_published,
+                "events_processed": self._stats.events_processed,
+                "subscribers_count": self._stats.subscribers_count,
+                "avg_match_time_ms": self._stats.avg_match_time_ms,
+                "history_size": len(self._history),
             }
 
     def reset_stats(self) -> None:

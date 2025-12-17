@@ -57,7 +57,9 @@ def test_check_memory_and_cpu(monkeypatch, checker):
     assert checker.check_memory()["status"] == "critical"
 
     cpu_percent = {"value": 50.0}
-    monkeypatch.setattr(health_check.psutil, "cpu_percent", lambda interval=0.5: cpu_percent["value"])
+    monkeypatch.setattr(
+        health_check.psutil, "cpu_percent", lambda interval=0.5: cpu_percent["value"]
+    )
     monkeypatch.setattr(health_check.psutil, "cpu_count", lambda: 8)
 
     assert checker.check_cpu()["status"] == "healthy"
@@ -94,11 +96,23 @@ def test_check_directories_and_files(monkeypatch, tmp_path, checker):
 
 
 def test_run_all_checks_summary(monkeypatch, checker):
-    monkeypatch.setattr(checker, "check_disk_space", lambda: {"check": "disk", "status": "healthy"})
-    monkeypatch.setattr(checker, "check_memory", lambda: {"check": "mem", "status": "warning"})
-    monkeypatch.setattr(checker, "check_cpu", lambda: {"check": "cpu", "status": "healthy"})
-    monkeypatch.setattr(checker, "check_directories", lambda dirs: {"check": "dir", "status": "critical"})
-    monkeypatch.setattr(checker, "check_files", lambda files: {"check": "files", "status": "healthy"})
+    monkeypatch.setattr(
+        checker, "check_disk_space", lambda: {"check": "disk", "status": "healthy"}
+    )
+    monkeypatch.setattr(
+        checker, "check_memory", lambda: {"check": "mem", "status": "warning"}
+    )
+    monkeypatch.setattr(
+        checker, "check_cpu", lambda: {"check": "cpu", "status": "healthy"}
+    )
+    monkeypatch.setattr(
+        checker,
+        "check_directories",
+        lambda dirs: {"check": "dir", "status": "critical"},
+    )
+    monkeypatch.setattr(
+        checker, "check_files", lambda files: {"check": "files", "status": "healthy"}
+    )
 
     report = checker.run_all_checks(["/data"], ["config.yaml"])
     assert report["overall_status"] == "critical"

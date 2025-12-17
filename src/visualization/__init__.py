@@ -21,7 +21,14 @@ try:
         quick_titration_curve,
     )
 
-    __all__.extend(["AdvancedChartCreator", "quick_titration_curve", "demo_charts", "PLOTLY_AVAILABLE"])
+    __all__.extend(
+        [
+            "AdvancedChartCreator",
+            "quick_titration_curve",
+            "demo_charts",
+            "PLOTLY_AVAILABLE",
+        ]
+    )
 except ImportError:
     PLOTLY_AVAILABLE = False
     __all__.append("PLOTLY_AVAILABLE")

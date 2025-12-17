@@ -11,8 +11,13 @@ from src.knowledge.reagent_db import ReagentDatabase
 from src.models.knowledge import Hazard, HazardLevel, KnowledgeCard, KnowledgeType
 
 
-def create_test_reagent(reagent_id: str, name: str, cas: str = "0000-00-0",
-                        hazards: list = None, properties: dict = None) -> KnowledgeCard:
+def create_test_reagent(
+    reagent_id: str,
+    name: str,
+    cas: str = "0000-00-0",
+    hazards: list = None,
+    properties: dict = None,
+) -> KnowledgeCard:
     """创建测试用试剂"""
     return KnowledgeCard(
         id=reagent_id,
@@ -21,7 +26,7 @@ def create_test_reagent(reagent_id: str, name: str, cas: str = "0000-00-0",
         content="",
         cas=cas,
         properties=properties,
-        hazards=hazards or []
+        hazards=hazards or [],
     )
 
 
@@ -48,7 +53,10 @@ class TestHazardCheckerInitialization:
 
         # 检查硫酸水混合规则
         assert "rapid_mixing_h2so4_water" in checker.hazard_rules
-        assert checker.hazard_rules["rapid_mixing_h2so4_water"]["level"] == HazardLevel.CRITICAL
+        assert (
+            checker.hazard_rules["rapid_mixing_h2so4_water"]["level"]
+            == HazardLevel.CRITICAL
+        )
 
 
 class TestTemperatureCheck:
@@ -109,29 +117,21 @@ class TestReagentMixing:
                 Hazard(
                     type="corrosive",
                     level=HazardLevel.CRITICAL,
-                    hint="强腐蚀性,必须防护"
+                    hint="强腐蚀性,必须防护",
                 )
             ],
-            properties={"concentration": "98%"}
+            properties={"concentration": "98%"},
         )
 
-        self.db._reagents["water"] = create_test_reagent(
-            "water",
-            "水",
-            "7732-18-5"
-        )
+        self.db._reagents["water"] = create_test_reagent("water", "水", "7732-18-5")
 
         self.db._reagents["hcl"] = create_test_reagent(
             "hcl",
             "盐酸",
             "7647-01-0",
             hazards=[
-                Hazard(
-                    type="corrosive",
-                    level=HazardLevel.WARNING,
-                    hint="腐蚀性"
-                )
-            ]
+                Hazard(type="corrosive", level=HazardLevel.WARNING, hint="腐蚀性")
+            ],
         )
 
     def test_safe_mixing(self):
@@ -157,12 +157,8 @@ class TestReagentMixing:
             "氢氧化钠溶液(碱)",
             "1310-73-2",
             hazards=[
-                Hazard(
-                    type="corrosive",
-                    level=HazardLevel.SEVERE,
-                    hint="强碱腐蚀性"
-                )
-            ]
+                Hazard(type="corrosive", level=HazardLevel.SEVERE, hint="强碱腐蚀性")
+            ],
         )
         # 创建含"酸"字的试剂title
         self.db._reagents["hcl"].title = "盐酸溶液(酸)"
@@ -197,17 +193,9 @@ class TestReagentHazards:
             "苯",
             "71-43-2",
             hazards=[
-                Hazard(
-                    type="toxic",
-                    level=HazardLevel.SEVERE,
-                    hint="有毒,致癌"
-                ),
-                Hazard(
-                    type="flammable",
-                    level=HazardLevel.WARNING,
-                    hint="易燃"
-                )
-            ]
+                Hazard(type="toxic", level=HazardLevel.SEVERE, hint="有毒,致癌"),
+                Hazard(type="flammable", level=HazardLevel.WARNING, hint="易燃"),
+            ],
         )
 
         level, hints = self.checker.check_reagent_hazards("benzene")
@@ -219,11 +207,7 @@ class TestReagentHazards:
 
     def test_reagent_no_hazards(self):
         """测试无危险的试剂"""
-        self.db._reagents["nacl"] = create_test_reagent(
-            "nacl",
-            "氯化钠",
-            "7647-14-5"
-        )
+        self.db._reagents["nacl"] = create_test_reagent("nacl", "氯化钠", "7647-14-5")
 
         level, hints = self.checker.check_reagent_hazards("nacl")
 
@@ -254,12 +238,8 @@ class TestProtectionEquipment:
             "盐酸",
             "7647-01-0",
             hazards=[
-                Hazard(
-                    type="corrosive",
-                    level=HazardLevel.WARNING,
-                    hint="腐蚀性"
-                )
-            ]
+                Hazard(type="corrosive", level=HazardLevel.WARNING, hint="腐蚀性")
+            ],
         )
 
         # 没有防护装备
@@ -278,18 +258,11 @@ class TestProtectionEquipment:
             "盐酸",
             "7647-01-0",
             hazards=[
-                Hazard(
-                    type="corrosive",
-                    level=HazardLevel.WARNING,
-                    hint="腐蚀性"
-                )
-            ]
+                Hazard(type="corrosive", level=HazardLevel.WARNING, hint="腐蚀性")
+            ],
         )
 
-        alert = self.checker.check_protection_equipment(
-            ["hcl"],
-            ["gloves", "goggles"]
-        )
+        alert = self.checker.check_protection_equipment(["hcl"], ["gloves", "goggles"])
 
         assert alert is None
 
@@ -300,18 +273,13 @@ class TestProtectionEquipment:
             "浓硫酸",
             "7664-93-9",
             hazards=[
-                Hazard(
-                    type="corrosive",
-                    level=HazardLevel.SEVERE,
-                    hint="强腐蚀性"
-                )
-            ]
+                Hazard(type="corrosive", level=HazardLevel.SEVERE, hint="强腐蚀性")
+            ],
         )
 
         # 只有手套和护目镜,缺实验服
         alert = self.checker.check_protection_equipment(
-            ["h2so4"],
-            ["gloves", "goggles"]
+            ["h2so4"], ["gloves", "goggles"]
         )
 
         assert alert is not None
@@ -319,16 +287,9 @@ class TestProtectionEquipment:
 
     def test_safe_reagents_no_protection_needed(self):
         """测试安全试剂不需要特殊防护"""
-        self.db._reagents["water"] = create_test_reagent(
-            "water",
-            "水",
-            "7732-18-5"
-        )
+        self.db._reagents["water"] = create_test_reagent("water", "水", "7732-18-5")
 
-        alert = self.checker.check_protection_equipment(
-            ["water"],
-            []
-        )
+        alert = self.checker.check_protection_equipment(["water"], [])
 
         assert alert is None
 
@@ -342,7 +303,7 @@ class TestHazardAlert:
             level=HazardLevel.WARNING,
             title="温度警告",
             message="温度过高",
-            action="pause"
+            action="pause",
         )
 
         assert alert.level == HazardLevel.WARNING
@@ -352,11 +313,7 @@ class TestHazardAlert:
 
     def test_hazard_alert_default_action(self):
         """测试默认操作"""
-        alert = HazardAlert(
-            level=HazardLevel.INFO,
-            title="提示",
-            message="信息"
-        )
+        alert = HazardAlert(level=HazardLevel.INFO, title="提示", message="信息")
 
         assert alert.action == "pause"
 
@@ -387,11 +344,7 @@ class TestEdgeCases:
 
     def test_same_reagent_mixing(self):
         """测试同一试剂混合"""
-        self.db._reagents["water"] = create_test_reagent(
-            "water",
-            "水",
-            "7732-18-5"
-        )
+        self.db._reagents["water"] = create_test_reagent("water", "水", "7732-18-5")
 
         alert = self.checker.check_mixing("water", "water")
 

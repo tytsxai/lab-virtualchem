@@ -237,14 +237,20 @@ class ErrorFixer(IErrorFixer):
 
             # 简单的线性预测（实际应用中可以使用更复杂的算法）
             usage_growth_rate = 0.1  # GB per day (假设值)
-            days_until_full = free_gb / usage_growth_rate if usage_growth_rate > 0 else 365
+            days_until_full = (
+                free_gb / usage_growth_rate if usage_growth_rate > 0 else 365
+            )
 
             return {
                 "current_free_gb": free_gb,
                 "total_gb": total_gb,
                 "usage_percent": (disk.used / disk.total) * 100,
                 "days_until_full": days_until_full,
-                "risk_level": "high" if days_until_full < 30 else "medium" if days_until_full < 90 else "low",
+                "risk_level": "high"
+                if days_until_full < 30
+                else "medium"
+                if days_until_full < 90
+                else "low",
             }
         except Exception as e:
             logger.warning(f"磁盘使用预测失败: {e}")
@@ -257,7 +263,11 @@ class ErrorFixer(IErrorFixer):
             return {
                 "current_usage_percent": memory.percent,
                 "available_gb": memory.available / (1024**3),
-                "risk_level": "high" if memory.percent > 85 else "medium" if memory.percent > 70 else "low",
+                "risk_level": "high"
+                if memory.percent > 85
+                else "medium"
+                if memory.percent > 70
+                else "low",
             }
         except Exception as e:
             logger.warning(f"内存使用预测失败: {e}")
@@ -278,7 +288,10 @@ class ErrorFixer(IErrorFixer):
             # 简单的增长预测（实际应用中需要历史数据）
             growth_rate = total_size / (1024**2) / 7  # MB per day (假设值)
 
-            return {"current_size_mb": total_size / (1024**2), "growth_rate": growth_rate}
+            return {
+                "current_size_mb": total_size / (1024**2),
+                "growth_rate": growth_rate,
+            }
         except Exception as e:
             logger.warning(f"日志增长预测失败: {e}")
             return {"growth_rate": 0}
@@ -291,12 +304,17 @@ class ErrorFixer(IErrorFixer):
                 return {"change_frequency": 0}
 
             # 统计配置文件数量
-            config_files = list(config_dir.glob("*.json")) + list(config_dir.glob("*.yaml"))
+            config_files = list(config_dir.glob("*.json")) + list(
+                config_dir.glob("*.yaml")
+            )
 
             # 简单的变更频率预测（实际应用中需要历史数据）
             change_frequency = len(config_files) * 0.5  # changes per week (假设值)
 
-            return {"config_file_count": len(config_files), "change_frequency": change_frequency}
+            return {
+                "config_file_count": len(config_files),
+                "change_frequency": change_frequency,
+            }
         except Exception as e:
             logger.warning(f"配置变更预测失败: {e}")
             return {"change_frequency": 0}
@@ -332,14 +350,22 @@ class ErrorFixer(IErrorFixer):
                 optimizations.append("优化了配置文件")
 
             success = len(optimizations) > 0
-            message = f"性能优化完成: {', '.join(optimizations)}" if optimizations else "无需优化"
+            message = (
+                f"性能优化完成: {', '.join(optimizations)}"
+                if optimizations
+                else "无需优化"
+            )
 
             # 记录维护历史
-            self._record_maintenance_history("performance_optimization", success, message)
+            self._record_maintenance_history(
+                "performance_optimization", success, message
+            )
 
             return MaintenanceResult(
                 task_type=MaintenanceTaskType.PERFORMANCE_OPTIMIZATION,
-                status=MaintenanceStatus.COMPLETED if success else MaintenanceStatus.SKIPPED,
+                status=MaintenanceStatus.COMPLETED
+                if success
+                else MaintenanceStatus.SKIPPED,
                 success=success,
                 message=message,
                 duration_seconds=time.time() - start_time,
@@ -360,7 +386,11 @@ class ErrorFixer(IErrorFixer):
         """清理临时文件"""
         cleaned_count = 0
         try:
-            temp_dirs = [self.base_path / "temp", self.base_path / "logs" / "temp", self.base_path / "data" / "temp"]
+            temp_dirs = [
+                self.base_path / "temp",
+                self.base_path / "logs" / "temp",
+                self.base_path / "data" / "temp",
+            ]
 
             for temp_dir in temp_dirs:
                 if temp_dir.exists():
@@ -403,7 +433,10 @@ class ErrorFixer(IErrorFixer):
         """清理缓存"""
         cleaned_count = 0
         try:
-            cache_dirs = [self.base_path / "data" / ".cache", self.base_path / "logs" / "cache"]
+            cache_dirs = [
+                self.base_path / "data" / ".cache",
+                self.base_path / "logs" / "cache",
+            ]
 
             for cache_dir in cache_dirs:
                 if cache_dir.exists():
@@ -441,7 +474,9 @@ class ErrorFixer(IErrorFixer):
             logger.warning(f"优化配置文件失败: {e}")
             return False
 
-    def _record_maintenance_history(self, task_type: str, success: bool, message: str) -> None:
+    def _record_maintenance_history(
+        self, task_type: str, success: bool, message: str
+    ) -> None:
         """记录维护历史"""
         history_entry = {
             "timestamp": datetime.now().isoformat(),
@@ -574,7 +609,9 @@ class ErrorFixer(IErrorFixer):
                 errors=[str(e)],
             )
 
-    def fix_all_issues(self, severity_threshold: IssueSeverity = IssueSeverity.MEDIUM) -> MaintenanceResult:
+    def fix_all_issues(
+        self, severity_threshold: IssueSeverity = IssueSeverity.MEDIUM
+    ) -> MaintenanceResult:
         """
         修复所有问题
 
@@ -605,7 +642,8 @@ class ErrorFixer(IErrorFixer):
             fixable_issues = [
                 issue
                 for issue in self.issues.values()
-                if issue.fix_available and severity_order[issue.severity] >= threshold_level
+                if issue.fix_available
+                and severity_order[issue.severity] >= threshold_level
             ]
 
             # 按严重程度排序
@@ -630,7 +668,9 @@ class ErrorFixer(IErrorFixer):
 
             return MaintenanceResult(
                 task_type=MaintenanceTaskType.ERROR_FIX,
-                status=MaintenanceStatus.COMPLETED if success else MaintenanceStatus.FAILED,
+                status=MaintenanceStatus.COMPLETED
+                if success
+                else MaintenanceStatus.FAILED,
                 success=success,
                 message=f"修复完成: 处理{items_processed}个问题，成功修复{items_fixed}个",
                 items_processed=items_processed,
@@ -667,7 +707,9 @@ class ErrorFixer(IErrorFixer):
         # 收集严重和高优先级问题
         for issue in issues:
             if issue.severity in (IssueSeverity.CRITICAL, IssueSeverity.HIGH):
-                problems.append(f"[{issue.severity.value.upper()}] {issue.title}: {issue.description}")
+                problems.append(
+                    f"[{issue.severity.value.upper()}] {issue.title}: {issue.description}"
+                )
 
         is_healthy = len(problems) == 0
 

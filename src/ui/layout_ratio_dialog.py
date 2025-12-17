@@ -95,7 +95,12 @@ class LayoutRatioChartWidget(QWidget):
 
             # 绘制柱状图
             bar_width = chart_rect.width() // len(self._chart_data)
-            colors = [Qt.GlobalColor.blue, Qt.GlobalColor.green, Qt.GlobalColor.red, Qt.GlobalColor.yellow]
+            colors = [
+                Qt.GlobalColor.blue,
+                Qt.GlobalColor.green,
+                Qt.GlobalColor.red,
+                Qt.GlobalColor.yellow,
+            ]
 
             for i, item in enumerate(self._chart_data):
                 value = item.get("value", 0)
@@ -104,7 +109,10 @@ class LayoutRatioChartWidget(QWidget):
                 # 计算柱状图高度
                 bar_height = int((value / max_value) * chart_rect.height())
                 bar_rect = chart_rect.adjusted(
-                    i * bar_width, chart_rect.height() - bar_height, (i + 1) * bar_width - 5, chart_rect.height()
+                    i * bar_width,
+                    chart_rect.height() - bar_height,
+                    (i + 1) * bar_width - 5,
+                    chart_rect.height(),
                 )
 
                 # 绘制柱子
@@ -115,7 +123,11 @@ class LayoutRatioChartWidget(QWidget):
 
                 # 绘制标签
                 painter.setPen(QPen(Qt.GlobalColor.black))
-                painter.drawText(bar_rect.adjusted(0, 5, 0, 5), Qt.AlignmentFlag.AlignCenter, f"{label}\n{value:.1f}")
+                painter.drawText(
+                    bar_rect.adjusted(0, 5, 0, 5),
+                    Qt.AlignmentFlag.AlignCenter,
+                    f"{label}\n{value:.1f}",
+                )
 
         except Exception as e:
             logger.error(f"绘制柱状图失败: {e}", exc_info=True)
@@ -139,7 +151,12 @@ class LayoutRatioChartWidget(QWidget):
 
             # 绘制饼图
             start_angle = 0
-            colors = [Qt.GlobalColor.blue, Qt.GlobalColor.green, Qt.GlobalColor.red, Qt.GlobalColor.yellow]
+            colors = [
+                Qt.GlobalColor.blue,
+                Qt.GlobalColor.green,
+                Qt.GlobalColor.red,
+                Qt.GlobalColor.yellow,
+            ]
 
             for i, item in enumerate(self._chart_data):
                 value = item.get("value", 0)
@@ -152,12 +169,23 @@ class LayoutRatioChartWidget(QWidget):
                 color = colors[i % len(colors)]
                 painter.setBrush(QBrush(color))
                 painter.setPen(QPen(Qt.GlobalColor.black, 1))
-                painter.drawPie(center.x() - radius, center.y() - radius, radius * 2, radius * 2, start_angle, angle)
+                painter.drawPie(
+                    center.x() - radius,
+                    center.y() - radius,
+                    radius * 2,
+                    radius * 2,
+                    start_angle,
+                    angle,
+                )
 
                 # 绘制标签
                 mid_angle = start_angle + angle // 2
-                label_x = center.x() + int(radius * 1.2 * math.cos(math.radians(mid_angle / 16)))
-                label_y = center.y() + int(radius * 1.2 * math.sin(math.radians(mid_angle / 16)))
+                label_x = center.x() + int(
+                    radius * 1.2 * math.cos(math.radians(mid_angle / 16))
+                )
+                label_y = center.y() + int(
+                    radius * 1.2 * math.sin(math.radians(mid_angle / 16))
+                )
 
                 painter.setPen(QPen(Qt.GlobalColor.black))
                 painter.drawText(label_x, label_y, f"{label}\n{value:.1f}")
@@ -189,12 +217,21 @@ class LayoutRatioChartWidget(QWidget):
             points = []
             for i, item in enumerate(self._chart_data):
                 value = item.get("value", 0)
-                x = chart_rect.left() + (chart_rect.width() * i / (len(self._chart_data) - 1))
-                y = chart_rect.bottom() - (chart_rect.height() * (value - min_val) / val_range)
+                x = chart_rect.left() + (
+                    chart_rect.width() * i / (len(self._chart_data) - 1)
+                )
+                y = chart_rect.bottom() - (
+                    chart_rect.height() * (value - min_val) / val_range
+                )
                 points.append((x, y))
 
             for i in range(len(points) - 1):
-                painter.drawLine(int(points[i][0]), int(points[i][1]), int(points[i + 1][0]), int(points[i + 1][1]))
+                painter.drawLine(
+                    int(points[i][0]),
+                    int(points[i][1]),
+                    int(points[i + 1][0]),
+                    int(points[i + 1][1]),
+                )
 
             # 绘制数据点
             painter.setBrush(QBrush(Qt.GlobalColor.red))
@@ -437,11 +474,17 @@ class LayoutRatioDialog(QDialog):
         try:
             # 连接复选框的状态变化信号，实现实时预览
             if hasattr(self, "auto_optimize_checkbox"):
-                self.auto_optimize_checkbox.stateChanged.connect(self._on_preference_changed)
+                self.auto_optimize_checkbox.stateChanged.connect(
+                    self._on_preference_changed
+                )
             if hasattr(self, "golden_ratio_checkbox"):
-                self.golden_ratio_checkbox.stateChanged.connect(self._on_preference_changed)
+                self.golden_ratio_checkbox.stateChanged.connect(
+                    self._on_preference_changed
+                )
             if hasattr(self, "accessibility_checkbox"):
-                self.accessibility_checkbox.stateChanged.connect(self._on_preference_changed)
+                self.accessibility_checkbox.stateChanged.connect(
+                    self._on_preference_changed
+                )
 
             logger.debug("布局比例对话框信号连接完成")
         except Exception as e:
@@ -483,7 +526,9 @@ class LayoutRatioDialog(QDialog):
             self.accessibility_score_bar.setValue(int(accessibility_score * 10))
             self.accessibility_score_label.setText(f"{accessibility_score:.1f}")
 
-            golden_ratio_compliance = self._analysis_result.get("golden_ratio_compliance", 0)
+            golden_ratio_compliance = self._analysis_result.get(
+                "golden_ratio_compliance", 0
+            )
             self.golden_ratio_bar.setValue(int(golden_ratio_compliance))
             self.golden_ratio_label.setText(f"{golden_ratio_compliance:.1f}%")
 
@@ -493,9 +538,13 @@ class LayoutRatioDialog(QDialog):
 
             # 更新图表
             chart_data = []
-            for component, ratio_info in self._analysis_result.get("current_ratios", {}).items():
+            for component, ratio_info in self._analysis_result.get(
+                "current_ratios", {}
+            ).items():
                 if "accessibility_score" in ratio_info:
-                    chart_data.append({"label": component, "value": ratio_info["accessibility_score"]})
+                    chart_data.append(
+                        {"label": component, "value": ratio_info["accessibility_score"]}
+                    )
 
             self.ratio_chart.set_chart_data(chart_data)
 
@@ -560,9 +609,13 @@ class LayoutRatioDialog(QDialog):
             # 更新性能图表
             chart_data = []
             if render_info:
-                chart_data.append({"label": "渲染时间", "value": render_info.get("average", 0)})
+                chart_data.append(
+                    {"label": "渲染时间", "value": render_info.get("average", 0)}
+                )
             if layout_info:
-                chart_data.append({"label": "布局时间", "value": layout_info.get("average", 0)})
+                chart_data.append(
+                    {"label": "布局时间", "value": layout_info.get("average", 0)}
+                )
 
             self.performance_chart.set_chart_data(chart_data)
 
@@ -587,14 +640,21 @@ class LayoutRatioDialog(QDialog):
                 screen_type = entry.get("screen_type", "")
                 accessibility_score = entry.get("accessibility_score", 0)
 
-                label = QLabel(f"{timestamp} - {screen_type} - 无障碍评分: {accessibility_score:.1f}")
+                label = QLabel(
+                    f"{timestamp} - {screen_type} - 无障碍评分: {accessibility_score:.1f}"
+                )
                 label.setWordWrap(True)
                 self.history_layout.addWidget(label)
 
             # 更新历史图表
             chart_data = []
             for entry in history:
-                chart_data.append({"label": entry.get("screen_type", ""), "value": entry.get("accessibility_score", 0)})
+                chart_data.append(
+                    {
+                        "label": entry.get("screen_type", ""),
+                        "value": entry.get("accessibility_score", 0),
+                    }
+                )
 
             self.history_chart.set_chart_data(chart_data)
 
@@ -607,9 +667,15 @@ class LayoutRatioDialog(QDialog):
             preferences = get_user_layout_preferences()
 
             # 更新复选框状态
-            self.auto_optimize_checkbox.setChecked(preferences.get("auto_optimize", False))
-            self.golden_ratio_checkbox.setChecked(preferences.get("golden_ratio", False))
-            self.accessibility_checkbox.setChecked(preferences.get("accessibility", False))
+            self.auto_optimize_checkbox.setChecked(
+                preferences.get("auto_optimize", False)
+            )
+            self.golden_ratio_checkbox.setChecked(
+                preferences.get("golden_ratio", False)
+            )
+            self.accessibility_checkbox.setChecked(
+                preferences.get("accessibility", False)
+            )
 
         except Exception as e:
             logger.error(f"更新用户偏好标签页失败: {e}", exc_info=True)
@@ -632,7 +698,9 @@ class LayoutRatioDialog(QDialog):
                 if success:
                     from PySide6.QtWidgets import QMessageBox
 
-                    QMessageBox.information(self, "导出成功", f"报告已导出到: {file_path}")
+                    QMessageBox.information(
+                        self, "导出成功", f"报告已导出到: {file_path}"
+                    )
                 else:
                     from PySide6.QtWidgets import QMessageBox
 
@@ -656,9 +724,15 @@ class LayoutRatioDialog(QDialog):
     def save_preferences(self) -> None:
         """保存偏好设置"""
         try:
-            set_user_layout_preference("auto_optimize", self.auto_optimize_checkbox.isChecked())
-            set_user_layout_preference("golden_ratio", self.golden_ratio_checkbox.isChecked())
-            set_user_layout_preference("accessibility", self.accessibility_checkbox.isChecked())
+            set_user_layout_preference(
+                "auto_optimize", self.auto_optimize_checkbox.isChecked()
+            )
+            set_user_layout_preference(
+                "golden_ratio", self.golden_ratio_checkbox.isChecked()
+            )
+            set_user_layout_preference(
+                "accessibility", self.accessibility_checkbox.isChecked()
+            )
 
             from PySide6.QtWidgets import QMessageBox
 

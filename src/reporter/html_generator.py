@@ -245,7 +245,9 @@ class HTMLReportGenerator:
     def __init__(self, report_title: str | None = None) -> None:
         self.report_title = report_title or "VirtualChemLab 实验报告"
 
-    def generate(self, experiment_data: dict[str, Any], output_path: str | Path | None = None) -> str:
+    def generate(
+        self, experiment_data: dict[str, Any], output_path: str | Path | None = None
+    ) -> str:
         """根据提供的数据生成HTML报告"""
         context = self._build_context(experiment_data)
         html_content = self._render_html(context)
@@ -281,7 +283,9 @@ class HTMLReportGenerator:
             total_score = data.get("final_score", 0)
 
         return {
-            "experiment_name": data.get("experiment_name") or data.get("experiment_title") or self.report_title,
+            "experiment_name": data.get("experiment_name")
+            or data.get("experiment_title")
+            or self.report_title,
             "experiment_id": data.get("experiment_id") or data.get("id") or "--",
             "user_id": data.get("user_id") or data.get("student_id") or "N/A",
             "description": description,
@@ -299,7 +303,9 @@ class HTMLReportGenerator:
             "report_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
 
-    def _normalize_steps(self, steps_input: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _normalize_steps(
+        self, steps_input: Iterable[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         normalized: list[dict[str, Any]] = []
 
         for index, raw_step in enumerate(steps_input, start=1):
@@ -329,10 +335,16 @@ class HTMLReportGenerator:
             normalized.append(
                 {
                     "step_id": raw_step.get("step_id") or f"step_{index}",
-                    "title": raw_step.get("title") or raw_step.get("step_id") or f"步骤 {index}",
-                    "description": raw_step.get("description") or raw_step.get("text") or "",
+                    "title": raw_step.get("title")
+                    or raw_step.get("step_id")
+                    or f"步骤 {index}",
+                    "description": raw_step.get("description")
+                    or raw_step.get("text")
+                    or "",
                     "data": step_data,
-                    "is_correct": bool(raw_step.get("is_correct") or raw_step.get("passed")),
+                    "is_correct": bool(
+                        raw_step.get("is_correct") or raw_step.get("passed")
+                    ),
                     "score": raw_step.get("score"),
                     "attempts": int(raw_step.get("attempts", 1) or 1),
                     "mistakes": mistakes,
@@ -350,7 +362,9 @@ class HTMLReportGenerator:
             ("用时", context["duration"]),
             ("难度", context["difficulty"]),
         ]
-        info_html = "".join(self._render_info_item(label, value) for label, value in info_items)
+        info_html = "".join(
+            self._render_info_item(label, value) for label, value in info_items
+        )
 
         summary = context["summary"]
         summary_html = "".join(
@@ -371,21 +385,21 @@ class HTMLReportGenerator:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{escape(context['experiment_name'])} - 实验报告</title>
+    <title>{escape(context["experiment_name"])} - 实验报告</title>
 {_STYLE_BLOCK}
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>{escape(context['experiment_name'])}</h1>
-            <p class="subtitle">{escape(context['description'])}</p>
+            <h1>{escape(context["experiment_name"])}</h1>
+            <p class="subtitle">{escape(context["description"])}</p>
         </div>
         <div class="info-section">
             {info_html}
         </div>
         <div class="score-box">
             <h2>最终得分</h2>
-            <div class="score">{escape(str(context['total_score']))}</div>
+            <div class="score">{escape(str(context["total_score"]))}</div>
         </div>
         <div class="summary">
             <h2 class="section-title">实验摘要</h2>
@@ -399,7 +413,7 @@ class HTMLReportGenerator:
         </div>
         <div class="footer">
             <p>VirtualChemLab - 虚拟化学实验室</p>
-            <p>报告生成时间: {escape(context['report_time'])}</p>
+            <p>报告生成时间: {escape(context["report_time"])}</p>
         </div>
     </div>
 </body>
@@ -427,7 +441,9 @@ class HTMLReportGenerator:
 
         description_html = ""
         if step["description"]:
-            description_html = f"<p><strong>操作:</strong> {escape(step['description'])}</p>"
+            description_html = (
+                f"<p><strong>操作:</strong> {escape(step['description'])}</p>"
+            )
 
         score_html = ""
         if step["score"] is not None:
@@ -443,7 +459,7 @@ class HTMLReportGenerator:
         return f"""
             <div class="step-card">
                 <div class="step-header">
-                    <span class="step-title">{escape(step['title'])}</span>
+                    <span class="step-title">{escape(step["title"])}</span>
                     <span class="step-status {status_class}">{status_label}</span>
                 </div>
                 <div class="step-details">
@@ -465,18 +481,20 @@ class HTMLReportGenerator:
                 f"<li><strong>{escape(str(key))}:</strong> {escape(self._format_value(value))}</li>"
                 for key, value in data.items()
             )
-            return f"<ul class=\"step-data\">{items_html}</ul>"
+            return f'<ul class="step-data">{items_html}</ul>'
 
         return f"<p>{escape(self._format_value(data))}</p>"
 
     def _render_mistakes(self, mistakes: Iterable[str]) -> str:
-        items = [f"<div class=\"mistake-item\">• {escape(str(m))}</div>" for m in mistakes if m]
+        items = [
+            f'<div class="mistake-item">• {escape(str(m))}</div>' for m in mistakes if m
+        ]
         if not items:
             return ""
         return f"""
             <div class="mistakes">
                 <div class="mistakes-title">错误记录:</div>
-                {''.join(items)}
+                {"".join(items)}
             </div>
         """
 
@@ -535,13 +553,18 @@ class HTMLGenerator(HTMLReportGenerator):
         self.i18n = I18n()
 
     def generate(
-        self, record: UserRecord, template: ExperimentTemplate, output_path: str | Path | None = None
+        self,
+        record: UserRecord,
+        template: ExperimentTemplate,
+        output_path: str | Path | None = None,
     ) -> str:
         """将UserRecord转换为HTML报告"""
         experiment_data = self._convert_record_to_data(record, template)
         return super().generate(experiment_data, output_path)
 
-    def _convert_record_to_data(self, record: UserRecord, template: ExperimentTemplate) -> dict[str, Any]:
+    def _convert_record_to_data(
+        self, record: UserRecord, template: ExperimentTemplate
+    ) -> dict[str, Any]:
         template_steps = {step.id: step for step in template.steps}
 
         steps = []
@@ -553,7 +576,9 @@ class HTMLGenerator(HTMLReportGenerator):
 
             description = ""
             if step_template:
-                description = getattr(step_template, "text", "") or getattr(step_template, "instruction", "")
+                description = getattr(step_template, "text", "") or getattr(
+                    step_template, "instruction", ""
+                )
 
             steps.append(
                 {
@@ -568,8 +593,12 @@ class HTMLGenerator(HTMLReportGenerator):
                 }
             )
 
-        difficulty_code = getattr(template, "difficulty", None) or getattr(template, "level", None)
-        difficulty_label = self.i18n.t(f"difficulty.{difficulty_code}") if difficulty_code else "N/A"
+        difficulty_code = getattr(template, "difficulty", None) or getattr(
+            template, "level", None
+        )
+        difficulty_label = (
+            self.i18n.t(f"difficulty.{difficulty_code}") if difficulty_code else "N/A"
+        )
 
         return {
             "experiment_id": record.experiment_id,

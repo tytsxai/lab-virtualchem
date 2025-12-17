@@ -226,16 +226,29 @@ class TestErrorHandler:
         handler = ErrorHandler()
         calls: list[str] = []
 
-        monkeypatch.setattr("src.core.error_handler.close_event_bus", lambda: calls.append("close_bus"))
-        monkeypatch.setattr("src.core.error_handler.get_event_bus", lambda: calls.append("get_bus"))
-        monkeypatch.setattr("src.core.error_handler.reset_container", lambda: calls.append("reset_container"))
         monkeypatch.setattr(
-            "src.core.error_handler.get_configured_container", lambda: calls.append("configure_container")
+            "src.core.error_handler.close_event_bus", lambda: calls.append("close_bus")
+        )
+        monkeypatch.setattr(
+            "src.core.error_handler.get_event_bus", lambda: calls.append("get_bus")
+        )
+        monkeypatch.setattr(
+            "src.core.error_handler.reset_container",
+            lambda: calls.append("reset_container"),
+        )
+        monkeypatch.setattr(
+            "src.core.error_handler.get_configured_container",
+            lambda: calls.append("configure_container"),
         )
 
         handler._restart_critical_components()
 
-        assert calls == ["close_bus", "get_bus", "reset_container", "configure_container"]
+        assert calls == [
+            "close_bus",
+            "get_bus",
+            "reset_container",
+            "configure_container",
+        ]
 
     def test_restart_critical_components_handles_missing(self, monkeypatch):
         """缺少依赖时仍安全执行"""
@@ -254,7 +267,9 @@ class TestErrorContextManager:
 
     def test_error_context_manager_success(self):
         """测试错误上下文管理器成功情况"""
-        with ErrorContextManager("test_component", "test_operation", user_id="123") as context:
+        with ErrorContextManager(
+            "test_component", "test_operation", user_id="123"
+        ) as context:
             assert context.component == "test_component"
             assert context.operation == "test_operation"
             # user_id 在 metadata 中，不在直接属性中
@@ -263,7 +278,7 @@ class TestErrorContextManager:
 
     def test_error_context_manager_with_exception(self):
         """测试错误上下文管理器异常情况"""
-        with patch('src.core.error_handler.handle_error_func') as mock_handle:
+        with patch("src.core.error_handler.handle_error_func") as mock_handle:
             try:
                 with ErrorContextManager("test_component", "test_operation") as context:
                     raise ValueError("Test error")
@@ -283,6 +298,7 @@ class TestUtilityFunctions:
 
     def test_safe_execute_success(self):
         """测试安全执行成功"""
+
         def test_func(x, y):
             return x + y
 
@@ -291,6 +307,7 @@ class TestUtilityFunctions:
 
     def test_safe_execute_with_exception(self):
         """测试安全执行异常"""
+
         def test_func():
             raise ValueError("Test error")
 
@@ -299,6 +316,7 @@ class TestUtilityFunctions:
 
     def test_safe_execute_with_default_success(self):
         """测试带默认值的安全执行成功"""
+
         def test_func():
             return "success"
 
@@ -307,6 +325,7 @@ class TestUtilityFunctions:
 
     def test_safe_execute_with_default_exception(self):
         """测试带默认值的安全执行异常"""
+
         def test_func():
             raise ValueError("Test error")
 

@@ -12,6 +12,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import psutil
 
@@ -25,7 +26,7 @@ class HealthStatus:
     status: str  # healthy, degraded, unhealthy
     message: str
     timestamp: datetime
-    details: dict[str, any]
+    details: dict[str, Any]
 
 
 class HealthMonitor:
@@ -106,7 +107,11 @@ class HealthMonitor:
             process = psutil.Process()
             process_mem_mb = process.memory_info().rss / (1024**2)
 
-            max_usage_mb = self.config.get("performance", {}).get("memory", {}).get("max_usage_mb", 500)
+            max_usage_mb = (
+                self.config.get("performance", {})
+                .get("memory", {})
+                .get("max_usage_mb", 500)
+            )
 
             if process_mem_mb > max_usage_mb * 1.5:
                 return HealthStatus(
@@ -154,30 +159,63 @@ class HealthMonitor:
     def check_dependencies(self) -> HealthStatus:
         """检查依赖可用性"""
         try:
-            missing_deps = []
+            missing_core: list[str] = []
+            missing_optional: list[str] = []
 
-            # 检查关键依赖
-            critical_deps = ["PySide6", "matplotlib", "numpy", "pydantic", "PyYAML"]
+            # 核心依赖：缺失则无法启动/运行核心功能
+            core_deps = {
+                "PySide6": "PySide6",
+                "numpy": "numpy",
+                "pydantic": "pydantic",
+                "PyYAML": "yaml",
+            }
 
-            for dep in critical_deps:
+            # 可选依赖：缺失仅导致部分功能降级（例如打包 lite 构建会主动排除）
+            optional_deps = {
+                "matplotlib": "matplotlib",
+                "pandas": "pandas",
+                "numba": "numba",
+            }
+
+            for display_name, module_name in core_deps.items():
                 try:
-                    __import__(dep)
+                    __import__(module_name)
                 except ImportError:
-                    missing_deps.append(dep)
+                    missing_core.append(display_name)
 
-            if missing_deps:
+            for display_name, module_name in optional_deps.items():
+                try:
+                    __import__(module_name)
+                except ImportError:
+                    missing_optional.append(display_name)
+
+            if missing_core:
                 return HealthStatus(
                     status="unhealthy",
-                    message=f"缺少关键依赖: {', '.join(missing_deps)}",
+                    message=f"缺少关键依赖: {', '.join(missing_core)}",
                     timestamp=datetime.now(),
-                    details={"missing": missing_deps},
+                    details={
+                        "missing_core": missing_core,
+                        "missing_optional": missing_optional,
+                    },
+                )
+
+            if missing_optional:
+                return HealthStatus(
+                    status="degraded",
+                    message=f"部分可选依赖缺失（功能将降级）: {', '.join(missing_optional)}",
+                    timestamp=datetime.now(),
+                    details={"missing_optional": missing_optional},
                 )
 
             return HealthStatus(
                 status="healthy",
                 message="所有依赖可用",
                 timestamp=datetime.now(),
-                details={"checked": critical_deps},
+                details={
+                    "checked_core": list(core_deps.keys()),
+                    "checked_optional": list(optional_deps.keys()),
+                },
             )
 
         except Exception as e:

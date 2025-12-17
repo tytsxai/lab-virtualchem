@@ -16,4 +16,3 @@ from tools.chemlab_integration.src.converters.template_converter import (
 )
 
 __all__ = ["CardConverter", "TemplateConverter"]
-

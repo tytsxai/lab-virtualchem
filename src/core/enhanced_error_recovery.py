@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class RecoveryStrategy(Enum):
     """恢复策略"""
+
     RETRY = "retry"
     FALLBACK = "fallback"
     GRACEFUL_DEGRADATION = "graceful_degradation"
@@ -32,6 +33,7 @@ class RecoveryStrategy(Enum):
 
 class ErrorSeverity(Enum):
     """错误严重程度"""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -54,6 +56,7 @@ class RecoveryRule:
 @dataclass
 class RecoveryConfig:
     """恢复配置"""
+
     max_retries: int = 3
     retry_delay: float = 1.0
     retry_backoff_multiplier: float = 2.0
@@ -68,6 +71,7 @@ class RecoveryConfig:
 @dataclass
 class RecoveryAttempt:
     """恢复尝试"""
+
     attempt_number: int
     timestamp: float
     strategy: RecoveryStrategy
@@ -80,6 +84,7 @@ class RecoveryAttempt:
 @dataclass
 class CircuitBreakerState:
     """熔断器状态"""
+
     failure_count: int = 0
     last_failure_time: float | None = None
     state: str = "closed"  # closed, open, half_open
@@ -108,7 +113,9 @@ class EnhancedErrorRecovery:
         self.fallback_functions[operation_name] = fallback_func
         logger.debug(f"注册回退函数: {operation_name}")
 
-    def register_degradation_handler(self, operation_name: str, handler: Callable) -> None:
+    def register_degradation_handler(
+        self, operation_name: str, handler: Callable
+    ) -> None:
         """注册降级处理器"""
         self.degradation_handlers[operation_name] = handler
         logger.debug(f"注册降级处理器: {operation_name}")
@@ -119,13 +126,16 @@ class EnhancedErrorRecovery:
         operation_func: Callable,
         *args,
         max_retries: int | None = None,
-        **kwargs
+        **kwargs,
     ) -> Any:
         """执行恢复操作"""
 
         # 检查熔断器状态
         if self._is_circuit_breaker_open(operation_name):
-            if self.config.fallback_enabled and operation_name in self.fallback_functions:
+            if (
+                self.config.fallback_enabled
+                and operation_name in self.fallback_functions
+            ):
                 logger.warning(f"熔断器开启，使用回退函数: {operation_name}")
                 return self._execute_fallback(operation_name, *args, **kwargs)
             else:
@@ -142,7 +152,7 @@ class EnhancedErrorRecovery:
         operation_func: Callable,
         *args,
         max_retries: int | None = None,
-        **kwargs
+        **kwargs,
     ) -> Any:
         """执行带恢复的操作"""
 
@@ -154,14 +164,16 @@ class EnhancedErrorRecovery:
                 # 计算延迟
                 if attempt > 0:
                     delay = self._calculate_retry_delay(attempt)
-                    logger.info(f"重试 {operation_name} (第 {attempt + 1} 次)，延迟 {delay:.2f}秒")
+                    logger.info(
+                        f"重试 {operation_name} (第 {attempt + 1} 次)，延迟 {delay:.2f}秒"
+                    )
                     time.sleep(delay)
 
                 # 记录尝试
                 recovery_attempt = RecoveryAttempt(
                     attempt_number=attempt + 1,
                     timestamp=time.time(),
-                    strategy=RecoveryStrategy.RETRY
+                    strategy=RecoveryStrategy.RETRY,
                 )
 
                 start_time = time.time()
@@ -171,7 +183,10 @@ class EnhancedErrorRecovery:
                     # 异步函数
                     loop = asyncio.get_event_loop()
                     result = loop.run_until_complete(
-                        asyncio.wait_for(operation_func(*args, **kwargs), timeout=self.config.timeout_seconds)
+                        asyncio.wait_for(
+                            operation_func(*args, **kwargs),
+                            timeout=self.config.timeout_seconds,
+                        )
                     )
                 else:
                     # 同步函数
@@ -198,19 +213,19 @@ class EnhancedErrorRecovery:
 
                 # 如果是最后一次尝试，尝试回退或降级
                 if attempt == self.config.max_retries:
-                    return self._handle_final_failure(operation_name, e, *args, **kwargs)
+                    return self._handle_final_failure(
+                        operation_name, e, *args, **kwargs
+                    )
 
-                logger.warning(f"操作 {operation_name} 第 {attempt + 1} 次尝试失败: {e}")
+                logger.warning(
+                    f"操作 {operation_name} 第 {attempt + 1} 次尝试失败: {e}"
+                )
 
         # 这里不应该到达，但为了类型安全
         raise last_error or BaseAppException(f"操作失败: {operation_name}")
 
     def _handle_final_failure(
-        self,
-        operation_name: str,
-        error: Exception,
-        *args,
-        **kwargs
+        self, operation_name: str, error: Exception, *args, **kwargs
     ) -> Any:
         """处理最终失败"""
 
@@ -223,7 +238,10 @@ class EnhancedErrorRecovery:
                 logger.error(f"回退函数也失败: {fallback_error}")
 
         # 尝试降级处理
-        if self.config.graceful_degradation_enabled and operation_name in self.degradation_handlers:
+        if (
+            self.config.graceful_degradation_enabled
+            and operation_name in self.degradation_handlers
+        ):
             logger.warning(f"使用降级处理: {operation_name}")
             try:
                 return self._execute_degradation(operation_name, error, *args, **kwargs)
@@ -235,7 +253,7 @@ class EnhancedErrorRecovery:
             app_error = BaseAppException(
                 message=f"操作 {operation_name} 失败",
                 original_exception=error,
-                user_message="操作失败，请稍后重试"
+                user_message="操作失败，请稍后重试",
             )
         else:
             app_error = error
@@ -247,9 +265,7 @@ class EnhancedErrorRecovery:
         fallback_func = self.fallback_functions[operation_name]
 
         recovery_attempt = RecoveryAttempt(
-            attempt_number=0,
-            timestamp=time.time(),
-            strategy=RecoveryStrategy.FALLBACK
+            attempt_number=0, timestamp=time.time(), strategy=RecoveryStrategy.FALLBACK
         )
 
         start_time = time.time()
@@ -266,14 +282,16 @@ class EnhancedErrorRecovery:
             self._record_recovery_attempt(operation_name, recovery_attempt)
             raise
 
-    def _execute_degradation(self, operation_name: str, error: Exception, *args, **kwargs) -> Any:
+    def _execute_degradation(
+        self, operation_name: str, error: Exception, *args, **kwargs
+    ) -> Any:
         """执行降级处理"""
         degradation_handler = self.degradation_handlers[operation_name]
 
         recovery_attempt = RecoveryAttempt(
             attempt_number=0,
             timestamp=time.time(),
-            strategy=RecoveryStrategy.GRACEFUL_DEGRADATION
+            strategy=RecoveryStrategy.GRACEFUL_DEGRADATION,
         )
 
         start_time = time.time()
@@ -292,7 +310,9 @@ class EnhancedErrorRecovery:
 
     def _calculate_retry_delay(self, attempt: int) -> float:
         """计算重试延迟"""
-        delay = self.config.retry_delay * (self.config.retry_backoff_multiplier ** (attempt - 1))
+        delay = self.config.retry_delay * (
+            self.config.retry_backoff_multiplier ** (attempt - 1)
+        )
         return min(delay, self.config.max_retry_delay)
 
     def _is_circuit_breaker_open(self, operation_name: str) -> bool:
@@ -337,7 +357,9 @@ class EnhancedErrorRecovery:
             state.next_attempt_time = None
             logger.debug(f"熔断器重置: {operation_name}")
 
-    def _record_recovery_attempt(self, operation_name: str, attempt: RecoveryAttempt) -> None:
+    def _record_recovery_attempt(
+        self, operation_name: str, attempt: RecoveryAttempt
+    ) -> None:
         """记录恢复尝试"""
         if operation_name not in self.recovery_history:
             self.recovery_history[operation_name] = []
@@ -346,7 +368,9 @@ class EnhancedErrorRecovery:
 
         # 限制历史记录长度
         if len(self.recovery_history[operation_name]) > 100:
-            self.recovery_history[operation_name] = self.recovery_history[operation_name][-50:]
+            self.recovery_history[operation_name] = self.recovery_history[
+                operation_name
+            ][-50:]
 
     def get_recovery_stats(self, operation_name: str) -> dict[str, Any]:
         """获取恢复统计"""
@@ -356,13 +380,15 @@ class EnhancedErrorRecovery:
         attempts = self.recovery_history[operation_name]
         total_attempts = len(attempts)
         successful_attempts = sum(1 for a in attempts if a.success)
-        success_rate = successful_attempts / total_attempts if total_attempts > 0 else 0.0
+        success_rate = (
+            successful_attempts / total_attempts if total_attempts > 0 else 0.0
+        )
 
         return {
             "total_attempts": total_attempts,
             "successful_attempts": successful_attempts,
             "success_rate": success_rate,
-            "recent_attempts": attempts[-10:] if attempts else []
+            "recent_attempts": attempts[-10:] if attempts else [],
         }
 
     def get_circuit_breaker_status(self, operation_name: str) -> dict[str, Any] | None:
@@ -375,7 +401,7 @@ class EnhancedErrorRecovery:
             "state": state.state,
             "failure_count": state.failure_count,
             "last_failure_time": state.last_failure_time,
-            "next_attempt_time": state.next_attempt_time
+            "next_attempt_time": state.next_attempt_time,
         }
 
 
@@ -387,9 +413,10 @@ def recoverable(
     operation_name: str | None = None,
     max_retries: int | None = None,
     fallback_func: Callable | None = None,
-    degradation_handler: Callable | None = None
+    degradation_handler: Callable | None = None,
 ):
     """可恢复函数装饰器"""
+
     def decorator(func: Callable) -> Callable:
         name = operation_name or func.__name__
 
@@ -403,9 +430,12 @@ def recoverable(
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            return error_recovery.recover(name, func, *args, max_retries=max_retries, **kwargs)
+            return error_recovery.recover(
+                name, func, *args, max_retries=max_retries, **kwargs
+            )
 
         return wrapper
+
     return decorator
 
 
@@ -427,6 +457,7 @@ def get_error_recovery() -> EnhancedErrorRecovery:
 
 # ======= 基于异常类型的兼容性接口（供综合测试使用） =======
 
+
 def _match_rule_for_error(
     rules: dict[type[Exception], RecoveryRule],
     error: Exception,
@@ -442,12 +473,16 @@ def _get_error_type(error: Exception) -> type[Exception]:
     return type(error)
 
 
-def add_recovery_rule(self: EnhancedErrorRecovery, error_type: type[Exception], rule: RecoveryRule) -> None:
+def add_recovery_rule(
+    self: EnhancedErrorRecovery, error_type: type[Exception], rule: RecoveryRule
+) -> None:
     """注册基于异常类型的恢复规则"""
     self.recovery_rules[error_type] = rule
 
 
-def get_recovery_rule(self: EnhancedErrorRecovery, error: Exception) -> RecoveryRule | None:
+def get_recovery_rule(
+    self: EnhancedErrorRecovery, error: Exception
+) -> RecoveryRule | None:
     """根据异常获取恢复规则"""
     return _match_rule_for_error(self.recovery_rules, error)
 

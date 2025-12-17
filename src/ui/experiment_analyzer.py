@@ -244,9 +244,15 @@ class ExperimentAnalyzer(QDialog):
             return
 
         total_experiments = len(self.records)
-        completed_experiments = sum(1 for r in self.records if r.get("is_completed", False))
+        completed_experiments = sum(
+            1 for r in self.records if r.get("is_completed", False)
+        )
 
-        scores = [r.get("final_score", 0) for r in self.records if r.get("final_score") is not None]
+        scores = [
+            r.get("final_score", 0)
+            for r in self.records
+            if r.get("final_score") is not None
+        ]
         average_score = sum(scores) / len(scores) if scores else 0
 
         total_time = sum(r.get("total_duration_seconds", 0) for r in self.records) // 60
@@ -278,11 +284,17 @@ class ExperimentAnalyzer(QDialog):
         incomplete = len(self.records) - completed
 
         if completed + incomplete > 0:
-            ax1.pie([completed, incomplete], labels=["已完成", "未完成"], autopct="%1.1f%%")
+            ax1.pie(
+                [completed, incomplete], labels=["已完成", "未完成"], autopct="%1.1f%%"
+            )
             ax1.set_title("实验完成状态")
 
         # 分数分布直方图
-        scores = [r.get("final_score", 0) for r in self.records if r.get("final_score") is not None]
+        scores = [
+            r.get("final_score", 0)
+            for r in self.records
+            if r.get("final_score") is not None
+        ]
         if scores:
             ax2.hist(scores, bins=10, alpha=0.7, color="skyblue", edgecolor="black")
             ax2.set_title("分数分布")
@@ -292,7 +304,9 @@ class ExperimentAnalyzer(QDialog):
         # 实验时长分布
         durations = [r.get("total_duration_seconds", 0) / 60 for r in self.records]
         if durations:
-            ax3.hist(durations, bins=10, alpha=0.7, color="lightgreen", edgecolor="black")
+            ax3.hist(
+                durations, bins=10, alpha=0.7, color="lightgreen", edgecolor="black"
+            )
             ax3.set_title("实验时长分布")
             ax3.set_xlabel("时长 (分钟)")
             ax3.set_ylabel("频次")
@@ -300,7 +314,9 @@ class ExperimentAnalyzer(QDialog):
         # 错误数分布
         mistakes = [r.get("total_mistakes", 0) for r in self.records]
         if mistakes:
-            ax4.hist(mistakes, bins=10, alpha=0.7, color="lightcoral", edgecolor="black")
+            ax4.hist(
+                mistakes, bins=10, alpha=0.7, color="lightcoral", edgecolor="black"
+            )
             ax4.set_title("错误数分布")
             ax4.set_xlabel("错误数")
             ax4.set_ylabel("频次")
@@ -334,13 +350,22 @@ class ExperimentAnalyzer(QDialog):
             record_date = record.get("created_at")
             if record_date:
                 if isinstance(record_date, str):
-                    record_date = datetime.fromisoformat(record_date.replace("Z", "+00:00"))
+                    record_date = datetime.fromisoformat(
+                        record_date.replace("Z", "+00:00")
+                    )
                 if record_date >= cutoff:
                     filtered_records.append(record)
 
         if not filtered_records:
             ax = figure.add_subplot(111)
-            ax.text(0.5, 0.5, "所选时间范围内无数据", ha="center", va="center", transform=ax.transAxes)
+            ax.text(
+                0.5,
+                0.5,
+                "所选时间范围内无数据",
+                ha="center",
+                va="center",
+                transform=ax.transAxes,
+            )
             self.trends_canvas.draw()
             return
 
@@ -354,7 +379,9 @@ class ExperimentAnalyzer(QDialog):
             record_date = record.get("created_at")
             if record_date:
                 if isinstance(record_date, str):
-                    record_date = datetime.fromisoformat(record_date.replace("Z", "+00:00"))
+                    record_date = datetime.fromisoformat(
+                        record_date.replace("Z", "+00:00")
+                    )
                 dates.append(record_date.date())
 
                 if metric == "分数":
@@ -385,13 +412,27 @@ class ExperimentAnalyzer(QDialog):
         figure = self.scores_canvas.figure
         figure.clear()
 
-        scores = [r.get("final_score", 0) for r in self.records if r.get("final_score") is not None]
+        scores = [
+            r.get("final_score", 0)
+            for r in self.records
+            if r.get("final_score") is not None
+        ]
 
         if scores:
             ax = figure.add_subplot(111)
             ax.hist(scores, bins=15, alpha=0.7, color="skyblue", edgecolor="black")
-            ax.axvline(np.mean(scores), color="red", linestyle="--", label=f"平均值: {np.mean(scores):.1f}")
-            ax.axvline(np.median(scores), color="green", linestyle="--", label=f"中位数: {np.median(scores):.1f}")
+            ax.axvline(
+                np.mean(scores),
+                color="red",
+                linestyle="--",
+                label=f"平均值: {np.mean(scores):.1f}",
+            )
+            ax.axvline(
+                np.median(scores),
+                color="green",
+                linestyle="--",
+                label=f"中位数: {np.median(scores):.1f}",
+            )
             ax.set_title("成绩分布")
             ax.set_xlabel("分数")
             ax.set_ylabel("频次")
@@ -431,12 +472,21 @@ class ExperimentAnalyzer(QDialog):
                 record_date = record.get("created_at")
                 if record_date:
                     if isinstance(record_date, str):
-                        record_date = datetime.fromisoformat(record_date.replace("Z", "+00:00"))
+                        record_date = datetime.fromisoformat(
+                            record_date.replace("Z", "+00:00")
+                        )
                     dates.append(record_date.date())
                     mistake_counts.append(record.get("total_mistakes", 0))
 
             if dates and mistake_counts:
-                ax.plot(dates, mistake_counts, marker="o", linewidth=2, markersize=6, color="red")
+                ax.plot(
+                    dates,
+                    mistake_counts,
+                    marker="o",
+                    linewidth=2,
+                    markersize=6,
+                    color="red",
+                )
                 ax.set_title("错误数趋势")
                 ax.set_xlabel("日期")
                 ax.set_ylabel("错误数")

@@ -158,7 +158,9 @@ class IErrorFixer(ABC):
         pass
 
     @abstractmethod
-    def fix_all_issues(self, severity_threshold: IssueSeverity = IssueSeverity.MEDIUM) -> MaintenanceResult:
+    def fix_all_issues(
+        self, severity_threshold: IssueSeverity = IssueSeverity.MEDIUM
+    ) -> MaintenanceResult:
         """
         修复所有问题
 

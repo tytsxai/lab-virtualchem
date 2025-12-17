@@ -79,7 +79,10 @@ class EquipmentCard(QFrame):
             if not pixmap.isNull():
                 image_label.setPixmap(
                     pixmap.scaled(
-                        80, 80, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
+                        80,
+                        80,
+                        Qt.AspectRatioMode.KeepAspectRatio,
+                        Qt.TransformationMode.SmoothTransformation,
                     )
                 )
             else:
@@ -141,7 +144,11 @@ class EquipmentLibrary(QWidget):
 
     equipment_selected = Signal(str, dict)  # 器材ID, 器材信息
 
-    def __init__(self, equipment_data: dict[str, Any] | None = None, parent: QWidget | None = None):
+    def __init__(
+        self,
+        equipment_data: dict[str, Any] | None = None,
+        parent: QWidget | None = None,
+    ):
         super().__init__(parent)
         self.equipment_data = equipment_data or self._get_default_equipment()
 
@@ -218,7 +225,9 @@ class EquipmentLibrary(QWidget):
 
         return categories
 
-    def _create_category_tab(self, _category_name: str, items: dict[str, dict[str, Any]]) -> QWidget:
+    def _create_category_tab(
+        self, _category_name: str, items: dict[str, dict[str, Any]]
+    ) -> QWidget:
         """创建分类标签页"""
         widget = QWidget()
         layout = QVBoxLayout(widget)
@@ -440,7 +449,11 @@ class CompactEquipmentLibrary(QWidget):
 
     equipment_selected = Signal(str, dict)
 
-    def __init__(self, equipment_data: dict[str, Any] | None = None, parent: QWidget | None = None):
+    def __init__(
+        self,
+        equipment_data: dict[str, Any] | None = None,
+        parent: QWidget | None = None,
+    ):
         super().__init__(parent)
         self.equipment_data = equipment_data or {}
 
@@ -488,7 +501,9 @@ class CompactEquipmentLibrary(QWidget):
             """
             )
             btn.clicked.connect(
-                lambda _checked=False, eid=item_id, info=item_info: self.equipment_selected.emit(eid, info)
+                lambda _checked=False,
+                eid=item_id,
+                info=item_info: self.equipment_selected.emit(eid, info)
             )
             container_layout.addWidget(btn)
 

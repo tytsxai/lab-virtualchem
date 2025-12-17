@@ -85,13 +85,17 @@ class UserSession(BaseModel):
     session_id: str = Field(..., description="会话ID")
     user_id: str = Field(..., description="用户ID")
     created_at: datetime = Field(default_factory=datetime.now, description="创建时间")
-    last_activity: datetime = Field(default_factory=datetime.now, description="最后活动时间")
+    last_activity: datetime = Field(
+        default_factory=datetime.now, description="最后活动时间"
+    )
     expires_at: datetime = Field(..., description="过期时间")
     ip_address: str = Field(..., description="IP地址")
     user_agent: str = Field(..., description="用户代理")
     status: SessionStatus = Field(default=SessionStatus.ACTIVE, description="会话状态")
     auth_methods: list[AuthMethod] = Field(default_factory=list, description="认证方法")
-    security_level: SecurityLevel = Field(default=SecurityLevel.MEDIUM, description="安全级别")
+    security_level: SecurityLevel = Field(
+        default=SecurityLevel.MEDIUM, description="安全级别"
+    )
     metadata: dict[str, Any] = Field(default_factory=dict, description="元数据")
 
 
@@ -153,7 +157,9 @@ class MultiFactorAuth:
         # 生成6位代码
         return f"{code % 1000000:06d}"
 
-    def verify_totp_code(self, secret: str, code: str, timestamp: int | None = None) -> bool:
+    def verify_totp_code(
+        self, secret: str, code: str, timestamp: int | None = None
+    ) -> bool:
         """验证TOTP代码
 
         Args:
@@ -320,14 +326,18 @@ class SessionManager:
                 return None
 
             # 生成新令牌
-            new_token = self._generate_session_token(session.session_id, session.user_id)
+            new_token = self._generate_session_token(
+                session.session_id, session.user_id
+            )
 
             # 更新令牌映射
             del self.session_tokens[token]
             self.session_tokens[new_token] = session.session_id
 
             # 延长过期时间
-            session.expires_at = datetime.now() + timedelta(seconds=self.session_timeout)
+            session.expires_at = datetime.now() + timedelta(
+                seconds=self.session_timeout
+            )
 
             logger.info(f"会话已刷新: {session.session_id}")
             return new_token
@@ -367,7 +377,10 @@ class SessionManager:
             revoked_count = 0
 
             for session in self.active_sessions.values():
-                if session.user_id == user_id and session.status == SessionStatus.ACTIVE:
+                if (
+                    session.user_id == user_id
+                    and session.status == SessionStatus.ACTIVE
+                ):
                     session.status = SessionStatus.REVOKED
                     revoked_count += 1
 
@@ -405,7 +418,11 @@ class SessionManager:
                 session.status = SessionStatus.EXPIRED
 
                 # 清理令牌映射
-                tokens_to_remove = [token for token, sid in self.session_tokens.items() if sid == session_id]
+                tokens_to_remove = [
+                    token
+                    for token, sid in self.session_tokens.items()
+                    if sid == session_id
+                ]
                 for token in tokens_to_remove:
                     del self.session_tokens[token]
 
@@ -441,7 +458,11 @@ class SessionManager:
             会话列表
         """
         with self._lock:
-            return [session for session in self.active_sessions.values() if session.user_id == user_id]
+            return [
+                session
+                for session in self.active_sessions.values()
+                if session.user_id == user_id
+            ]
 
     def get_session_stats(self) -> dict[str, Any]:
         """获取会话统计
@@ -452,7 +473,9 @@ class SessionManager:
         with self._lock:
             total_sessions = len(self.active_sessions)
             active_sessions = sum(
-                1 for session in self.active_sessions.values() if session.status == SessionStatus.ACTIVE
+                1
+                for session in self.active_sessions.values()
+                if session.status == SessionStatus.ACTIVE
             )
 
             return {
@@ -580,7 +603,8 @@ class SecurityAuditor:
         recent_attempts = [
             attempt
             for attempt in self.failed_attempts[user_id]
-            if datetime.now() - attempt.timestamp < timedelta(seconds=self.lockout_duration)
+            if datetime.now() - attempt.timestamp
+            < timedelta(seconds=self.lockout_duration)
         ]
 
         if len(recent_attempts) >= self.max_failed_attempts:
@@ -606,7 +630,8 @@ class SecurityAuditor:
             for attempt in self.login_attempts
             if attempt.ip_address == ip_address
             and not attempt.success
-            and datetime.now() - attempt.timestamp < timedelta(seconds=self.ip_block_duration)
+            and datetime.now() - attempt.timestamp
+            < timedelta(seconds=self.ip_block_duration)
         )
 
         if failed_count >= self.max_failed_attempts * 2:
@@ -674,7 +699,9 @@ class SecurityAuditor:
         """
         # 统计登录尝试
         total_attempts = len(self.login_attempts)
-        successful_attempts = sum(1 for attempt in self.login_attempts if attempt.success)
+        successful_attempts = sum(
+            1 for attempt in self.login_attempts if attempt.success
+        )
         failed_attempts = total_attempts - successful_attempts
 
         # 统计安全事件
@@ -688,12 +715,20 @@ class SecurityAuditor:
                 "total": total_attempts,
                 "successful": successful_attempts,
                 "failed": failed_attempts,
-                "success_rate": successful_attempts / total_attempts if total_attempts > 0 else 0.0,
+                "success_rate": successful_attempts / total_attempts
+                if total_attempts > 0
+                else 0.0,
             },
-            "security_events": {"total": len(self.security_events), "by_severity": events_by_severity},
+            "security_events": {
+                "total": len(self.security_events),
+                "by_severity": events_by_severity,
+            },
             "blocked_users": len(self.user_blacklist),
             "blocked_ips": len(self.ip_blacklist),
-            "failed_attempts_by_user": {user_id: len(attempts) for user_id, attempts in self.failed_attempts.items()},
+            "failed_attempts_by_user": {
+                user_id: len(attempts)
+                for user_id, attempts in self.failed_attempts.items()
+            },
         }
 
 
@@ -766,7 +801,12 @@ class AdvancedAuth:
         # 检查用户是否被封锁
         if self.security_auditor.is_user_blocked(user_id):
             self.security_auditor.record_login_attempt(
-                user_id, ip_address, user_agent, False, AuthMethod.PASSWORD, "用户被封锁"
+                user_id,
+                ip_address,
+                user_agent,
+                False,
+                AuthMethod.PASSWORD,
+                "用户被封锁",
             )
             return False, None, "用户被封锁"
 
@@ -788,21 +828,38 @@ class AdvancedAuth:
 
         # 检查是否需要多因素认证
         auth_config = self.user_auth_configs.get(user_id)
-        if auth_config and auth_config["security_level"] in [SecurityLevel.HIGH, SecurityLevel.CRITICAL]:
+        if auth_config and auth_config["security_level"] in [
+            SecurityLevel.HIGH,
+            SecurityLevel.CRITICAL,
+        ]:
             if not totp_code and not backup_code:
                 return False, None, "需要多因素认证"
 
             # 验证TOTP代码
-            if totp_code and not self.mfa.verify_totp_code(auth_config["totp_secret"], totp_code):
+            if totp_code and not self.mfa.verify_totp_code(
+                auth_config["totp_secret"], totp_code
+            ):
                 self.security_auditor.record_login_attempt(
-                    user_id, ip_address, user_agent, False, AuthMethod.TOTP, "TOTP代码错误"
+                    user_id,
+                    ip_address,
+                    user_agent,
+                    False,
+                    AuthMethod.TOTP,
+                    "TOTP代码错误",
                 )
                 return False, None, "TOTP代码错误"
 
             # 验证备份代码
-            if backup_code and not self.mfa.verify_backup_code(backup_code, auth_config["backup_codes"]):
+            if backup_code and not self.mfa.verify_backup_code(
+                backup_code, auth_config["backup_codes"]
+            ):
                 self.security_auditor.record_login_attempt(
-                    user_id, ip_address, user_agent, False, AuthMethod.PASSWORD, "备份代码错误"
+                    user_id,
+                    ip_address,
+                    user_agent,
+                    False,
+                    AuthMethod.PASSWORD,
+                    "备份代码错误",
                 )
                 return False, None, "备份代码错误"
 
@@ -813,7 +870,9 @@ class AdvancedAuth:
         if backup_code:
             auth_methods.append(AuthMethod.PASSWORD)  # 备份代码也算密码认证
 
-        security_level = auth_config["security_level"] if auth_config else SecurityLevel.MEDIUM
+        security_level = (
+            auth_config["security_level"] if auth_config else SecurityLevel.MEDIUM
+        )
 
         token, session = self.session_manager.create_session(
             user_id=user_id,
@@ -824,7 +883,9 @@ class AdvancedAuth:
         )
 
         # 记录成功登录
-        self.security_auditor.record_login_attempt(user_id, ip_address, user_agent, True, AuthMethod.PASSWORD)
+        self.security_auditor.record_login_attempt(
+            user_id, ip_address, user_agent, True, AuthMethod.PASSWORD
+        )
 
         logger.info(f"用户认证成功: {user_id}")
         return True, token, None

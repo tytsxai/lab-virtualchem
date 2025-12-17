@@ -52,7 +52,11 @@ class BaseAppException(Exception):
         Returns:
             字典表示
         """
-        error_message = self.error_code.message_zh if language == "zh" else self.error_code.message_en
+        error_message = (
+            self.error_code.message_zh
+            if language == "zh"
+            else self.error_code.message_en
+        )
 
         return {
             "success": False,

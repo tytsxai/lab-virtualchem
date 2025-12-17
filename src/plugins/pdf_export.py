@@ -58,7 +58,9 @@ class PDFExporter:
                 str(output_path),
                 pagesize=A4,
                 title=title,
-                author=metadata.get("author", "VirtualChemLab") if metadata else "VirtualChemLab",
+                author=metadata.get("author", "VirtualChemLab")
+                if metadata
+                else "VirtualChemLab",
             )
 
             # 准备样式
@@ -102,7 +104,9 @@ class PDFExporter:
                     img = Image(item["path"], width=item.get("width", 15 * cm))
                     story.append(img)
                     if "caption" in item:
-                        story.append(Paragraph(f"图: {item['caption']}", styles["Italic"]))
+                        story.append(
+                            Paragraph(f"图: {item['caption']}", styles["Italic"])
+                        )
                     story.append(Spacer(1, 12))
 
                 elif item_type == "table":
@@ -134,7 +138,9 @@ class PDFExporter:
             return False
 
     @require_plugin("weasyprint")
-    def export_with_weasyprint(self, output_path: Path, html_content: str, base_url: str | None = None) -> bool:
+    def export_with_weasyprint(
+        self, output_path: Path, html_content: str, base_url: str | None = None
+    ) -> bool:
         """使用WeasyPrint从HTML导出PDF
 
         Args:
@@ -193,7 +199,9 @@ class PDFExporter:
             logger.error(f"WeasyPrint导出失败: {e}")
             return False
 
-    def export(self, output_path: Path, content: Any, method: str = "auto", **kwargs) -> bool:
+    def export(
+        self, output_path: Path, content: Any, method: str = "auto", **kwargs
+    ) -> bool:
         """智能选择导出方法
 
         Args:
@@ -218,14 +226,19 @@ class PDFExporter:
                 # HTML转结构化数据（简化）
                 content = [{"type": "text", "data": content}]
             return self.export_with_reportlab(
-                output_path, kwargs.get("title", "实验报告"), content, kwargs.get("metadata")
+                output_path,
+                kwargs.get("title", "实验报告"),
+                content,
+                kwargs.get("metadata"),
             )
 
         elif method == "weasyprint" and registry.is_available("weasyprint"):
             if not isinstance(content, str):
                 # 结构化数据转HTML（简化）
                 content = "<html><body><h1>实验报告</h1></body></html>"
-            return self.export_with_weasyprint(output_path, content, kwargs.get("base_url"))
+            return self.export_with_weasyprint(
+                output_path, content, kwargs.get("base_url")
+            )
 
         return False
 

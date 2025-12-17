@@ -35,6 +35,7 @@ class Reward(BaseModel):
     icon: str = Field(default="🎁", description="图标")
     rarity: str = Field(default="common", description="稀有度")
 
+
 class UserReward(BaseModel):
     """用户奖励记录"""
 
@@ -46,6 +47,7 @@ class UserReward(BaseModel):
     @field_serializer("obtained_at")
     def serialize_obtained_at(self, value: datetime) -> str:
         return value.isoformat()
+
 
 class RewardManager:
     """奖励管理器"""

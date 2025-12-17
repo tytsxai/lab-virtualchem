@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class AIProvider(Enum):
     """AI提供商"""
+
     OLLAMA = "ollama"
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
@@ -26,6 +27,7 @@ class AIProvider(Enum):
 
 class LearningStyle(Enum):
     """学习风格"""
+
     VISUAL = "visual"
     AUDITORY = "auditory"
     KINESTHETIC = "kinesthetic"
@@ -34,6 +36,7 @@ class LearningStyle(Enum):
 
 class DifficultyPreference(Enum):
     """难度偏好"""
+
     BEGINNER = "beginner"
     INTERMEDIATE = "intermediate"
     ADVANCED = "advanced"
@@ -43,6 +46,7 @@ class DifficultyPreference(Enum):
 @dataclass
 class UserProfile:
     """用户AI档案"""
+
     user_id: str
     learning_style: LearningStyle
     difficulty_preference: DifficultyPreference
@@ -59,6 +63,7 @@ class UserProfile:
 @dataclass
 class LearningSession:
     """学习会话"""
+
     session_id: str
     user_id: str
     start_time: datetime
@@ -79,6 +84,7 @@ class LearningSession:
 @dataclass
 class AIRecommendation:
     """AI推荐"""
+
     type: str  # "experiment", "study", "practice", "review"
     priority: int  # 1-5
     title: str
@@ -95,6 +101,7 @@ class AIRecommendation:
 @dataclass
 class LearningInsight:
     """学习洞察"""
+
     insight_type: str  # "strength", "weakness", "pattern", "recommendation"
     title: str
     description: str
@@ -125,20 +132,20 @@ class EnhancedAISystem:
             "chemistry_concepts": {
                 "basic": ["原子结构", "化学键", "化学反应", "酸碱理论"],
                 "intermediate": ["有机化学", "无机化学", "物理化学", "分析化学"],
-                "advanced": ["量子化学", "生物化学", "材料化学", "环境化学"]
+                "advanced": ["量子化学", "生物化学", "材料化学", "环境化学"],
             },
             "experiment_types": {
                 "titration": ["酸碱滴定", "氧化还原滴定", "络合滴定"],
                 "synthesis": ["有机合成", "无机合成", "纳米材料合成"],
                 "analysis": ["定性分析", "定量分析", "仪器分析"],
-                "physical": ["热力学", "动力学", "电化学"]
+                "physical": ["热力学", "动力学", "电化学"],
             },
             "learning_resources": {
                 "videos": ["基础化学视频", "实验操作视频", "理论讲解视频"],
                 "simulations": ["分子模拟", "反应模拟", "仪器模拟"],
                 "exercises": ["选择题", "计算题", "实验题", "综合题"],
-                "interactive": ["虚拟实验", "3D分子模型", "交互式图表"]
-            }
+                "interactive": ["虚拟实验", "3D分子模型", "交互式图表"],
+            },
         }
         logger.info("AI知识库已初始化")
 
@@ -147,6 +154,7 @@ class EnhancedAISystem:
         try:
             # 尝试连接Ollama
             import requests
+
             response = requests.get("http://localhost:11434/api/tags", timeout=5)
             if response.status_code == 200:
                 self.ai_provider = AIProvider.OLLAMA
@@ -161,20 +169,22 @@ class EnhancedAISystem:
     @enhance_robustness(
         operation_name="create_user_profile",
         security_level="medium",
-        enable_caching=True
+        enable_caching=True,
     )
-    @validate_input(validation_rules={
-        "user_id": {"type": str, "required": True},
-        "learning_style": {"type": str, "required": True},
-        "difficulty_preference": {"type": str, "required": True}
-    })
+    @validate_input(
+        validation_rules={
+            "user_id": {"type": str, "required": True},
+            "learning_style": {"type": str, "required": True},
+            "difficulty_preference": {"type": str, "required": True},
+        }
+    )
     @log_operation(operation_name="create_ai_profile")
     def create_user_profile(
         self,
         user_id: str,
         learning_style: str,
         difficulty_preference: str,
-        additional_info: dict[str, Any] | None = None
+        additional_info: dict[str, Any] | None = None,
     ) -> UserProfile:
         """创建用户AI档案"""
         logger.info(f"创建用户AI档案: {user_id}")
@@ -191,7 +201,7 @@ class EnhancedAISystem:
         profile = UserProfile(
             user_id=user_id,
             learning_style=learning_style_enum,
-            difficulty_preference=difficulty_enum
+            difficulty_preference=difficulty_enum,
         )
 
         # 添加额外信息
@@ -199,9 +209,15 @@ class EnhancedAISystem:
             profile.interests = additional_info.get("interests", [])
             profile.learning_goals = additional_info.get("learning_goals", [])
             profile.preferred_topics = additional_info.get("preferred_topics", [])
-            profile.study_time_preference = additional_info.get("study_time_preference", "morning")
-            profile.session_duration_preference = additional_info.get("session_duration_preference", 30)
-            profile.feedback_frequency = additional_info.get("feedback_frequency", "immediate")
+            profile.study_time_preference = additional_info.get(
+                "study_time_preference", "morning"
+            )
+            profile.session_duration_preference = additional_info.get(
+                "session_duration_preference", 30
+            )
+            profile.feedback_frequency = additional_info.get(
+                "feedback_frequency", "immediate"
+            )
 
         self.user_profiles[user_id] = profile
 
@@ -220,18 +236,20 @@ class EnhancedAISystem:
 
         # 基于学习风格生成推荐
         if profile.learning_style == LearningStyle.VISUAL:
-            recommendations.append(AIRecommendation(
-                type="study",
-                priority=4,
-                title="视觉学习资源",
-                description="基于您的视觉学习偏好，推荐观看化学概念视频和3D分子模型",
-                estimated_time=30,
-                difficulty_level=profile.difficulty_preference.value,
-                learning_objectives=["理解分子结构", "掌握化学键理论"],
-                resources=["3D分子模型", "化学概念视频", "交互式图表"],
-                ai_reasoning="视觉学习者更容易通过图表和模型理解抽象概念",
-                confidence_score=0.85
-            ))
+            recommendations.append(
+                AIRecommendation(
+                    type="study",
+                    priority=4,
+                    title="视觉学习资源",
+                    description="基于您的视觉学习偏好，推荐观看化学概念视频和3D分子模型",
+                    estimated_time=30,
+                    difficulty_level=profile.difficulty_preference.value,
+                    learning_objectives=["理解分子结构", "掌握化学键理论"],
+                    resources=["3D分子模型", "化学概念视频", "交互式图表"],
+                    ai_reasoning="视觉学习者更容易通过图表和模型理解抽象概念",
+                    confidence_score=0.85,
+                )
+            )
 
         # 基于难度偏好生成推荐
         difficulty_topics = self.knowledge_base["chemistry_concepts"].get(
@@ -239,31 +257,33 @@ class EnhancedAISystem:
         )
 
         if difficulty_topics:
-            recommendations.append(AIRecommendation(
-                type="experiment",
-                priority=3,
-                title=f"{profile.difficulty_preference.value.title()}级实验",
-                description=f"适合您当前水平的{profile.difficulty_preference.value}级化学实验",
-                estimated_time=45,
-                difficulty_level=profile.difficulty_preference.value,
-                learning_objectives=difficulty_topics[:3],
-                ai_reasoning=f"基于您的{profile.difficulty_preference.value}难度偏好",
-                confidence_score=0.80
-            ))
+            recommendations.append(
+                AIRecommendation(
+                    type="experiment",
+                    priority=3,
+                    title=f"{profile.difficulty_preference.value.title()}级实验",
+                    description=f"适合您当前水平的{profile.difficulty_preference.value}级化学实验",
+                    estimated_time=45,
+                    difficulty_level=profile.difficulty_preference.value,
+                    learning_objectives=difficulty_topics[:3],
+                    ai_reasoning=f"基于您的{profile.difficulty_preference.value}难度偏好",
+                    confidence_score=0.80,
+                )
+            )
 
         self.ai_recommendations[user_id] = recommendations
 
     @enhance_robustness(
         operation_name="start_learning_session",
         security_level="low",
-        enable_caching=False
+        enable_caching=False,
     )
     @log_operation(operation_name="start_session")
     def start_learning_session(
         self,
         user_id: str,
         session_type: str = "general",
-        topics: list[str] | None = None
+        topics: list[str] | None = None,
     ) -> LearningSession:
         """开始学习会话"""
         session_id = f"session_{user_id}_{int(time.time())}"
@@ -273,7 +293,7 @@ class EnhancedAISystem:
             user_id=user_id,
             start_time=datetime.now(),
             session_type=session_type,
-            topics_covered=topics or []
+            topics_covered=topics or [],
         )
 
         self.learning_sessions[session_id] = session
@@ -284,13 +304,11 @@ class EnhancedAISystem:
     @enhance_robustness(
         operation_name="update_learning_session",
         security_level="low",
-        enable_caching=False
+        enable_caching=False,
     )
     @log_operation(operation_name="update_session")
     def update_learning_session(
-        self,
-        session_id: str,
-        update_data: dict[str, Any]
+        self, session_id: str, update_data: dict[str, Any]
     ) -> bool:
         """更新学习会话"""
         if session_id not in self.learning_sessions:
@@ -329,7 +347,7 @@ class EnhancedAISystem:
     @enhance_robustness(
         operation_name="end_learning_session",
         security_level="low",
-        enable_caching=False
+        enable_caching=False,
     )
     @log_operation(operation_name="end_session")
     def end_learning_session(self, session_id: str) -> LearningSession | None:
@@ -340,12 +358,16 @@ class EnhancedAISystem:
 
         session = self.learning_sessions[session_id]
         session.end_time = datetime.now()
-        session.duration = (session.end_time - session.start_time).total_seconds() / 60  # 分钟
+        session.duration = (
+            session.end_time - session.start_time
+        ).total_seconds() / 60  # 分钟
 
         # 生成学习洞察
         self._generate_learning_insights(session)
 
-        logger.info(f"学习会话已结束: {session_id}, 持续时间: {session.duration:.1f}分钟")
+        logger.info(
+            f"学习会话已结束: {session_id}, 持续时间: {session.duration:.1f}分钟"
+        )
         return session
 
     def _generate_learning_insights(self, session: LearningSession) -> None:
@@ -354,67 +376,79 @@ class EnhancedAISystem:
 
         # 分析学习模式
         if session.accuracy_score > 0.8:
-            insights.append(LearningInsight(
-                insight_type="strength",
-                title="高准确率表现",
-                description=f"您在本次学习中达到了{session.accuracy_score:.1%}的准确率，表现优秀",
-                data_points=[{"metric": "accuracy", "value": session.accuracy_score}],
-                confidence=0.9,
-                actionable=True,
-                suggested_actions=["继续保持当前学习节奏", "尝试更高难度的内容"]
-            ))
+            insights.append(
+                LearningInsight(
+                    insight_type="strength",
+                    title="高准确率表现",
+                    description=f"您在本次学习中达到了{session.accuracy_score:.1%}的准确率，表现优秀",
+                    data_points=[
+                        {"metric": "accuracy", "value": session.accuracy_score}
+                    ],
+                    confidence=0.9,
+                    actionable=True,
+                    suggested_actions=["继续保持当前学习节奏", "尝试更高难度的内容"],
+                )
+            )
 
         # 分析参与度
         if session.engagement_level > 0.7:
-            insights.append(LearningInsight(
-                insight_type="strength",
-                title="高参与度",
-                description="您在学习过程中表现出很高的参与度",
-                data_points=[{"metric": "engagement", "value": session.engagement_level}],
-                confidence=0.8,
-                actionable=True,
-                suggested_actions=["利用高参与度学习更多内容", "分享学习经验"]
-            ))
+            insights.append(
+                LearningInsight(
+                    insight_type="strength",
+                    title="高参与度",
+                    description="您在学习过程中表现出很高的参与度",
+                    data_points=[
+                        {"metric": "engagement", "value": session.engagement_level}
+                    ],
+                    confidence=0.8,
+                    actionable=True,
+                    suggested_actions=["利用高参与度学习更多内容", "分享学习经验"],
+                )
+            )
 
         # 分析困难概念
         if session.concepts_struggled:
-            insights.append(LearningInsight(
-                insight_type="weakness",
-                title="需要加强的概念",
-                description=f"您在以下概念上遇到了困难: {', '.join(session.concepts_struggled)}",
-                data_points=[{"concepts": session.concepts_struggled}],
-                confidence=0.85,
-                actionable=True,
-                suggested_actions=[
-                    "复习相关基础概念",
-                    "寻求额外练习机会",
-                    "观看相关教学视频"
-                ]
-            ))
+            insights.append(
+                LearningInsight(
+                    insight_type="weakness",
+                    title="需要加强的概念",
+                    description=f"您在以下概念上遇到了困难: {', '.join(session.concepts_struggled)}",
+                    data_points=[{"concepts": session.concepts_struggled}],
+                    confidence=0.85,
+                    actionable=True,
+                    suggested_actions=[
+                        "复习相关基础概念",
+                        "寻求额外练习机会",
+                        "观看相关教学视频",
+                    ],
+                )
+            )
 
         # 分析AI交互模式
         if session.ai_interactions > 5:
-            insights.append(LearningInsight(
-                insight_type="pattern",
-                title="积极使用AI助手",
-                description="您在学习过程中积极使用AI助手，这是一个很好的学习策略",
-                data_points=[{"metric": "ai_interactions", "value": session.ai_interactions}],
-                confidence=0.75,
-                actionable=True,
-                suggested_actions=["继续利用AI助手解决问题", "尝试更多AI功能"]
-            ))
+            insights.append(
+                LearningInsight(
+                    insight_type="pattern",
+                    title="积极使用AI助手",
+                    description="您在学习过程中积极使用AI助手，这是一个很好的学习策略",
+                    data_points=[
+                        {"metric": "ai_interactions", "value": session.ai_interactions}
+                    ],
+                    confidence=0.75,
+                    actionable=True,
+                    suggested_actions=["继续利用AI助手解决问题", "尝试更多AI功能"],
+                )
+            )
 
         self.learning_insights[session.user_id] = insights
 
     @enhance_robustness(
         operation_name="get_ai_recommendations",
         security_level="low",
-        enable_caching=True
+        enable_caching=True,
     )
     def get_ai_recommendations(
-        self,
-        user_id: str,
-        limit: int = 5
+        self, user_id: str, limit: int = 5
     ) -> list[AIRecommendation]:
         """获取AI推荐"""
         if user_id not in self.ai_recommendations:
@@ -430,12 +464,10 @@ class EnhancedAISystem:
     @enhance_robustness(
         operation_name="get_learning_insights",
         security_level="low",
-        enable_caching=True
+        enable_caching=True,
     )
     def get_learning_insights(
-        self,
-        user_id: str,
-        insight_type: str | None = None
+        self, user_id: str, insight_type: str | None = None
     ) -> list[LearningInsight]:
         """获取学习洞察"""
         if user_id not in self.learning_insights:
@@ -444,21 +476,18 @@ class EnhancedAISystem:
         insights = self.learning_insights[user_id]
 
         if insight_type:
-            insights = [insight for insight in insights if insight.insight_type == insight_type]
+            insights = [
+                insight for insight in insights if insight.insight_type == insight_type
+            ]
 
         return insights
 
     @enhance_robustness(
-        operation_name="ask_ai_question",
-        security_level="medium",
-        enable_caching=True
+        operation_name="ask_ai_question", security_level="medium", enable_caching=True
     )
     @log_operation(operation_name="ai_question")
     def ask_ai_question(
-        self,
-        user_id: str,
-        question: str,
-        context: dict[str, Any] | None = None
+        self, user_id: str, question: str, context: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """向AI提问"""
         try:
@@ -481,7 +510,7 @@ class EnhancedAISystem:
                 "confidence": 0.8,
                 "sources": ["知识库", "学习记录"],
                 "follow_up_questions": self._generate_follow_up_questions(question),
-                "related_topics": self._find_related_topics(question)
+                "related_topics": self._find_related_topics(question),
             }
 
         except Exception as e:
@@ -489,14 +518,11 @@ class EnhancedAISystem:
             return {
                 "answer": "抱歉，我暂时无法回答您的问题。请稍后再试。",
                 "confidence": 0.0,
-                "error": str(e)
+                "error": str(e),
             }
 
     def _build_question_prompt(
-        self,
-        question: str,
-        profile: UserProfile | None,
-        context: dict[str, Any] | None
+        self, question: str, profile: UserProfile | None, context: dict[str, Any] | None
     ) -> str:
         """构建问题提示词"""
         prompt = f"问题: {question}\n\n"
@@ -531,16 +557,10 @@ class EnhancedAISystem:
         try:
             import requests
 
-            data = {
-                "model": "llama2",
-                "prompt": prompt,
-                "stream": False
-            }
+            data = {"model": "llama2", "prompt": prompt, "stream": False}
 
             response = requests.post(
-                "http://localhost:11434/api/generate",
-                json=data,
-                timeout=30
+                "http://localhost:11434/api/generate", json=data, timeout=30
             )
 
             if response.status_code == 200:
@@ -568,18 +588,22 @@ class EnhancedAISystem:
         follow_ups = []
 
         if "实验" in question:
-            follow_ups.extend([
-                "这个实验的原理是什么？",
-                "实验过程中需要注意什么？",
-                "如何分析实验结果？"
-            ])
+            follow_ups.extend(
+                [
+                    "这个实验的原理是什么？",
+                    "实验过程中需要注意什么？",
+                    "如何分析实验结果？",
+                ]
+            )
 
         if "化学" in question:
-            follow_ups.extend([
-                "这个概念在实际生活中有哪些应用？",
-                "相关的化学方程式是什么？",
-                "如何验证这个化学现象？"
-            ])
+            follow_ups.extend(
+                [
+                    "这个概念在实际生活中有哪些应用？",
+                    "相关的化学方程式是什么？",
+                    "如何验证这个化学现象？",
+                ]
+            )
 
         return follow_ups[:3]  # 返回最多3个后续问题
 
@@ -599,7 +623,7 @@ class EnhancedAISystem:
     @enhance_robustness(
         operation_name="get_learning_analytics",
         security_level="low",
-        enable_caching=True
+        enable_caching=True,
     )
     def get_learning_analytics(self, user_id: str) -> dict[str, Any]:
         """获取学习分析"""
@@ -610,7 +634,8 @@ class EnhancedAISystem:
 
         # 获取用户的所有学习会话
         user_sessions = [
-            session for session in self.learning_sessions.values()
+            session
+            for session in self.learning_sessions.values()
             if session.user_id == user_id
         ]
 
@@ -619,17 +644,23 @@ class EnhancedAISystem:
                 "total_sessions": 0,
                 "total_time": 0,
                 "average_accuracy": 0.0,
-                "learning_trend": "stable"
+                "learning_trend": "stable",
             }
 
         # 计算统计数据
         total_sessions = len(user_sessions)
         total_time = sum(session.duration or 0 for session in user_sessions)
-        average_accuracy = sum(session.accuracy_score for session in user_sessions) / total_sessions
+        average_accuracy = (
+            sum(session.accuracy_score for session in user_sessions) / total_sessions
+        )
 
         # 分析学习趋势
-        recent_sessions = user_sessions[-5:] if len(user_sessions) >= 5 else user_sessions
-        recent_accuracy = sum(session.accuracy_score for session in recent_sessions) / len(recent_sessions)
+        recent_sessions = (
+            user_sessions[-5:] if len(user_sessions) >= 5 else user_sessions
+        )
+        recent_accuracy = sum(
+            session.accuracy_score for session in recent_sessions
+        ) / len(recent_sessions)
 
         if recent_accuracy > average_accuracy:
             learning_trend = "improving"
@@ -647,15 +678,23 @@ class EnhancedAISystem:
             "preferred_topics": profile.preferred_topics,
             "learning_style": profile.learning_style.value,
             "difficulty_preference": profile.difficulty_preference.value,
-            "ai_interactions": sum(session.ai_interactions for session in user_sessions),
-            "concepts_mastered": list(set(
-                concept for session in user_sessions
-                for concept in session.concepts_mastered
-            )),
-            "concepts_struggled": list(set(
-                concept for session in user_sessions
-                for concept in session.concepts_struggled
-            ))
+            "ai_interactions": sum(
+                session.ai_interactions for session in user_sessions
+            ),
+            "concepts_mastered": list(
+                set(
+                    concept
+                    for session in user_sessions
+                    for concept in session.concepts_mastered
+                )
+            ),
+            "concepts_struggled": list(
+                set(
+                    concept
+                    for session in user_sessions
+                    for concept in session.concepts_struggled
+                )
+            ),
         }
 
 

@@ -59,7 +59,9 @@ class RealtimeLineChart(QWidget):
     def add_data_point(self, value: float, time_label: str = ""):
         """添加数据点"""
         self.data_points.append(value)
-        self.time_labels.append(time_label if time_label else str(len(self.data_points)))
+        self.time_labels.append(
+            time_label if time_label else str(len(self.data_points))
+        )
         self.update()
 
     def clear_data(self):
@@ -100,14 +102,21 @@ class RealtimeLineChart(QWidget):
         font.setPointSize(12)
         font.setBold(True)
         painter.setFont(font)
-        painter.drawText(0, 0, width, margin_top, Qt.AlignmentFlag.AlignCenter, self.title)
+        painter.drawText(
+            0, 0, width, margin_top, Qt.AlignmentFlag.AlignCenter, self.title
+        )
 
         # 绘制坐标轴
         painter.setPen(QPen(QColor(100, 100, 100), 2))
         # Y轴
         painter.drawLine(margin_left, margin_top, margin_left, height - margin_bottom)
         # X轴
-        painter.drawLine(margin_left, height - margin_bottom, width - margin_right, height - margin_bottom)
+        painter.drawLine(
+            margin_left,
+            height - margin_bottom,
+            width - margin_right,
+            height - margin_bottom,
+        )
 
         # Y轴标签
         font.setPointSize(10)
@@ -125,7 +134,14 @@ class RealtimeLineChart(QWidget):
 
             # 标签
             painter.setPen(QPen(self.text_color))
-            painter.drawText(0, int(y_pos - 10), margin_left - 5, 20, Qt.AlignmentFlag.AlignRight, f"{y_value:.1f}")
+            painter.drawText(
+                0,
+                int(y_pos - 10),
+                margin_left - 5,
+                20,
+                Qt.AlignmentFlag.AlignRight,
+                f"{y_value:.1f}",
+            )
 
         # Y轴标题
         painter.save()
@@ -144,7 +160,11 @@ class RealtimeLineChart(QWidget):
                 x = margin_left + (chart_width * i / (self.max_points - 1))
                 # 限制值在范围内
                 clamped_value = max(self.y_min, min(value, self.y_max))
-                y_ratio = (clamped_value - self.y_min) / (self.y_max - self.y_min) if self.y_max > self.y_min else 0
+                y_ratio = (
+                    (clamped_value - self.y_min) / (self.y_max - self.y_min)
+                    if self.y_max > self.y_min
+                    else 0
+                )
                 y = height - margin_bottom - (chart_height * y_ratio)
                 points.append(QPointF(x, y))
 
@@ -163,7 +183,13 @@ class RealtimeLineChart(QWidget):
                 gradient = QLinearGradient(0, margin_top, 0, height - margin_bottom)
                 gradient.setColorAt(0, self.fill_color)
                 gradient.setColorAt(
-                    1, QColor(self.line_color.red(), self.line_color.green(), self.line_color.blue(), 10)
+                    1,
+                    QColor(
+                        self.line_color.red(),
+                        self.line_color.green(),
+                        self.line_color.blue(),
+                        10,
+                    ),
                 )
 
                 painter.setPen(Qt.PenStyle.NoPen)
@@ -199,7 +225,14 @@ class RealtimeLineChart(QWidget):
 
                 painter.setBrush(QBrush(QColor(255, 255, 255, 200)))
                 painter.setPen(QPen(self.line_color, 2))
-                painter.drawRoundedRect(text_x - 5, text_y - 5, text_rect.width() + 10, text_rect.height() + 10, 5, 5)
+                painter.drawRoundedRect(
+                    text_x - 5,
+                    text_y - 5,
+                    text_rect.width() + 10,
+                    text_rect.height() + 10,
+                    5,
+                    5,
+                )
 
                 painter.setPen(QPen(self.line_color))
                 painter.drawText(text_x, text_y + text_rect.height(), value_text)
@@ -284,14 +317,21 @@ class RealtimeBarChart(QWidget):
         font.setPointSize(12)
         font.setBold(True)
         painter.setFont(font)
-        painter.drawText(0, 0, width, margin_top, Qt.AlignmentFlag.AlignCenter, self.title)
+        painter.drawText(
+            0, 0, width, margin_top, Qt.AlignmentFlag.AlignCenter, self.title
+        )
 
         # 绘制坐标轴
         painter.setPen(QPen(QColor(100, 100, 100), 2))
         # Y轴
         painter.drawLine(margin_left, margin_top, margin_left, height - margin_bottom)
         # X轴
-        painter.drawLine(margin_left, height - margin_bottom, width - margin_right, height - margin_bottom)
+        painter.drawLine(
+            margin_left,
+            height - margin_bottom,
+            width - margin_right,
+            height - margin_bottom,
+        )
 
         # Y轴刻度
         font.setPointSize(9)
@@ -309,7 +349,14 @@ class RealtimeBarChart(QWidget):
 
             # 标签
             painter.setPen(QPen(QColor(50, 50, 50)))
-            painter.drawText(5, int(y_pos - 10), margin_left - 10, 20, Qt.AlignmentFlag.AlignRight, f"{y_value:.0f}")
+            painter.drawText(
+                5,
+                int(y_pos - 10),
+                margin_left - 10,
+                20,
+                Qt.AlignmentFlag.AlignRight,
+                f"{y_value:.0f}",
+            )
 
         # 绘制柱状图
         if self.data:
@@ -319,7 +366,9 @@ class RealtimeBarChart(QWidget):
 
             for i, (label, value) in enumerate(self.data.items()):
                 x = margin_left + bar_spacing + i * (bar_width + bar_spacing)
-                bar_height = (value / self.y_max) * chart_height if self.y_max > 0 else 0
+                bar_height = (
+                    (value / self.y_max) * chart_height if self.y_max > 0 else 0
+                )
                 y = height - margin_bottom - bar_height
 
                 # 柱子颜色
@@ -328,11 +377,15 @@ class RealtimeBarChart(QWidget):
                 # 渐变填充
                 gradient = QLinearGradient(0, y, 0, height - margin_bottom)
                 gradient.setColorAt(0, color)
-                gradient.setColorAt(1, QColor(color.red(), color.green(), color.blue(), 150))
+                gradient.setColorAt(
+                    1, QColor(color.red(), color.green(), color.blue(), 150)
+                )
 
                 painter.setPen(QPen(color.darker(120), 2))
                 painter.setBrush(QBrush(gradient))
-                painter.drawRoundedRect(int(x), int(y), int(bar_width), int(bar_height), 4, 4)
+                painter.drawRoundedRect(
+                    int(x), int(y), int(bar_width), int(bar_height), 4, 4
+                )
 
                 # 数值标签
                 painter.setPen(QPen(QColor(50, 50, 50)))
@@ -354,7 +407,14 @@ class RealtimeBarChart(QWidget):
                 painter.save()
                 painter.translate(x + bar_width / 2, height - margin_bottom + 10)
                 painter.rotate(-45)
-                painter.drawText(0, 0, 100, 20, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, label)
+                painter.drawText(
+                    0,
+                    0,
+                    100,
+                    20,
+                    Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+                    label,
+                )
                 painter.restore()
 
 
@@ -463,7 +523,9 @@ class DataMonitorPanel(QFrame):
         logger.info(f"添加折线图: {chart_id} - {title}")
         return chart
 
-    def add_bar_chart(self, chart_id: str, title: str, max_bars: int = 10, y_max: float = 100.0) -> RealtimeBarChart:
+    def add_bar_chart(
+        self, chart_id: str, title: str, max_bars: int = 10, y_max: float = 100.0
+    ) -> RealtimeBarChart:
         """添加柱状图"""
         chart = RealtimeBarChart(title, max_bars, y_max)
         self.charts[chart_id] = chart
@@ -565,20 +627,29 @@ class GaugeWidget(QWidget):
         painter.setPen(QPen(color, 8, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
         span_angle = int(300 * ratio * 16)
         painter.drawArc(
-            int(center_x - radius), int(center_y - radius), int(radius * 2), int(radius * 2), 30 * 16, span_angle
+            int(center_x - radius),
+            int(center_y - radius),
+            int(radius * 2),
+            int(radius * 2),
+            30 * 16,
+            span_angle,
         )
 
         # 绘制数值
         font.setPointSize(18)
         painter.setFont(font)
         value_text = f"{self._current_value:.1f}"
-        painter.drawText(0, int(center_y - 10), width, 30, Qt.AlignmentFlag.AlignCenter, value_text)
+        painter.drawText(
+            0, int(center_y - 10), width, 30, Qt.AlignmentFlag.AlignCenter, value_text
+        )
 
         # 绘制单位
         font.setPointSize(10)
         font.setBold(False)
         painter.setFont(font)
-        painter.drawText(0, int(center_y + 20), width, 20, Qt.AlignmentFlag.AlignCenter, self.unit)
+        painter.drawText(
+            0, int(center_y + 20), width, 20, Qt.AlignmentFlag.AlignCenter, self.unit
+        )
 
         # 绘制范围标签
         font.setPointSize(8)

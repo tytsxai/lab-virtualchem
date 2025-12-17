@@ -113,10 +113,22 @@ class ColorTransition:
             return self.end_color
 
         # 线性插值
-        r = int(self.start_color.red() + (self.end_color.red() - self.start_color.red()) * progress)
-        g = int(self.start_color.green() + (self.end_color.green() - self.start_color.green()) * progress)
-        b = int(self.start_color.blue() + (self.end_color.blue() - self.start_color.blue()) * progress)
-        a = int(self.start_color.alpha() + (self.end_color.alpha() - self.start_color.alpha()) * progress)
+        r = int(
+            self.start_color.red()
+            + (self.end_color.red() - self.start_color.red()) * progress
+        )
+        g = int(
+            self.start_color.green()
+            + (self.end_color.green() - self.start_color.green()) * progress
+        )
+        b = int(
+            self.start_color.blue()
+            + (self.end_color.blue() - self.start_color.blue()) * progress
+        )
+        a = int(
+            self.start_color.alpha()
+            + (self.end_color.alpha() - self.start_color.alpha()) * progress
+        )
 
         return QColor(r, g, b, a)
 
@@ -152,10 +164,16 @@ class ReactionAnimation(QObject):
         self.scene = scene
 
     def start_color_transition(
-        self, animation_id: str, start_color: QColor, end_color: QColor, duration: float = 1.0
+        self,
+        animation_id: str,
+        start_color: QColor,
+        end_color: QColor,
+        duration: float = 1.0,
     ) -> None:
         """开始颜色过渡动画"""
-        self.color_transitions[animation_id] = ColorTransition(start_color, end_color, duration)
+        self.color_transitions[animation_id] = ColorTransition(
+            start_color, end_color, duration
+        )
         logger.info(f"开始颜色过渡动画: {animation_id}")
 
     def create_bubble_effect(self, x: float, y: float, count: int = 10) -> None:
@@ -280,7 +298,12 @@ class ReactionAnimation(QObject):
 class AnimatedContainer(QGraphicsPixmapItem):
     """带动画效果的容器"""
 
-    def __init__(self, container_id: str, pixmap: Any | None = None, parent: QGraphicsItem | None = None):
+    def __init__(
+        self,
+        container_id: str,
+        pixmap: Any | None = None,
+        parent: QGraphicsItem | None = None,
+    ):
         super().__init__(pixmap, parent)
         self.container_id = container_id
         self.current_color = QColor(255, 255, 255)
@@ -323,7 +346,9 @@ class AnimatedContainer(QGraphicsPixmapItem):
     def paint(self, painter: QPainter, option: Any, widget: Any = None) -> None:
         """绘制容器"""
         # 更新颜色
-        self.current_color = self._interpolate_color(self.current_color, self.target_color, self.animation_speed)
+        self.current_color = self._interpolate_color(
+            self.current_color, self.target_color, self.animation_speed
+        )
 
         # 绘制容器
         super().paint(painter, option, widget)
@@ -331,7 +356,12 @@ class AnimatedContainer(QGraphicsPixmapItem):
         # 绘制液体
         if self.current_color.alpha() > 0:
             rect = self.boundingRect()
-            liquid_rect = QRectF(rect.x() + 5, rect.y() + rect.height() * 0.3, rect.width() - 10, rect.height() * 0.4)
+            liquid_rect = QRectF(
+                rect.x() + 5,
+                rect.y() + rect.height() * 0.3,
+                rect.width() - 10,
+                rect.height() * 0.4,
+            )
 
             painter.setBrush(QBrush(self.current_color))
             painter.setPen(QPen(self.current_color))

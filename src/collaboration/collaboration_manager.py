@@ -86,8 +86,12 @@ class CollaborationManager:
         """初始化协作管理器"""
         self.active_sessions: dict[str, CollaborationSession] = {}
         self.user_sessions: dict[str, set[str]] = {}  # user_id -> session_ids
-        self.event_history: dict[str, list[CollaborationEvent]] = {}  # session_id -> events
-        self.event_listeners: dict[str, list[Callable[..., None]]] = {}  # event_type -> listeners
+        self.event_history: dict[
+            str, list[CollaborationEvent]
+        ] = {}  # session_id -> events
+        self.event_listeners: dict[
+            str, list[Callable[..., None]]
+        ] = {}  # event_type -> listeners
 
         # 会话清理任务
         self._cleanup_task: asyncio.Task[None] | None = None
@@ -116,7 +120,10 @@ class CollaborationManager:
         sessions_to_remove = []
         for session_id, session in self.active_sessions.items():
             # 检查最后活动时间
-            last_activity = max((p.last_activity for p in session.participants), default=session.created_at)
+            last_activity = max(
+                (p.last_activity for p in session.participants),
+                default=session.created_at,
+            )
 
             if current_time - last_activity > inactive_threshold:
                 sessions_to_remove.append(session_id)
@@ -233,7 +240,12 @@ class CollaborationManager:
         self.user_sessions[user_id].add(session_id)
 
         # 发送加入事件
-        self._emit_event(session_id, user_id, "user_joined", {"user_id": user_id, "username": username})
+        self._emit_event(
+            session_id,
+            user_id,
+            "user_joined",
+            {"user_id": user_id, "username": username},
+        )
 
         logger.info(f"用户加入会话: {user_id} -> {session_id}")
         return True
@@ -290,7 +302,12 @@ class CollaborationManager:
         session.status = SessionStatus.ENDED
 
         # 发送结束事件
-        self._emit_event(session_id, ended_by, "session_ended", {"ended_by": ended_by, "reason": "会话结束"})
+        self._emit_event(
+            session_id,
+            ended_by,
+            "session_ended",
+            {"ended_by": ended_by, "reason": "会话结束"},
+        )
 
         # 清理会话
         for participant in session.participants:
@@ -342,9 +359,15 @@ class CollaborationManager:
             会话列表
         """
         session_ids = self.user_sessions.get(user_id, set())
-        return [self.active_sessions[sid] for sid in session_ids if sid in self.active_sessions]
+        return [
+            self.active_sessions[sid]
+            for sid in session_ids
+            if sid in self.active_sessions
+        ]
 
-    def update_shared_data(self, session_id: str, user_id: str, data: dict[str, Any]) -> bool:
+    def update_shared_data(
+        self, session_id: str, user_id: str, data: dict[str, Any]
+    ) -> bool:
         """更新共享数据
 
         Args:
@@ -370,7 +393,9 @@ class CollaborationManager:
         session.shared_data.update(data)
 
         # 发送更新事件
-        self._emit_event(session_id, user_id, "data_updated", {"data": data, "updated_by": user_id})
+        self._emit_event(
+            session_id, user_id, "data_updated", {"data": data, "updated_by": user_id}
+        )
 
         logger.info(f"共享数据已更新: {session_id} by {user_id}")
         return True
@@ -387,7 +412,9 @@ class CollaborationManager:
         session = self.active_sessions.get(session_id)
         return session.shared_data if session else {}
 
-    def add_event_listener(self, event_type: str, listener: Callable[..., None]) -> None:
+    def add_event_listener(
+        self, event_type: str, listener: Callable[..., None]
+    ) -> None:
         """添加事件监听器
 
         Args:
@@ -398,7 +425,9 @@ class CollaborationManager:
             self.event_listeners[event_type] = []
         self.event_listeners[event_type].append(listener)
 
-    def remove_event_listener(self, event_type: str, listener: Callable[..., None]) -> None:
+    def remove_event_listener(
+        self, event_type: str, listener: Callable[..., None]
+    ) -> None:
         """移除事件监听器
 
         Args:
@@ -409,7 +438,9 @@ class CollaborationManager:
             with contextlib.suppress(ValueError):
                 self.event_listeners[event_type].remove(listener)
 
-    def _emit_event(self, session_id: str, user_id: str, event_type: str, data: dict[str, Any]) -> None:
+    def _emit_event(
+        self, session_id: str, user_id: str, event_type: str, data: dict[str, Any]
+    ) -> None:
         """发送事件
 
         Args:
@@ -418,7 +449,9 @@ class CollaborationManager:
             event_type: 事件类型
             data: 事件数据
         """
-        event = CollaborationEvent(session_id=session_id, user_id=user_id, event_type=event_type, data=data)
+        event = CollaborationEvent(
+            session_id=session_id, user_id=user_id, event_type=event_type, data=data
+        )
 
         # 添加到历史记录
         if session_id in self.event_history:
@@ -434,7 +467,9 @@ class CollaborationManager:
 
         logger.debug(f"事件已发送: {event_type} in {session_id}")
 
-    def get_session_events(self, session_id: str, limit: int = 100) -> list[CollaborationEvent]:
+    def get_session_events(
+        self, session_id: str, limit: int = 100
+    ) -> list[CollaborationEvent]:
         """获取会话事件历史
 
         Args:
@@ -469,7 +504,8 @@ class CollaborationManager:
             "participant_count": len(session.participants),
             "max_participants": session.max_participants,
             "created_at": session.created_at.isoformat(),
-            "duration_minutes": (datetime.now() - session.created_at).total_seconds() / 60,
+            "duration_minutes": (datetime.now() - session.created_at).total_seconds()
+            / 60,
             "event_count": len(events),
             "online_users": sum(1 for p in session.participants if p.is_online),
             "shared_data_size": len(session.shared_data),

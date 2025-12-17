@@ -22,7 +22,9 @@ class PDFExporter:
 
     def __init__(self):
         if not WEASYPRINT_AVAILABLE:
-            logger.warning("WeasyPrint未安装,PDF导出功能不可用。请运行: pip install weasyprint")
+            logger.warning(
+                "WeasyPrint未安装,PDF导出功能不可用。请运行: pip install weasyprint"
+            )
 
     def export_from_html(self, html_content: str, output_path: str) -> bool:
         """
@@ -111,7 +113,9 @@ class PDFExporterSimple:
         # 注册中文字体
         self._register_chinese_fonts()
 
-    def export_simple_report(self, title: str, content_lines: list, output_path: str) -> bool:
+    def export_simple_report(
+        self, title: str, content_lines: list, output_path: str
+    ) -> bool:
         """
         导出简单的文本PDF报告
 
@@ -185,10 +189,16 @@ class PDFExporterSimple:
             elif system == "Linux":
                 # Linux字体路径
                 linux_fonts = [
-                    Path("/usr/share/fonts/truetype/wqy/wqy-microhei.ttc"),  # 文泉驿微米黑
+                    Path(
+                        "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc"
+                    ),  # 文泉驿微米黑
                     Path("/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc"),  # 文泉驿正黑
-                    Path("/usr/share/fonts/truetype/droid/DroidSansFallbackFull.tt"),  # Droid
-                    Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"),  # Noto Sans
+                    Path(
+                        "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.tt"
+                    ),  # Droid
+                    Path(
+                        "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
+                    ),  # Noto Sans
                 ]
                 font_paths = linux_fonts
 

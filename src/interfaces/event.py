@@ -64,7 +64,12 @@ class IEventBus(ABC):
     """事件总线接口"""
 
     @abstractmethod
-    def subscribe(self, event_name: str, handler: IEventHandler, priority: EventPriority | None = None) -> str:
+    def subscribe(
+        self,
+        event_name: str,
+        handler: IEventHandler,
+        priority: EventPriority | None = None,
+    ) -> str:
         """订阅事件
 
         Args:

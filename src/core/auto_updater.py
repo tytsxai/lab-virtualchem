@@ -18,6 +18,7 @@ from .. import __version__ as APP_VERSION
 
 try:
     import requests
+
     REQUESTS_AVAILABLE = True
 except ImportError:
     REQUESTS_AVAILABLE = False
@@ -28,6 +29,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class VersionInfo:
     """版本信息"""
+
     version: str
     build_number: int
     release_date: str
@@ -53,7 +55,7 @@ class AutoUpdater:
         self,
         current_version: str | None = None,
         update_url: str = "https://api.virtualchemlab.com/updates",
-        check_interval: int = 86400  # 24小时
+        check_interval: int = 86400,  # 24小时
     ):
         """初始化自动更新器
 
@@ -77,7 +79,7 @@ class AutoUpdater:
         self.platform = self._detect_platform()
 
         # 临时目录
-        self.temp_dir = Path(tempfile.gettempdir()) / 'virtualchemlab_updates'
+        self.temp_dir = Path(tempfile.gettempdir()) / "virtualchemlab_updates"
         self.temp_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info("自动更新器初始化完成 (当前版本: %s)", self.current_version)
@@ -85,14 +87,14 @@ class AutoUpdater:
     def _detect_platform(self) -> str:
         """检测平台"""
         system = platform.system().lower()
-        if system == 'windows':
-            return 'windows'
-        elif system == 'darwin':
-            return 'macos'
-        elif system == 'linux':
-            return 'linux'
+        if system == "windows":
+            return "windows"
+        elif system == "darwin":
+            return "macos"
+        elif system == "linux":
+            return "linux"
         else:
-            return 'unknown'
+            return "unknown"
 
     def check_for_updates(self, force: bool = False) -> VersionInfo | None:
         """检查更新
@@ -117,10 +119,7 @@ class AutoUpdater:
         try:
             # 请求更新信息
             url = f"{self.update_url}/check"
-            params = {
-                'version': self.current_version,
-                'platform': self.platform
-            }
+            params = {"version": self.current_version, "platform": self.platform}
 
             response = requests.get(url, params=params, timeout=10)
             response.raise_for_status()
@@ -131,17 +130,17 @@ class AutoUpdater:
             self.last_check_time = datetime.now()
 
             # 解析版本信息
-            if data.get('has_update'):
-                update_info = data.get('update_info', {})
+            if data.get("has_update"):
+                update_info = data.get("update_info", {})
                 self.latest_version = VersionInfo(
-                    version=update_info['version'],
-                    build_number=update_info['build_number'],
-                    release_date=update_info['release_date'],
-                    download_url=update_info['download_url'],
-                    checksum=update_info['checksum'],
-                    size_bytes=update_info['size_bytes'],
-                    changelog=update_info.get('changelog', ''),
-                    is_critical=update_info.get('is_critical', False)
+                    version=update_info["version"],
+                    build_number=update_info["build_number"],
+                    release_date=update_info["release_date"],
+                    download_url=update_info["download_url"],
+                    checksum=update_info["checksum"],
+                    size_bytes=update_info["size_bytes"],
+                    changelog=update_info.get("changelog", ""),
+                    is_critical=update_info.get("is_critical", False),
                 )
 
                 logger.info(f"发现新版本: {self.latest_version.version}")
@@ -160,7 +159,7 @@ class AutoUpdater:
     def download_update(
         self,
         version_info: VersionInfo,
-        progress_callback: Callable[[int, int], None] | None = None
+        progress_callback: Callable[[int, int], None] | None = None,
     ) -> Path | None:
         """下载更新
 
@@ -184,7 +183,7 @@ class AutoUpdater:
 
             # 确定文件名
             filename = f"VirtualChemLab-{version_info.version}-{self.platform}.exe"
-            if self.platform == 'macos':
+            if self.platform == "macos":
                 filename = f"VirtualChemLab-{version_info.version}.dmg"
 
             file_path = self.temp_dir / filename
@@ -193,7 +192,7 @@ class AutoUpdater:
             total_size = version_info.size_bytes
             downloaded = 0
 
-            with open(file_path, 'wb') as f:
+            with open(file_path, "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk:
                         f.write(chunk)
@@ -252,7 +251,7 @@ class AutoUpdater:
             是否成功
         """
         try:
-            if self.platform == 'windows':
+            if self.platform == "windows":
                 # Windows: 启动安装程序（避免使用shell以减少注入风险）
                 logger.info("启动Windows安装程序...")
                 installer_path = update_file.resolve(strict=True)
@@ -262,10 +261,10 @@ class AutoUpdater:
                 subprocess.run([str(installer_path)], check=True)
                 return True
 
-            elif self.platform == 'macos':
+            elif self.platform == "macos":
                 # macOS: 打开DMG
                 logger.info("打开macOS DMG镜像...")
-                subprocess.Popen(['open', str(update_file)])
+                subprocess.Popen(["open", str(update_file)])
                 return True
 
             else:
@@ -279,7 +278,7 @@ class AutoUpdater:
     def auto_update(
         self,
         auto_install: bool = False,
-        progress_callback: Callable[[int, int], None] | None = None
+        progress_callback: Callable[[int, int], None] | None = None,
     ) -> bool:
         """自动更新流程
 
@@ -323,13 +322,13 @@ class AutoUpdater:
 
         try:
             url = f"{self.update_url}/changelog"
-            params = {'version': version} if version else {}
+            params = {"version": version} if version else {}
 
             response = requests.get(url, params=params, timeout=10)
             response.raise_for_status()
 
             data = response.json()
-            return data.get('changelog', '无更新日志')
+            return data.get("changelog", "无更新日志")
 
         except Exception as e:
             logger.error(f"获取更新日志失败: {e}")

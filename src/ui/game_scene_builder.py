@@ -29,7 +29,12 @@ class GameSceneBuilder:
                         "position": [150, 500],
                         "size": [80, 100],
                         "image": "beaker.png",
-                        "physics_props": {"mass": 1.0, "friction": 0.9, "bounce_factor": 0.6, "rarity": "common"},
+                        "physics_props": {
+                            "mass": 1.0,
+                            "friction": 0.9,
+                            "bounce_factor": 0.6,
+                            "rarity": "common",
+                        },
                     },
                     {
                         "id": "erlenmeyer_flask",
@@ -37,7 +42,12 @@ class GameSceneBuilder:
                         "position": [400, 480],
                         "size": [90, 120],
                         "image": "flask.png",
-                        "physics_props": {"mass": 1.2, "friction": 0.9, "bounce_factor": 0.7, "rarity": "uncommon"},
+                        "physics_props": {
+                            "mass": 1.2,
+                            "friction": 0.9,
+                            "bounce_factor": 0.7,
+                            "rarity": "uncommon",
+                        },
                     },
                     {
                         "id": "burette",
@@ -45,7 +55,12 @@ class GameSceneBuilder:
                         "position": [600, 300],
                         "size": [60, 200],
                         "image": "burette.png",
-                        "physics_props": {"mass": 0.8, "friction": 0.95, "bounce_factor": 0.5, "rarity": "rare"},
+                        "physics_props": {
+                            "mass": 0.8,
+                            "friction": 0.95,
+                            "bounce_factor": 0.5,
+                            "rarity": "rare",
+                        },
                     },
                     {
                         "id": "reagent_hcl",
@@ -53,7 +68,12 @@ class GameSceneBuilder:
                         "position": [50, 100],
                         "size": [60, 80],
                         "image": "reagent_bottle.png",
-                        "physics_props": {"mass": 0.6, "friction": 0.8, "bounce_factor": 0.8, "rarity": "common"},
+                        "physics_props": {
+                            "mass": 0.6,
+                            "friction": 0.8,
+                            "bounce_factor": 0.8,
+                            "rarity": "common",
+                        },
                     },
                     {
                         "id": "reagent_naoh",
@@ -61,7 +81,12 @@ class GameSceneBuilder:
                         "position": [150, 100],
                         "size": [60, 80],
                         "image": "reagent_bottle.png",
-                        "physics_props": {"mass": 0.6, "friction": 0.8, "bounce_factor": 0.8, "rarity": "common"},
+                        "physics_props": {
+                            "mass": 0.6,
+                            "friction": 0.8,
+                            "bounce_factor": 0.8,
+                            "rarity": "common",
+                        },
                     },
                     {
                         "id": "indicator_phenolphthalein",
@@ -69,7 +94,12 @@ class GameSceneBuilder:
                         "position": [250, 100],
                         "size": [40, 60],
                         "image": "indicator_bottle.png",
-                        "physics_props": {"mass": 0.3, "friction": 0.7, "bounce_factor": 0.9, "rarity": "epic"},
+                        "physics_props": {
+                            "mass": 0.3,
+                            "friction": 0.7,
+                            "bounce_factor": 0.9,
+                            "rarity": "epic",
+                        },
                     },
                 ],
                 "interactive_zones": [
@@ -109,7 +139,12 @@ class GameSceneBuilder:
                         "position": [300, 500],
                         "size": [100, 120],
                         "image": "round_flask.png",
-                        "physics_props": {"mass": 1.5, "friction": 0.9, "bounce_factor": 0.6, "rarity": "rare"},
+                        "physics_props": {
+                            "mass": 1.5,
+                            "friction": 0.9,
+                            "bounce_factor": 0.6,
+                            "rarity": "rare",
+                        },
                     },
                     {
                         "id": "condenser",
@@ -117,7 +152,12 @@ class GameSceneBuilder:
                         "position": [500, 400],
                         "size": [80, 150],
                         "image": "condenser.png",
-                        "physics_props": {"mass": 2.0, "friction": 0.95, "bounce_factor": 0.4, "rarity": "epic"},
+                        "physics_props": {
+                            "mass": 2.0,
+                            "friction": 0.95,
+                            "bounce_factor": 0.4,
+                            "rarity": "epic",
+                        },
                     },
                     {
                         "id": "heating_mantle",
@@ -125,7 +165,12 @@ class GameSceneBuilder:
                         "position": [200, 600],
                         "size": [120, 80],
                         "image": "heating_mantle.png",
-                        "physics_props": {"mass": 3.0, "friction": 0.98, "bounce_factor": 0.2, "rarity": "legendary"},
+                        "physics_props": {
+                            "mass": 3.0,
+                            "friction": 0.98,
+                            "bounce_factor": 0.2,
+                            "rarity": "legendary",
+                        },
                     },
                     {
                         "id": "thermometer",
@@ -133,7 +178,12 @@ class GameSceneBuilder:
                         "position": [400, 300],
                         "size": [30, 100],
                         "image": "thermometer.png",
-                        "physics_props": {"mass": 0.4, "friction": 0.8, "bounce_factor": 0.7, "rarity": "uncommon"},
+                        "physics_props": {
+                            "mass": 0.4,
+                            "friction": 0.8,
+                            "bounce_factor": 0.7,
+                            "rarity": "uncommon",
+                        },
                     },
                     {
                         "id": "reagent_a",
@@ -141,7 +191,12 @@ class GameSceneBuilder:
                         "position": [50, 200],
                         "size": [60, 80],
                         "image": "reagent_bottle.png",
-                        "physics_props": {"mass": 0.6, "friction": 0.8, "bounce_factor": 0.8, "rarity": "common"},
+                        "physics_props": {
+                            "mass": 0.6,
+                            "friction": 0.8,
+                            "bounce_factor": 0.8,
+                            "rarity": "common",
+                        },
                     },
                     {
                         "id": "reagent_b",
@@ -149,7 +204,12 @@ class GameSceneBuilder:
                         "position": [150, 200],
                         "size": [60, 80],
                         "image": "reagent_bottle.png",
-                        "physics_props": {"mass": 0.6, "friction": 0.8, "bounce_factor": 0.8, "rarity": "common"},
+                        "physics_props": {
+                            "mass": 0.6,
+                            "friction": 0.8,
+                            "bounce_factor": 0.8,
+                            "rarity": "common",
+                        },
                     },
                 ],
                 "interactive_zones": [
@@ -189,7 +249,12 @@ class GameSceneBuilder:
                         "position": [300, 400],
                         "size": [120, 80],
                         "image": "crystal_dish.png",
-                        "physics_props": {"mass": 1.0, "friction": 0.9, "bounce_factor": 0.6, "rarity": "rare"},
+                        "physics_props": {
+                            "mass": 1.0,
+                            "friction": 0.9,
+                            "bounce_factor": 0.6,
+                            "rarity": "rare",
+                        },
                     },
                     {
                         "id": "seed_crystal",
@@ -197,7 +262,12 @@ class GameSceneBuilder:
                         "position": [350, 350],
                         "size": [20, 20],
                         "image": "seed_crystal.png",
-                        "physics_props": {"mass": 0.1, "friction": 0.7, "bounce_factor": 0.9, "rarity": "legendary"},
+                        "physics_props": {
+                            "mass": 0.1,
+                            "friction": 0.7,
+                            "bounce_factor": 0.9,
+                            "rarity": "legendary",
+                        },
                     },
                     {
                         "id": "saturated_solution",
@@ -205,7 +275,12 @@ class GameSceneBuilder:
                         "position": [100, 200],
                         "size": [80, 100],
                         "image": "solution_bottle.png",
-                        "physics_props": {"mass": 0.8, "friction": 0.8, "bounce_factor": 0.7, "rarity": "uncommon"},
+                        "physics_props": {
+                            "mass": 0.8,
+                            "friction": 0.8,
+                            "bounce_factor": 0.7,
+                            "rarity": "uncommon",
+                        },
                     },
                     {
                         "id": "heating_plate",
@@ -213,7 +288,12 @@ class GameSceneBuilder:
                         "position": [250, 500],
                         "size": [100, 60],
                         "image": "heating_plate.png",
-                        "physics_props": {"mass": 2.0, "friction": 0.98, "bounce_factor": 0.3, "rarity": "epic"},
+                        "physics_props": {
+                            "mass": 2.0,
+                            "friction": 0.98,
+                            "bounce_factor": 0.3,
+                            "rarity": "epic",
+                        },
                     },
                     {
                         "id": "thermometer_precise",
@@ -221,7 +301,12 @@ class GameSceneBuilder:
                         "position": [450, 300],
                         "size": [25, 80],
                         "image": "precise_thermometer.png",
-                        "physics_props": {"mass": 0.3, "friction": 0.8, "bounce_factor": 0.7, "rarity": "rare"},
+                        "physics_props": {
+                            "mass": 0.3,
+                            "friction": 0.8,
+                            "bounce_factor": 0.7,
+                            "rarity": "rare",
+                        },
                     },
                 ],
                 "interactive_zones": [
@@ -261,7 +346,12 @@ class GameSceneBuilder:
                         "position": [400, 450],
                         "size": [150, 100],
                         "image": "electrochemical_cell.png",
-                        "physics_props": {"mass": 2.5, "friction": 0.95, "bounce_factor": 0.4, "rarity": "epic"},
+                        "physics_props": {
+                            "mass": 2.5,
+                            "friction": 0.95,
+                            "bounce_factor": 0.4,
+                            "rarity": "epic",
+                        },
                     },
                     {
                         "id": "electrode_anode",
@@ -269,7 +359,12 @@ class GameSceneBuilder:
                         "position": [350, 400],
                         "size": [20, 80],
                         "image": "electrode.png",
-                        "physics_props": {"mass": 0.5, "friction": 0.8, "bounce_factor": 0.6, "rarity": "rare"},
+                        "physics_props": {
+                            "mass": 0.5,
+                            "friction": 0.8,
+                            "bounce_factor": 0.6,
+                            "rarity": "rare",
+                        },
                     },
                     {
                         "id": "electrode_cathode",
@@ -277,7 +372,12 @@ class GameSceneBuilder:
                         "position": [550, 400],
                         "size": [20, 80],
                         "image": "electrode.png",
-                        "physics_props": {"mass": 0.5, "friction": 0.8, "bounce_factor": 0.6, "rarity": "rare"},
+                        "physics_props": {
+                            "mass": 0.5,
+                            "friction": 0.8,
+                            "bounce_factor": 0.6,
+                            "rarity": "rare",
+                        },
                     },
                     {
                         "id": "power_supply",
@@ -285,7 +385,12 @@ class GameSceneBuilder:
                         "position": [200, 300],
                         "size": [100, 80],
                         "image": "power_supply.png",
-                        "physics_props": {"mass": 1.8, "friction": 0.9, "bounce_factor": 0.5, "rarity": "legendary"},
+                        "physics_props": {
+                            "mass": 1.8,
+                            "friction": 0.9,
+                            "bounce_factor": 0.5,
+                            "rarity": "legendary",
+                        },
                     },
                     {
                         "id": "electrolyte_solution",
@@ -293,7 +398,12 @@ class GameSceneBuilder:
                         "position": [100, 200],
                         "size": [80, 100],
                         "image": "electrolyte_bottle.png",
-                        "physics_props": {"mass": 0.8, "friction": 0.8, "bounce_factor": 0.7, "rarity": "uncommon"},
+                        "physics_props": {
+                            "mass": 0.8,
+                            "friction": 0.8,
+                            "bounce_factor": 0.7,
+                            "rarity": "uncommon",
+                        },
                     },
                     {
                         "id": "multimeter",
@@ -301,7 +411,12 @@ class GameSceneBuilder:
                         "position": [600, 200],
                         "size": [80, 60],
                         "image": "multimeter.png",
-                        "physics_props": {"mass": 0.7, "friction": 0.8, "bounce_factor": 0.6, "rarity": "rare"},
+                        "physics_props": {
+                            "mass": 0.7,
+                            "friction": 0.8,
+                            "bounce_factor": 0.6,
+                            "rarity": "rare",
+                        },
                     },
                 ],
                 "interactive_zones": [

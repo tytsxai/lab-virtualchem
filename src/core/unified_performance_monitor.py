@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 class MetricType(Enum):
     """指标类型"""
+
     CPU_USAGE = "cpu_usage"
     MEMORY_USAGE = "memory_usage"
     DISK_USAGE = "disk_usage"
@@ -42,6 +43,7 @@ class MetricType(Enum):
 @dataclass
 class PerformanceMetric:
     """性能指标"""
+
     name: str
     value: float
     timestamp: float
@@ -55,13 +57,14 @@ class PerformanceMetric:
             "value": self.value,
             "timestamp": self.timestamp,
             "unit": self.unit,
-            "tags": self.tags
+            "tags": self.tags,
         }
 
 
 @dataclass
 class PerformanceThreshold:
     """性能阈值"""
+
     metric_name: str
     threshold_value: float
     comparison: str  # "gt", "lt", "eq"
@@ -82,7 +85,9 @@ class PerformanceCollector:
         with self._lock:
             self._metrics[metric.name].append(metric)
 
-    def get_metric_history(self, metric_name: str, limit: int | None = None) -> list[PerformanceMetric]:
+    def get_metric_history(
+        self, metric_name: str, limit: int | None = None
+    ) -> list[PerformanceMetric]:
         """获取指标历史"""
         with self._lock:
             history = list(self._metrics[metric_name])
@@ -109,7 +114,7 @@ class PerformanceCollector:
                 "min": min(values),
                 "max": max(values),
                 "avg": sum(values) / len(values),
-                "latest": values[-1]
+                "latest": values[-1],
             }
 
     def clear_metrics(self, metric_name: str | None = None) -> None:
@@ -140,7 +145,9 @@ class PerformanceAnalyzer:
             if threshold.metric_name != metric.name:
                 continue
 
-            if self._compare_value(metric.value, threshold.threshold_value, threshold.comparison):
+            if self._compare_value(
+                metric.value, threshold.threshold_value, threshold.comparison
+            ):
                 triggered.append(threshold)
 
                 # 创建性能错误
@@ -152,8 +159,8 @@ class PerformanceAnalyzer:
                     details={
                         "comparison": threshold.comparison,
                         "severity": threshold.severity,
-                        "action": threshold.action
-                    }
+                        "action": threshold.action,
+                    },
                 )
 
                 self._error_handler.handle_error(perf_error)
@@ -197,31 +204,37 @@ class UnifiedPerformanceMonitor:
     def _setup_default_thresholds(self) -> None:
         """设置默认阈值"""
         # CPU使用率阈值
-        self._analyzer.add_threshold(PerformanceThreshold(
-            metric_name=MetricType.CPU_USAGE.value,
-            threshold_value=80.0,
-            comparison="gt",
-            severity="warning",
-            action="reduce_load"
-        ))
+        self._analyzer.add_threshold(
+            PerformanceThreshold(
+                metric_name=MetricType.CPU_USAGE.value,
+                threshold_value=80.0,
+                comparison="gt",
+                severity="warning",
+                action="reduce_load",
+            )
+        )
 
         # 内存使用率阈值
-        self._analyzer.add_threshold(PerformanceThreshold(
-            metric_name=MetricType.MEMORY_USAGE.value,
-            threshold_value=85.0,
-            comparison="gt",
-            severity="warning",
-            action="cleanup_memory"
-        ))
+        self._analyzer.add_threshold(
+            PerformanceThreshold(
+                metric_name=MetricType.MEMORY_USAGE.value,
+                threshold_value=85.0,
+                comparison="gt",
+                severity="warning",
+                action="cleanup_memory",
+            )
+        )
 
         # 帧率阈值
-        self._analyzer.add_threshold(PerformanceThreshold(
-            metric_name=MetricType.FPS.value,
-            threshold_value=30.0,
-            comparison="lt",
-            severity="warning",
-            action="optimize_rendering"
-        ))
+        self._analyzer.add_threshold(
+            PerformanceThreshold(
+                metric_name=MetricType.FPS.value,
+                threshold_value=30.0,
+                comparison="lt",
+                severity="warning",
+                action="optimize_rendering",
+            )
+        )
 
     def start_monitoring(self, interval: float = 1.0) -> None:
         """开始监控"""
@@ -230,9 +243,7 @@ class UnifiedPerformanceMonitor:
 
         self._monitoring = True
         self._monitor_thread = threading.Thread(
-            target=self._monitor_loop,
-            args=(interval,),
-            daemon=True
+            target=self._monitor_loop, args=(interval,), daemon=True
         )
         self._monitor_thread.start()
         logger.info("Performance monitoring started")
@@ -260,35 +271,42 @@ class UnifiedPerformanceMonitor:
 
         # CPU使用率
         cpu_percent = self._process.cpu_percent()
-        self._collector.collect_metric(PerformanceMetric(
-            name=MetricType.CPU_USAGE.value,
-            value=cpu_percent,
-            timestamp=current_time,
-            unit="%"
-        ))
+        self._collector.collect_metric(
+            PerformanceMetric(
+                name=MetricType.CPU_USAGE.value,
+                value=cpu_percent,
+                timestamp=current_time,
+                unit="%",
+            )
+        )
 
         # 内存使用率
         memory_info = self._process.memory_info()
         memory_percent = (memory_info.rss / (1024 * 1024 * 1024)) * 100  # GB
-        self._collector.collect_metric(PerformanceMetric(
-            name=MetricType.MEMORY_USAGE.value,
-            value=memory_percent,
-            timestamp=current_time,
-            unit="%"
-        ))
+        self._collector.collect_metric(
+            PerformanceMetric(
+                name=MetricType.MEMORY_USAGE.value,
+                value=memory_percent,
+                timestamp=current_time,
+                unit="%",
+            )
+        )
 
         # 磁盘使用率
-        disk_usage = psutil.disk_usage('/')
+        disk_usage = psutil.disk_usage("/")
         disk_percent = (disk_usage.used / disk_usage.total) * 100
-        self._collector.collect_metric(PerformanceMetric(
-            name=MetricType.DISK_USAGE.value,
-            value=disk_percent,
-            timestamp=current_time,
-            unit="%"
-        ))
+        self._collector.collect_metric(
+            PerformanceMetric(
+                name=MetricType.DISK_USAGE.value,
+                value=disk_percent,
+                timestamp=current_time,
+                unit="%",
+            )
+        )
 
     def measure_function(self, func_name: str | None = None):
         """函数性能测量装饰器"""
+
         def decorator(func: Callable) -> Callable:
             @wraps(func)
             def wrapper(*args, **kwargs):
@@ -300,14 +318,18 @@ class UnifiedPerformanceMonitor:
                     end_time = time.time()
                     duration = (end_time - start_time) * 1000  # 转换为毫秒
 
-                    self._collector.collect_metric(PerformanceMetric(
-                        name=MetricType.FUNCTION_TIME.value,
-                        value=duration,
-                        timestamp=end_time,
-                        unit="ms",
-                        tags={"function": func_name or func.__name__}
-                    ))
+                    self._collector.collect_metric(
+                        PerformanceMetric(
+                            name=MetricType.FUNCTION_TIME.value,
+                            value=duration,
+                            timestamp=end_time,
+                            unit="ms",
+                            tags={"function": func_name or func.__name__},
+                        )
+                    )
+
             return wrapper
+
         return decorator
 
     @contextmanager
@@ -320,40 +342,45 @@ class UnifiedPerformanceMonitor:
             end_time = time.time()
             duration = (end_time - start_time) * 1000  # 转换为毫秒
 
-            self._collector.collect_metric(PerformanceMetric(
-                name=MetricType.FUNCTION_TIME.value,
-                value=duration,
-                timestamp=end_time,
-                unit="ms",
-                tags={"context": context_name}
-            ))
+            self._collector.collect_metric(
+                PerformanceMetric(
+                    name=MetricType.FUNCTION_TIME.value,
+                    value=duration,
+                    timestamp=end_time,
+                    unit="ms",
+                    tags={"context": context_name},
+                )
+            )
 
     def record_fps(self, fps: float) -> None:
         """记录帧率"""
-        self._collector.collect_metric(PerformanceMetric(
-            name=MetricType.FPS.value,
-            value=fps,
-            timestamp=time.time(),
-            unit="fps"
-        ))
+        self._collector.collect_metric(
+            PerformanceMetric(
+                name=MetricType.FPS.value, value=fps, timestamp=time.time(), unit="fps"
+            )
+        )
 
     def record_frame_time(self, frame_time: float) -> None:
         """记录帧时间"""
-        self._collector.collect_metric(PerformanceMetric(
-            name=MetricType.FRAME_TIME.value,
-            value=frame_time,
-            timestamp=time.time(),
-            unit="ms"
-        ))
+        self._collector.collect_metric(
+            PerformanceMetric(
+                name=MetricType.FRAME_TIME.value,
+                value=frame_time,
+                timestamp=time.time(),
+                unit="ms",
+            )
+        )
 
     def record_render_time(self, render_time: float) -> None:
         """记录渲染时间"""
-        self._collector.collect_metric(PerformanceMetric(
-            name=MetricType.RENDER_TIME.value,
-            value=render_time,
-            timestamp=time.time(),
-            unit="ms"
-        ))
+        self._collector.collect_metric(
+            PerformanceMetric(
+                name=MetricType.RENDER_TIME.value,
+                value=render_time,
+                timestamp=time.time(),
+                unit="ms",
+            )
+        )
 
     def record_cache_hit(self) -> None:
         """记录缓存命中"""
@@ -370,14 +397,18 @@ class UnifiedPerformanceMonitor:
         total = self._cache_stats["hits"] + self._cache_stats["misses"]
         if total > 0:
             hit_rate = (self._cache_stats["hits"] / total) * 100
-            self._collector.collect_metric(PerformanceMetric(
-                name=MetricType.CACHE_HIT_RATE.value,
-                value=hit_rate,
-                timestamp=time.time(),
-                unit="%"
-            ))
+            self._collector.collect_metric(
+                PerformanceMetric(
+                    name=MetricType.CACHE_HIT_RATE.value,
+                    value=hit_rate,
+                    timestamp=time.time(),
+                    unit="%",
+                )
+            )
 
-    def get_metric_history(self, metric_name: str, limit: int | None = None) -> list[PerformanceMetric]:
+    def get_metric_history(
+        self, metric_name: str, limit: int | None = None
+    ) -> list[PerformanceMetric]:
         """获取指标历史"""
         return self._collector.get_metric_history(metric_name, limit)
 
@@ -391,7 +422,9 @@ class UnifiedPerformanceMonitor:
 
     def get_all_metrics(self) -> dict[str, list[PerformanceMetric]]:
         """获取所有指标"""
-        return {name: list(metrics) for name, metrics in self._collector._metrics.items()}
+        return {
+            name: list(metrics) for name, metrics in self._collector._metrics.items()
+        }
 
     def clear_metrics(self, metric_name: str | None = None) -> None:
         """清除指标"""
@@ -407,7 +440,7 @@ class UnifiedPerformanceMonitor:
             "timestamp": time.time(),
             "metrics": {},
             "thresholds": len(self._analyzer._thresholds),
-            "monitoring": self._monitoring
+            "monitoring": self._monitoring,
         }
 
         # 收集所有指标的统计信息

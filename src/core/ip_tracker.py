@@ -62,7 +62,9 @@ class IPTracker:
         # 加载可疑IP列表
         self._suspicious_ips = self._load_suspicious_ips()
 
-    def track_ip(self, license_key: str, device_id: str, ip_address: str | None = None) -> IPInfo:
+    def track_ip(
+        self, license_key: str, device_id: str, ip_address: str | None = None
+    ) -> IPInfo:
         """追踪IP地址
 
         Args:
@@ -95,7 +97,9 @@ class IPTracker:
 
         return ip_info
 
-    def get_ip_history(self, license_key: str | None = None, device_id: str | None = None) -> list[dict[str, Any]]:
+    def get_ip_history(
+        self, license_key: str | None = None, device_id: str | None = None
+    ) -> list[dict[str, Any]]:
         """获取IP历史记录
 
         Args:
@@ -166,9 +170,15 @@ class IPTracker:
         history = self.get_ip_history(license_key=license_key)
 
         unique_ips = {r["ip_info"]["ip_address"] for r in history}
-        countries = {r["ip_info"].get("country", "") for r in history if r["ip_info"].get("country")}
+        countries = {
+            r["ip_info"].get("country", "")
+            for r in history
+            if r["ip_info"].get("country")
+        }
 
-        suspicious_count = sum(1 for r in history if self._is_suspicious_ip(r["ip_info"]["ip_address"]))
+        suspicious_count = sum(
+            1 for r in history if self._is_suspicious_ip(r["ip_info"]["ip_address"])
+        )
 
         return {
             "license_key": license_key,
@@ -205,12 +215,19 @@ class IPTracker:
                     "type": "multiple_ips",
                     "severity": "high",
                     "message": f"最近20次连接使用了{len(unique_recent_ips)}个不同IP地址",
-                    "data": {"ip_count": len(unique_recent_ips), "ips": list(unique_recent_ips)},
+                    "data": {
+                        "ip_count": len(unique_recent_ips),
+                        "ips": list(unique_recent_ips),
+                    },
                 }
             )
 
         # 异常2: 来自多个国家
-        countries = {r["ip_info"].get("country", "") for r in history if r["ip_info"].get("country")}
+        countries = {
+            r["ip_info"].get("country", "")
+            for r in history
+            if r["ip_info"].get("country")
+        }
         if len(countries) > 3:
             anomalies.append(
                 {
@@ -222,7 +239,11 @@ class IPTracker:
             )
 
         # 异常3: 使用可疑IP
-        suspicious = [r["ip_info"]["ip_address"] for r in history if self._is_suspicious_ip(r["ip_info"]["ip_address"])]
+        suspicious = [
+            r["ip_info"]["ip_address"]
+            for r in history
+            if self._is_suspicious_ip(r["ip_info"]["ip_address"])
+        ]
         if suspicious:
             anomalies.append(
                 {
@@ -300,7 +321,9 @@ class IPTracker:
         """检查IP是否可疑"""
         return ip_address in self._suspicious_ips
 
-    def _record_ip_history(self, license_key: str, device_id: str, ip_info: IPInfo) -> None:
+    def _record_ip_history(
+        self, license_key: str, device_id: str, ip_info: IPInfo
+    ) -> None:
         """记录IP历史"""
         record = {
             "timestamp": datetime.now().isoformat(),

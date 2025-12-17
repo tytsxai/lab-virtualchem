@@ -569,11 +569,15 @@ class ModernTheme:
         palette.setColor(QPalette.ColorRole.Text, QColor(colors["text_primary"]))
         palette.setColor(QPalette.ColorRole.BrightText, QColor(colors["text_primary"]))
         palette.setColor(QPalette.ColorRole.ButtonText, QColor(colors["text_primary"]))
-        palette.setColor(QPalette.ColorRole.PlaceholderText, QColor(colors["text_hint"]))
+        palette.setColor(
+            QPalette.ColorRole.PlaceholderText, QColor(colors["text_hint"])
+        )
 
         # 高亮
         palette.setColor(QPalette.ColorRole.Highlight, QColor(colors["selected"]))
-        palette.setColor(QPalette.ColorRole.HighlightedText, QColor(colors["text_primary"]))
+        palette.setColor(
+            QPalette.ColorRole.HighlightedText, QColor(colors["text_primary"])
+        )
 
         # 按钮
         palette.setColor(QPalette.ColorRole.Button, QColor(colors["surface"]))

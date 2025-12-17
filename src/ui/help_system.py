@@ -465,7 +465,9 @@ class HelpDialog(QDialog):
             score += 0.6
 
         # 关键词匹配
-        keyword_matches = sum(1 for keyword in topic.keywords if search_text in keyword.lower())
+        keyword_matches = sum(
+            1 for keyword in topic.keywords if search_text in keyword.lower()
+        )
         if keyword_matches > 0:
             score += 0.4 * keyword_matches / len(topic.keywords)
 
@@ -616,7 +618,10 @@ class HelpDialog(QDialog):
                 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
                 filename, _ = QFileDialog.getSaveFileName(
-                    self, "保存帮助内容", f"{self.current_topic.title}.txt", "文本文件 (*.txt)"
+                    self,
+                    "保存帮助内容",
+                    f"{self.current_topic.title}.txt",
+                    "文本文件 (*.txt)",
                 )
 
                 if filename:
@@ -627,10 +632,14 @@ class HelpDialog(QDialog):
                             f.write(self.current_topic.content)
 
                         logger.info(f"帮助内容已保存到: {filename}")
-                        QMessageBox.information(self, "保存完成", f"内容已保存到:\n{filename}")
+                        QMessageBox.information(
+                            self, "保存完成", f"内容已保存到:\n{filename}"
+                        )
                     except Exception as e:
                         logger.error(f"保存文件失败: {e}")
-                        QMessageBox.warning(self, "保存失败", f"保存文件时发生错误:\n{e}")
+                        QMessageBox.warning(
+                            self, "保存失败", f"保存文件时发生错误:\n{e}"
+                        )
 
             except Exception as e:
                 logger.error(f"打印功能失败: {e}")
@@ -706,7 +715,9 @@ class HelpManager:
             "tutorial_dialog": "tutorial",
         }
 
-    def show_help(self, context: str | None = None, parent: QWidget | None = None) -> None:
+    def show_help(
+        self, context: str | None = None, parent: QWidget | None = None
+    ) -> None:
         """显示帮助"""
         if self.help_dialog is None:
             self.help_dialog = HelpDialog(parent)

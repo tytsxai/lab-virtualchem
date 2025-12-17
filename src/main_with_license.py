@@ -53,7 +53,9 @@ def check_license() -> bool:
 
             with open(config_file, encoding="utf-8") as f:
                 config = json.load(f)
-                secret_key = config.get("license", {}).get("secret_key", "default_secret_key")
+                secret_key = config.get("license", {}).get(
+                    "secret_key", "default_secret_key"
+                )
                 strict_mode = config.get("license", {}).get("strict_mode", False)
                 trial_days = config.get("license", {}).get("trial_days", 7)
         else:
@@ -67,7 +69,11 @@ def check_license() -> bool:
         license_manager = LicenseManager(secret_key, license_file)
 
         # 创建中间件
-        middleware = LicenseMiddleware(license_manager=license_manager, strict_mode=strict_mode, trial_days=trial_days)
+        middleware = LicenseMiddleware(
+            license_manager=license_manager,
+            strict_mode=strict_mode,
+            trial_days=trial_days,
+        )
 
         # 执行验证
         async def verify():
@@ -100,7 +106,9 @@ def check_license() -> bool:
                 logger.warning("=" * 60)
                 logger.info("")
                 logger.info("💡 购买完整版许可证:")
-                logger.info("   1. 获取机器ID: python tools/license_generator.py machine-id")
+                logger.info(
+                    "   1. 获取机器ID: python tools/license_generator.py machine-id"
+                )
                 logger.info("   2. 访问: https://virtualchemlab.com")
                 logger.info("   3. 支持: BTC, ETH, USDT, TRX 等加密货币支付")
                 logger.info("=" * 60)
@@ -127,7 +135,9 @@ def check_license() -> bool:
         logger.info("      Telegram: @VirtualChemLabSupport")
         logger.info("")
         logger.info("   4. 激活许可证:")
-        logger.info("      python tools/license_generator.py activate data/license.json")
+        logger.info(
+            "      python tools/license_generator.py activate data/license.json"
+        )
         logger.info("=" * 60)
 
         return False
@@ -209,7 +219,9 @@ def main() -> int:
                 import ctypes
 
                 app_user_model_id = f"VirtualChemLab.Licensed.{APP_VERSION}"
-                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_user_model_id)
+                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+                    app_user_model_id
+                )
             except Exception:
                 pass
 

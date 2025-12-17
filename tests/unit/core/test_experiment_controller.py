@@ -51,7 +51,9 @@ def test_init_rejects_template_without_steps():
     empty_template = EmptyAllowedTemplate(id="empty-exp", title="Empty", steps=[])
 
     with pytest.raises(ValueError):
-        ExperimentController(template=empty_template, user_id="student", enable_monitoring=False)
+        ExperimentController(
+            template=empty_template, user_id="student", enable_monitoring=False
+        )
 
 
 def test_pause_and_resume_state_flow(simple_template):
@@ -157,7 +159,9 @@ def test_monitoring_stubs_capture_signals(simple_template):
         step_record.passed = True
     controller.complete_experiment()
 
-    assert any(item["name"] == "experiment.initialized" for item in monitor.apm.counters)
+    assert any(
+        item["name"] == "experiment.initialized" for item in monitor.apm.counters
+    )
     assert any(gauge["name"] == "experiment.active" for gauge in monitor.apm.gauges)
     assert trace_manager.started
     assert trace_manager.finished

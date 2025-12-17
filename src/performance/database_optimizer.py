@@ -80,7 +80,11 @@ class QueryAnalyzer:
         logger.info("查询分析器已初始化")
 
     def record_query(
-        self, query: str, execution_time: float, rows_affected: int = 0, parameters: tuple[Any, ...] | None = None
+        self,
+        query: str,
+        execution_time: float,
+        rows_affected: int = 0,
+        parameters: tuple[Any, ...] | None = None,
     ) -> None:
         """记录查询统计
 
@@ -173,7 +177,9 @@ class QueryAnalyzer:
         Returns:
             慢查询列表
         """
-        return sorted(self.slow_queries, key=lambda x: x.execution_time, reverse=True)[:limit]
+        return sorted(self.slow_queries, key=lambda x: x.execution_time, reverse=True)[
+            :limit
+        ]
 
     def get_query_patterns(self, limit: int = 10) -> dict[str, dict[str, Any]]:
         """获取查询模式统计
@@ -201,7 +207,9 @@ class QueryAnalyzer:
                 }
 
         # 按总时间排序
-        sorted_patterns = sorted(patterns.items(), key=lambda x: x[1]["total_time"], reverse=True)
+        sorted_patterns = sorted(
+            patterns.items(), key=lambda x: x[1]["total_time"], reverse=True
+        )
         return dict(sorted_patterns[:limit])
 
     def get_performance_summary(self) -> dict[str, Any]:
@@ -219,7 +227,9 @@ class QueryAnalyzer:
         max_time = max(s.execution_time for s in self.query_stats)
 
         # 按查询类型统计
-        type_stats: dict[str, dict[str, Any]] = defaultdict(lambda: {"count": 0, "total_time": 0.0})
+        type_stats: dict[str, dict[str, Any]] = defaultdict(
+            lambda: {"count": 0, "total_time": 0.0}
+        )
         for stats in self.query_stats:
             type_stats[stats.query_type.value]["count"] += 1
             type_stats[stats.query_type.value]["total_time"] += stats.execution_time
@@ -230,7 +240,9 @@ class QueryAnalyzer:
             "avg_time": avg_time,
             "max_time": max_time,
             "slow_queries_count": len(self.slow_queries),
-            "slow_query_rate": len(self.slow_queries) / total_queries if total_queries > 0 else 0.0,
+            "slow_query_rate": len(self.slow_queries) / total_queries
+            if total_queries > 0
+            else 0.0,
             "query_types": dict(type_stats),
             "patterns_count": len(self.query_patterns),
         }
@@ -317,7 +329,11 @@ class IndexManager:
 
             # 提取索引名
             name_match = re.search(r"INDEX\s+(\w+)", sql)
-            name = name_match.group(1) if name_match else f"idx_{table}_{'_'.join(columns)}"
+            name = (
+                name_match.group(1)
+                if name_match
+                else f"idx_{table}_{'_'.join(columns)}"
+            )
 
             return IndexInfo(
                 name=name,
@@ -335,7 +351,11 @@ class IndexManager:
             return None
 
     def create_index(
-        self, table: str, columns: list[str], index_type: IndexType = IndexType.INDEX, name: str | None = None
+        self,
+        table: str,
+        columns: list[str],
+        index_type: IndexType = IndexType.INDEX,
+        name: str | None = None,
     ) -> bool:
         """创建索引
 
@@ -357,7 +377,9 @@ class IndexManager:
                 if index_type == IndexType.PRIMARY:
                     sql = f"CREATE PRIMARY KEY ({', '.join(columns)})"
                 elif index_type == IndexType.UNIQUE:
-                    sql = f"CREATE UNIQUE INDEX {name} ON {table} ({', '.join(columns)})"
+                    sql = (
+                        f"CREATE UNIQUE INDEX {name} ON {table} ({', '.join(columns)})"
+                    )
                 else:
                     sql = f"CREATE INDEX {name} ON {table} ({', '.join(columns)})"
 
@@ -504,7 +526,9 @@ class IndexManager:
 class ConnectionPool:
     """连接池"""
 
-    def __init__(self, db_path: str, max_connections: int = 10, min_connections: int = 2):
+    def __init__(
+        self, db_path: str, max_connections: int = 10, min_connections: int = 2
+    ):
         """初始化连接池
 
         Args:
@@ -653,7 +677,9 @@ class DatabaseOptimizer:
 
         self._optimization_task = asyncio.create_task(optimize_loop())
 
-    def execute_query(self, query: str, parameters: tuple[Any, ...] | None = None) -> Any:
+    def execute_query(
+        self, query: str, parameters: tuple[Any, ...] | None = None
+    ) -> Any:
         """执行查询
 
         Args:
@@ -689,7 +715,9 @@ class DatabaseOptimizer:
 
             # 记录查询统计
             execution_time = time.time() - start_time
-            self.query_analyzer.record_query(query, execution_time, cursor.rowcount, parameters)
+            self.query_analyzer.record_query(
+                query, execution_time, cursor.rowcount, parameters
+            )
 
             return result
 
@@ -717,7 +745,9 @@ class DatabaseOptimizer:
             if slow_queries:
                 logger.warning(f"发现 {len(slow_queries)} 个慢查询")
                 for query in slow_queries[:5]:  # 显示前5个
-                    logger.warning(f"慢查询: {query.query} - {query.execution_time:.3f}s")
+                    logger.warning(
+                        f"慢查询: {query.query} - {query.execution_time:.3f}s"
+                    )
 
             # 3. 分析索引
             index_analysis = self.index_manager.analyze_indexes()
@@ -745,7 +775,11 @@ class DatabaseOptimizer:
         return {
             "performance": self.query_analyzer.get_performance_summary(),
             "slow_queries": [
-                {"query": q.query, "execution_time": q.execution_time, "timestamp": q.timestamp.isoformat()}
+                {
+                    "query": q.query,
+                    "execution_time": q.execution_time,
+                    "timestamp": q.timestamp.isoformat(),
+                }
                 for q in self.query_analyzer.get_slow_queries()
             ],
             "query_patterns": self.query_analyzer.get_query_patterns(),

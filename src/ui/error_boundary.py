@@ -69,7 +69,9 @@ class ErrorBoundary(QWidget):
         error_msg = str(error)
         stack_trace = traceback.format_exc()
 
-        self.error_info = f"错误: {error_msg}\n\n上下文: {context}\n\n堆栈:\n{stack_trace}"
+        self.error_info = (
+            f"错误: {error_msg}\n\n上下文: {context}\n\n堆栈:\n{stack_trace}"
+        )
 
         logger.error(f"错误边界捕获错误 [{context}]: {error_msg}\n{stack_trace}")
 
@@ -250,17 +252,25 @@ class SafeWidget(QWidget):
         self._error_boundary = boundary
 
 
-def with_error_boundary(widget_class: type, fallback_widget: QWidget | None = None, on_error: Callable | None = None):
+def with_error_boundary(
+    widget_class: type,
+    fallback_widget: QWidget | None = None,
+    on_error: Callable | None = None,
+):
     """错误边界装饰器（类工厂）"""
 
     def wrapper(*args, **kwargs):
         try:
             widget = widget_class(*args, **kwargs)
-            boundary = ErrorBoundary(child_widget=widget, fallback_widget=fallback_widget, on_error=on_error)
+            boundary = ErrorBoundary(
+                child_widget=widget, fallback_widget=fallback_widget, on_error=on_error
+            )
             return boundary
         except Exception as e:
             logger.error(f"创建组件失败: {widget_class.__name__}", exc_info=True)
-            boundary = ErrorBoundary(child_widget=None, fallback_widget=fallback_widget, on_error=on_error)
+            boundary = ErrorBoundary(
+                child_widget=None, fallback_widget=fallback_widget, on_error=on_error
+            )
             boundary.catch_error(e, f"创建{widget_class.__name__}")
             return boundary
 

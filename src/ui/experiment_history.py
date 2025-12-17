@@ -62,7 +62,11 @@ class ExperimentHistory:
         self.max_actions = 1000  # 最多保存1000条记录
 
     def record_drag(
-        self, item_id: str, from_pos: tuple[float, float], to_pos: tuple[float, float], step_id: str | None = None
+        self,
+        item_id: str,
+        from_pos: tuple[float, float],
+        to_pos: tuple[float, float],
+        step_id: str | None = None,
     ) -> None:
         """记录拖拽操作"""
         action = ExperimentAction(
@@ -74,7 +78,11 @@ class ExperimentHistory:
         logger.debug(f"记录拖拽: {item_id} {from_pos} -> {to_pos}")
 
     def record_drop(
-        self, item_id: str, zone_id: str, position: tuple[float, float], step_id: str | None = None
+        self,
+        item_id: str,
+        zone_id: str,
+        position: tuple[float, float],
+        step_id: str | None = None,
     ) -> None:
         """记录放置操作"""
         action = ExperimentAction(
@@ -86,7 +94,10 @@ class ExperimentHistory:
         logger.debug(f"记录放置: {item_id} -> {zone_id}")
 
     def record_click(
-        self, item_id: str, position: tuple[float, float] | None = None, step_id: str | None = None
+        self,
+        item_id: str,
+        position: tuple[float, float] | None = None,
+        step_id: str | None = None,
     ) -> None:
         """记录点击操作"""
         action = ExperimentAction(
@@ -97,7 +108,9 @@ class ExperimentHistory:
         self._add_action(action)
         logger.debug(f"记录点击: {item_id}")
 
-    def record_input(self, field_name: str, value: Any, step_id: str | None = None) -> None:
+    def record_input(
+        self, field_name: str, value: Any, step_id: str | None = None
+    ) -> None:
         """记录输入操作"""
         action = ExperimentAction(
             ActionType.INPUT,
@@ -107,7 +120,9 @@ class ExperimentHistory:
         self._add_action(action)
         logger.debug(f"记录输入: {field_name} = {value}")
 
-    def record_select(self, option_id: str, selected: bool, step_id: str | None = None) -> None:
+    def record_select(
+        self, option_id: str, selected: bool, step_id: str | None = None
+    ) -> None:
         """记录选择操作"""
         action = ExperimentAction(
             ActionType.SELECT,
@@ -158,7 +173,10 @@ class ExperimentHistory:
 
     def get_action_sequence(self) -> list[str]:
         """获取操作序列（用于序列验证）"""
-        return [f"{a.action_type.value}:{a.details.get('item_id', '')}" for a in self.actions]
+        return [
+            f"{a.action_type.value}:{a.details.get('item_id', '')}"
+            for a in self.actions
+        ]
 
     def get_click_counts(self) -> dict[str, int]:
         """获取所有物品的点击次数"""
@@ -201,13 +219,17 @@ class ExperimentHistory:
 
         duration = 0
         if len(self.actions) >= 2:
-            duration = int((self.actions[-1].timestamp - self.actions[0].timestamp).total_seconds())
+            duration = int(
+                (self.actions[-1].timestamp - self.actions[0].timestamp).total_seconds()
+            )
 
         return {
             "total_actions": len(self.actions),
             "by_type": by_type,
             "duration": duration,
-            "actions_per_minute": len(self.actions) / (duration / 60) if duration > 0 else 0,
+            "actions_per_minute": len(self.actions) / (duration / 60)
+            if duration > 0
+            else 0,
         }
 
     def export_to_list(self) -> list[dict[str, Any]]:

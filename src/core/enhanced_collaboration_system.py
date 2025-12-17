@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class CollaborationRole(Enum):
     """协作角色"""
+
     OWNER = "owner"
     ADMIN = "admin"
     MODERATOR = "moderator"
@@ -27,6 +28,7 @@ class CollaborationRole(Enum):
 
 class SessionStatus(Enum):
     """会话状态"""
+
     ACTIVE = "active"
     PAUSED = "paused"
     ENDED = "ended"
@@ -35,6 +37,7 @@ class SessionStatus(Enum):
 
 class CollaborationType(Enum):
     """协作类型"""
+
     EXPERIMENT = "experiment"
     STUDY_GROUP = "study_group"
     PROJECT = "project"
@@ -44,6 +47,7 @@ class CollaborationType(Enum):
 @dataclass
 class User:
     """用户信息"""
+
     user_id: str
     username: str
     email: str
@@ -56,6 +60,7 @@ class User:
 @dataclass
 class CollaborationMember:
     """协作成员"""
+
     user: User
     role: CollaborationRole
     joined_at: datetime
@@ -66,6 +71,7 @@ class CollaborationMember:
 @dataclass
 class CollaborationSession:
     """协作会话"""
+
     session_id: str
     name: str
     description: str
@@ -84,6 +90,7 @@ class CollaborationSession:
 @dataclass
 class CollaborationMessage:
     """协作消息"""
+
     message_id: str
     session_id: str
     sender_id: str
@@ -98,6 +105,7 @@ class CollaborationMessage:
 @dataclass
 class SharedResource:
     """共享资源"""
+
     resource_id: str
     session_id: str
     name: str
@@ -125,22 +133,34 @@ class EnhancedCollaborationSystem:
         # 权限系统
         self.role_permissions = {
             CollaborationRole.OWNER: {
-                "manage_session", "invite_members", "remove_members", "edit_settings",
-                "share_resources", "manage_resources", "moderate_chat", "end_session"
+                "manage_session",
+                "invite_members",
+                "remove_members",
+                "edit_settings",
+                "share_resources",
+                "manage_resources",
+                "moderate_chat",
+                "end_session",
             },
             CollaborationRole.ADMIN: {
-                "invite_members", "remove_members", "edit_settings", "share_resources",
-                "manage_resources", "moderate_chat"
+                "invite_members",
+                "remove_members",
+                "edit_settings",
+                "share_resources",
+                "manage_resources",
+                "moderate_chat",
             },
             CollaborationRole.MODERATOR: {
-                "moderate_chat", "share_resources", "manage_resources"
+                "moderate_chat",
+                "share_resources",
+                "manage_resources",
             },
             CollaborationRole.MEMBER: {
-                "share_resources", "send_messages", "view_resources"
+                "share_resources",
+                "send_messages",
+                "view_resources",
             },
-            CollaborationRole.OBSERVER: {
-                "view_resources", "send_messages"
-            }
+            CollaborationRole.OBSERVER: {"view_resources", "send_messages"},
         }
 
         # 初始化系统
@@ -153,14 +173,16 @@ class EnhancedCollaborationSystem:
     @enhance_robustness(
         operation_name="create_collaboration_session",
         security_level="medium",
-        enable_caching=True
+        enable_caching=True,
     )
-    @validate_input(validation_rules={
-        "name": {"type": str, "required": True},
-        "description": {"type": str, "required": True},
-        "type": {"type": str, "required": True},
-        "owner_id": {"type": str, "required": True}
-    })
+    @validate_input(
+        validation_rules={
+            "name": {"type": str, "required": True},
+            "description": {"type": str, "required": True},
+            "type": {"type": str, "required": True},
+            "owner_id": {"type": str, "required": True},
+        }
+    )
     @log_operation(operation_name="create_session")
     def create_collaboration_session(
         self,
@@ -168,7 +190,7 @@ class EnhancedCollaborationSystem:
         description: str,
         collaboration_type: str,
         owner_id: str,
-        settings: dict[str, Any] | None = None
+        settings: dict[str, Any] | None = None,
     ) -> CollaborationSession:
         """创建协作会话"""
         session_id = f"session_{uuid.uuid4().hex[:8]}"
@@ -187,7 +209,7 @@ class EnhancedCollaborationSystem:
             owner_id=owner_id,
             created_at=datetime.now(),
             status=SessionStatus.ACTIVE,
-            settings=settings or {}
+            settings=settings or {},
         )
 
         # 添加创建者为所有者
@@ -195,7 +217,7 @@ class EnhancedCollaborationSystem:
             user=User(user_id=owner_id, username=f"user_{owner_id}", email=""),
             role=CollaborationRole.OWNER,
             joined_at=datetime.now(),
-            permissions=self.role_permissions[CollaborationRole.OWNER]
+            permissions=self.role_permissions[CollaborationRole.OWNER],
         )
         session.members.append(owner_member)
 
@@ -210,11 +232,7 @@ class EnhancedCollaborationSystem:
         self.user_sessions[owner_id].add(session_id)
 
         # 记录系统消息
-        self._add_system_message(
-            session_id,
-            f"会话 '{name}' 已创建",
-            "system"
-        )
+        self._add_system_message(session_id, f"会话 '{name}' 已创建", "system")
 
         logger.info(f"协作会话已创建: {session_id} - {name}")
         return session
@@ -222,7 +240,7 @@ class EnhancedCollaborationSystem:
     @enhance_robustness(
         operation_name="invite_user_to_session",
         security_level="medium",
-        enable_caching=False
+        enable_caching=False,
     )
     @log_operation(operation_name="invite_user")
     def invite_user_to_session(
@@ -232,7 +250,7 @@ class EnhancedCollaborationSystem:
         user_id: str,
         username: str,
         email: str,
-        role: str = "member"
+        role: str = "member",
     ) -> bool:
         """邀请用户加入会话"""
         if session_id not in self.sessions:
@@ -263,17 +281,13 @@ class EnhancedCollaborationSystem:
             member_role = CollaborationRole.MEMBER
 
         # 创建新成员
-        new_user = User(
-            user_id=user_id,
-            username=username,
-            email=email
-        )
+        new_user = User(user_id=user_id, username=username, email=email)
 
         new_member = CollaborationMember(
             user=new_user,
             role=member_role,
             joined_at=datetime.now(),
-            permissions=self.role_permissions[member_role]
+            permissions=self.role_permissions[member_role],
         )
 
         # 添加成员
@@ -286,19 +300,13 @@ class EnhancedCollaborationSystem:
         self.user_sessions[user_id].add(session_id)
 
         # 记录系统消息
-        self._add_system_message(
-            session_id,
-            f"{username} 已加入会话",
-            "system"
-        )
+        self._add_system_message(session_id, f"{username} 已加入会话", "system")
 
         logger.info(f"用户 {user_id} 已加入会话 {session_id}")
         return True
 
     @enhance_robustness(
-        operation_name="send_message",
-        security_level="low",
-        enable_caching=False
+        operation_name="send_message", security_level="low", enable_caching=False
     )
     @log_operation(operation_name="send_message")
     def send_message(
@@ -307,7 +315,7 @@ class EnhancedCollaborationSystem:
         sender_id: str,
         content: str,
         message_type: str = "text",
-        attachments: list[dict[str, Any]] | None = None
+        attachments: list[dict[str, Any]] | None = None,
     ) -> CollaborationMessage | None:
         """发送消息"""
         if session_id not in self.sessions:
@@ -326,7 +334,7 @@ class EnhancedCollaborationSystem:
             sender_id=sender_id,
             content=content,
             message_type=message_type,
-            attachments=attachments or []
+            attachments=attachments or [],
         )
 
         # 保存消息
@@ -344,9 +352,7 @@ class EnhancedCollaborationSystem:
         return message
 
     @enhance_robustness(
-        operation_name="share_resource",
-        security_level="medium",
-        enable_caching=False
+        operation_name="share_resource", security_level="medium", enable_caching=False
     )
     @log_operation(operation_name="share_resource")
     def share_resource(
@@ -357,7 +363,7 @@ class EnhancedCollaborationSystem:
         resource_type: str,
         url: str = "",
         size: int = 0,
-        permissions: dict[str, list[str]] | None = None
+        permissions: dict[str, list[str]] | None = None,
     ) -> SharedResource | None:
         """共享资源"""
         if session_id not in self.sessions:
@@ -379,7 +385,7 @@ class EnhancedCollaborationSystem:
             created_at=datetime.now(),
             size=size,
             url=url,
-            permissions=permissions or {}
+            permissions=permissions or {},
         )
 
         # 保存资源
@@ -391,26 +397,16 @@ class EnhancedCollaborationSystem:
         self.sessions[session_id].last_activity = datetime.now()
 
         # 记录系统消息
-        self._add_system_message(
-            session_id,
-            f"资源 '{name}' 已共享",
-            "system"
-        )
+        self._add_system_message(session_id, f"资源 '{name}' 已共享", "system")
 
         logger.info(f"资源已共享: {resource.resource_id}")
         return resource
 
     @enhance_robustness(
-        operation_name="get_session_messages",
-        security_level="low",
-        enable_caching=True
+        operation_name="get_session_messages", security_level="low", enable_caching=True
     )
     def get_session_messages(
-        self,
-        session_id: str,
-        user_id: str,
-        limit: int = 50,
-        offset: int = 0
+        self, session_id: str, user_id: str, limit: int = 50, offset: int = 0
     ) -> list[CollaborationMessage]:
         """获取会话消息"""
         if session_id not in self.sessions:
@@ -432,13 +428,10 @@ class EnhancedCollaborationSystem:
     @enhance_robustness(
         operation_name="get_session_resources",
         security_level="low",
-        enable_caching=True
+        enable_caching=True,
     )
     def get_session_resources(
-        self,
-        session_id: str,
-        user_id: str,
-        resource_type: str | None = None
+        self, session_id: str, user_id: str, resource_type: str | None = None
     ) -> list[SharedResource]:
         """获取会话资源"""
         if session_id not in self.sessions:
@@ -457,9 +450,7 @@ class EnhancedCollaborationSystem:
         return resources
 
     @enhance_robustness(
-        operation_name="get_user_sessions",
-        security_level="low",
-        enable_caching=True
+        operation_name="get_user_sessions", security_level="low", enable_caching=True
     )
     def get_user_sessions(self, user_id: str) -> list[CollaborationSession]:
         """获取用户的会话列表"""
@@ -479,9 +470,7 @@ class EnhancedCollaborationSystem:
         return sessions
 
     @enhance_robustness(
-        operation_name="update_user_status",
-        security_level="low",
-        enable_caching=False
+        operation_name="update_user_status", security_level="low", enable_caching=False
     )
     @log_operation(operation_name="update_status")
     def update_user_status(self, user_id: str, status: str) -> bool:
@@ -502,7 +491,7 @@ class EnhancedCollaborationSystem:
     @enhance_robustness(
         operation_name="get_session_analytics",
         security_level="low",
-        enable_caching=True
+        enable_caching=True,
     )
     def get_session_analytics(self, session_id: str, user_id: str) -> dict[str, Any]:
         """获取会话分析"""
@@ -549,22 +538,17 @@ class EnhancedCollaborationSystem:
                 "status": session.status.value,
                 "created_at": session.created_at.isoformat(),
                 "last_activity": session.last_activity.isoformat(),
-                "member_count": len(session.members)
+                "member_count": len(session.members),
             },
             "message_stats": message_stats,
             "user_activity": user_activity,
             "resource_stats": resource_stats,
             "total_messages": len(messages),
             "total_resources": len(resources),
-            "active_members": len([m for m in session.members if m.is_active])
+            "active_members": len([m for m in session.members if m.is_active]),
         }
 
-    def _has_permission(
-        self,
-        session_id: str,
-        user_id: str,
-        permission: str
-    ) -> bool:
+    def _has_permission(self, session_id: str, user_id: str, permission: str) -> bool:
         """检查用户权限"""
         if session_id not in self.sessions:
             return False
@@ -586,10 +570,7 @@ class EnhancedCollaborationSystem:
         return any(member.user.user_id == user_id for member in session.members)
 
     def _add_system_message(
-        self,
-        session_id: str,
-        content: str,
-        message_type: str = "system"
+        self, session_id: str, content: str, message_type: str = "system"
     ) -> None:
         """添加系统消息"""
         message = CollaborationMessage(
@@ -597,7 +578,7 @@ class EnhancedCollaborationSystem:
             session_id=session_id,
             sender_id="system",
             content=content,
-            message_type=message_type
+            message_type=message_type,
         )
 
         if session_id not in self.messages:
@@ -605,15 +586,10 @@ class EnhancedCollaborationSystem:
         self.messages[session_id].append(message)
 
     @enhance_robustness(
-        operation_name="search_sessions",
-        security_level="low",
-        enable_caching=True
+        operation_name="search_sessions", security_level="low", enable_caching=True
     )
     def search_sessions(
-        self,
-        query: str,
-        user_id: str,
-        session_type: str | None = None
+        self, query: str, user_id: str, session_type: str | None = None
     ) -> list[CollaborationSession]:
         """搜索会话"""
         user_session_ids = self.user_sessions.get(user_id, set())
@@ -630,9 +606,11 @@ class EnhancedCollaborationSystem:
                 continue
 
             # 检查查询匹配
-            if (query.lower() in session.name.lower() or
-                query.lower() in session.description.lower() or
-                any(query.lower() in tag.lower() for tag in session.tags)):
+            if (
+                query.lower() in session.name.lower()
+                or query.lower() in session.description.lower()
+                or any(query.lower() in tag.lower() for tag in session.tags)
+            ):
                 matching_sessions.append(session)
 
         # 按相关性排序（简单实现）

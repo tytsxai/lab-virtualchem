@@ -46,19 +46,25 @@ class MenuComponent(BaseWindowComponent):
         # 新建实验
         new_action = QAction("新建实验(&N)", self)
         new_action.setShortcut("Ctrl+N")
-        new_action.triggered.connect(lambda: self.action_triggered.emit("new_experiment"))
+        new_action.triggered.connect(
+            lambda: self.action_triggered.emit("new_experiment")
+        )
         self._add_action("new_experiment", new_action, file_menu)
 
         # 打开实验
         open_action = QAction("打开实验(&O)", self)
         open_action.setShortcut("Ctrl+O")
-        open_action.triggered.connect(lambda: self.action_triggered.emit("open_experiment"))
+        open_action.triggered.connect(
+            lambda: self.action_triggered.emit("open_experiment")
+        )
         self._add_action("open_experiment", open_action, file_menu)
 
         # 保存实验
         save_action = QAction("保存实验(&S)", self)
         save_action.setShortcut("Ctrl+S")
-        save_action.triggered.connect(lambda: self.action_triggered.emit("save_experiment"))
+        save_action.triggered.connect(
+            lambda: self.action_triggered.emit("save_experiment")
+        )
         self._add_action("save_experiment", save_action, file_menu)
 
         # 分隔符
@@ -106,13 +112,17 @@ class MenuComponent(BaseWindowComponent):
         # 运行实验
         run_action = QAction("运行实验(&R)", self)
         run_action.setShortcut("F5")
-        run_action.triggered.connect(lambda: self.action_triggered.emit("run_experiment"))
+        run_action.triggered.connect(
+            lambda: self.action_triggered.emit("run_experiment")
+        )
         self._add_action("run_experiment", run_action, experiment_menu)
 
         # 停止实验
         stop_action = QAction("停止实验(&S)", self)
         stop_action.setShortcut("F6")
-        stop_action.triggered.connect(lambda: self.action_triggered.emit("stop_experiment"))
+        stop_action.triggered.connect(
+            lambda: self.action_triggered.emit("stop_experiment")
+        )
         self._add_action("stop_experiment", stop_action, experiment_menu)
 
         # 分隔符
@@ -120,7 +130,9 @@ class MenuComponent(BaseWindowComponent):
 
         # 实验设置
         settings_action = QAction("实验设置(&S)", self)
-        settings_action.triggered.connect(lambda: self.action_triggered.emit("experiment_settings"))
+        settings_action.triggered.connect(
+            lambda: self.action_triggered.emit("experiment_settings")
+        )
         self._add_action("experiment_settings", settings_action, experiment_menu)
 
         # 工具菜单
@@ -128,7 +140,9 @@ class MenuComponent(BaseWindowComponent):
 
         # 设置
         settings_action = QAction("设置(&S)", self)
-        settings_action.triggered.connect(lambda: self.action_triggered.emit("settings"))
+        settings_action.triggered.connect(
+            lambda: self.action_triggered.emit("settings")
+        )
         self._add_action("settings", settings_action, tools_menu)
 
         # 分隔符
@@ -137,7 +151,9 @@ class MenuComponent(BaseWindowComponent):
         # 开发者工具
         dev_tools_action = QAction("开发者工具(&D)", self)
         dev_tools_action.setShortcut("F12")
-        dev_tools_action.triggered.connect(lambda: self.action_triggered.emit("dev_tools"))
+        dev_tools_action.triggered.connect(
+            lambda: self.action_triggered.emit("dev_tools")
+        )
         self._add_action("dev_tools", dev_tools_action, tools_menu)
 
         # 帮助菜单
@@ -160,7 +176,9 @@ class MenuComponent(BaseWindowComponent):
     def _add_menu(self, name: str, title: str) -> QMenu:
         """添加菜单"""
         if self._menubar is None:
-            raise UIError("MenuBar not initialized", widget="MenuComponent", action="add_menu")
+            raise UIError(
+                "MenuBar not initialized", widget="MenuComponent", action="add_menu"
+            )
 
         menu = QMenu(title, self)
         self._menus[name] = menu
@@ -178,10 +196,16 @@ class MenuComponent(BaseWindowComponent):
         """添加菜单"""
         return self._add_menu(name, title)
 
-    def add_action(self, name: str, text: str, menu_name: str, shortcut: str | None = None) -> None:
+    def add_action(
+        self, name: str, text: str, menu_name: str, shortcut: str | None = None
+    ) -> None:
         """添加动作到指定菜单"""
         if menu_name not in self._menus:
-            raise UIError(f"Menu {menu_name} not found", widget="MenuComponent", action="add_action")
+            raise UIError(
+                f"Menu {menu_name} not found",
+                widget="MenuComponent",
+                action="add_action",
+            )
 
         action = QAction(text, self)
         if shortcut:

@@ -53,7 +53,9 @@ class PerformanceMonitor:
         """记录CPU使用率"""
         try:
             cpu_percent = self.process.cpu_percent(interval=0.1)
-            metric = PerformanceMetric(name="cpu_usage", value=cpu_percent, unit="%", timestamp=datetime.now())
+            metric = PerformanceMetric(
+                name="cpu_usage", value=cpu_percent, unit="%", timestamp=datetime.now()
+            )
             self.metrics["cpu"].append(metric)
             return metric
         except Exception as e:
@@ -81,7 +83,9 @@ class PerformanceMonitor:
             logger.error("记录内存使用失败: %s", str(e))
             raise
 
-    def record_response_time(self, operation: str, duration_ms: float) -> PerformanceMetric:
+    def record_response_time(
+        self, operation: str, duration_ms: float
+    ) -> PerformanceMetric:
         """
         记录操作响应时间
 
@@ -113,13 +117,17 @@ class PerformanceMonitor:
         """获取平均内存使用（MB）"""
         if not self.metrics["memory"]:
             return 0.0
-        return sum(m.value for m in self.metrics["memory"]) / len(self.metrics["memory"])
+        return sum(m.value for m in self.metrics["memory"]) / len(
+            self.metrics["memory"]
+        )
 
     def get_average_response_time(self) -> float:
         """获取平均响应时间（ms）"""
         if not self.metrics["response_time"]:
             return 0.0
-        return sum(m.value for m in self.metrics["response_time"]) / len(self.metrics["response_time"])
+        return sum(m.value for m in self.metrics["response_time"]) / len(
+            self.metrics["response_time"]
+        )
 
     def get_peak_memory(self) -> float:
         """获取峰值内存使用（MB）"""
@@ -136,7 +144,9 @@ class PerformanceMonitor:
                 "samples": len(self.metrics["cpu"]),
             },
             "memory": {
-                "current": self.metrics["memory"][-1].value if self.metrics["memory"] else 0,
+                "current": self.metrics["memory"][-1].value
+                if self.metrics["memory"]
+                else 0,
                 "average": self.get_average_memory(),
                 "peak": self.get_peak_memory(),
                 "samples": len(self.metrics["memory"]),
@@ -175,12 +185,16 @@ class PerformanceMonitor:
         # 检查内存
         peak_mem = self.get_peak_memory()
         if peak_mem > thresholds.get("memory", 500):
-            warnings.append(f"内存使用过高: {peak_mem:.0f}MB > {thresholds['memory']}MB")
+            warnings.append(
+                f"内存使用过高: {peak_mem:.0f}MB > {thresholds['memory']}MB"
+            )
 
         # 检查响应时间
         avg_rt = self.get_average_response_time()
         if avg_rt > thresholds.get("response_time", 1000):
-            warnings.append(f"响应时间过长: {avg_rt:.0f}ms > {thresholds['response_time']}ms")
+            warnings.append(
+                f"响应时间过长: {avg_rt:.0f}ms > {thresholds['response_time']}ms"
+            )
 
         return warnings
 

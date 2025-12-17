@@ -198,7 +198,9 @@ class RecoveryManager:
                     "file": f.name,
                     "path": str(f),
                     "size": f.stat().st_size,
-                    "modified": datetime.fromtimestamp(f.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S"),
+                    "modified": datetime.fromtimestamp(f.stat().st_mtime).strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    ),
                 }
                 for f in backup_files
             ]
@@ -215,7 +217,9 @@ class RecoveryManager:
         """
         try:
             # 获取该名称的所有备份
-            name_backups = [b for b in self._metadata["backups"] if b["name"] == backup_name]
+            name_backups = [
+                b for b in self._metadata["backups"] if b["name"] == backup_name
+            ]
 
             # 按时间排序
             name_backups.sort(key=lambda x: x["created_at"], reverse=True)
@@ -234,7 +238,9 @@ class RecoveryManager:
             # 删除过期的备份
             cutoff_date = datetime.now() - timedelta(days=self.backup_retention_days)
             expired_backups = [
-                b for b in self._metadata["backups"] if datetime.fromisoformat(b["created_at"]) < cutoff_date
+                b
+                for b in self._metadata["backups"]
+                if datetime.fromisoformat(b["created_at"]) < cutoff_date
             ]
 
             for expired in expired_backups:
@@ -281,7 +287,9 @@ class RecoveryManager:
 
                         # 从元数据中移除
                         self._metadata["backups"] = [
-                            b for b in self._metadata["backups"] if b["filename"] != old_backup.name
+                            b
+                            for b in self._metadata["backups"]
+                            if b["filename"] != old_backup.name
                         ]
                     except Exception as e:
                         logger.error(f"删除备份文件失败 {old_backup}: {e}")

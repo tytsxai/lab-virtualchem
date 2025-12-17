@@ -69,7 +69,9 @@ class LoadingTask:
 class LoadingSpinner(QWidget):
     """加载旋转器"""
 
-    def __init__(self, size: LoadingSize = LoadingSize.MEDIUM, parent: QWidget | None = None):
+    def __init__(
+        self, size: LoadingSize = LoadingSize.MEDIUM, parent: QWidget | None = None
+    ):
         super().__init__(parent)
 
         self.size = size
@@ -135,7 +137,9 @@ class LoadingSpinner(QWidget):
 class LoadingDots(QWidget):
     """加载点动画"""
 
-    def __init__(self, size: LoadingSize = LoadingSize.MEDIUM, parent: QWidget | None = None):
+    def __init__(
+        self, size: LoadingSize = LoadingSize.MEDIUM, parent: QWidget | None = None
+    ):
         super().__init__(parent)
 
         self.size = size
@@ -189,13 +193,17 @@ class LoadingDots(QWidget):
             painter.setBrush(color)
             painter.setPen(Qt.PenStyle.NoPen)
 
-            painter.drawEllipse(x - dot_size // 2, y - dot_size // 2, dot_size, dot_size)
+            painter.drawEllipse(
+                x - dot_size // 2, y - dot_size // 2, dot_size, dot_size
+            )
 
 
 class LoadingWave(QWidget):
     """加载波浪动画"""
 
-    def __init__(self, size: LoadingSize = LoadingSize.MEDIUM, parent: QWidget | None = None):
+    def __init__(
+        self, size: LoadingSize = LoadingSize.MEDIUM, parent: QWidget | None = None
+    ):
         super().__init__(parent)
 
         self.size = size
@@ -263,7 +271,9 @@ class LoadingDialog(QWidget):
         self.current_task: LoadingTask | None = None
 
         # 窗口设置
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
+        )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setFixedSize(300, 150)
 
@@ -398,7 +408,9 @@ class LoadingDialog(QWidget):
             self.progress_bar.setValue(current_step)
 
             # 更新状态
-            self.status_label.setText(f"步骤 {current_step}/{self.current_task.total_steps}")
+            self.status_label.setText(
+                f"步骤 {current_step}/{self.current_task.total_steps}"
+            )
 
             # 计算进度百分比
             progress = current_step / self.current_task.total_steps
@@ -534,7 +546,9 @@ class LoadingManager:
         logger.info(f"开始加载任务: {task.title}")
         return True
 
-    def update_task_progress(self, task_id: str, current_step: int, total_steps: int | None = None) -> bool:
+    def update_task_progress(
+        self, task_id: str, current_step: int, total_steps: int | None = None
+    ) -> bool:
         """更新任务进度"""
         if task_id not in self.active_tasks:
             return False
@@ -542,13 +556,21 @@ class LoadingManager:
         task = self.active_tasks[task_id]
 
         # 更新进度
-        if self.loading_dialog and self.loading_dialog.current_task and self.loading_dialog.current_task.id == task_id:
+        if (
+            self.loading_dialog
+            and self.loading_dialog.current_task
+            and self.loading_dialog.current_task.id == task_id
+        ):
             self.loading_dialog.update_progress(current_step, total_steps)
 
-        logger.debug(f"更新任务进度: {task.title} - {current_step}/{total_steps or task.total_steps}")
+        logger.debug(
+            f"更新任务进度: {task.title} - {current_step}/{total_steps or task.total_steps}"
+        )
         return True
 
-    def complete_task(self, task_id: str, success: bool = True, error: str | None = None) -> bool:
+    def complete_task(
+        self, task_id: str, success: bool = True, error: str | None = None
+    ) -> bool:
         """完成任务"""
         if task_id not in self.active_tasks:
             return False
@@ -556,7 +578,11 @@ class LoadingManager:
         task = self.active_tasks[task_id]
 
         # 完成任务
-        if self.loading_dialog and self.loading_dialog.current_task and self.loading_dialog.current_task.id == task_id:
+        if (
+            self.loading_dialog
+            and self.loading_dialog.current_task
+            and self.loading_dialog.current_task.id == task_id
+        ):
             self.loading_dialog.complete_task(success, error)
 
         # 从活跃任务中移除
@@ -573,7 +599,11 @@ class LoadingManager:
         task = self.active_tasks[task_id]
 
         # 取消任务
-        if self.loading_dialog and self.loading_dialog.current_task and self.loading_dialog.current_task.id == task_id:
+        if (
+            self.loading_dialog
+            and self.loading_dialog.current_task
+            and self.loading_dialog.current_task.id == task_id
+        ):
             self.loading_dialog.cancel_task()
 
         # 从活跃任务中移除
@@ -676,7 +706,9 @@ def get_loading_manager() -> LoadingManager:
 
 
 # 便捷函数
-def show_loading(title: str, description: str, parent: QWidget | None = None, total_steps: int = 0) -> str:
+def show_loading(
+    title: str, description: str, parent: QWidget | None = None, total_steps: int = 0
+) -> str:
     """显示加载对话框"""
     manager = get_loading_manager()
     task_id = manager.create_task(title, description, total_steps)
@@ -684,9 +716,13 @@ def show_loading(title: str, description: str, parent: QWidget | None = None, to
     return task_id
 
 
-def update_loading_progress(task_id: str, current_step: int, total_steps: int | None = None) -> bool:
+def update_loading_progress(
+    task_id: str, current_step: int, total_steps: int | None = None
+) -> bool:
     """更新加载进度"""
-    return get_loading_manager().update_task_progress(task_id, current_step, total_steps)
+    return get_loading_manager().update_task_progress(
+        task_id, current_step, total_steps
+    )
 
 
 def hide_loading(task_id: str, success: bool = True, error: str | None = None) -> bool:

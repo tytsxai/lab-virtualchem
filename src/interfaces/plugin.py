@@ -258,7 +258,9 @@ class SimplePlugin(IPlugin):
         self._version = version
         self._priority = priority
         self._capabilities = capabilities or []
-        self._executor = executor or (lambda action, params=None: {"action": action, "params": params})
+        self._executor = executor or (
+            lambda action, params=None: {"action": action, "params": params}
+        )
         self._available = True
 
     @property

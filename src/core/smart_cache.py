@@ -80,7 +80,11 @@ class SmartCache:
             del self._cache[key]
 
         # 添加新条目
-        self._cache[key] = {"value": value, "expires_at": expires_at, "created_at": time.time()}
+        self._cache[key] = {
+            "value": value,
+            "expires_at": expires_at,
+            "created_at": time.time(),
+        }
 
         # 检查是否需要淘汰
         self._evict_if_needed()
@@ -106,7 +110,9 @@ class SmartCache:
         self._hits = 0
         self._misses = 0
 
-    def get_or_set(self, key: str, factory: Callable[[], T], ttl: int | None = None) -> T:
+    def get_or_set(
+        self, key: str, factory: Callable[[], T], ttl: int | None = None
+    ) -> T:
         """
         获取缓存值，如果不存在则调用工厂函数生成
 
@@ -176,7 +182,9 @@ class CacheManager:
     def __init__(self):
         self._caches: dict[str, SmartCache] = {}
 
-    def get_cache(self, name: str, max_size: int = 1000, default_ttl: int = 3600) -> SmartCache:
+    def get_cache(
+        self, name: str, max_size: int = 1000, default_ttl: int = 3600
+    ) -> SmartCache:
         """
         获取或创建缓存
 
@@ -288,7 +296,9 @@ class ExperimentCache:
         """获取实验列表"""
         return self.cache.get(self._build_key("experiment_list", namespace))
 
-    def set_experiment_list(self, experiments: list, namespace: str | None = None) -> None:
+    def set_experiment_list(
+        self, experiments: list, namespace: str | None = None
+    ) -> None:
         """设置实验列表"""
         self.cache.set(self._build_key("experiment_list", namespace), experiments)
 

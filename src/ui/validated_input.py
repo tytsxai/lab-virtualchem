@@ -328,7 +328,9 @@ class InputWithLabel(QWidget):
         """获取输入值"""
         if isinstance(self.input_widget, (QLineEdit, ValidatedLineEdit)):
             return self.input_widget.text()
-        elif isinstance(self.input_widget, (QSpinBox, QDoubleSpinBox, ValidatedNumberInput)):
+        elif isinstance(
+            self.input_widget, (QSpinBox, QDoubleSpinBox, ValidatedNumberInput)
+        ):
             return self.input_widget.value()
         elif isinstance(self.input_widget, (QComboBox, ValidatedComboBox)):
             return self.input_widget.currentText()
@@ -336,9 +338,9 @@ class InputWithLabel(QWidget):
 
     def is_valid(self) -> bool:
         """检查是否有效"""
-        if hasattr(self.input_widget, 'is_valid'):
+        if hasattr(self.input_widget, "is_valid"):
             return self.input_widget.is_valid()
-        elif hasattr(self.input_widget, 'validate'):
+        elif hasattr(self.input_widget, "validate"):
             return self.input_widget.validate()
         return True
 
@@ -350,7 +352,7 @@ class Validators:
     @staticmethod
     def email(text: str) -> tuple[bool, str]:
         """邮箱验证"""
-        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         if re.match(pattern, text):
             return True, ""
         return False, "请输入有效的邮箱地址"
@@ -358,7 +360,7 @@ class Validators:
     @staticmethod
     def phone(text: str) -> tuple[bool, str]:
         """手机号验证"""
-        pattern = r'^1[3-9]\d{9}$'
+        pattern = r"^1[3-9]\d{9}$"
         if re.match(pattern, text):
             return True, ""
         return False, "请输入有效的手机号码"
@@ -366,6 +368,7 @@ class Validators:
     @staticmethod
     def number(min_val: float | None = None, max_val: float | None = None):
         """数字范围验证"""
+
         def validator(text: str) -> tuple[bool, str]:
             try:
                 value = float(text)
@@ -376,32 +379,38 @@ class Validators:
                 return True, ""
             except ValueError:
                 return False, "请输入有效的数字"
+
         return validator
 
     @staticmethod
     def min_length(length: int):
         """最小长度验证"""
+
         def validator(text: str) -> tuple[bool, str]:
             if len(text) >= length:
                 return True, ""
             return False, f"长度不能少于 {length} 个字符"
+
         return validator
 
     @staticmethod
     def max_length(length: int):
         """最大长度验证"""
+
         def validator(text: str) -> tuple[bool, str]:
             if len(text) <= length:
                 return True, ""
             return False, f"长度不能超过 {length} 个字符"
+
         return validator
 
     @staticmethod
     def pattern(regex: str, error_msg: str = "格式不正确"):
         """正则表达式验证"""
+
         def validator(text: str) -> tuple[bool, str]:
             if re.match(regex, text):
                 return True, ""
             return False, error_msg
-        return validator
 
+        return validator

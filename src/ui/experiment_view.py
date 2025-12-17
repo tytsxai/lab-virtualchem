@@ -342,8 +342,15 @@ class ExperimentView(QWidget):
         self.status_completion = QLabel("✅ 0%")
         self.status_completion.setFont(font)
 
-        for w in (self.status_time, self.status_steps, self.status_mistakes, self.status_completion):
-            w.setStyleSheet("padding: 6px 10px; background: #ffffff; border: 1px solid #e1dfdd; border-radius: 6px;")
+        for w in (
+            self.status_time,
+            self.status_steps,
+            self.status_mistakes,
+            self.status_completion,
+        ):
+            w.setStyleSheet(
+                "padding: 6px 10px; background: #ffffff; border: 1px solid #e1dfdd; border-radius: 6px;"
+            )
 
         layout.addWidget(self.status_time)
         layout.addWidget(self.status_steps)
@@ -363,7 +370,9 @@ class ExperimentView(QWidget):
             duration = int(self.controller.get_experiment_duration())
 
             self.status_time.setText(f"⏱️ {duration}s")
-            self.status_steps.setText(f"📋 {progress['current_step'] + 1}/{progress['total_steps']}")
+            self.status_steps.setText(
+                f"📋 {progress['current_step'] + 1}/{progress['total_steps']}"
+            )
             if "total_mistakes" in progress:
                 self.status_mistakes.setText(f"⚠️ {progress['total_mistakes']}")
             if "completion_rate" in progress:
@@ -539,7 +548,9 @@ class ExperimentView(QWidget):
             step = self.controller.get_current_step()
             if not step:
                 self.feedback_label.setText("⚠️ 无法加载步骤")
-                self.feedback_label.setStyleSheet("color: #856404; padding: 10px; background-color: #fff3cd;")
+                self.feedback_label.setStyleSheet(
+                    "color: #856404; padding: 10px; background-color: #fff3cd;"
+                )
                 logger.warning("update_step_display: 无法获取当前步骤")
                 return
 
@@ -674,7 +685,9 @@ class ExperimentView(QWidget):
             # 缩放图片以适应显示（保持宽高比，最大宽度600px）
             max_width = 600
             if pixmap.width() > max_width:
-                pixmap = pixmap.scaledToWidth(max_width, Qt.TransformationMode.SmoothTransformation)
+                pixmap = pixmap.scaledToWidth(
+                    max_width, Qt.TransformationMode.SmoothTransformation
+                )
 
             image_label.setPixmap(pixmap)
             image_label.setStyleSheet("border: none; padding: 5px;")
@@ -732,7 +745,11 @@ class ExperimentView(QWidget):
             layout.addWidget(msg_label)
 
         # 转换枚举类型为字符串进行比较
-        check_type_str = checkpoint.type.value if hasattr(checkpoint.type, "value") else str(checkpoint.type)
+        check_type_str = (
+            checkpoint.type.value
+            if hasattr(checkpoint.type, "value")
+            else str(checkpoint.type)
+        )
 
         if check_type_str == "confirm":
             # 确认框
@@ -774,8 +791,16 @@ class ExperimentView(QWidget):
                 combo.addItem(self.i18n.t("ui.please_select"))
                 for opt in checkpoint.input.options:
                     # 兼容字典/对象两种结构
-                    opt_label = opt.get("label") if isinstance(opt, dict) else getattr(opt, "label", str(opt))
-                    opt_value = opt.get("value") if isinstance(opt, dict) else getattr(opt, "value", opt)
+                    opt_label = (
+                        opt.get("label")
+                        if isinstance(opt, dict)
+                        else getattr(opt, "label", str(opt))
+                    )
+                    opt_value = (
+                        opt.get("value")
+                        if isinstance(opt, dict)
+                        else getattr(opt, "value", opt)
+                    )
                     combo.addItem(str(opt_label), opt_value)
                 self.input_widgets["selected"] = combo
                 layout.addWidget(combo)
@@ -796,9 +821,15 @@ class ExperimentView(QWidget):
                 for option in checkpoint.input.options:
                     # 兼容字典/对象两种结构
                     option_label = (
-                        option.get("label") if isinstance(option, dict) else getattr(option, "label", str(option))
+                        option.get("label")
+                        if isinstance(option, dict)
+                        else getattr(option, "label", str(option))
                     )
-                    option_value = option.get("value") if isinstance(option, dict) else getattr(option, "value", option)
+                    option_value = (
+                        option.get("value")
+                        if isinstance(option, dict)
+                        else getattr(option, "value", option)
+                    )
                     item = QListWidgetItem(str(option_label))
                     item.setData(Qt.ItemDataRole.UserRole, option_value)
                     sequence_list.addItem(item)
@@ -834,7 +865,9 @@ class ExperimentView(QWidget):
 
             # 添加说明标签
             hint_label = QLabel("💡 拖拽项目来重新排序")
-            hint_label.setStyleSheet("color: #666; font-style: italic; font-size: 10pt;")
+            hint_label.setStyleSheet(
+                "color: #666; font-style: italic; font-size: 10pt;"
+            )
             layout.addWidget(hint_label)
 
         group.setLayout(layout)
@@ -900,7 +933,11 @@ class ExperimentView(QWidget):
 
         except Exception as e:
             logger.error(f"获取用户输入失败: {e}", exc_info=True)
-            QMessageBox.warning(self, "输入错误", f"获取输入数据时发生错误:\n{e!s}\n\n请检查您的输入并重试。")
+            QMessageBox.warning(
+                self,
+                "输入错误",
+                f"获取输入数据时发生错误:\n{e!s}\n\n请检查您的输入并重试。",
+            )
             raise  # 重新抛出异常以便调用者处理
 
         return user_data
@@ -941,9 +978,13 @@ class ExperimentView(QWidget):
                     ):
                         # 根据InputSpec.input_type选择类型
                         input_spec = current_step.check.input
-                        expected_type = getattr(input_spec, "input_type", "general") or "general"
+                        expected_type = (
+                            getattr(input_spec, "input_type", "general") or "general"
+                        )
 
-                ok, msg, sanitized = validate_and_sanitize_input(value, input_type=expected_type)
+                ok, msg, sanitized = validate_and_sanitize_input(
+                    value, input_type=expected_type
+                )
                 if not ok:
                     raise ValueError(msg)
                 sanitized_payload[key] = sanitized
@@ -969,7 +1010,10 @@ class ExperimentView(QWidget):
                 logger.info(f"步骤验证通过: {message}, 得分: {score}")
 
                 # 自动前进到下一步（如果不是最后一步）
-                if self.controller.record.current_step_index < len(self.template.steps) - 1:
+                if (
+                    self.controller.record.current_step_index
+                    < len(self.template.steps) - 1
+                ):
                     # 延迟前进，让用户看到反馈
                     from PySide6.QtCore import QTimer
 
@@ -1003,7 +1047,9 @@ class ExperimentView(QWidget):
         """显示验证中状态"""
         from .widgets.enhanced_feedback_widget import FeedbackType
 
-        self.enhanced_feedback.show_feedback("正在验证您的答案...", FeedbackType.VALIDATING, auto_hide=False)
+        self.enhanced_feedback.show_feedback(
+            "正在验证您的答案...", FeedbackType.VALIDATING, auto_hide=False
+        )
 
     def show_success_feedback(self, message: str, score: float | None = None) -> None:
         """显示成功反馈"""
@@ -1014,7 +1060,9 @@ class ExperimentView(QWidget):
         if score is not None:
             full_message += f" (得分: {score:.1f})"
 
-        self.enhanced_feedback.show_feedback(full_message, FeedbackType.SUCCESS, auto_hide=True, duration=2000)
+        self.enhanced_feedback.show_feedback(
+            full_message, FeedbackType.SUCCESS, auto_hide=True, duration=2000
+        )
 
         # 播放成功音效（如果启用）
         # self._play_success_sound()
@@ -1193,7 +1241,9 @@ class ExperimentView(QWidget):
     def _should_show_interactive(self) -> bool:
         """判断是否应该显示交互式场景"""
         # 检查模板是否配置了交互式场景
-        if hasattr(self.template, "metadata") and isinstance(self.template.metadata, dict):
+        if hasattr(self.template, "metadata") and isinstance(
+            self.template.metadata, dict
+        ):
             return bool(self.template.metadata.get("interactive_mode", False))
         return False
 
@@ -1202,7 +1252,9 @@ class ExperimentView(QWidget):
         try:
             # 从模板获取场景配置
             scene_config = None
-            if hasattr(self.template, "metadata") and isinstance(self.template.metadata, dict):
+            if hasattr(self.template, "metadata") and isinstance(
+                self.template.metadata, dict
+            ):
                 scene_config = self.template.metadata.get("scene_config")
 
             # 如果没有配置，使用默认场景
@@ -1217,7 +1269,9 @@ class ExperimentView(QWidget):
                     scene_config = PRESET_SCENES.get("titration", {})
 
             # 创建场景
-            self.interactive_scene = ExperimentSceneBuilder.build_from_config(scene_config)
+            self.interactive_scene = ExperimentSceneBuilder.build_from_config(
+                scene_config
+            )
 
             # 连接信号
             self.interactive_scene.item_dropped.connect(self._on_item_dropped)
@@ -1293,14 +1347,18 @@ class ExperimentView(QWidget):
             "background-color: #cce5ff; color: #004085; padding: 8px; border-radius: 5px;"
         )
 
-    def _on_action_completed(self, action_name: str, result_data: dict[str, Any]) -> None:
+    def _on_action_completed(
+        self, action_name: str, result_data: dict[str, Any]
+    ) -> None:
         """动作完成"""
         logger.info(f"动作完成: {action_name}, 结果: {result_data}")
 
         # 记录到控制器上下文
         self.controller.record.context[f"action_{action_name}"] = result_data
 
-    def _on_equipment_selected(self, equipment_id: str, equipment_info: dict[str, Any]) -> None:
+    def _on_equipment_selected(
+        self, equipment_id: str, equipment_info: dict[str, Any]
+    ) -> None:
         """器材被选择"""
         logger.info(f"选择器材: {equipment_id}")
 
@@ -1331,7 +1389,9 @@ class ExperimentView(QWidget):
                 logger.warning(f"添加器材到场景失败: {e}")
 
         # 显示反馈
-        self.feedback_label.setText(f"✓ 已选择器材: {equipment_info.get('name', equipment_id)}")
+        self.feedback_label.setText(
+            f"✓ 已选择器材: {equipment_info.get('name', equipment_id)}"
+        )
         self.feedback_label.setStyleSheet(
             "background-color: #fff3cd; color: #856404; padding: 8px; border-radius: 5px;"
         )

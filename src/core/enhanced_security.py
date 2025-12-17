@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 class SecurityLevel(Enum):
     """安全级别"""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -25,6 +26,7 @@ class SecurityLevel(Enum):
 
 class ThreatType(Enum):
     """威胁类型"""
+
     SQL_INJECTION = "sql_injection"
     XSS = "xss"
     CSRF = "csrf"
@@ -37,6 +39,7 @@ class ThreatType(Enum):
 
 class AccessLevel(Enum):
     """访问级别"""
+
     READ = "read"
     WRITE = "write"
     ADMIN = "admin"
@@ -46,6 +49,7 @@ class AccessLevel(Enum):
 @dataclass
 class SecurityEvent:
     """安全事件"""
+
     timestamp: float
     event_type: ThreatType
     severity: SecurityLevel
@@ -61,6 +65,7 @@ class SecurityEvent:
 @dataclass
 class ThreatDetection:
     """威胁检测"""
+
     threat_type: ThreatType
     confidence: float
     pattern_matched: str
@@ -72,6 +77,7 @@ class ThreatDetection:
 @dataclass
 class AccessControlRule:
     """访问控制规则"""
+
     resource: str
     access_level: AccessLevel
     allowed_users: list[str] = field(default_factory=list)
@@ -133,19 +139,21 @@ class ThreatDetector:
                 r"setattr",
                 r"delattr",
                 r"hasattr",
-            ]
+            ],
         }
 
         self.compiled_patterns = {}
         for threat_type, patterns in self.threat_patterns.items():
             self.compiled_patterns[threat_type] = [
-                __import__('re').compile(pattern, __import__('re').IGNORECASE)
+                __import__("re").compile(pattern, __import__("re").IGNORECASE)
                 for pattern in patterns
             ]
 
         logger.info("威胁检测器初始化完成")
 
-    def detect_threats(self, input_data: str, context: dict[str, Any] | None = None) -> list[ThreatDetection]:
+    def detect_threats(
+        self, input_data: str, context: dict[str, Any] | None = None
+    ) -> list[ThreatDetection]:
         """检测威胁"""
         threats = []
 
@@ -162,7 +170,7 @@ class ThreatDetector:
                         confidence=confidence,
                         pattern_matched=pattern.pattern,
                         input_data=input_data,
-                        context=context or {}
+                        context=context or {},
                     )
                     threats.append(threat)
 
@@ -197,7 +205,7 @@ class AccessController:
         self.user_permissions: dict[str, list[AccessLevel]] = {}
         self.role_permissions: dict[str, list[AccessLevel]] = {}
         self.session_permissions: dict[str, list[AccessLevel]] = {}
-        self.lock = __import__('threading').RLock()
+        self.lock = __import__("threading").RLock()
 
         logger.info("访问控制器初始化完成")
 
@@ -230,7 +238,9 @@ class AccessController:
                     self.user_permissions[user_id].remove(access_level)
         logger.debug(f"撤销用户权限: {user_id} -> {access_level.value}")
 
-    def check_access(self, user_id: str, resource: str, required_level: AccessLevel) -> bool:
+    def check_access(
+        self, user_id: str, resource: str, required_level: AccessLevel
+    ) -> bool:
         """检查访问权限"""
         with self.lock:
             # 检查用户权限
@@ -254,18 +264,22 @@ class AccessController:
                     user_roles = self._get_user_roles(user_id)
                     for role in user_roles:
                         if role in rule.allowed_roles:
-                            if self._has_access_level([rule.access_level], required_level):
+                            if self._has_access_level(
+                                [rule.access_level], required_level
+                            ):
                                 return True
 
             return False
 
-    def _has_access_level(self, permissions: list[AccessLevel], required: AccessLevel) -> bool:
+    def _has_access_level(
+        self, permissions: list[AccessLevel], required: AccessLevel
+    ) -> bool:
         """检查是否有足够的访问级别"""
         level_hierarchy = {
             AccessLevel.READ: 1,
             AccessLevel.WRITE: 2,
             AccessLevel.ADMIN: 3,
-            AccessLevel.SUPER_ADMIN: 4
+            AccessLevel.SUPER_ADMIN: 4,
         }
 
         required_level = level_hierarchy.get(required, 0)
@@ -297,6 +311,7 @@ class DataEncryptor:
         """加密数据"""
         try:
             import base64
+
             try:
                 from cryptography.fernet import Fernet
 
@@ -318,6 +333,7 @@ class DataEncryptor:
         """解密数据"""
         try:
             import base64
+
             try:
                 from cryptography.fernet import Fernet
 
@@ -342,14 +358,16 @@ class DataEncryptor:
             salt = secrets.token_hex(16)
 
         # 使用PBKDF2进行密码哈希
-        hashed = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
+        hashed = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 100000)
         return f"{salt}:{hashed.hex()}"
 
     def verify_password(self, password: str, hashed_password: str) -> bool:
         """验证密码"""
         try:
-            salt, hash_hex = hashed_password.split(':')
-            hashed = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
+            salt, hash_hex = hashed_password.split(":")
+            hashed = hashlib.pbkdf2_hmac(
+                "sha256", password.encode(), salt.encode(), 100000
+            )
             return hashed.hex() == hash_hex
         except Exception as e:
             logger.error(f"密码验证失败: {e}")
@@ -363,7 +381,7 @@ class SecurityAuditor:
         self.security_events: list[SecurityEvent] = []
         self.threat_detections: list[ThreatDetection] = []
         self.audit_log: list[dict[str, Any]] = []
-        self.lock = __import__('threading').RLock()
+        self.lock = __import__("threading").RLock()
 
         logger.info("安全审计器初始化完成")
 
@@ -387,7 +405,9 @@ class SecurityAuditor:
             if len(self.threat_detections) > 1000:
                 self.threat_detections = self.threat_detections[-500:]
 
-        logger.warning(f"威胁检测: {threat.threat_type.value} - 置信度: {threat.confidence:.2f}")
+        logger.warning(
+            f"威胁检测: {threat.threat_type.value} - 置信度: {threat.confidence:.2f}"
+        )
 
     def log_audit_event(self, event_type: str, description: str, **kwargs) -> None:
         """记录审计事件"""
@@ -395,7 +415,7 @@ class SecurityAuditor:
             "timestamp": time.time(),
             "event_type": event_type,
             "description": description,
-            **kwargs
+            **kwargs,
         }
 
         with self.lock:
@@ -414,9 +434,13 @@ class SecurityAuditor:
                 "total_security_events": len(self.security_events),
                 "total_threat_detections": len(self.threat_detections),
                 "total_audit_events": len(self.audit_log),
-                "recent_events": self.security_events[-10:] if self.security_events else [],
-                "recent_threats": self.threat_detections[-10:] if self.threat_detections else [],
-                "recent_audit": self.audit_log[-10:] if self.audit_log else []
+                "recent_events": self.security_events[-10:]
+                if self.security_events
+                else [],
+                "recent_threats": self.threat_detections[-10:]
+                if self.threat_detections
+                else [],
+                "recent_audit": self.audit_log[-10:] if self.audit_log else [],
             }
 
 
@@ -438,7 +462,7 @@ class EnhancedSecurityManager:
             "enable_threat_detection": True,
             "enable_access_control": True,
             "enable_data_encryption": True,
-            "enable_audit_logging": True
+            "enable_audit_logging": True,
         }
 
         # 失败尝试记录
@@ -447,7 +471,9 @@ class EnhancedSecurityManager:
 
         logger.info("增强安全管理器初始化完成")
 
-    def validate_input(self, input_data: str, context: dict[str, Any] | None = None) -> bool:
+    def validate_input(
+        self, input_data: str, context: dict[str, Any] | None = None
+    ) -> bool:
         """验证输入"""
         if not self.security_config["enable_threat_detection"]:
             return True
@@ -468,7 +494,7 @@ class EnhancedSecurityManager:
                 description=f"检测到威胁: {threats[0].threat_type.value}",
                 details={"threats": [threat.__dict__ for threat in threats]},
                 blocked=True,
-                action_taken="输入被阻止"
+                action_taken="输入被阻止",
             )
             self.security_auditor.log_security_event(event)
 
@@ -476,7 +502,9 @@ class EnhancedSecurityManager:
 
         return True
 
-    def check_access(self, user_id: str, resource: str, required_level: AccessLevel) -> bool:
+    def check_access(
+        self, user_id: str, resource: str, required_level: AccessLevel
+    ) -> bool:
         """检查访问权限"""
         if not self.security_config["enable_access_control"]:
             return True
@@ -491,7 +519,9 @@ class EnhancedSecurityManager:
                 del self.locked_accounts[user_id]
 
         # 检查访问权限
-        has_access = self.access_controller.check_access(user_id, resource, required_level)
+        has_access = self.access_controller.check_access(
+            user_id, resource, required_level
+        )
 
         if not has_access:
             # 记录未授权访问
@@ -503,7 +533,7 @@ class EnhancedSecurityManager:
                 description=f"未授权访问尝试: {resource}",
                 details={"resource": resource, "required_level": required_level.value},
                 blocked=True,
-                action_taken="访问被拒绝"
+                action_taken="访问被拒绝",
             )
             self.security_auditor.log_security_event(event)
 
@@ -531,9 +561,7 @@ class EnhancedSecurityManager:
 
             # 记录成功登录
             self.security_auditor.log_audit_event(
-                "user_login",
-                f"用户登录成功: {user_id}",
-                user_id=user_id
+                "user_login", f"用户登录成功: {user_id}", user_id=user_id
             )
         else:
             # 记录失败尝试
@@ -541,9 +569,7 @@ class EnhancedSecurityManager:
 
             # 记录失败登录
             self.security_auditor.log_audit_event(
-                "user_login_failed",
-                f"用户登录失败: {user_id}",
-                user_id=user_id
+                "user_login_failed", f"用户登录失败: {user_id}", user_id=user_id
             )
 
         return is_valid
@@ -566,12 +592,16 @@ class EnhancedSecurityManager:
         # 清理过期的失败记录
         cutoff_time = current_time - self.security_config["lockout_duration"]
         self.failed_attempts[user_id] = [
-            attempt for attempt in self.failed_attempts[user_id]
+            attempt
+            for attempt in self.failed_attempts[user_id]
             if attempt > cutoff_time
         ]
 
         # 检查是否需要锁定账户
-        if len(self.failed_attempts[user_id]) >= self.security_config["max_failed_attempts"]:
+        if (
+            len(self.failed_attempts[user_id])
+            >= self.security_config["max_failed_attempts"]
+        ):
             lockout_time = current_time + self.security_config["lockout_duration"]
             self.locked_accounts[user_id] = lockout_time
 
@@ -584,7 +614,7 @@ class EnhancedSecurityManager:
                 description=f"账户因多次失败尝试被锁定: {user_id}",
                 details={"failed_attempts": len(self.failed_attempts[user_id])},
                 blocked=True,
-                action_taken="账户被锁定"
+                action_taken="账户被锁定",
             )
             self.security_auditor.log_security_event(event)
 
@@ -628,17 +658,21 @@ class EnhancedSecurityManager:
         report.append("")
 
         # 最近安全事件
-        if summary['recent_events']:
+        if summary["recent_events"]:
             report.append("## 最近安全事件")
-            for event in summary['recent_events']:
-                report.append(f"- {time.strftime('%H:%M:%S', time.localtime(event.timestamp))}: {event.description}")
+            for event in summary["recent_events"]:
+                report.append(
+                    f"- {time.strftime('%H:%M:%S', time.localtime(event.timestamp))}: {event.description}"
+                )
             report.append("")
 
         # 最近威胁检测
-        if summary['recent_threats']:
+        if summary["recent_threats"]:
             report.append("## 最近威胁检测")
-            for threat in summary['recent_threats']:
-                report.append(f"- {time.strftime('%H:%M:%S', time.localtime(threat.timestamp))}: {threat.threat_type.value} (置信度: {threat.confidence:.2f})")
+            for threat in summary["recent_threats"]:
+                report.append(
+                    f"- {time.strftime('%H:%M:%S', time.localtime(threat.timestamp))}: {threat.threat_type.value} (置信度: {threat.confidence:.2f})"
+                )
             report.append("")
 
         # 锁定账户
@@ -659,6 +693,7 @@ security_manager = EnhancedSecurityManager()
 
 def secure_input(func):
     """安全输入装饰器"""
+
     def wrapper(*args, **kwargs):
         # 检查所有字符串参数
         for arg in args:
@@ -672,22 +707,28 @@ def secure_input(func):
                     raise ValueError(f"输入包含威胁: {value[:50]}...")
 
         return func(*args, **kwargs)
+
     return wrapper
 
 
 def require_access(required_level: AccessLevel):
     """访问控制装饰器"""
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             # 这里需要从上下文中获取用户ID
             # 目前使用简单的模拟
             user_id = "current_user"  # 应该从请求上下文获取
 
-            if not security_manager.check_access(user_id, func.__name__, required_level):
+            if not security_manager.check_access(
+                user_id, func.__name__, required_level
+            ):
                 raise PermissionError(f"访问被拒绝: {func.__name__}")
 
             return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 

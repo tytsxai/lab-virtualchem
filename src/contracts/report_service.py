@@ -166,7 +166,9 @@ class ReportService(ABC):
         pass
 
     @abstractmethod
-    def export_report(self, report_id: str, output_path: Path, format: ExportFormat) -> bool:
+    def export_report(
+        self, report_id: str, output_path: Path, format: ExportFormat
+    ) -> bool:
         """导出报告
 
         Args:
@@ -180,7 +182,9 @@ class ReportService(ABC):
         pass
 
     @abstractmethod
-    def get_available_templates(self, report_type: ReportType | None = None) -> list[str]:
+    def get_available_templates(
+        self, report_type: ReportType | None = None
+    ) -> list[str]:
         """获取可用模板
 
         Args:

@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 class CacheLevel(Enum):
     """缓存级别"""
+
     L1 = "l1"  # 内存缓存
     L2 = "l2"  # 磁盘缓存
     L3 = "l3"  # 分布式缓存
@@ -39,6 +40,7 @@ class CacheLevel(Enum):
 
 class EvictionPolicy(Enum):
     """淘汰策略"""
+
     LRU = "lru"  # 最近最少使用
     LFU = "lfu"  # 最少使用
     TTL = "ttl"  # 基于时间
@@ -48,6 +50,7 @@ class EvictionPolicy(Enum):
 @dataclass
 class CacheEntry:
     """缓存条目"""
+
     key: str
     value: Any
     created_at: float
@@ -82,6 +85,7 @@ class CacheEntry:
 @dataclass
 class CacheStats:
     """缓存统计"""
+
     hits: int = 0
     misses: int = 0
     evictions: int = 0
@@ -158,7 +162,7 @@ class MemoryCacheBackend(CacheBackend):
                 value=value,
                 created_at=time.time(),
                 accessed_at=time.time(),
-                ttl=ttl
+                ttl=ttl,
             )
             entry.calculate_size()
 
@@ -199,10 +203,7 @@ class MemoryCacheBackend(CacheBackend):
             return
 
         # 简单的LRU淘汰
-        sorted_entries = sorted(
-            self._cache.items(),
-            key=lambda x: x[1].accessed_at
-        )
+        sorted_entries = sorted(self._cache.items(), key=lambda x: x[1].accessed_at)
 
         # 淘汰最旧的10%
         evict_count = max(1, len(self._cache) // 10)
@@ -233,7 +234,7 @@ class DiskCacheBackend(CacheBackend):
             return None
 
         try:
-            with open(cache_path, 'rb') as f:
+            with open(cache_path, "rb") as f:
                 entry = pickle.load(f)
 
             if entry.is_expired():
@@ -256,11 +257,11 @@ class DiskCacheBackend(CacheBackend):
                 value=value,
                 created_at=time.time(),
                 accessed_at=time.time(),
-                ttl=ttl
+                ttl=ttl,
             )
             entry.calculate_size()
 
-            with open(cache_path, 'wb') as f:
+            with open(cache_path, "wb") as f:
                 pickle.dump(entry, f)
 
             # 检查大小限制
@@ -298,7 +299,7 @@ class DiskCacheBackend(CacheBackend):
         try:
             for cache_file in self._cache_dir.glob("*.cache"):
                 try:
-                    with open(cache_file, 'rb') as f:
+                    with open(cache_file, "rb") as f:
                         entry = pickle.load(f)
                     keys.append(entry.key)
                 except Exception:
@@ -318,9 +319,7 @@ class DiskCacheBackend(CacheBackend):
     def _check_size_limit(self) -> None:
         """检查大小限制"""
         try:
-            total_size = sum(
-                f.stat().st_size for f in self._cache_dir.glob("*.cache")
-            )
+            total_size = sum(f.stat().st_size for f in self._cache_dir.glob("*.cache"))
 
             if total_size > self._max_size_bytes:
                 self._evict_oldest_files()
@@ -404,7 +403,7 @@ class SmartCacheManager:
                         f"Cache hit: {key}",
                         module="SmartCacheManager",
                         function="get",
-                        extra_data={"level": level.value}
+                        extra_data={"level": level.value},
                     )
 
                     return value
@@ -422,7 +421,7 @@ class SmartCacheManager:
             LogLevel.DEBUG,
             f"Cache miss: {key}",
             module="SmartCacheManager",
-            function="get"
+            function="get",
         )
 
         return None
@@ -432,7 +431,7 @@ class SmartCacheManager:
         key: str,
         value: Any,
         ttl: float | None = None,
-        levels: list[CacheLevel] | None = None
+        levels: list[CacheLevel] | None = None,
     ) -> bool:
         """设置缓存"""
         if levels is None:
@@ -458,7 +457,7 @@ class SmartCacheManager:
             f"Cache set: {key}",
             module="SmartCacheManager",
             function="set",
-            extra_data={"levels": [lvl.value for lvl in levels], "success": success}
+            extra_data={"levels": [lvl.value for lvl in levels], "success": success},
         )
 
         return success
@@ -497,7 +496,7 @@ class SmartCacheManager:
         key: str,
         factory: Callable[[], Any],
         ttl: float | None = None,
-        levels: list[CacheLevel] | None = None
+        levels: list[CacheLevel] | None = None,
     ) -> Any:
         """获取或设置缓存"""
         value = self.get(key)
@@ -518,7 +517,7 @@ class SmartCacheManager:
         key: str,
         factory: Callable[[], Any],
         ttl: float | None = None,
-        levels: list[CacheLevel] | None = None
+        levels: list[CacheLevel] | None = None,
     ) -> Any:
         """异步获取或设置缓存"""
         value = self.get(key)
@@ -558,7 +557,7 @@ class SmartCacheManager:
                         LogLevel.INFO,
                         f"Cache preloaded: {key}",
                         module="SmartCacheManager",
-                        function="preload"
+                        function="preload",
                     )
                 except Exception as e:
                     logger.error(f"Failed to preload cache {key}: {e}")
@@ -570,13 +569,13 @@ class SmartCacheManager:
             "misses": self._stats.misses,
             "hit_rate": self._stats.hit_rate,
             "evictions": self._stats.evictions,
-            "backends": {}
+            "backends": {},
         }
 
         for level, backend in self._backends.items():
             stats["backends"][level.value] = {
                 "size": backend.size(),
-                "keys": len(backend.keys())
+                "keys": len(backend.keys()),
             }
 
         return stats
@@ -587,7 +586,7 @@ class SmartCacheManager:
 
         # 导出统计信息
         stats_file = output_dir / "cache_stats.json"
-        with open(stats_file, 'w', encoding='utf-8') as f:
+        with open(stats_file, "w", encoding="utf-8") as f:
             json.dump(self.get_stats(), f, indent=2, ensure_ascii=False)
 
         # 导出缓存键
@@ -596,7 +595,7 @@ class SmartCacheManager:
         for level, backend in self._backends.items():
             all_keys[level.value] = backend.keys()
 
-        with open(keys_file, 'w', encoding='utf-8') as f:
+        with open(keys_file, "w", encoding="utf-8") as f:
             json.dump(all_keys, f, indent=2, ensure_ascii=False)
 
 
@@ -629,7 +628,9 @@ def cache_clear() -> None:
     _global_cache_manager.clear()
 
 
-def cache_get_or_set(key: str, factory: Callable[[], Any], ttl: float | None = None) -> Any:
+def cache_get_or_set(
+    key: str, factory: Callable[[], Any], ttl: float | None = None
+) -> Any:
     """获取或设置缓存"""
     return _global_cache_manager.get_or_set(key, factory, ttl)
 

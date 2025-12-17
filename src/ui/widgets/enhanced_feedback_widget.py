@@ -223,7 +223,9 @@ class EnhancedFeedbackWidget(QWidget):
                 QLabel { color: #004085; }
             """,
         }
-        self.feedback_container.setStyleSheet(styles.get(feedback_type, styles[FeedbackType.INFO]))
+        self.feedback_container.setStyleSheet(
+            styles.get(feedback_type, styles[FeedbackType.INFO])
+        )
 
         # 帮助区域
         if help_text and help_callback:
@@ -307,13 +309,17 @@ class EnhancedFeedbackWidget(QWidget):
             # 向左
             anim1 = QPropertyAnimation(self, b"pos")
             anim1.setDuration(shake_duration)
-            anim1.setEndValue(QPoint(original_pos.x() - shake_distance, original_pos.y()))
+            anim1.setEndValue(
+                QPoint(original_pos.x() - shake_distance, original_pos.y())
+            )
             anim_group.addAnimation(anim1)
 
             # 向右
             anim2 = QPropertyAnimation(self, b"pos")
             anim2.setDuration(shake_duration)
-            anim2.setEndValue(QPoint(original_pos.x() + shake_distance, original_pos.y()))
+            anim2.setEndValue(
+                QPoint(original_pos.x() + shake_distance, original_pos.y())
+            )
             anim_group.addAnimation(anim2)
 
         # 回到原位
@@ -339,7 +345,12 @@ class EnhancedFeedbackWidget(QWidget):
             self.feedback_container.setStyleSheet(highlight_style)
 
             # 延迟恢复
-            QTimer.singleShot(200, lambda: self.feedback_container.setStyleSheet(self.feedback_container.styleSheet()))
+            QTimer.singleShot(
+                200,
+                lambda: self.feedback_container.setStyleSheet(
+                    self.feedback_container.styleSheet()
+                ),
+            )
 
         # 闪烁两次
         QTimer.singleShot(0, flash)
@@ -352,7 +363,9 @@ class FeedbackOverlay(QWidget):
     def __init__(self, parent: QWidget):
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
+        )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         # 创建反馈控件
@@ -365,7 +378,11 @@ class FeedbackOverlay(QWidget):
         self.hide()
 
     def show_toast(
-        self, message: str, feedback_type: str = FeedbackType.INFO, duration: int = 2000, position: str = "top"
+        self,
+        message: str,
+        feedback_type: str = FeedbackType.INFO,
+        duration: int = 2000,
+        position: str = "top",
     ):
         """
         显示Toast提示
@@ -377,7 +394,9 @@ class FeedbackOverlay(QWidget):
             position: 位置（top, center, bottom）
         """
         # 设置反馈内容
-        self.feedback_widget.show_feedback(message, feedback_type, auto_hide=True, duration=duration)
+        self.feedback_widget.show_feedback(
+            message, feedback_type, auto_hide=True, duration=duration
+        )
 
         # 计算位置
         parent_rect = self.parent().rect()
@@ -411,20 +430,30 @@ class FeedbackOverlay(QWidget):
 
 # 便捷函数
 def show_success_feedback(
-    parent: QWidget, message: str, help_text: str | None = None, help_callback: Callable | None = None
+    parent: QWidget,
+    message: str,
+    help_text: str | None = None,
+    help_callback: Callable | None = None,
 ):
     """显示成功反馈"""
     feedback = EnhancedFeedbackWidget(parent)
-    feedback.show_feedback(message, FeedbackType.SUCCESS, help_text=help_text, help_callback=help_callback)
+    feedback.show_feedback(
+        message, FeedbackType.SUCCESS, help_text=help_text, help_callback=help_callback
+    )
     return feedback
 
 
 def show_error_feedback(
-    parent: QWidget, message: str, help_text: str | None = None, help_callback: Callable | None = None
+    parent: QWidget,
+    message: str,
+    help_text: str | None = None,
+    help_callback: Callable | None = None,
 ):
     """显示错误反馈"""
     feedback = EnhancedFeedbackWidget(parent)
-    feedback.show_feedback(message, FeedbackType.ERROR, help_text=help_text, help_callback=help_callback)
+    feedback.show_feedback(
+        message, FeedbackType.ERROR, help_text=help_text, help_callback=help_callback
+    )
     return feedback
 
 
@@ -436,7 +465,11 @@ def show_warning_feedback(parent: QWidget, message: str):
 
 
 def show_toast(
-    parent: QWidget, message: str, feedback_type: str = FeedbackType.INFO, duration: int = 2000, position: str = "top"
+    parent: QWidget,
+    message: str,
+    feedback_type: str = FeedbackType.INFO,
+    duration: int = 2000,
+    position: str = "top",
 ):
     """显示Toast提示"""
     overlay = FeedbackOverlay(parent)

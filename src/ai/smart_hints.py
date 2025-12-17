@@ -254,7 +254,9 @@ if __name__ == "__main__":
         print(f"[{hint.hint_type.value}] {hint.content}")
 
     print("\n=== 处理腐蚀性试剂 ===")
-    hints = smart_hints.get_hints(context={"hazard": "corrosive"}, hint_type=HintType.SAFETY)
+    hints = smart_hints.get_hints(
+        context={"hazard": "corrosive"}, hint_type=HintType.SAFETY
+    )
     for hint in hints:
         print(f"[{hint.hint_type.value}] {hint.content}")
 

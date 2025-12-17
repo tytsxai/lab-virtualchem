@@ -113,7 +113,9 @@ class DependencyChecker:
         # 生成报告
         return self._generate_report()
 
-    def _check_deps(self, deps: dict[str, dict], is_optional: bool = False) -> dict[str, DependencyInfo]:
+    def _check_deps(
+        self, deps: dict[str, dict], is_optional: bool = False
+    ) -> dict[str, DependencyInfo]:
         """检查依赖列表"""
         results = {}
 
@@ -224,7 +226,9 @@ class DependencyChecker:
 
             # 检查冲突的包是否都已安装
             all_installed = all(
-                self.results.get(pkg) and self.results[pkg].status == DepStatus.INSTALLED for pkg in packages
+                self.results.get(pkg)
+                and self.results[pkg].status == DepStatus.INSTALLED
+                for pkg in packages
             )
 
             if all_installed:
@@ -235,40 +239,67 @@ class DependencyChecker:
         """生成检查报告"""
         # 统计信息
         core_installed = sum(
-            1 for dep in self.results.values() if not dep.is_optional and dep.status == DepStatus.INSTALLED
+            1
+            for dep in self.results.values()
+            if not dep.is_optional and dep.status == DepStatus.INSTALLED
         )
         core_total = sum(1 for dep in self.results.values() if not dep.is_optional)
 
         optional_installed = sum(
-            1 for dep in self.results.values() if dep.is_optional and dep.status == DepStatus.INSTALLED
+            1
+            for dep in self.results.values()
+            if dep.is_optional and dep.status == DepStatus.INSTALLED
         )
         optional_total = sum(1 for dep in self.results.values() if dep.is_optional)
 
         # 检测问题
-        missing_core = [dep for dep in self.results.values() if not dep.is_optional and dep.status == DepStatus.MISSING]
+        missing_core = [
+            dep
+            for dep in self.results.values()
+            if not dep.is_optional and dep.status == DepStatus.MISSING
+        ]
 
-        version_conflicts = [dep for dep in self.results.values() if dep.status == DepStatus.VERSION_CONFLICT]
+        version_conflicts = [
+            dep
+            for dep in self.results.values()
+            if dep.status == DepStatus.VERSION_CONFLICT
+        ]
 
-        import_errors = [dep for dep in self.results.values() if dep.status == DepStatus.IMPORT_ERROR]
+        import_errors = [
+            dep for dep in self.results.values() if dep.status == DepStatus.IMPORT_ERROR
+        ]
 
         # 生成报告
         report = {
             "summary": {
                 "core_installed": core_installed,
                 "core_total": core_total,
-                "core_percentage": (core_installed / core_total * 100) if core_total > 0 else 0,
+                "core_percentage": (core_installed / core_total * 100)
+                if core_total > 0
+                else 0,
                 "optional_installed": optional_installed,
                 "optional_total": optional_total,
-                "optional_percentage": (optional_installed / optional_total * 100) if optional_total > 0 else 0,
+                "optional_percentage": (optional_installed / optional_total * 100)
+                if optional_total > 0
+                else 0,
                 "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
             },
             "issues": {
-                "missing_core": [{"name": d.name, "required": d.required_version} for d in missing_core],
+                "missing_core": [
+                    {"name": d.name, "required": d.required_version}
+                    for d in missing_core
+                ],
                 "version_conflicts": [
-                    {"name": d.name, "required": d.required_version, "actual": d.actual_version}
+                    {
+                        "name": d.name,
+                        "required": d.required_version,
+                        "actual": d.actual_version,
+                    }
                     for d in version_conflicts
                 ],
-                "import_errors": [{"name": d.name, "error": d.error_msg} for d in import_errors],
+                "import_errors": [
+                    {"name": d.name, "error": d.error_msg} for d in import_errors
+                ],
                 "potential_conflicts": self.conflicts,
             },
             "all_dependencies": {
@@ -311,7 +342,9 @@ class DependencyChecker:
         if issues["version_conflicts"]:
             logger.info("\n⚠️  版本冲突:")
             for dep in issues["version_conflicts"]:
-                logger.info(f"  - {dep['name']}: 需要 {dep['required']}, 实际 {dep['actual']}")
+                logger.info(
+                    f"  - {dep['name']}: 需要 {dep['required']}, 实际 {dep['actual']}"
+                )
 
         if issues["import_errors"]:
             logger.info("\n❌ 导入错误:")

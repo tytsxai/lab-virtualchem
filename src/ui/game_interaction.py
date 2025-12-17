@@ -142,7 +142,9 @@ class GamePhysicsItem(QGraphicsPixmapItem):
         self.setCursor(QCursor(Qt.CursorShape.OpenHandCursor))
 
         # 接受鼠标事件
-        self.setAcceptedMouseButtons(Qt.MouseButton.LeftButton | Qt.MouseButton.RightButton)
+        self.setAcceptedMouseButtons(
+            Qt.MouseButton.LeftButton | Qt.MouseButton.RightButton
+        )
 
         # 工具提示
         self.setToolTip(f"{item_type}: {item_id}")
@@ -165,13 +167,35 @@ class GamePhysicsItem(QGraphicsPixmapItem):
         scene = self.scene()
         if scene:
             scene_rect = scene.sceneRect()
-            if new_pos.x() < 0 or new_pos.x() > scene_rect.width() - self.boundingRect().width():
+            if (
+                new_pos.x() < 0
+                or new_pos.x() > scene_rect.width() - self.boundingRect().width()
+            ):
                 self.velocity.setX(-self.velocity.x() * self.bounce_factor)
-                new_pos.setX(max(0, min(new_pos.x(), scene_rect.width() - self.boundingRect().width())))
+                new_pos.setX(
+                    max(
+                        0,
+                        min(
+                            new_pos.x(),
+                            scene_rect.width() - self.boundingRect().width(),
+                        ),
+                    )
+                )
 
-            if new_pos.y() < 0 or new_pos.y() > scene_rect.height() - self.boundingRect().height():
+            if (
+                new_pos.y() < 0
+                or new_pos.y() > scene_rect.height() - self.boundingRect().height()
+            ):
                 self.velocity.setY(-self.velocity.y() * self.bounce_factor)
-                new_pos.setY(max(0, min(new_pos.y(), scene_rect.height() - self.boundingRect().height())))
+                new_pos.setY(
+                    max(
+                        0,
+                        min(
+                            new_pos.y(),
+                            scene_rect.height() - self.boundingRect().height(),
+                        ),
+                    )
+                )
 
         # 应用摩擦力
         self.velocity *= self.friction
@@ -189,7 +213,9 @@ class GamePhysicsItem(QGraphicsPixmapItem):
             old_state = self.physics_state
             self.physics_state = state
             self.physics_state_changed.emit(self.item_id, state)
-            logger.debug(f"物品 {self.item_id} 物理状态: {old_state.value} -> {state.value}")
+            logger.debug(
+                f"物品 {self.item_id} 物理状态: {old_state.value} -> {state.value}"
+            )
 
     def apply_force(self, force: QPointF) -> None:
         """施加力"""
@@ -321,7 +347,9 @@ class GamePhysicsItem(QGraphicsPixmapItem):
 
             elif self.is_clickable:
                 self.interaction_completed.emit(
-                    self.item_id, InteractionType.CLICK, {"click_position": (event.pos().x(), event.pos().y())}
+                    self.item_id,
+                    InteractionType.CLICK,
+                    {"click_position": (event.pos().x(), event.pos().y())},
                 )
 
         super().mouseReleaseEvent(event)
@@ -348,7 +376,9 @@ class GamePhysicsItem(QGraphicsPixmapItem):
             painter.setPen(QPen(self.glow_color, 3))
             painter.setBrush(QBrush(self.glow_color))
             rect = self.boundingRect()
-            painter.drawEllipse(rect.center(), self.collision_radius, self.collision_radius)
+            painter.drawEllipse(
+                rect.center(), self.collision_radius, self.collision_radius
+            )
 
         # 绘制稀有度边框
         if self.rarity != "common":
@@ -373,7 +403,9 @@ class GamePhysicsScene(QGraphicsScene):
     collision_detected = Signal(str, str)
     item_interacted = Signal(str, InteractionType, dict)
 
-    def __init__(self, scene_config: dict[str, Any] | None = None, parent: QWidget | None = None):
+    def __init__(
+        self, scene_config: dict[str, Any] | None = None, parent: QWidget | None = None
+    ):
         super().__init__(parent)
 
         self.scene_config = scene_config or {}
@@ -491,7 +523,10 @@ class GamePhysicsScene(QGraphicsScene):
             relative_velocity = item2.velocity - item1.velocity
 
             # 碰撞冲量
-            impulse = -(1 + min(item1.bounce_factor, item2.bounce_factor)) * relative_velocity.manhattanLength()
+            impulse = (
+                -(1 + min(item1.bounce_factor, item2.bounce_factor))
+                * relative_velocity.manhattanLength()
+            )
 
             # 应用冲量
             item1.apply_impulse(QPointF(-dx * impulse, -dy * impulse))
@@ -509,11 +544,15 @@ class GamePhysicsScene(QGraphicsScene):
         """碰撞检测处理"""
         logger.debug(f"碰撞检测: {item_id} <-> {other_item_id}")
 
-    def _on_interaction_started(self, item_id: str, interaction_type: InteractionType) -> None:
+    def _on_interaction_started(
+        self, item_id: str, interaction_type: InteractionType
+    ) -> None:
         """交互开始处理"""
         logger.debug(f"交互开始: {item_id} - {interaction_type.value}")
 
-    def _on_interaction_completed(self, item_id: str, interaction_type: InteractionType, data: dict) -> None:
+    def _on_interaction_completed(
+        self, item_id: str, interaction_type: InteractionType, data: dict
+    ) -> None:
         """交互完成处理"""
         self.item_interacted.emit(item_id, interaction_type, data)
         logger.debug(f"交互完成: {item_id} - {interaction_type.value} - {data}")
@@ -556,7 +595,9 @@ class GamePhysicsView(QGraphicsView):
     ViewportUpdateMode = QGraphicsView.ViewportUpdateMode
     FullViewportUpdate = QGraphicsView.ViewportUpdateMode.FullViewportUpdate
 
-    def __init__(self, scene: GamePhysicsScene | None = None, parent: QWidget | None = None):
+    def __init__(
+        self, scene: GamePhysicsScene | None = None, parent: QWidget | None = None
+    ):
         super().__init__(parent)
 
         if scene is None:

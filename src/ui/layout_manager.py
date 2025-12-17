@@ -19,10 +19,11 @@ logger = get_logger(__name__)
 
 class LayoutMode(Enum):
     """布局模式"""
+
     CLASSIC = "classic"  # 经典布局 - 左侧实验列表，右侧实验区
-    MODERN = "modern"    # 现代布局 - 顶部工具栏，中间实验区，底部信息
+    MODERN = "modern"  # 现代布局 - 顶部工具栏，中间实验区，底部信息
     COMPACT = "compact"  # 紧凑布局 - 最小化边栏，最大化实验区
-    WIDE = "wide"        # 宽屏布局 - 适合宽屏显示器
+    WIDE = "wide"  # 宽屏布局 - 适合宽屏显示器
 
 
 class LayoutConfig:
@@ -215,10 +216,16 @@ class LayoutManager(QObject):
                 # 计算实际尺寸
                 total = sum(ratios)
                 if total > 0:
-                    total_size = splitter.width() if splitter.orientation() == 1 else splitter.height()
+                    total_size = (
+                        splitter.width()
+                        if splitter.orientation() == 1
+                        else splitter.height()
+                    )
                     sizes = [int(total_size * r / total) for r in ratios]
                     splitter.setSizes(sizes)
-                    logger.debug(f"设置分割器 {splitter_name} 比例: {ratios} -> {sizes}")
+                    logger.debug(
+                        f"设置分割器 {splitter_name} 比例: {ratios} -> {sizes}"
+                    )
 
         except Exception as e:
             logger.warning(f"设置分割器比例失败 {splitter_name}: {e}")
@@ -232,7 +239,9 @@ class LayoutManager(QObject):
                 self.original_geometries["main_splitter"] = splitter.saveState()
 
             # 保存窗口大小和位置
-            self.original_geometries["window_geometry"] = self.main_window.saveGeometry()
+            self.original_geometries["window_geometry"] = (
+                self.main_window.saveGeometry()
+            )
 
         except Exception as e:
             logger.warning(f"保存几何信息失败: {e}")
@@ -271,10 +280,18 @@ class LayoutManager(QObject):
                 # 从QSettings加载
                 mode_str = self.settings.value("mode", "classic")
                 self.config.mode = LayoutMode(mode_str)
-                self.config.sidebar_width = int(self.settings.value("sidebar_width", 250))
-                self.config.toolbar_visible = self.settings.value("toolbar_visible", True, type=bool)
-                self.config.statusbar_visible = self.settings.value("statusbar_visible", True, type=bool)
-                self.config.sidebar_visible = self.settings.value("sidebar_visible", True, type=bool)
+                self.config.sidebar_width = int(
+                    self.settings.value("sidebar_width", 250)
+                )
+                self.config.toolbar_visible = self.settings.value(
+                    "toolbar_visible", True, type=bool
+                )
+                self.config.statusbar_visible = self.settings.value(
+                    "statusbar_visible", True, type=bool
+                )
+                self.config.sidebar_visible = self.settings.value(
+                    "sidebar_visible", True, type=bool
+                )
                 logger.info(f"从设置加载布局配置: {self.config.mode.value}")
 
             # 应用加载的布局
@@ -308,4 +325,3 @@ class LayoutManager(QObject):
         self._set_component_visible("statusbar", self.config.statusbar_visible)
         self.save_layout()
         logger.info(f"状态栏可见性: {self.config.statusbar_visible}")
-

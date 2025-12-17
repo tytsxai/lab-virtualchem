@@ -180,7 +180,9 @@ class UserWorkflowManager(QObject):
             logger.error(f"启动工作流程失败: {e}", exc_info=True)
             return False
 
-    def complete_welcome_wizard(self, user_preferences: dict[str, Any] | None = None) -> None:
+    def complete_welcome_wizard(
+        self, user_preferences: dict[str, Any] | None = None
+    ) -> None:
         """
         完成欢迎向导
 
@@ -564,7 +566,9 @@ class UserWorkflowManager(QObject):
 
         try:
             with session_file.open("w", encoding="utf-8") as f:
-                json.dump(self.current_session.to_dict(), f, ensure_ascii=False, indent=2)
+                json.dump(
+                    self.current_session.to_dict(), f, ensure_ascii=False, indent=2
+                )
 
             logger.debug("会话保存成功")
 
@@ -634,7 +638,9 @@ class UserWorkflowManager(QObject):
 
             self.auto_save_enabled = config.get("auto_save_enabled", True)
             self.show_welcome_wizard = config.get("show_welcome_wizard", True)
-            self.require_identity_confirmation = config.get("require_identity_confirmation", False)
+            self.require_identity_confirmation = config.get(
+                "require_identity_confirmation", False
+            )
 
             logger.info("流程配置加载成功")
 

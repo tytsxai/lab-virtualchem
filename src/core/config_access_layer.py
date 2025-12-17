@@ -85,7 +85,9 @@ class ConfigAccessLayer:
         try:
             return int(value)
         except (ValueError, TypeError):
-            logger.warning(f"Invalid integer config: {key} = {value}, using default: {default}")
+            logger.warning(
+                f"Invalid integer config: {key} = {value}, using default: {default}"
+            )
             return default
 
     def get_float(self, key: str, default: float = 0.0) -> float:
@@ -94,7 +96,9 @@ class ConfigAccessLayer:
         try:
             return float(value)
         except (ValueError, TypeError):
-            logger.warning(f"Invalid float config: {key} = {value}, using default: {default}")
+            logger.warning(
+                f"Invalid float config: {key} = {value}, using default: {default}"
+            )
             return default
 
     def get_bool(self, key: str, default: bool = False) -> bool:
@@ -137,7 +141,9 @@ class ConfigAccessLayer:
         if hasattr(value, "dict"):
             return value.dict()
 
-        logger.warning(f"Invalid dict config: {key} = {value}, using default: {default}")
+        logger.warning(
+            f"Invalid dict config: {key} = {value}, using default: {default}"
+        )
         return default or {}
 
     def _get_nested_value(self, obj: Any, key: str) -> Any:
@@ -181,7 +187,9 @@ class ConfigAccessLayer:
         if missing:
             raise ValueError(f"Missing required configuration: {', '.join(missing)}")
 
-    def get_with_validation(self, key: str, validator: Callable[[Any], Any], default: Any = None) -> Any:
+    def get_with_validation(
+        self, key: str, validator: Callable[[Any], Any], default: Any = None
+    ) -> Any:
         """获取配置并验证"""
         value = self.get(key, default)
 
@@ -211,7 +219,11 @@ def reload_config_access() -> None:
     """重新加载全局配置访问层"""
     global _config_access_layer
     with _config_access_lock:
-        instance = _config_access_layer() if callable(_config_access_layer) else _config_access_layer
+        instance = (
+            _config_access_layer()
+            if callable(_config_access_layer)
+            else _config_access_layer
+        )
         if instance is not None:
             instance.reload()
         else:
@@ -274,7 +286,9 @@ def config_validate_required(*keys: str) -> None:
     get_config_access().validate_required(*keys)
 
 
-def config_get_with_validation(key: str, validator: Callable[[Any], Any], default: Any = None) -> Any:
+def config_get_with_validation(
+    key: str, validator: Callable[[Any], Any], default: Any = None
+) -> Any:
     """获取配置并验证"""
     return get_config_access().get_with_validation(key, validator, default)
 

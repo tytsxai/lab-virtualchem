@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class DeviceType(Enum):
     """设备类型"""
+
     MOBILE = "mobile"
     TABLET = "tablet"
     DESKTOP = "desktop"
@@ -28,15 +29,17 @@ class DeviceType(Enum):
 
 class ScreenSize(Enum):
     """屏幕尺寸"""
-    SMALL = "small"      # < 576px
-    MEDIUM = "medium"    # 576px - 768px
-    LARGE = "large"      # 768px - 992px
-    XLARGE = "xlarge"    # 992px - 1200px
+
+    SMALL = "small"  # < 576px
+    MEDIUM = "medium"  # 576px - 768px
+    LARGE = "large"  # 768px - 992px
+    XLARGE = "xlarge"  # 992px - 1200px
     XXLARGE = "xxlarge"  # > 1200px
 
 
 class TouchGesture(Enum):
     """触摸手势"""
+
     TAP = "tap"
     DOUBLE_TAP = "double_tap"
     LONG_PRESS = "long_press"
@@ -50,6 +53,7 @@ class TouchGesture(Enum):
 
 class NetworkStatus(Enum):
     """网络状态"""
+
     ONLINE = "online"
     OFFLINE = "offline"
     SLOW = "slow"
@@ -59,6 +63,7 @@ class NetworkStatus(Enum):
 @dataclass
 class DeviceInfo:
     """设备信息"""
+
     device_id: str
     device_type: DeviceType
     screen_width: int
@@ -75,6 +80,7 @@ class DeviceInfo:
 @dataclass
 class TouchEvent:
     """触摸事件"""
+
     event_id: str
     gesture: TouchGesture
     x: float
@@ -89,6 +95,7 @@ class TouchEvent:
 @dataclass
 class ResponsiveLayout:
     """响应式布局"""
+
     breakpoint: ScreenSize
     columns: int
     gutter: int
@@ -104,6 +111,7 @@ class ResponsiveLayout:
 @dataclass
 class OfflineData:
     """离线数据"""
+
     data_id: str
     data_type: str
     content: Any
@@ -142,7 +150,7 @@ class EnhancedMobileSystem:
                 footer_height=60,
                 font_size_base=14,
                 spacing_unit=8,
-                touch_target_size=44
+                touch_target_size=44,
             ),
             ScreenSize.MEDIUM: ResponsiveLayout(
                 breakpoint=ScreenSize.MEDIUM,
@@ -154,7 +162,7 @@ class EnhancedMobileSystem:
                 footer_height=64,
                 font_size_base=15,
                 spacing_unit=12,
-                touch_target_size=48
+                touch_target_size=48,
             ),
             ScreenSize.LARGE: ResponsiveLayout(
                 breakpoint=ScreenSize.LARGE,
@@ -166,7 +174,7 @@ class EnhancedMobileSystem:
                 footer_height=68,
                 font_size_base=16,
                 spacing_unit=16,
-                touch_target_size=48
+                touch_target_size=48,
             ),
             ScreenSize.XLARGE: ResponsiveLayout(
                 breakpoint=ScreenSize.XLARGE,
@@ -178,7 +186,7 @@ class EnhancedMobileSystem:
                 footer_height=72,
                 font_size_base=16,
                 spacing_unit=20,
-                touch_target_size=48
+                touch_target_size=48,
             ),
             ScreenSize.XXLARGE: ResponsiveLayout(
                 breakpoint=ScreenSize.XXLARGE,
@@ -190,8 +198,8 @@ class EnhancedMobileSystem:
                 footer_height=76,
                 font_size_base=18,
                 spacing_unit=24,
-                touch_target_size=52
-            )
+                touch_target_size=52,
+            ),
         }
 
         self.responsive_layouts = layouts
@@ -203,9 +211,7 @@ class EnhancedMobileSystem:
         pass
 
     @enhance_robustness(
-        operation_name="detect_device",
-        security_level="low",
-        enable_caching=True
+        operation_name="detect_device", security_level="low", enable_caching=True
     )
     @log_operation(operation_name="detect_device")
     def detect_device(
@@ -213,7 +219,7 @@ class EnhancedMobileSystem:
         user_agent: str,
         screen_width: int,
         screen_height: int,
-        screen_density: float = 1.0
+        screen_density: float = 1.0,
     ) -> DeviceInfo:
         """检测设备信息"""
         device_id = f"device_{hash(user_agent)}_{screen_width}_{screen_height}"
@@ -241,7 +247,7 @@ class EnhancedMobileSystem:
             platform=platform,
             browser=browser,
             version="1.0",
-            capabilities=capabilities
+            capabilities=capabilities,
         )
 
         self.devices[device_id] = device_info
@@ -298,7 +304,9 @@ class EnhancedMobileSystem:
         else:
             return "unknown"
 
-    def _detect_capabilities(self, _user_agent: str, device_type: DeviceType) -> dict[str, bool]:
+    def _detect_capabilities(
+        self, _user_agent: str, device_type: DeviceType
+    ) -> dict[str, bool]:
         """检测设备能力"""
         capabilities = {
             "touch": device_type in [DeviceType.MOBILE, DeviceType.TABLET],
@@ -311,7 +319,7 @@ class EnhancedMobileSystem:
             "push_notifications": True,
             "offline_storage": True,
             "webgl": True,
-            "websockets": True
+            "websockets": True,
         }
 
         return capabilities
@@ -319,7 +327,7 @@ class EnhancedMobileSystem:
     @enhance_robustness(
         operation_name="get_responsive_layout",
         security_level="low",
-        enable_caching=True
+        enable_caching=True,
     )
     def get_responsive_layout(self, screen_width: int) -> ResponsiveLayout:
         """获取响应式布局"""
@@ -335,9 +343,7 @@ class EnhancedMobileSystem:
             return self.responsive_layouts[ScreenSize.XXLARGE]
 
     @enhance_robustness(
-        operation_name="handle_touch_event",
-        security_level="low",
-        enable_caching=False
+        operation_name="handle_touch_event", security_level="low", enable_caching=False
     )
     @log_operation(operation_name="touch_event")
     def handle_touch_event(
@@ -347,7 +353,7 @@ class EnhancedMobileSystem:
         y: float,
         duration: float = 0.0,
         pressure: float = 0.0,
-        target_element: str = ""
+        target_element: str = "",
     ) -> TouchEvent:
         """处理触摸事件"""
         try:
@@ -363,7 +369,7 @@ class EnhancedMobileSystem:
             timestamp=datetime.now(),
             duration=duration,
             pressure=pressure,
-            target_element=target_element
+            target_element=target_element,
         )
 
         self.touch_events.append(touch_event)
@@ -378,7 +384,7 @@ class EnhancedMobileSystem:
     @enhance_robustness(
         operation_name="cache_offline_data",
         security_level="medium",
-        enable_caching=False
+        enable_caching=False,
     )
     @log_operation(operation_name="cache_data")
     def cache_offline_data(
@@ -388,7 +394,7 @@ class EnhancedMobileSystem:
         content: Any,
         priority: int = 1,
         ttl: float | None = None,
-        dependencies: list[str] | None = None
+        dependencies: list[str] | None = None,
     ) -> OfflineData:
         """缓存离线数据"""
         # 计算数据大小
@@ -405,7 +411,7 @@ class EnhancedMobileSystem:
             size=size,
             priority=priority,
             ttl=ttl,
-            dependencies=dependencies or []
+            dependencies=dependencies or [],
         )
 
         self.offline_cache[data_id] = offline_data
@@ -414,9 +420,7 @@ class EnhancedMobileSystem:
         return offline_data
 
     @enhance_robustness(
-        operation_name="get_offline_data",
-        security_level="low",
-        enable_caching=True
+        operation_name="get_offline_data", security_level="low", enable_caching=True
     )
     def get_offline_data(self, data_id: str) -> OfflineData | None:
         """获取离线数据"""
@@ -437,7 +441,7 @@ class EnhancedMobileSystem:
     @enhance_robustness(
         operation_name="update_network_status",
         security_level="low",
-        enable_caching=False
+        enable_caching=False,
     )
     @log_operation(operation_name="network_status")
     def update_network_status(self, status: str) -> bool:
@@ -453,7 +457,7 @@ class EnhancedMobileSystem:
     @enhance_robustness(
         operation_name="get_mobile_optimizations",
         security_level="low",
-        enable_caching=True
+        enable_caching=True,
     )
     def get_mobile_optimizations(self, device_id: str) -> dict[str, Any]:
         """获取移动端优化建议"""
@@ -470,37 +474,37 @@ class EnhancedMobileSystem:
                 "container_width": layout.container_width,
                 "sidebar_width": layout.sidebar_width,
                 "header_height": layout.header_height,
-                "footer_height": layout.footer_height
+                "footer_height": layout.footer_height,
             },
             "typography": {
                 "font_size_base": layout.font_size_base,
-                "spacing_unit": layout.spacing_unit
+                "spacing_unit": layout.spacing_unit,
             },
             "touch": {
                 "target_size": layout.touch_target_size,
-                "gestures_enabled": device.capabilities.get("touch", False)
+                "gestures_enabled": device.capabilities.get("touch", False),
             },
             "performance": {
                 "lazy_loading": True,
                 "image_optimization": True,
                 "code_splitting": True,
-                "caching": True
+                "caching": True,
             },
             "features": {
                 "offline_mode": device.capabilities.get("offline_storage", False),
-                "push_notifications": device.capabilities.get("push_notifications", False),
+                "push_notifications": device.capabilities.get(
+                    "push_notifications", False
+                ),
                 "geolocation": device.capabilities.get("geolocation", False),
                 "camera": device.capabilities.get("camera", False),
-                "microphone": device.capabilities.get("microphone", False)
-            }
+                "microphone": device.capabilities.get("microphone", False),
+            },
         }
 
         return optimizations
 
     @enhance_robustness(
-        operation_name="generate_mobile_css",
-        security_level="low",
-        enable_caching=True
+        operation_name="generate_mobile_css", security_level="low", enable_caching=True
     )
     def generate_mobile_css(self, device_id: str) -> str:
         """生成移动端CSS"""
@@ -746,9 +750,7 @@ class EnhancedMobileSystem:
         return css
 
     @enhance_robustness(
-        operation_name="get_touch_analytics",
-        security_level="low",
-        enable_caching=True
+        operation_name="get_touch_analytics", security_level="low", enable_caching=True
     )
     def get_touch_analytics(self, limit: int = 100) -> dict[str, Any]:
         """获取触摸分析"""
@@ -760,7 +762,7 @@ class EnhancedMobileSystem:
                 "gesture_distribution": {},
                 "average_pressure": 0.0,
                 "average_duration": 0.0,
-                "most_used_elements": {}
+                "most_used_elements": {},
             }
 
         # 统计手势分布
@@ -781,14 +783,18 @@ class EnhancedMobileSystem:
         element_usage = {}
         for event in recent_events:
             if event.target_element:
-                element_usage[event.target_element] = element_usage.get(event.target_element, 0) + 1
+                element_usage[event.target_element] = (
+                    element_usage.get(event.target_element, 0) + 1
+                )
 
         return {
             "total_events": len(recent_events),
             "gesture_distribution": gesture_distribution,
             "average_pressure": average_pressure,
             "average_duration": average_duration,
-            "most_used_elements": dict(sorted(element_usage.items(), key=lambda x: x[1], reverse=True)[:10])
+            "most_used_elements": dict(
+                sorted(element_usage.items(), key=lambda x: x[1], reverse=True)[:10]
+            ),
         }
 
 

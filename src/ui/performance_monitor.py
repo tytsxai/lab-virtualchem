@@ -94,7 +94,9 @@ class PerformanceMonitor(QDialog):
         # 缓存统计表格
         self.cache_table = QTableWidget()
         self.cache_table.setColumnCount(6)
-        self.cache_table.setHorizontalHeaderLabels(["缓存名称", "大小", "最大大小", "命中次数", "未命中次数", "命中率"])
+        self.cache_table.setHorizontalHeaderLabels(
+            ["缓存名称", "大小", "最大大小", "命中次数", "未命中次数", "命中率"]
+        )
         layout.addWidget(self.cache_table)
 
         return widget
@@ -122,7 +124,9 @@ class PerformanceMonitor(QDialog):
         # 性能图表区域（简化版）
         self.performance_label = QLabel("性能图表区域\n\n这里可以添加实时性能图表")
         self.performance_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.performance_label.setStyleSheet("border: 1px solid gray; background-color: #f0f0f0;")
+        self.performance_label.setStyleSheet(
+            "border: 1px solid gray; background-color: #f0f0f0;"
+        )
         layout.addWidget(self.performance_label)
 
         return widget
@@ -150,10 +154,14 @@ class PerformanceMonitor(QDialog):
             for row, (name, stat) in enumerate(stats.items()):
                 self.cache_table.setItem(row, 0, QTableWidgetItem(name))
                 self.cache_table.setItem(row, 1, QTableWidgetItem(str(stat["size"])))
-                self.cache_table.setItem(row, 2, QTableWidgetItem(str(stat["max_size"])))
+                self.cache_table.setItem(
+                    row, 2, QTableWidgetItem(str(stat["max_size"]))
+                )
                 self.cache_table.setItem(row, 3, QTableWidgetItem(str(stat["hits"])))
                 self.cache_table.setItem(row, 4, QTableWidgetItem(str(stat["misses"])))
-                self.cache_table.setItem(row, 5, QTableWidgetItem(f"{stat['hit_rate']:.2%}"))
+                self.cache_table.setItem(
+                    row, 5, QTableWidgetItem(f"{stat['hit_rate']:.2%}")
+                )
 
         except Exception as e:
             logger.error(f"更新缓存统计失败: {e}")
@@ -165,7 +173,9 @@ class PerformanceMonitor(QDialog):
 
             # 内存使用
             memory = psutil.virtual_memory()
-            self.memory_label.setText(f"{memory.used // 1024 // 1024} MB / {memory.total // 1024 // 1024} MB")
+            self.memory_label.setText(
+                f"{memory.used // 1024 // 1024} MB / {memory.total // 1024 // 1024} MB"
+            )
 
             # CPU使用
             cpu_percent = psutil.cpu_percent(interval=0.1)

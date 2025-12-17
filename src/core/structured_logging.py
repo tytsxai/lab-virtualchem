@@ -327,7 +327,14 @@ class AuditLogger:
     def __init__(self, logger: StructuredLogger):
         self.logger = logger
 
-    def log_action(self, action: str, resource: str, user_id: str, result: str = "success", **details) -> None:
+    def log_action(
+        self,
+        action: str,
+        resource: str,
+        user_id: str,
+        result: str = "success",
+        **details,
+    ) -> None:
         """记录用户操作"""
         self.logger.info(
             f"审计: {action}",
@@ -340,7 +347,13 @@ class AuditLogger:
 
     def log_access(self, resource: str, user_id: str, granted: bool, **details) -> None:
         """记录访问控制"""
-        self.logger.info(f"访问: {resource}", resource=resource, user_id=user_id, granted=granted, **details)
+        self.logger.info(
+            f"访问: {resource}",
+            resource=resource,
+            user_id=user_id,
+            granted=granted,
+            **details,
+        )
 
 
 class LogAggregator:

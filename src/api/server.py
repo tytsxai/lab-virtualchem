@@ -104,13 +104,19 @@ class APIRequestHandler(BaseHTTPRequestHandler):
 
         super().__init__(*args, **kwargs)
 
-    def _set_headers(self, status: int = 200, content_type: str = "application/json") -> None:
+    def _set_headers(
+        self, status: int = 200, content_type: str = "application/json"
+    ) -> None:
         """设置响应头"""
         self.send_response(status)
         self.send_header("Content-type", content_type)
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Key")
+        self.send_header(
+            "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"
+        )
+        self.send_header(
+            "Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Key"
+        )
         self.end_headers()
 
     def _send_json(self, data: dict[str, Any], status: int = 200) -> None:
@@ -172,7 +178,9 @@ class APIRequestHandler(BaseHTTPRequestHandler):
 
         return None
 
-    def _cache_response(self, cache_key: str, data: dict[str, Any], strategy: CacheStrategy) -> None:
+    def _cache_response(
+        self, cache_key: str, data: dict[str, Any], strategy: CacheStrategy
+    ) -> None:
         """缓存响应"""
         if not self.cache_enabled or strategy == CacheStrategy.NO_CACHE:
             return
@@ -187,7 +195,11 @@ class APIRequestHandler(BaseHTTPRequestHandler):
         else:
             return
 
-        self.request_cache[cache_key] = {"data": data, "expires_at": expires_at, "strategy": strategy.value}
+        self.request_cache[cache_key] = {
+            "data": data,
+            "expires_at": expires_at,
+            "strategy": strategy.value,
+        }
 
     def _validate_api_key(self, api_key: str) -> bool:
         """验证API密钥"""
@@ -220,7 +232,9 @@ class APIRequestHandler(BaseHTTPRequestHandler):
         # 这里应该实现真实的速率限制逻辑
         return True
 
-    def _update_metrics(self, endpoint: str, method: str, response_time: float, success: bool) -> None:
+    def _update_metrics(
+        self, endpoint: str, method: str, response_time: float, success: bool
+    ) -> None:
         """更新API指标"""
         self.api_metrics["total_requests"] += 1
 
@@ -230,8 +244,12 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             self.api_metrics["failed_requests"] += 1
 
         # 更新平均响应时间
-        total_time = self.api_metrics["average_response_time"] * (self.api_metrics["total_requests"] - 1)
-        self.api_metrics["average_response_time"] = (total_time + response_time) / self.api_metrics["total_requests"]
+        total_time = self.api_metrics["average_response_time"] * (
+            self.api_metrics["total_requests"] - 1
+        )
+        self.api_metrics["average_response_time"] = (
+            total_time + response_time
+        ) / self.api_metrics["total_requests"]
 
         # 更新端点统计
         endpoint_key = f"{method}:{endpoint}"
@@ -252,17 +270,26 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             endpoint_stats["failed"] += 1
 
         # 更新端点平均时间
-        total_endpoint_time = endpoint_stats["average_time"] * (endpoint_stats["requests"] - 1)
-        endpoint_stats["average_time"] = (total_endpoint_time + response_time) / endpoint_stats["requests"]
+        total_endpoint_time = endpoint_stats["average_time"] * (
+            endpoint_stats["requests"] - 1
+        )
+        endpoint_stats["average_time"] = (
+            total_endpoint_time + response_time
+        ) / endpoint_stats["requests"]
 
-    def _handle_graphql_query(self, _query: str, _variables: dict[str, Any]) -> dict[str, Any]:
+    def _handle_graphql_query(
+        self, _query: str, _variables: dict[str, Any]
+    ) -> dict[str, Any]:
         """处理GraphQL查询"""
         try:
             # 这里应该实现GraphQL查询处理
             # 暂时返回模拟数据
             return {
                 "data": {
-                    "experiments": [{"id": "exp1", "title": "基础化学实验"}, {"id": "exp2", "title": "有机化学实验"}]
+                    "experiments": [
+                        {"id": "exp1", "title": "基础化学实验"},
+                        {"id": "exp2", "title": "有机化学实验"},
+                    ]
                 }
             }
         except Exception as e:
@@ -299,7 +326,10 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                                     "application/json": {
                                         "schema": {
                                             "type": "object",
-                                            "properties": {"success": {"type": "boolean"}, "data": {"type": "array"}},
+                                            "properties": {
+                                                "success": {"type": "boolean"},
+                                                "data": {"type": "array"},
+                                            },
                                         }
                                     }
                                 },
@@ -310,7 +340,9 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             },
         }
 
-    def _send_exception(self, exception: BaseAppException, trace_id: str | None = None) -> None:
+    def _send_exception(
+        self, exception: BaseAppException, trace_id: str | None = None
+    ) -> None:
         """发送基于异常对象的错误响应
 
         Args:
@@ -365,10 +397,14 @@ class APIRequestHandler(BaseHTTPRequestHandler):
 
         try:
             # 记录请求开始(包含追踪ID)
-            access_logger.info(f"[{trace_id}] GET {self.path} from {self.client_address[0]}")
+            access_logger.info(
+                f"[{trace_id}] GET {self.path} from {self.client_address[0]}"
+            )
 
             # 应用限流(从服务器获取)
-            if hasattr(self.server, "rate_limiter") and not self.server.rate_limiter.is_allowed(self.client_address[0]):
+            if hasattr(
+                self.server, "rate_limiter"
+            ) and not self.server.rate_limiter.is_allowed(self.client_address[0]):
                 self._send_error(429, "请求过于频繁,请稍后再试")
                 return
 
@@ -381,7 +417,9 @@ class APIRequestHandler(BaseHTTPRequestHandler):
 
             # 应用认证中间件(除白名单外)
             if path not in whitelist_paths and hasattr(self.server, "auth_middleware"):
-                api_key = self.headers.get("X-API-Key") or self.headers.get("Authorization", "").replace("Bearer ", "")
+                api_key = self.headers.get("X-API-Key") or self.headers.get(
+                    "Authorization", ""
+                ).replace("Bearer ", "")
 
                 client_info = self.server.auth_middleware.verify_api_key(api_key)
                 if not client_info:
@@ -456,7 +494,9 @@ class APIRequestHandler(BaseHTTPRequestHandler):
         finally:
             # 记录请求完成
             duration = (time.time() - start_time) * 1000  # 毫秒
-            access_logger.info(f"[{trace_id}] GET {self.path} completed in {duration:.2f}ms")
+            access_logger.info(
+                f"[{trace_id}] GET {self.path} completed in {duration:.2f}ms"
+            )
 
     def do_POST(self):
         """处理POST请求"""
@@ -467,7 +507,9 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             access_logger.info(f"POST {self.path} from {self.client_address[0]}")
 
             # 应用限流
-            if hasattr(self.server, "rate_limiter") and not self.server.rate_limiter.is_allowed(self.client_address[0]):
+            if hasattr(
+                self.server, "rate_limiter"
+            ) and not self.server.rate_limiter.is_allowed(self.client_address[0]):
                 self._send_error(429, "请求过于频繁,请稍后再试")
                 return
 
@@ -482,7 +524,9 @@ class APIRequestHandler(BaseHTTPRequestHandler):
 
             # 应用认证
             if hasattr(self.server, "auth_middleware"):
-                api_key = self.headers.get("X-API-Key") or self.headers.get("Authorization", "").replace("Bearer ", "")
+                api_key = self.headers.get("X-API-Key") or self.headers.get(
+                    "Authorization", ""
+                ).replace("Bearer ", "")
 
                 client_info = self.server.auth_middleware.verify_api_key(api_key)
                 if not client_info:
@@ -525,7 +569,13 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             trace_id: 请求追踪ID（用于日志追踪）
         """
         _ = trace_id  # 保留参数以保持接口统一
-        self._send_json({"status": "healthy", "version": "1.0.0", "timestamp": datetime.now().isoformat()})
+        self._send_json(
+            {
+                "status": "healthy",
+                "version": "1.0.0",
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
     def _handle_list_experiments(self, trace_id: str) -> None:
         """列出所有实验
@@ -710,7 +760,9 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                     "record_id": record.id,
                     "final_score": record.final_score,
                     "total_mistakes": len(record.mistakes),
-                    "duration_seconds": (record.end_time - record.start_time).total_seconds(),
+                    "duration_seconds": (
+                        record.end_time - record.start_time
+                    ).total_seconds(),
                 }
             )
         except Exception as e:
@@ -775,7 +827,9 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                         "experiment_id": record.experiment_id,
                         "final_score": record.final_score,
                         "start_time": record.start_time.isoformat(),
-                        "end_time": record.end_time.isoformat() if record.end_time else None,
+                        "end_time": record.end_time.isoformat()
+                        if record.end_time
+                        else None,
                         "step_records": [
                             {
                                 "step_id": sr.step_id,
@@ -866,7 +920,11 @@ class APIServer:
 
         # 初始化中间件
         self.auth_middleware = get_auth_middleware(enabled=enable_auth)
-        self.rate_limiter = get_rate_limiter(max_requests=100, time_window=60) if enable_rate_limit else None
+        self.rate_limiter = (
+            get_rate_limiter(max_requests=100, time_window=60)
+            if enable_rate_limit
+            else None
+        )
 
         logger.info(f"API服务器初始化 - 认证: {enable_auth}, 限流: {enable_rate_limit}")
 
@@ -884,15 +942,25 @@ class APIServer:
             self.server.rate_limiter = self.rate_limiter
 
             # 在新线程中运行
-            self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+            self.thread = threading.Thread(
+                target=self.server.serve_forever, daemon=True
+            )
             self.thread.start()
 
             logger.info(f"API Server started at http://{self.host}:{self.port}")
-            logger.info(f"🚀 VirtualChemLab API Server running at http://{self.host}:{self.port}")
-            logger.info(f"📚 API Documentation: http://{self.host}:{self.port}/api/docs")
+            logger.info(
+                f"🚀 VirtualChemLab API Server running at http://{self.host}:{self.port}"
+            )
+            logger.info(
+                f"📚 API Documentation: http://{self.host}:{self.port}/api/docs"
+            )
             logger.info(f"💚 Health Check: http://{self.host}:{self.port}/api/health")
-            logger.info(f"🔒 认证: {'已启用' if self.auth_middleware.enabled else '已禁用'}")
-            logger.info(f"⏱️  限流: {'已启用 (100请求/分钟)' if self.rate_limiter else '已禁用'}")
+            logger.info(
+                f"🔒 认证: {'已启用' if self.auth_middleware.enabled else '已禁用'}"
+            )
+            logger.info(
+                f"⏱️  限流: {'已启用 (100请求/分钟)' if self.rate_limiter else '已禁用'}"
+            )
 
         except Exception as e:
             logger.error(f"Failed to start server: {e}")
@@ -908,7 +976,11 @@ class APIServer:
 
     def is_running(self) -> bool:
         """检查服务器是否运行"""
-        return self.server is not None and self.thread is not None and self.thread.is_alive()
+        return (
+            self.server is not None
+            and self.thread is not None
+            and self.thread.is_alive()
+        )
 
 
 if __name__ == "__main__":

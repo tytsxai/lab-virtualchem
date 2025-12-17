@@ -433,13 +433,18 @@ def console_notification_handler(report: ErrorReport, level: NotificationLevel) 
         print()
     except UnicodeEncodeError:
         # Windows控制台编码问题，使用ASCII安全输出
-        print(f"\n{icon} [{report.error_type}] {report.user_message.encode('ascii', 'ignore').decode('ascii')}")
+        print(
+            f"\n{icon} [{report.error_type}] {report.user_message.encode('ascii', 'ignore').decode('ascii')}"
+        )
         print(f"   Time: {report.timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
 
 
 def log_notification_handler(report: ErrorReport, level: NotificationLevel) -> None:
     """日志通知处理器"""
-    log_message = f"[{report.error_type}] {report.message} " f"(context: {report.context}, user: {report.user_id})"
+    log_message = (
+        f"[{report.error_type}] {report.message} "
+        f"(context: {report.context}, user: {report.user_id})"
+    )
 
     if level == NotificationLevel.CRITICAL:
         logger.critical(log_message)
@@ -452,5 +457,9 @@ def log_notification_handler(report: ErrorReport, level: NotificationLevel) -> N
 
 
 # 注册默认通知处理器
-error_reporter.register_notification_handler(NotificationChannel.CONSOLE, console_notification_handler)
-error_reporter.register_notification_handler(NotificationChannel.LOG, log_notification_handler)
+error_reporter.register_notification_handler(
+    NotificationChannel.CONSOLE, console_notification_handler
+)
+error_reporter.register_notification_handler(
+    NotificationChannel.LOG, log_notification_handler
+)

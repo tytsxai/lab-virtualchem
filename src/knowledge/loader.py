@@ -106,7 +106,9 @@ class KnowledgeLoader:
         logger.warning(f"找不到知识卡片: {card_id}")
         return None
 
-    def search_cards(self, query: str, card_type: KnowledgeType | None = None) -> list[KnowledgeCard]:
+    def search_cards(
+        self, query: str, card_type: KnowledgeType | None = None
+    ) -> list[KnowledgeCard]:
         """搜索知识卡片
 
         Args:

@@ -48,7 +48,9 @@ class EventSetup:
             logger.error(f"事件处理器设置失败: {e}")
 
     @staticmethod
-    def _setup_experiment_handlers(event_bus: EventBus, _container: DIContainer) -> None:
+    def _setup_experiment_handlers(
+        event_bus: EventBus, _container: DIContainer
+    ) -> None:
         """设置实验相关事件处理器"""
 
         def on_experiment_started(event: Event) -> None:
@@ -70,7 +72,9 @@ class EventSetup:
                 experiment_id = event.data.get("experiment_id")
                 user_id = event.data.get("user_id")
                 score = event.data.get("score", 0)
-                logger.info(f"实验完成: {experiment_id}, 用户: {user_id}, 得分: {score}")
+                logger.info(
+                    f"实验完成: {experiment_id}, 用户: {user_id}, 得分: {score}"
+                )
 
                 # 可以在这里添加实验完成后的逻辑
                 # 例如：保存记录、计算统计等
@@ -100,9 +104,15 @@ class EventSetup:
                 logger.error(f"处理实验错误事件失败: {e}")
 
         # 注册事件处理器
-        event_bus.subscribe("experiment.started", on_experiment_started, EventPriority.HIGH)
-        event_bus.subscribe("experiment.completed", on_experiment_completed, EventPriority.HIGH)
-        event_bus.subscribe("experiment.step_submitted", on_step_submitted, EventPriority.NORMAL)
+        event_bus.subscribe(
+            "experiment.started", on_experiment_started, EventPriority.HIGH
+        )
+        event_bus.subscribe(
+            "experiment.completed", on_experiment_completed, EventPriority.HIGH
+        )
+        event_bus.subscribe(
+            "experiment.step_submitted", on_step_submitted, EventPriority.NORMAL
+        )
         event_bus.subscribe("experiment.error", on_experiment_error, EventPriority.HIGH)
 
     @staticmethod
@@ -140,7 +150,9 @@ class EventSetup:
 
         # 注册系统事件处理器
         event_bus.subscribe("system.startup", on_system_startup, EventPriority.CRITICAL)
-        event_bus.subscribe("system.shutdown", on_system_shutdown, EventPriority.CRITICAL)
+        event_bus.subscribe(
+            "system.shutdown", on_system_shutdown, EventPriority.CRITICAL
+        )
         event_bus.subscribe("system.error", on_system_error, EventPriority.HIGH)
 
     @staticmethod

@@ -113,7 +113,9 @@ class DIContainer:
         instance: T | None = None,
     ) -> "DIContainer":
         """注册单例服务"""
-        return self.register(service_type, implementation, factory, instance, Lifetime.SINGLETON)
+        return self.register(
+            service_type, implementation, factory, instance, Lifetime.SINGLETON
+        )
 
     def register_transient(
         self,
@@ -122,7 +124,9 @@ class DIContainer:
         factory: Callable[[], T] | None = None,
     ) -> "DIContainer":
         """注册瞬态服务"""
-        return self.register(service_type, implementation, factory, lifetime=Lifetime.TRANSIENT)
+        return self.register(
+            service_type, implementation, factory, lifetime=Lifetime.TRANSIENT
+        )
 
     def resolve(self, service_type: type[T]) -> T:
         """
@@ -145,7 +149,9 @@ class DIContainer:
         # 检测循环依赖
         if service_type in self._resolving:
             chain = " -> ".join(t.__name__ for t in self._resolving)
-            raise RuntimeError(f"Circular dependency detected: {chain} -> {service_type.__name__}")
+            raise RuntimeError(
+                f"Circular dependency detected: {chain} -> {service_type.__name__}"
+            )
 
         # 检查是否已注册
         if service_type not in self._services:
@@ -154,7 +160,10 @@ class DIContainer:
         descriptor = self._services[service_type]
 
         # 如果是单例且已创建，直接返回
-        if descriptor.lifetime == Lifetime.SINGLETON and service_type in self._singletons:
+        if (
+            descriptor.lifetime == Lifetime.SINGLETON
+            and service_type in self._singletons
+        ):
             return self._singletons[service_type]
 
         # 标记正在解析（用于循环依赖检测）
@@ -186,7 +195,9 @@ class DIContainer:
 
         # 使用实现类创建实例
         if descriptor.implementation is None:
-            raise ValueError(f"No implementation or factory provided for {descriptor.service_type.__name__}")
+            raise ValueError(
+                f"No implementation or factory provided for {descriptor.service_type.__name__}"
+            )
 
         # 自动解析构造函数依赖
         return self._create_with_dependencies(descriptor.implementation)

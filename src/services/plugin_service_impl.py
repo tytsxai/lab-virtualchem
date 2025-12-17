@@ -35,11 +35,15 @@ class PluginServiceImpl(PluginService):
             # 获取插件
             plugin = self.registry.get(request.plugin_name)
             if not plugin:
-                return PluginExecuteResponse(success=False, error=f"插件不存在: {request.plugin_name}")
+                return PluginExecuteResponse(
+                    success=False, error=f"插件不存在: {request.plugin_name}"
+                )
 
             # 检查插件是否可用
             if not plugin.is_available():
-                return PluginExecuteResponse(success=False, error=f"插件不可用: {request.plugin_name}")
+                return PluginExecuteResponse(
+                    success=False, error=f"插件不可用: {request.plugin_name}"
+                )
 
             # 执行插件
             result = plugin.execute(request.action, request.params)
@@ -59,7 +63,9 @@ class PluginServiceImpl(PluginService):
             name=plugin.name,
             version=plugin.version,
             plugin_type=plugin.plugin_type,
-            status=PluginStatus.ENABLED if plugin.is_available() else PluginStatus.DISABLED,
+            status=PluginStatus.ENABLED
+            if plugin.is_available()
+            else PluginStatus.DISABLED,
             capabilities=plugin.get_capabilities(),
             description=f"{plugin.name} v{plugin.version}",
         )
@@ -91,25 +97,35 @@ class PluginServiceImpl(PluginService):
             # 加载插件
             plugin = self.loader.load_plugin(request.plugin_path)
             if not plugin:
-                return PluginInstallResponse(success=False, message=f"加载插件失败: {request.plugin_path}")
+                return PluginInstallResponse(
+                    success=False, message=f"加载插件失败: {request.plugin_path}"
+                )
 
             # 注册插件
             success = self.registry.register(plugin)
             if not success:
-                return PluginInstallResponse(success=False, message=f"注册插件失败: {plugin.name}")
+                return PluginInstallResponse(
+                    success=False, message=f"注册插件失败: {plugin.name}"
+                )
 
             # 初始化插件
             if plugin.initialize(request.config):
                 return PluginInstallResponse(
-                    success=True, plugin_name=plugin.name, message=f"插件安装成功: {plugin.name}"
+                    success=True,
+                    plugin_name=plugin.name,
+                    message=f"插件安装成功: {plugin.name}",
                 )
             else:
                 # 初始化失败，取消注册
                 self.registry.unregister(plugin.name)
-                return PluginInstallResponse(success=False, message=f"插件初始化失败: {plugin.name}")
+                return PluginInstallResponse(
+                    success=False, message=f"插件初始化失败: {plugin.name}"
+                )
 
         except Exception as e:
-            return PluginInstallResponse(success=False, message=f"安装插件失败: {str(e)}")
+            return PluginInstallResponse(
+                success=False, message=f"安装插件失败: {str(e)}"
+            )
 
     def uninstall_plugin(self, plugin_name: str) -> bool:
         """卸载插件"""

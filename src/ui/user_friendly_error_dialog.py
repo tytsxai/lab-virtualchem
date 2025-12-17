@@ -164,7 +164,9 @@ class RecoveryOptionsWidget(QWidget):
         # 自动恢复选项
         auto_recover_btn = ModernButton("🔄 自动恢复")
         auto_recover_btn.setToolTip("尝试自动修复此错误")
-        auto_recover_btn.clicked.connect(lambda: self.recovery_selected.emit("auto_recover"))
+        auto_recover_btn.clicked.connect(
+            lambda: self.recovery_selected.emit("auto_recover")
+        )
         layout.addWidget(auto_recover_btn)
 
         # 重试选项
@@ -422,7 +424,9 @@ class UserFriendlyErrorDialog(QDialog):
         return self.recovery_result
 
 
-def show_user_friendly_error(error: BaseAppException, parent: QWidget | None = None) -> Any | None:
+def show_user_friendly_error(
+    error: BaseAppException, parent: QWidget | None = None
+) -> Any | None:
     """显示用户友好的错误对话框"""
     try:
         dialog = UserFriendlyErrorDialog(error, parent)

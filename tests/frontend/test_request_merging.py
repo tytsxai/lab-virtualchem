@@ -51,8 +51,12 @@ async def test_request_merger_flushes_on_timeout():
     merger = RequestMerger(batch_size=5, batch_timeout=0.01, executor=executor)
     received = []
 
-    await merger.add_request("req_a", "/api/info", {}, lambda data: received.append(data))
-    await merger.add_request("req_b", "/api/info", {}, lambda data: received.append(data))
+    await merger.add_request(
+        "req_a", "/api/info", {}, lambda data: received.append(data)
+    )
+    await merger.add_request(
+        "req_b", "/api/info", {}, lambda data: received.append(data)
+    )
 
     await asyncio.sleep(0.05)
 
@@ -139,4 +143,3 @@ def test_register_and_get_data_loader():
         assert get_data_loader(name) is loader
     finally:
         request_merger_module._data_loader_registry.pop(name, None)
-

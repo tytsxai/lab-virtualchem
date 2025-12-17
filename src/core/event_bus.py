@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import logging
 import re
 import threading
@@ -179,7 +180,7 @@ class EventBus:
             bus.subscribe("order.*", on_order,
                 filter_func=lambda e: e.data.get('amount', 0) > 100)
         """
-        is_async = asyncio.iscoroutinefunction(handler)
+        is_async = inspect.iscoroutinefunction(handler)
 
         subscriber = EventSubscriber(
             handler=handler,
@@ -309,7 +310,9 @@ class EventBus:
         self._middleware.append(middleware)
         return self
 
-    def get_history(self, event_name: str | None = None, limit: int | None = None) -> list[Event]:
+    def get_history(
+        self, event_name: str | None = None, limit: int | None = None
+    ) -> list[Event]:
         """
         获取事件历史
 
@@ -436,7 +439,11 @@ if __name__ == "__main__":
     bus.subscribe("user.*", on_any_user_event, priority=EventPriority.LOW)
 
     # 发布事件
-    login_event = Event(name="user.login", data={"user_id": 123, "username": "john"}, source="auth_service")
+    login_event = Event(
+        name="user.login",
+        data={"user_id": 123, "username": "john"},
+        source="auth_service",
+    )
 
     results = bus.publish(login_event)
 

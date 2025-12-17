@@ -62,14 +62,19 @@ def test_new_experiment_selects_template(monkeypatch, refactored_window):
     refactored_window._load_experiment_view = fake_loader
 
     monkeypatch.setattr(
-        QInputDialog, "getItem", staticmethod(lambda *args, **kwargs: ("demo-template", True))
+        QInputDialog,
+        "getItem",
+        staticmethod(lambda *args, **kwargs: ("demo-template", True)),
     )
 
     refactored_window._new_experiment()
 
     assert refactored_window._current_experiment_id == "demo-template"
     assert loaded["template"].title == "Demo Template"
-    assert refactored_window._statusbar_component.get_status() == "已创建实验: demo-template"
+    assert (
+        refactored_window._statusbar_component.get_status()
+        == "已创建实验: demo-template"
+    )
 
 
 def test_new_experiment_handles_missing_templates(refactored_window):
@@ -115,10 +120,14 @@ def test_open_experiment_restores_state(monkeypatch, refactored_window):
     refactored_window._template_engine = DummyTemplateEngine()
 
     loaded = {}
-    refactored_window._load_experiment_view = lambda template: loaded.setdefault("template", template)
+    refactored_window._load_experiment_view = lambda template: loaded.setdefault(
+        "template", template
+    )
 
     monkeypatch.setattr(
-        QFileDialog, "getOpenFileName", staticmethod(lambda *args, **kwargs: ("state-file.json", "json"))
+        QFileDialog,
+        "getOpenFileName",
+        staticmethod(lambda *args, **kwargs: ("state-file.json", "json")),
     )
 
     refactored_window._open_experiment()
@@ -127,7 +136,10 @@ def test_open_experiment_restores_state(monkeypatch, refactored_window):
     assert loaded["template"].title == "Restored Template"
     assert state_mgr.loaded == "state-file.json"
     assert state_mgr.restored is not False
-    assert refactored_window._statusbar_component.get_status() == "已加载实验状态: state-file.json"
+    assert (
+        refactored_window._statusbar_component.get_status()
+        == "已加载实验状态: state-file.json"
+    )
 
 
 def test_save_experiment_captures_state(monkeypatch, refactored_window, tmp_path):
@@ -174,4 +186,7 @@ def test_save_experiment_captures_state(monkeypatch, refactored_window, tmp_path
 
     assert state_mgr.captured == "demo-template"
     assert copied_args["dst"] == tmp_path / "manual.json"
-    assert refactored_window._statusbar_component.get_status() == f"已保存: {tmp_path / 'manual.json'}"
+    assert (
+        refactored_window._statusbar_component.get_status()
+        == f"已保存: {tmp_path / 'manual.json'}"
+    )

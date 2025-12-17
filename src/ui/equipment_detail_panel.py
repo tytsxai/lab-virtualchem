@@ -373,15 +373,22 @@ class EquipmentDetailPanel(QFrame):
             pixmap = QPixmap(image_path)
             if not pixmap.isNull():
                 scaled_pixmap = pixmap.scaled(
-                    180, 180, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
+                    180,
+                    180,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
                 )
                 self.image_label.setPixmap(scaled_pixmap)
             else:
                 self.image_label.setText("📦\n暂无图片")
-                self.image_label.setStyleSheet(self.image_label.styleSheet() + "font-size: 48pt;")
+                self.image_label.setStyleSheet(
+                    self.image_label.styleSheet() + "font-size: 48pt;"
+                )
         else:
             self.image_label.setText("📦\n暂无图片")
-            self.image_label.setStyleSheet(self.image_label.styleSheet() + "font-size: 48pt;")
+            self.image_label.setStyleSheet(
+                self.image_label.styleSheet() + "font-size: 48pt;"
+            )
 
         # 清空旧属性
         self._clear_layout(self.properties_layout)
@@ -404,13 +411,23 @@ class EquipmentDetailPanel(QFrame):
                 self._add_property_row(self.specs_layout, key, str(value))
         else:
             # 如果有容量、浓度等信息，显示为规格
-            if "capacity" in equipment_data or "amount" in equipment_data or "concentration" in equipment_data:
+            if (
+                "capacity" in equipment_data
+                or "amount" in equipment_data
+                or "concentration" in equipment_data
+            ):
                 if "capacity" in equipment_data:
-                    self._add_property_row(self.specs_layout, "容量", equipment_data["capacity"])
+                    self._add_property_row(
+                        self.specs_layout, "容量", equipment_data["capacity"]
+                    )
                 if "amount" in equipment_data:
-                    self._add_property_row(self.specs_layout, "数量", equipment_data["amount"])
+                    self._add_property_row(
+                        self.specs_layout, "数量", equipment_data["amount"]
+                    )
                 if "concentration" in equipment_data:
-                    self._add_property_row(self.specs_layout, "浓度", equipment_data["concentration"])
+                    self._add_property_row(
+                        self.specs_layout, "浓度", equipment_data["concentration"]
+                    )
             else:
                 no_specs = QLabel("暂无规格信息")
                 no_specs.setStyleSheet("color: #95a5a6; font-style: italic;")
@@ -491,7 +508,12 @@ class CompactEquipmentCard(QFrame):
 
     clicked = Signal(str, dict)  # 器材ID, 器材数据
 
-    def __init__(self, equipment_id: str, equipment_data: dict[str, Any], parent: QWidget | None = None):
+    def __init__(
+        self,
+        equipment_id: str,
+        equipment_data: dict[str, Any],
+        parent: QWidget | None = None,
+    ):
         super().__init__(parent)
         self.equipment_id = equipment_id
         self.equipment_data = equipment_data
@@ -531,7 +553,10 @@ class CompactEquipmentCard(QFrame):
             pixmap = QPixmap(image_path)
             if not pixmap.isNull():
                 scaled_pixmap = pixmap.scaled(
-                    64, 64, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
+                    64,
+                    64,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
                 )
                 icon_label.setPixmap(scaled_pixmap)
             else:

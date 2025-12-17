@@ -206,7 +206,13 @@ class ImprovedErrorDialog(QDialog):
 
         from PySide6.QtCore import QTimer
 
-        QTimer.singleShot(2000, lambda: (self.copy_btn.setText(original_text), self.copy_btn.setEnabled(True)))
+        QTimer.singleShot(
+            2000,
+            lambda: (
+                self.copy_btn.setText(original_text),
+                self.copy_btn.setEnabled(True),
+            ),
+        )
 
         self.copy_details_clicked.emit()
 
@@ -257,7 +263,9 @@ def show_warning(
     Returns:
         对话框结果
     """
-    dialog = ImprovedErrorDialog(title, message, details, suggestions, "warning", parent)
+    dialog = ImprovedErrorDialog(
+        title, message, details, suggestions, "warning", parent
+    )
     return dialog.exec()
 
 

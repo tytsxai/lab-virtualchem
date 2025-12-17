@@ -43,7 +43,9 @@ else:
 
 
 @jit(nopython=True, cache=True)
-def calculate_ph_curve_fast(volumes: np.ndarray, concentrations: np.ndarray) -> np.ndarray:
+def calculate_ph_curve_fast(
+    volumes: np.ndarray, concentrations: np.ndarray
+) -> np.ndarray:
     """
     快速计算pH曲线
 
@@ -69,7 +71,9 @@ def calculate_ph_curve_fast(volumes: np.ndarray, concentrations: np.ndarray) -> 
 
 
 @jit(nopython=True, cache=True)
-def calculate_concentration_from_ph_fast(ph_values: np.ndarray, is_acid: bool = True) -> np.ndarray:
+def calculate_concentration_from_ph_fast(
+    ph_values: np.ndarray, is_acid: bool = True
+) -> np.ndarray:
     """
     从pH值快速计算浓度
 
@@ -160,7 +164,9 @@ def calculate_titration_curve_fast(
 
 
 @jit(nopython=True, cache=True)
-def calculate_dilution_series_fast(initial_concentration: float, dilution_factors: np.ndarray) -> np.ndarray:
+def calculate_dilution_series_fast(
+    initial_concentration: float, dilution_factors: np.ndarray
+) -> np.ndarray:
     """
     快速计算稀释系列浓度
 
@@ -183,7 +189,9 @@ def calculate_dilution_series_fast(initial_concentration: float, dilution_factor
 
 
 @jit(nopython=True, cache=True)
-def calculate_mixture_concentration_fast(volumes: np.ndarray, concentrations: np.ndarray) -> float:
+def calculate_mixture_concentration_fast(
+    volumes: np.ndarray, concentrations: np.ndarray
+) -> float:
     """
     快速计算混合物浓度
 
@@ -216,7 +224,10 @@ def calculate_mixture_concentration_fast(volumes: np.ndarray, concentrations: np
 
 @jit(nopython=True, cache=True)
 def calculate_reaction_kinetics_fast(
-    initial_concentration: float, rate_constant: float, time_points: np.ndarray, order: int = 1
+    initial_concentration: float,
+    rate_constant: float,
+    time_points: np.ndarray,
+    order: int = 1,
 ) -> np.ndarray:
     """
     快速计算反应动力学

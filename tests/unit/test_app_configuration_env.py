@@ -7,7 +7,12 @@ from config.schemas.app_config import AppConfig, AppConfiguration, DeveloperConf
 
 def test_production_requires_env_secrets(monkeypatch: pytest.MonkeyPatch) -> None:
     """生产环境缺少密钥时应立即失败。"""
-    for key in ("JWT_SECRET_KEY", "SESSION_SECRET_KEY", "DEVELOPER_SECRET_KEY", "DEVELOPER_MODE_ENABLED"):
+    for key in (
+        "JWT_SECRET_KEY",
+        "SESSION_SECRET_KEY",
+        "DEVELOPER_SECRET_KEY",
+        "DEVELOPER_MODE_ENABLED",
+    ):
         monkeypatch.delenv(key, raising=False)
 
     with pytest.raises(ValueError, match="缺少必需的密钥"):

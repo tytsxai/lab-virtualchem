@@ -87,9 +87,13 @@ class RequestMerger:
         else:
             # 设置超时定时器
             if endpoint not in self._timers:
-                self._timers[endpoint] = asyncio.create_task(self._schedule_flush(endpoint))
+                self._timers[endpoint] = asyncio.create_task(
+                    self._schedule_flush(endpoint)
+                )
 
-        logger.debug(f"添加请求到批次: {endpoint}, 当前: {len(self._pending[endpoint])}")
+        logger.debug(
+            f"添加请求到批次: {endpoint}, 当前: {len(self._pending[endpoint])}"
+        )
 
     async def _schedule_flush(self, endpoint: str) -> None:
         """

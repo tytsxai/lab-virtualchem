@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ConfigSection:
     """配置节"""
+
     name: str
     data: dict[str, Any] = field(default_factory=dict)
     schema: dict[str, Any] | None = None
@@ -92,11 +93,17 @@ class UnifiedConfigManager:
             "properties": {
                 "name": {"type": "string"},
                 "version": {"type": "string"},
-                "environment": {"type": "string", "enum": ["development", "production", "test"]},
+                "environment": {
+                    "type": "string",
+                    "enum": ["development", "production", "test"],
+                },
                 "debug": {"type": "boolean"},
-                "log_level": {"type": "string", "enum": ["DEBUG", "INFO", "WARNING", "ERROR"]}
+                "log_level": {
+                    "type": "string",
+                    "enum": ["DEBUG", "INFO", "WARNING", "ERROR"],
+                },
             },
-            "required": ["name", "version", "environment"]
+            "required": ["name", "version", "environment"],
         }
 
         self._sections["app"] = ConfigSection(
@@ -106,10 +113,10 @@ class UnifiedConfigManager:
                 "version": APP_VERSION,
                 "environment": "development",
                 "debug": True,
-                "log_level": "INFO"
+                "log_level": "INFO",
             },
             schema=app_schema,
-            required=True
+            required=True,
         )
 
         # UI配置
@@ -120,8 +127,8 @@ class UnifiedConfigManager:
                 "language": {"type": "string"},
                 "font_size": {"type": "integer", "minimum": 8, "maximum": 24},
                 "window_width": {"type": "integer", "minimum": 800},
-                "window_height": {"type": "integer", "minimum": 600}
-            }
+                "window_height": {"type": "integer", "minimum": 600},
+            },
         }
 
         self._sections["ui"] = ConfigSection(
@@ -131,9 +138,9 @@ class UnifiedConfigManager:
                 "language": "zh_CN",
                 "font_size": 12,
                 "window_width": 1200,
-                "window_height": 800
+                "window_height": 800,
             },
-            schema=ui_schema
+            schema=ui_schema,
         )
 
         # 性能配置
@@ -143,8 +150,8 @@ class UnifiedConfigManager:
                 "enable_caching": {"type": "boolean"},
                 "cache_size": {"type": "integer", "minimum": 0},
                 "max_memory_usage": {"type": "integer", "minimum": 0},
-                "enable_profiling": {"type": "boolean"}
-            }
+                "enable_profiling": {"type": "boolean"},
+            },
         }
 
         self._sections["performance"] = ConfigSection(
@@ -153,9 +160,9 @@ class UnifiedConfigManager:
                 "enable_caching": True,
                 "cache_size": 1000,
                 "max_memory_usage": 512,
-                "enable_profiling": False
+                "enable_profiling": False,
             },
-            schema=performance_schema
+            schema=performance_schema,
         )
 
         # 实验配置
@@ -165,8 +172,8 @@ class UnifiedConfigManager:
                 "default_template": {"type": "string"},
                 "auto_save": {"type": "boolean"},
                 "save_interval": {"type": "integer", "minimum": 1},
-                "max_history": {"type": "integer", "minimum": 1}
-            }
+                "max_history": {"type": "integer", "minimum": 1},
+            },
         }
 
         self._sections["experiment"] = ConfigSection(
@@ -175,9 +182,9 @@ class UnifiedConfigManager:
                 "default_template": "basic_titration",
                 "auto_save": True,
                 "save_interval": 30,
-                "max_history": 100
+                "max_history": 100,
             },
-            schema=experiment_schema
+            schema=experiment_schema,
         )
 
     def _load_config_files(self) -> None:
@@ -188,7 +195,10 @@ class UnifiedConfigManager:
             self._load_config_file(main_config_file)
 
         # 加载环境特定配置
-        env_config_file = self._config_dir / f"config_{self.get('app.environment', 'development')}.json"
+        env_config_file = (
+            self._config_dir
+            / f"config_{self.get('app.environment', 'development')}.json"
+        )
         if env_config_file.exists():
             self._load_config_file(env_config_file)
 
@@ -200,8 +210,11 @@ class UnifiedConfigManager:
     def _load_config_file(self, config_file: Path) -> None:
         """加载配置文件"""
         try:
-            with open(config_file, encoding='utf-8') as f:
-                if config_file.suffix.lower() == '.yaml' or config_file.suffix.lower() == '.yml':
+            with open(config_file, encoding="utf-8") as f:
+                if (
+                    config_file.suffix.lower() == ".yaml"
+                    or config_file.suffix.lower() == ".yml"
+                ):
                     config_data = yaml.safe_load(f)
                 else:
                     config_data = json.load(f)
@@ -214,8 +227,7 @@ class UnifiedConfigManager:
                     else:
                         # 创建新节
                         self._sections[section_name] = ConfigSection(
-                            name=section_name,
-                            data=section_data
+                            name=section_name, data=section_data
                         )
 
             logger.info(f"Loaded config file: {config_file}")
@@ -224,10 +236,10 @@ class UnifiedConfigManager:
 
     def get(self, key: str, default: Any = None) -> Any:
         """获取配置值"""
-        if '.' not in key:
+        if "." not in key:
             raise ConfigurationError(f"Invalid config key format: {key}")
 
-        section_name, config_key = key.split('.', 1)
+        section_name, config_key = key.split(".", 1)
 
         if section_name not in self._sections:
             return default
@@ -236,10 +248,10 @@ class UnifiedConfigManager:
 
     def set(self, key: str, value: Any) -> None:
         """设置配置值"""
-        if '.' not in key:
+        if "." not in key:
             raise ConfigurationError(f"Invalid config key format: {key}")
 
-        section_name, config_key = key.split('.', 1)
+        section_name, config_key = key.split(".", 1)
 
         if section_name not in self._sections:
             self._sections[section_name] = ConfigSection(name=section_name)
@@ -248,10 +260,10 @@ class UnifiedConfigManager:
 
     def has(self, key: str) -> bool:
         """检查配置键是否存在"""
-        if '.' not in key:
+        if "." not in key:
             return False
 
-        section_name, config_key = key.split('.', 1)
+        section_name, config_key = key.split(".", 1)
 
         if section_name not in self._sections:
             return False
@@ -260,10 +272,10 @@ class UnifiedConfigManager:
 
     def remove(self, key: str) -> None:
         """移除配置键"""
-        if '.' not in key:
+        if "." not in key:
             raise ConfigurationError(f"Invalid config key format: {key}")
 
-        section_name, config_key = key.split('.', 1)
+        section_name, config_key = key.split(".", 1)
 
         if section_name in self._sections:
             self._sections[section_name].remove(config_key)
@@ -272,13 +284,16 @@ class UnifiedConfigManager:
         """获取配置节"""
         return self._sections.get(section_name)
 
-    def add_section(self, section_name: str, schema: dict[str, Any] | None = None, required: bool = False) -> None:
+    def add_section(
+        self,
+        section_name: str,
+        schema: dict[str, Any] | None = None,
+        required: bool = False,
+    ) -> None:
         """添加配置节"""
         if section_name not in self._sections:
             self._sections[section_name] = ConfigSection(
-                name=section_name,
-                schema=schema,
-                required=required
+                name=section_name, schema=schema, required=required
             )
 
     def validate_all(self) -> bool:
@@ -303,7 +318,7 @@ class UnifiedConfigManager:
             for section_name, section in self._sections.items():
                 config_data[section_name] = section.data
 
-            with open(config_file, 'w', encoding='utf-8') as f:
+            with open(config_file, "w", encoding="utf-8") as f:
                 json.dump(config_data, f, indent=2, ensure_ascii=False)
 
             logger.info(f"Config saved to {config_file}")
@@ -320,7 +335,7 @@ class UnifiedConfigManager:
         """处理初始化错误"""
         config_error = ConfigurationError(
             message=f"Failed to initialize UnifiedConfigManager: {str(error)}",
-            cause=error
+            cause=error,
         )
         self._error_handler.handle_error(config_error)
 

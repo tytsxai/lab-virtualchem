@@ -12,13 +12,15 @@ from pymunk import Vec2d
 
 class BodyType(Enum):
     """刚体类型"""
+
     DYNAMIC = "dynamic"  # 动态刚体（受力影响）
-    STATIC = "static"    # 静态刚体（不受力影响）
+    STATIC = "static"  # 静态刚体（不受力影响）
     KINEMATIC = "kinematic"  # 运动学刚体（速度控制）
 
 
 class ShapeType(Enum):
     """形状类型"""
+
     CIRCLE = "circle"
     BOX = "box"
     SEGMENT = "segment"
@@ -148,17 +150,29 @@ class PhysicsBody:
     def force(self, value: tuple[float, float]):
         self._body.force = Vec2d(value[0], value[1])
 
-    def apply_force_at_world_point(self, force: tuple[float, float], point: tuple[float, float]):
+    def apply_force_at_world_point(
+        self, force: tuple[float, float], point: tuple[float, float]
+    ):
         """在世界坐标的某点施加力"""
-        self._body.apply_force_at_world_point(Vec2d(force[0], force[1]), Vec2d(point[0], point[1]))
+        self._body.apply_force_at_world_point(
+            Vec2d(force[0], force[1]), Vec2d(point[0], point[1])
+        )
 
-    def apply_force_at_local_point(self, force: tuple[float, float], point: tuple[float, float]):
+    def apply_force_at_local_point(
+        self, force: tuple[float, float], point: tuple[float, float]
+    ):
         """在本地坐标的某点施加力"""
-        self._body.apply_force_at_local_point(Vec2d(force[0], force[1]), Vec2d(point[0], point[1]))
+        self._body.apply_force_at_local_point(
+            Vec2d(force[0], force[1]), Vec2d(point[0], point[1])
+        )
 
-    def apply_impulse_at_world_point(self, impulse: tuple[float, float], point: tuple[float, float]):
+    def apply_impulse_at_world_point(
+        self, impulse: tuple[float, float], point: tuple[float, float]
+    ):
         """在世界坐标的某点施加冲量"""
-        self._body.apply_impulse_at_world_point(Vec2d(impulse[0], impulse[1]), Vec2d(point[0], point[1]))
+        self._body.apply_impulse_at_world_point(
+            Vec2d(impulse[0], impulse[1]), Vec2d(point[0], point[1])
+        )
 
 
 class PyMunkPhysicsEngine:
@@ -209,7 +223,7 @@ class PyMunkPhysicsEngine:
         position: tuple[float, float] = (0, 0),
         body_type: BodyType = BodyType.DYNAMIC,
         friction: float = 0.5,
-        elasticity: float = 0.5
+        elasticity: float = 0.5,
     ) -> PhysicsBody:
         """创建圆形刚体"""
         # 计算转动惯量
@@ -247,7 +261,7 @@ class PyMunkPhysicsEngine:
         position: tuple[float, float] = (0, 0),
         body_type: BodyType = BodyType.DYNAMIC,
         friction: float = 0.5,
-        elasticity: float = 0.5
+        elasticity: float = 0.5,
     ) -> PhysicsBody:
         """创建矩形刚体"""
         # 计算转动惯量
@@ -284,7 +298,7 @@ class PyMunkPhysicsEngine:
         thickness: float = 1.0,
         body_type: BodyType = BodyType.STATIC,
         friction: float = 1.0,
-        elasticity: float = 0.5
+        elasticity: float = 0.5,
     ) -> PhysicsBody:
         """创建线段刚体（通常用于墙壁、地面等）"""
         if body_type == BodyType.STATIC:
@@ -294,7 +308,12 @@ class PyMunkPhysicsEngine:
             self._space.add(body)
 
         # 创建形状
-        shape = pymunk.Segment(body, Vec2d(point_a[0], point_a[1]), Vec2d(point_b[0], point_b[1]), thickness)
+        shape = pymunk.Segment(
+            body,
+            Vec2d(point_a[0], point_a[1]),
+            Vec2d(point_b[0], point_b[1]),
+            thickness,
+        )
         shape.friction = friction
         shape.elasticity = elasticity
 
@@ -315,7 +334,7 @@ class PyMunkPhysicsEngine:
         position: tuple[float, float] = (0, 0),
         body_type: BodyType = BodyType.DYNAMIC,
         friction: float = 0.5,
-        elasticity: float = 0.5
+        elasticity: float = 0.5,
     ) -> PhysicsBody:
         """创建多边形刚体"""
         # 转换顶点格式
@@ -370,16 +389,17 @@ class PyMunkPhysicsEngine:
         anchor_b: tuple[float, float] = (0, 0),
         rest_length: float = 0,
         stiffness: float = 10.0,
-        damping: float = 1.0
+        damping: float = 1.0,
     ) -> pymunk.Constraint:
         """在两个刚体之间添加弹簧约束"""
         spring = pymunk.DampedSpring(
-            body_a._body, body_b._body,
+            body_a._body,
+            body_b._body,
             Vec2d(anchor_a[0], anchor_a[1]),
             Vec2d(anchor_b[0], anchor_b[1]),
             rest_length,
             stiffness,
-            damping
+            damping,
         )
         self._space.add(spring)
         return spring
@@ -389,28 +409,23 @@ class PyMunkPhysicsEngine:
         body_a: PhysicsBody,
         body_b: PhysicsBody,
         anchor_a: tuple[float, float] = (0, 0),
-        anchor_b: tuple[float, float] = (0, 0)
+        anchor_b: tuple[float, float] = (0, 0),
     ) -> pymunk.Constraint:
         """在两个刚体之间添加钉住关节"""
         joint = pymunk.PinJoint(
-            body_a._body, body_b._body,
+            body_a._body,
+            body_b._body,
             Vec2d(anchor_a[0], anchor_a[1]),
-            Vec2d(anchor_b[0], anchor_b[1])
+            Vec2d(anchor_b[0], anchor_b[1]),
         )
         self._space.add(joint)
         return joint
 
     def add_pivot_joint(
-        self,
-        body_a: PhysicsBody,
-        body_b: PhysicsBody,
-        pivot: tuple[float, float]
+        self, body_a: PhysicsBody, body_b: PhysicsBody, pivot: tuple[float, float]
     ) -> pymunk.Constraint:
         """在两个刚体之间添加枢轴关节"""
-        joint = pymunk.PivotJoint(
-            body_a._body, body_b._body,
-            Vec2d(pivot[0], pivot[1])
-        )
+        joint = pymunk.PivotJoint(body_a._body, body_b._body, Vec2d(pivot[0], pivot[1]))
         self._space.add(joint)
         return joint
 
@@ -420,9 +435,7 @@ class PyMunkPhysicsEngine:
             self._space.remove(constraint)
 
     def ray_cast(
-        self,
-        start: tuple[float, float],
-        end: tuple[float, float]
+        self, start: tuple[float, float], end: tuple[float, float]
     ) -> dict | None:
         """射线检测
 
@@ -434,10 +447,7 @@ class PyMunkPhysicsEngine:
             - alpha: 击中点的参数值 (0-1)
         """
         hit_info = self._space.segment_query_first(
-            Vec2d(start[0], start[1]),
-            Vec2d(end[0], end[1]),
-            0,
-            pymunk.ShapeFilter()
+            Vec2d(start[0], start[1]), Vec2d(end[0], end[1]), 0, pymunk.ShapeFilter()
         )
 
         if hit_info:
@@ -445,37 +455,35 @@ class PyMunkPhysicsEngine:
             for body in self._bodies:
                 if body._body == hit_info.shape.body:
                     return {
-                        'body': body,
-                        'point': (hit_info.point.x, hit_info.point.y),
-                        'normal': (hit_info.normal.x, hit_info.normal.y),
-                        'alpha': hit_info.alpha
+                        "body": body,
+                        "point": (hit_info.point.x, hit_info.point.y),
+                        "normal": (hit_info.normal.x, hit_info.normal.y),
+                        "alpha": hit_info.alpha,
                     }
 
         return None
 
     def point_query(
-        self,
-        point: tuple[float, float],
-        max_distance: float = 0
+        self, point: tuple[float, float], max_distance: float = 0
     ) -> list[dict]:
         """点查询 - 查找距离某点最近的形状"""
         results = []
 
         query_result = self._space.point_query_nearest(
-            Vec2d(point[0], point[1]),
-            max_distance,
-            pymunk.ShapeFilter()
+            Vec2d(point[0], point[1]), max_distance, pymunk.ShapeFilter()
         )
 
         if query_result:
             # 查找对应的PhysicsBody
             for body in self._bodies:
                 if body._body == query_result.shape.body:
-                    results.append({
-                        'body': body,
-                        'point': (query_result.point.x, query_result.point.y),
-                        'distance': query_result.distance
-                    })
+                    results.append(
+                        {
+                            "body": body,
+                            "point": (query_result.point.x, query_result.point.y),
+                            "distance": query_result.distance,
+                        }
+                    )
                     break
 
         return results

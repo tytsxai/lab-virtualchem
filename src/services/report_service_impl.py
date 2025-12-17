@@ -33,7 +33,18 @@ from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-_SUPPORTED_TEMPLATE_SUFFIXES = {".json", ".yaml", ".yml", ".md", ".markdown", ".html", ".htm", ".jinja", ".j2", ".tpl"}
+_SUPPORTED_TEMPLATE_SUFFIXES = {
+    ".json",
+    ".yaml",
+    ".yml",
+    ".md",
+    ".markdown",
+    ".html",
+    ".htm",
+    ".jinja",
+    ".j2",
+    ".tpl",
+}
 _REPORT_TYPE_ALIASES: dict[ReportType, list[str]] = {
     ReportType.EXPERIMENT: ["experiment", "exp", "lab", "实验"],
     ReportType.SUMMARY: ["summary", "sum", "overview", "汇总"],
@@ -74,11 +85,17 @@ if TYPE_CHECKING:
             format: ExportFormat = ...,
         ) -> ReportResponse: ...
 
-        def generate_comparison_report(self, record_ids: list[str], format: ExportFormat = ...) -> ReportResponse: ...
+        def generate_comparison_report(
+            self, record_ids: list[str], format: ExportFormat = ...
+        ) -> ReportResponse: ...
 
-        def export_report(self, report_id: str, output_path: Path, format: ExportFormat) -> bool: ...
+        def export_report(
+            self, report_id: str, output_path: Path, format: ExportFormat
+        ) -> bool: ...
 
-        def get_available_templates(self, report_type: ReportType | None = None) -> list[str]: ...
+        def get_available_templates(
+            self, report_type: ReportType | None = None
+        ) -> list[str]: ...
 
         def preview_report(self, request: ReportRequest) -> str: ...
 
@@ -122,25 +139,35 @@ class ReportServiceImpl(_ReportServiceBase):
                 if not record:
                     logger.warning(f"记录不存在: {request.record_id}")
                     return ReportResponse(success=False, message="记录不存在")
-                return self.generate_experiment_report(record, request.format, request.options, request.template_name)
+                return self.generate_experiment_report(
+                    record, request.format, request.options, request.template_name
+                )
 
             elif request.report_type == ReportType.COMPARISON and request.record_ids:
                 # 生成对比报告
-                return self.generate_comparison_report(request.record_ids, request.format)
+                return self.generate_comparison_report(
+                    request.record_ids, request.format
+                )
 
             else:
                 logger.warning(f"不支持的报告类型或缺少参数: {request.report_type}")
-                return ReportResponse(success=False, message="不支持的报告类型或缺少必要参数")
+                return ReportResponse(
+                    success=False, message="不支持的报告类型或缺少必要参数"
+                )
 
         except OSError as e:
             logger.error(f"文件操作失败: {e}", exc_info=True)
-            return ReportResponse(success=False, message="文件操作失败，请检查权限和磁盘空间")
+            return ReportResponse(
+                success=False, message="文件操作失败，请检查权限和磁盘空间"
+            )
         except ValueError as e:
             logger.error(f"参数错误: {e}", exc_info=True)
             return ReportResponse(success=False, message=f"参数错误: {str(e)}")
         except Exception as e:
             logger.error(f"生成报告失败: {e}", exc_info=True)
-            return ReportResponse(success=False, message="生成报告失败，请查看日志获取详细信息")
+            return ReportResponse(
+                success=False, message="生成报告失败，请查看日志获取详细信息"
+            )
 
     def generate_experiment_report(
         self,
@@ -151,10 +178,14 @@ class ReportServiceImpl(_ReportServiceBase):
     ) -> ReportResponse:
         """生成实验报告"""
         try:
-            logger.info(f"生成实验报告: record_id={record.record_id}, format={format.value}")
+            logger.info(
+                f"生成实验报告: record_id={record.record_id}, format={format.value}"
+            )
 
             # 生成报告内容
-            content = self.generator.generate(record, template=template_name, options=options)
+            content = self.generator.generate(
+                record, template=template_name, options=options
+            )
 
             # 缓存报告内容
             self._cache_report(record.record_id, content)
@@ -210,10 +241,16 @@ class ReportServiceImpl(_ReportServiceBase):
                 "start_date": start_date,
                 "end_date": end_date,
                 "total_experiments": len(records),
-                "completed_experiments": sum(1 for r in records if r.status == "completed"),
-                "average_score": sum(r.score.total for r in records) / len(records) if records else 0,
+                "completed_experiments": sum(
+                    1 for r in records if r.status == "completed"
+                ),
+                "average_score": sum(r.score.total for r in records) / len(records)
+                if records
+                else 0,
                 "total_time": sum(
-                    (r.completed_at - r.started_at).total_seconds() / 60 for r in records if r.completed_at
+                    (r.completed_at - r.started_at).total_seconds() / 60
+                    for r in records
+                    if r.completed_at
                 ),
                 "experiments_by_type": self._count_by_type(records),
                 "score_trend": self._calculate_score_trend(records),
@@ -263,14 +300,20 @@ class ReportServiceImpl(_ReportServiceBase):
                     records.append(record)
 
             if len(records) < 2:
-                return ReportResponse(success=False, message="对比报告至少需要2个有效记录")
+                return ReportResponse(
+                    success=False, message="对比报告至少需要2个有效记录"
+                )
 
             # 2. 生成对比数据
             comparison_data = {
                 "records": records,
                 "comparison_metrics": {
                     "scores": [r.score.total for r in records],
-                    "times": [(r.completed_at - r.started_at).total_seconds() / 60 for r in records if r.completed_at],
+                    "times": [
+                        (r.completed_at - r.started_at).total_seconds() / 60
+                        for r in records
+                        if r.completed_at
+                    ],
                     "procedural_scores": [r.score.procedural for r in records],
                     "safety_scores": [r.score.safety for r in records],
                     "scientific_scores": [r.score.scientific for r in records],
@@ -287,7 +330,9 @@ class ReportServiceImpl(_ReportServiceBase):
             output_dir = Path(self.config.output_dir)
             output_dir.mkdir(parents=True, exist_ok=True)
 
-            filename = f"comparison_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{format.value}"
+            filename = (
+                f"comparison_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{format.value}"
+            )
             output_path = output_dir / filename
 
             success = self.exporter.export(
@@ -310,7 +355,9 @@ class ReportServiceImpl(_ReportServiceBase):
         except Exception as e:
             return ReportResponse(success=False, message=f"生成对比报告失败: {str(e)}")
 
-    def export_report(self, report_id: str, output_path: Path, format: ExportFormat) -> bool:
+    def export_report(
+        self, report_id: str, output_path: Path, format: ExportFormat
+    ) -> bool:
         """导出报告"""
         try:
             # 1. 从缓存或存储加载报告
@@ -323,7 +370,10 @@ class ReportServiceImpl(_ReportServiceBase):
             report_format = self._convert_format(format)
             success = bool(
                 self.exporter.export(
-                report_content, output_path, report_format, metadata={"report_id": report_id}
+                    report_content,
+                    output_path,
+                    report_format,
+                    metadata={"report_id": report_id},
                 )
             )
 
@@ -332,11 +382,15 @@ class ReportServiceImpl(_ReportServiceBase):
         except Exception:
             return False
 
-    def get_available_templates(self, report_type: ReportType | None = None) -> list[str]:
+    def get_available_templates(
+        self, report_type: ReportType | None = None
+    ) -> list[str]:
         """获取可用模板（结合生成器与文件系统）"""
         builtin_templates = self.generator.list_templates()
         builtin_infos = [
-            TemplateInfo(name=name, report_types=self._infer_report_types_from_name(name))
+            TemplateInfo(
+                name=name, report_types=self._infer_report_types_from_name(name)
+            )
             for name in builtin_templates
         ]
         fs_infos = self._load_templates_from_directory()
@@ -400,7 +454,9 @@ class ReportServiceImpl(_ReportServiceBase):
 
         return infos
 
-    def _infer_report_types_from_file(self, path: Path, content: str) -> set[ReportType]:
+    def _infer_report_types_from_file(
+        self, path: Path, content: str
+    ) -> set[ReportType]:
         """结合文件内容/名称推断适用的报告类型"""
         inferred = self._infer_report_types_from_name(path.stem)
         suffix = path.suffix.lower()
@@ -515,7 +571,9 @@ class ReportServiceImpl(_ReportServiceBase):
             if request.record_id:
                 record = self._load_record(request.record_id)
                 if record:
-                    content = self.generator.generate(record, options={"format": "html"})
+                    content = self.generator.generate(
+                        record, options={"format": "html"}
+                    )
                     return str(content)
 
             return "<html><body><p>无法预览报告</p></body></html>"
@@ -545,7 +603,8 @@ class ReportServiceImpl(_ReportServiceBase):
                 all_records = cast(list[UserRecord], raw_records or [])
             elif hasattr(self.record_repository, "find_by"):
                 all_records = cast(
-                    list[UserRecord], self.record_repository.find_by(lambda r: r.user_id == user_id)
+                    list[UserRecord],
+                    self.record_repository.find_by(lambda r: r.user_id == user_id),
                 )
             elif hasattr(self.record_repository, "find_all"):
                 all_records = [
@@ -639,18 +698,26 @@ class ReportServiceImpl(_ReportServiceBase):
         sorted_records = sorted(records, key=lambda r: r.started_at)
         return [float(r.score.total) for r in sorted_records]
 
-    def _analyze_common_mistakes(self, records: list[UserRecord]) -> list[dict[str, Any]]:
+    def _analyze_common_mistakes(
+        self, records: list[UserRecord]
+    ) -> list[dict[str, Any]]:
         """分析常见错误"""
         mistake_counts: dict[str, dict[str, Any]] = {}
         for record in records:
             for mistake in record.mistakes_summary:
                 key = mistake.description  # 使用description而不是message
                 if key not in mistake_counts:
-                    mistake_counts[key] = {"message": key, "count": 0, "severity": mistake.severity}
+                    mistake_counts[key] = {
+                        "message": key,
+                        "count": 0,
+                        "severity": mistake.severity,
+                    }
                 mistake_counts[key]["count"] += 1
 
         # 按次数排序
-        common_mistakes = sorted(mistake_counts.values(), key=lambda x: x["count"], reverse=True)
+        common_mistakes = sorted(
+            mistake_counts.values(), key=lambda x: x["count"], reverse=True
+        )
         return common_mistakes[:10]  # 返回前10个
 
     def _generate_summary_content(self, summary_data: dict[str, Any]) -> str:

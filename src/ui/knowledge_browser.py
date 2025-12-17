@@ -64,7 +64,8 @@ class KnowledgeBrowser(QDialog):
                 for file_path in self.knowledge_dir.glob("*.json"):
                     try:
                         import json
-                        with open(file_path, encoding='utf-8') as f:
+
+                        with open(file_path, encoding="utf-8") as f:
                             data = json.load(f)
                             content.append(f"## {file_path.stem}")
                             content.append(str(data))

@@ -584,7 +584,9 @@ class ShortcutHelp:
 
             for shortcut in sorted(cat_shortcuts, key=lambda x: str(x.combination)):
                 status = "✓" if shortcut.enabled else "✗"
-                lines.append(f"{status} {shortcut.combination:<20} - {shortcut.description}")
+                lines.append(
+                    f"{status} {shortcut.combination:<20} - {shortcut.description}"
+                )
 
         return "\n".join(lines)
 
@@ -709,12 +711,19 @@ class DefaultShortcuts:
 
 
 # 快捷键装饰器
-def shortcut(combination: str, description: str, category: str = "general", context: str | None = None):
+def shortcut(
+    combination: str,
+    description: str,
+    category: str = "general",
+    context: str | None = None,
+):
     """快捷键装饰器"""
 
     def decorator(func: Callable[[], None]) -> Callable[[], None]:
         shortcut_id = f"{func.__module__}.{func.__name__}"
-        register_shortcut(shortcut_id, combination, func, description, category, context)
+        register_shortcut(
+            shortcut_id, combination, func, description, category, context
+        )
         return func
 
     return decorator
@@ -758,7 +767,14 @@ if __name__ == "__main__":
     # 3. 快捷键解析
     logger.info("3. 快捷键解析:")
 
-    test_combinations = ["Ctrl+N", "Ctrl+Shift+S", "Alt+F4", "F1", "Ctrl+Plus", "Ctrl+Minus"]
+    test_combinations = [
+        "Ctrl+N",
+        "Ctrl+Shift+S",
+        "Alt+F4",
+        "F1",
+        "Ctrl+Plus",
+        "Ctrl+Minus",
+    ]
 
     for combo_str in test_combinations:
         combination = ShortcutParser.parse(combo_str)

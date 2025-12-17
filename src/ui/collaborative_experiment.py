@@ -100,7 +100,13 @@ class CollaborativeSession(QObject):
     chat_received = Signal(ChatMessage)
     cursor_moved = Signal(str, float, float)  # 用户ID, x, y
 
-    def __init__(self, session_id: str, owner_id: str, owner_name: str, parent: QObject | None = None):
+    def __init__(
+        self,
+        session_id: str,
+        owner_id: str,
+        owner_name: str,
+        parent: QObject | None = None,
+    ):
         super().__init__(parent)
 
         self.session_id = session_id
@@ -133,7 +139,12 @@ class CollaborativeSession(QObject):
                 "chat",
             ],
             CollaboratorRole.OBSERVER: ["chat"],
-            CollaboratorRole.ASSISTANT: ["add_equipment", "move_item", "measure", "chat"],
+            CollaboratorRole.ASSISTANT: [
+                "add_equipment",
+                "move_item",
+                "measure",
+                "chat",
+            ],
         }
 
         # 心跳检测
@@ -144,7 +155,10 @@ class CollaborativeSession(QObject):
         logger.info(f"协作会话创建: {session_id}")
 
     def add_collaborator(
-        self, user_id: str, user_name: str, role: CollaboratorRole = CollaboratorRole.OBSERVER
+        self,
+        user_id: str,
+        user_name: str,
+        role: CollaboratorRole = CollaboratorRole.OBSERVER,
     ) -> bool:
         """添加协作者"""
         if user_id in self.collaborators:
@@ -189,7 +203,9 @@ class CollaborativeSession(QObject):
         logger.info(f"协作者离开: {collaborator.name}")
         return True
 
-    def update_collaborator_role(self, user_id: str, new_role: CollaboratorRole) -> bool:
+    def update_collaborator_role(
+        self, user_id: str, new_role: CollaboratorRole
+    ) -> bool:
         """更新协作者角色"""
         if user_id not in self.collaborators:
             return False
@@ -199,12 +215,16 @@ class CollaborativeSession(QObject):
 
         # 发送系统消息
         name = self.collaborators[user_id].name
-        self._add_system_message(f"{name} 的角色已从 {old_role.value} 变更为 {new_role.value}")
+        self._add_system_message(
+            f"{name} 的角色已从 {old_role.value} 变更为 {new_role.value}"
+        )
 
         logger.info(f"角色更新: {name} -> {new_role.value}")
         return True
 
-    def submit_action(self, user_id: str, action_type: ActionType, data: dict[str, Any]) -> bool:
+    def submit_action(
+        self, user_id: str, action_type: ActionType, data: dict[str, Any]
+    ) -> bool:
         """提交操作"""
         if user_id not in self.collaborators:
             logger.warning(f"未知用户: {user_id}")
@@ -214,12 +234,18 @@ class CollaborativeSession(QObject):
 
         # 检查权限
         if not self._has_permission(collaborator.role, action_type.value):
-            logger.warning(f"权限不足: {collaborator.name} 无法执行 {action_type.value}")
+            logger.warning(
+                f"权限不足: {collaborator.name} 无法执行 {action_type.value}"
+            )
             return False
 
         # 创建操作记录
         action = CollaborativeAction(
-            id=str(uuid.uuid4()), user_id=user_id, user_name=collaborator.name, action_type=action_type, data=data
+            id=str(uuid.uuid4()),
+            user_id=user_id,
+            user_name=collaborator.name,
+            action_type=action_type,
+            data=data,
         )
 
         self.action_history.append(action)
@@ -237,7 +263,12 @@ class CollaborativeSession(QObject):
 
         collaborator = self.collaborators[user_id]
 
-        chat_msg = ChatMessage(id=str(uuid.uuid4()), user_id=user_id, user_name=collaborator.name, message=message)
+        chat_msg = ChatMessage(
+            id=str(uuid.uuid4()),
+            user_id=user_id,
+            user_name=collaborator.name,
+            message=message,
+        )
 
         self.chat_history.append(chat_msg)
 
@@ -264,7 +295,11 @@ class CollaborativeSession(QObject):
     def _add_system_message(self, message: str) -> None:
         """添加系统消息"""
         chat_msg = ChatMessage(
-            id=str(uuid.uuid4()), user_id="system", user_name="系统", message=message, is_system=True
+            id=str(uuid.uuid4()),
+            user_id="system",
+            user_name="系统",
+            message=message,
+            is_system=True,
         )
 
         self.chat_history.append(chat_msg)
@@ -323,7 +358,12 @@ class CollaborativeSession(QObject):
 class CollaborativeExperimentWidget(QWidget):
     """协作实验界面组件"""
 
-    def __init__(self, session: CollaborativeSession, current_user_id: str, parent: QWidget | None = None):
+    def __init__(
+        self,
+        session: CollaborativeSession,
+        current_user_id: str,
+        parent: QWidget | None = None,
+    ):
         super().__init__(parent)
 
         self.session = session
@@ -403,8 +443,12 @@ class CollaborativeExperimentWidget(QWidget):
 
     def _connect_signals(self) -> None:
         """连接信号"""
-        self.session.collaborator_joined.connect(lambda _: self._update_collaborators_list())
-        self.session.collaborator_left.connect(lambda _: self._update_collaborators_list())
+        self.session.collaborator_joined.connect(
+            lambda _: self._update_collaborators_list()
+        )
+        self.session.collaborator_left.connect(
+            lambda _: self._update_collaborators_list()
+        )
         self.session.chat_received.connect(self._on_chat_received)
 
     def _update_collaborators_list(self) -> None:
@@ -499,7 +543,11 @@ class CollaborationManager(QObject):
         return self.sessions.get(session_id)
 
     def join_session(
-        self, session_id: str, user_id: str, user_name: str, role: CollaboratorRole = CollaboratorRole.OBSERVER
+        self,
+        session_id: str,
+        user_id: str,
+        user_name: str,
+        role: CollaboratorRole = CollaboratorRole.OBSERVER,
     ) -> bool:
         """加入协作会话"""
         session = self.get_session(session_id)

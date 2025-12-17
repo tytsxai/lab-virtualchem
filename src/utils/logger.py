@@ -32,8 +32,12 @@ SENSITIVE_FIELD_NAMES = {
     "mobile",
     "license_key",
 }
-EMAIL_PATTERN = re.compile(r"(?P<local>[A-Za-z0-9._%+-]+)@(?P<domain>[A-Za-z0-9.-]+\.[A-Za-z]{2,})")
-PHONE_PATTERN = re.compile(r"\b(\+?\d{1,3}[-.\s]?)?(\d{3})[-.\s]?(\d{4})[-.\s]?(\d{3,4})\b")
+EMAIL_PATTERN = re.compile(
+    r"(?P<local>[A-Za-z0-9._%+-]+)@(?P<domain>[A-Za-z0-9.-]+\.[A-Za-z]{2,})"
+)
+PHONE_PATTERN = re.compile(
+    r"\b(\+?\d{1,3}[-.\s]?)?(\d{3})[-.\s]?(\d{4})[-.\s]?(\d{3,4})\b"
+)
 SECRET_PATTERN = re.compile(
     r"(?i)(?P<key>bearer|token|secret|password|passwd|pwd|api[_-]?key|access[_-]?token|refresh[_-]?token|authorization)"
     r"(?:\s*[:=]\s*|\s+)(?P<value>[-A-Za-z0-9._~+/]{4,})"
@@ -42,6 +46,7 @@ SECRET_PATTERN = re.compile(
 
 class LogLevel(Enum):
     """日志级别枚举"""
+
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
@@ -52,6 +57,7 @@ class LogLevel(Enum):
 @dataclass
 class LogEntry:
     """结构化日志条目"""
+
     timestamp: float
     level: str
     logger_name: str
@@ -107,7 +113,10 @@ def sanitize_log_value(value: Any) -> Any:
     if isinstance(value, str):
         return _sanitize_text(value)
     if isinstance(value, dict):
-        return {k: (MASK_TEXT if _is_sensitive_key(k) else sanitize_log_value(v)) for k, v in value.items()}
+        return {
+            k: (MASK_TEXT if _is_sensitive_key(k) else sanitize_log_value(v))
+            for k, v in value.items()
+        }
     if isinstance(value, (list, tuple, set)):
         container_type = type(value)
         sanitized_items = [sanitize_log_value(v) for v in value]
@@ -129,9 +138,26 @@ class SensitiveDataFilter(logging.Filter):
 
         for key, value in list(record.__dict__.items()):
             if key in {
-                "msg", "args", "name", "levelno", "levelname", "pathname", "filename", "module",
-                "exc_info", "exc_text", "stack_info", "lineno", "funcName", "created", "msecs",
-                "relativeCreated", "thread", "threadName", "processName", "process",
+                "msg",
+                "args",
+                "name",
+                "levelno",
+                "levelname",
+                "pathname",
+                "filename",
+                "module",
+                "exc_info",
+                "exc_text",
+                "stack_info",
+                "lineno",
+                "funcName",
+                "created",
+                "msecs",
+                "relativeCreated",
+                "thread",
+                "threadName",
+                "processName",
+                "process",
             }:
                 continue
 
@@ -145,7 +171,9 @@ class SensitiveDataFilter(logging.Filter):
 
 def _ensure_sensitive_filter(target: logging.Logger | logging.Handler) -> None:
     """确保目标挂载敏感信息过滤器"""
-    if not any(isinstance(f, SensitiveDataFilter) for f in getattr(target, "filters", [])):
+    if not any(
+        isinstance(f, SensitiveDataFilter) for f in getattr(target, "filters", [])
+    ):
         target.addFilter(SensitiveDataFilter())
 
 
@@ -155,7 +183,9 @@ def _resolve_log_level(level: int | str) -> int:
     if isinstance(level, str):
         resolved = getattr(logging, level.upper(), logging.INFO)
 
-    environment = os.getenv("ENVIRONMENT", "").lower() or os.getenv("APP_ENV", "").lower()
+    environment = (
+        os.getenv("ENVIRONMENT", "").lower() or os.getenv("APP_ENV", "").lower()
+    )
     if environment == "production" and resolved < logging.INFO:
         return logging.INFO
     return int(resolved)
@@ -188,23 +218,28 @@ class StructuredFormatter(logging.Formatter):
             log_entry.exception_info = self.formatException(record.exc_info)
 
         # 额外数据
-        if hasattr(record, 'extra_data'):
+        if hasattr(record, "extra_data"):
             log_entry.extra_data = sanitize_log_value(record.extra_data)
 
         # 转换为JSON格式
-        return json.dumps({
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(log_entry.timestamp)),
-            "level": log_entry.level,
-            "logger": log_entry.logger_name,
-            "message": log_entry.message,
-            "module": log_entry.module,
-            "function": log_entry.function,
-            "line": log_entry.line_number,
-            "thread": log_entry.thread_id,
-            "process": log_entry.process_id,
-            "extra": log_entry.extra_data,
-            "exception": log_entry.exception_info,
-        }, ensure_ascii=False)
+        return json.dumps(
+            {
+                "timestamp": time.strftime(
+                    "%Y-%m-%d %H:%M:%S", time.localtime(log_entry.timestamp)
+                ),
+                "level": log_entry.level,
+                "logger": log_entry.logger_name,
+                "message": log_entry.message,
+                "module": log_entry.module,
+                "function": log_entry.function,
+                "line": log_entry.line_number,
+                "thread": log_entry.thread_id,
+                "process": log_entry.process_id,
+                "extra": log_entry.extra_data,
+                "exception": log_entry.exception_info,
+            },
+            ensure_ascii=False,
+        )
 
 
 class LogBuffer:
@@ -222,9 +257,11 @@ class LogBuffer:
             entry.extra_data = sanitize_log_value(entry.extra_data)
             self.buffer.append(entry)
             if len(self.buffer) > self.max_size:
-                self.buffer = self.buffer[-self.max_size:]
+                self.buffer = self.buffer[-self.max_size :]
 
-    def get_entries(self, level: str | None = None, limit: int | None = None) -> list[LogEntry]:
+    def get_entries(
+        self, level: str | None = None, limit: int | None = None
+    ) -> list[LogEntry]:
         """获取日志条目"""
         with self._lock:
             entries = self.buffer.copy()
@@ -385,7 +422,11 @@ def setup_logger(
     )
 
     # 控制台处理器 - 设置UTF-8编码以正确显示中文
-    has_stdout_handler = any(isinstance(h, logging.StreamHandler) and getattr(h, "stream", None) == sys.stdout for h in logger.handlers)
+    has_stdout_handler = any(
+        isinstance(h, logging.StreamHandler)
+        and getattr(h, "stream", None) == sys.stdout
+        for h in logger.handlers
+    )
     if enable_console and not has_stdout_handler:
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(resolved_level)
@@ -418,7 +459,7 @@ def setup_logger(
             log_file_path,
             maxBytes=max_bytes,
             backupCount=backup_count,
-            encoding="utf-8"
+            encoding="utf-8",
         )
         file_handler.setLevel(resolved_level)
         file_handler.setFormatter(formatter)
@@ -457,18 +498,22 @@ def clear_log_buffer() -> None:
     _global_log_buffer.clear()
 
 
-def export_logs(file_path: str, level: str | None = None, limit: int | None = None) -> bool:
+def export_logs(
+    file_path: str, level: str | None = None, limit: int | None = None
+) -> bool:
     """导出日志到文件"""
     try:
         entries = _global_log_buffer.get_entries(level=level, limit=limit)
 
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             for entry in entries:
                 # 确保导出时再次脱敏
                 safe_message = sanitize_log_value(entry.message)
                 safe_extra = sanitize_log_value(entry.extra_data)
                 log_data = {
-                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(entry.timestamp)),
+                    "timestamp": time.strftime(
+                        "%Y-%m-%d %H:%M:%S", time.localtime(entry.timestamp)
+                    ),
                     "level": entry.level,
                     "logger": entry.logger_name,
                     "message": safe_message,
@@ -480,7 +525,7 @@ def export_logs(file_path: str, level: str | None = None, limit: int | None = No
                     "extra": safe_extra,
                     "exception": entry.exception_info,
                 }
-                f.write(json.dumps(log_data, ensure_ascii=False) + '\n')
+                f.write(json.dumps(log_data, ensure_ascii=False) + "\n")
 
         return True
     except Exception as e:

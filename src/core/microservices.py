@@ -202,7 +202,9 @@ class ServiceRegistry:
             # 更新统计信息
             if old_status == ServiceStatus.RUNNING and status != ServiceStatus.RUNNING:
                 self.stats["active_services"] -= 1
-            elif old_status != ServiceStatus.RUNNING and status == ServiceStatus.RUNNING:
+            elif (
+                old_status != ServiceStatus.RUNNING and status == ServiceStatus.RUNNING
+            ):
                 self.stats["active_services"] += 1
 
             if status == ServiceStatus.FAILED:
@@ -233,7 +235,9 @@ class ServiceRegistry:
             服务信息列表
         """
         with self._lock:
-            return [service for service in self.services.values() if service.name == name]
+            return [
+                service for service in self.services.values() if service.name == name
+            ]
 
     def get_services_by_type(self, service_type: ServiceType) -> list[ServiceInfo]:
         """根据类型获取服务
@@ -245,7 +249,11 @@ class ServiceRegistry:
             服务信息列表
         """
         with self._lock:
-            return [service for service in self.services.values() if service.service_type == service_type]
+            return [
+                service
+                for service in self.services.values()
+                if service.service_type == service_type
+            ]
 
     def get_healthy_services(self) -> list[ServiceInfo]:
         """获取健康服务
@@ -272,7 +280,8 @@ class ServiceRegistry:
                 "active_services": self.stats["active_services"],
                 "failed_services": self.stats["failed_services"],
                 "services_by_type": {
-                    service_type.value: len(self.get_services_by_type(service_type)) for service_type in ServiceType
+                    service_type.value: len(self.get_services_by_type(service_type))
+                    for service_type in ServiceType
                 },
             }
 
@@ -293,7 +302,9 @@ class ServiceDiscovery:
 
         logger.info("服务发现已初始化")
 
-    def discover_service(self, service_name: str, service_type: ServiceType | None = None) -> ServiceInfo | None:
+    def discover_service(
+        self, service_name: str, service_type: ServiceType | None = None
+    ) -> ServiceInfo | None:
         """发现服务
 
         Args:
@@ -307,7 +318,10 @@ class ServiceDiscovery:
         cache_key = f"{service_name}:{service_type.value if service_type else 'any'}"
         current_time = time.time()
 
-        if cache_key in self.cache and current_time - self.last_cache_update < self.cache_ttl:
+        if (
+            cache_key in self.cache
+            and current_time - self.last_cache_update < self.cache_ttl
+        ):
             services = self.cache[cache_key]
             if services:
                 return services[0]  # 返回第一个可用服务
@@ -319,7 +333,11 @@ class ServiceDiscovery:
             services = [s for s in services if s.service_type == service_type]
 
         # 过滤健康服务
-        healthy_services = [s for s in services if s.status in [ServiceStatus.RUNNING, ServiceStatus.HEALTHY]]
+        healthy_services = [
+            s
+            for s in services
+            if s.status in [ServiceStatus.RUNNING, ServiceStatus.HEALTHY]
+        ]
 
         if healthy_services:
             # 更新缓存
@@ -330,7 +348,9 @@ class ServiceDiscovery:
 
         return None
 
-    def discover_services(self, service_name: str, service_type: ServiceType | None = None) -> list[ServiceInfo]:
+    def discover_services(
+        self, service_name: str, service_type: ServiceType | None = None
+    ) -> list[ServiceInfo]:
         """发现多个服务
 
         Args:
@@ -346,7 +366,11 @@ class ServiceDiscovery:
             services = [s for s in services if s.service_type == service_type]
 
         # 过滤健康服务
-        healthy_services = [s for s in services if s.status in [ServiceStatus.RUNNING, ServiceStatus.HEALTHY]]
+        healthy_services = [
+            s
+            for s in services
+            if s.status in [ServiceStatus.RUNNING, ServiceStatus.HEALTHY]
+        ]
 
         return healthy_services
 
@@ -370,7 +394,12 @@ class ServiceGateway:
         self.session = None
 
         # 统计信息
-        self.stats = {"requests_total": 0, "requests_success": 0, "requests_failed": 0, "response_time_avg": 0.0}
+        self.stats = {
+            "requests_total": 0,
+            "requests_success": 0,
+            "requests_failed": 0,
+            "response_time_avg": 0.0,
+        }
 
         logger.info("服务网关已初始化")
 
@@ -402,7 +431,9 @@ class ServiceGateway:
             service = self.discovery.discover_service(request.service_name)
             if not service:
                 return ServiceResponse(
-                    request_id=request.request_id, status_code=404, error=f"服务未找到: {request.service_name}"
+                    request_id=request.request_id,
+                    status_code=404,
+                    error=f"服务未找到: {request.service_name}",
                 )
 
             # 构建URL
@@ -420,7 +451,8 @@ class ServiceGateway:
 
             response_time = time.time() - start_time
             self.stats["response_time_avg"] = (
-                self.stats["response_time_avg"] * (self.stats["requests_success"] - 1) + response_time
+                self.stats["response_time_avg"] * (self.stats["requests_success"] - 1)
+                + response_time
             ) / self.stats["requests_success"]
 
             return response
@@ -432,9 +464,13 @@ class ServiceGateway:
             self.stats["requests_total"] += 1
             self.stats["requests_failed"] += 1
 
-            return ServiceResponse(request_id=request.request_id, status_code=500, error=str(e))
+            return ServiceResponse(
+                request_id=request.request_id, status_code=500, error=str(e)
+            )
 
-    async def _call_service_async(self, url: str, request: ServiceRequest) -> ServiceResponse:
+    async def _call_service_async(
+        self, url: str, request: ServiceRequest
+    ) -> ServiceResponse:
         """异步调用服务"""
         async with self.session.request(
             method=request.method,
@@ -443,13 +479,22 @@ class ServiceGateway:
             json=request.data,
             timeout=aiohttp.ClientTimeout(total=request.timeout),
         ) as response:
-            data = await response.json() if response.content_type == "application/json" else await response.text()
-
-            return ServiceResponse(
-                request_id=request.request_id, status_code=response.status, data=data, headers=dict(response.headers)
+            data = (
+                await response.json()
+                if response.content_type == "application/json"
+                else await response.text()
             )
 
-    async def _call_service_sync(self, url: str, request: ServiceRequest) -> ServiceResponse:
+            return ServiceResponse(
+                request_id=request.request_id,
+                status_code=response.status,
+                data=data,
+                headers=dict(response.headers),
+            )
+
+    async def _call_service_sync(
+        self, url: str, request: ServiceRequest
+    ) -> ServiceResponse:
         """同步调用服务"""
         if not REQUESTS_AVAILABLE:
             raise ImportError("requests库未安装")
@@ -459,7 +504,11 @@ class ServiceGateway:
         response = await loop.run_in_executor(
             None,
             lambda: requests.request(
-                method=request.method, url=url, headers=request.headers, json=request.data, timeout=request.timeout
+                method=request.method,
+                url=url,
+                headers=request.headers,
+                json=request.data,
+                timeout=request.timeout,
             ),
         )
 
@@ -468,7 +517,9 @@ class ServiceGateway:
             status_code=response.status_code,
             data=(
                 response.json()
-                if response.headers.get("content-type", "").startswith("application/json")
+                if response.headers.get("content-type", "").startswith(
+                    "application/json"
+                )
                 else response.text
             ),
             headers=dict(response.headers),
@@ -484,7 +535,8 @@ class ServiceGateway:
             "requests_total": self.stats["requests_total"],
             "requests_success": self.stats["requests_success"],
             "requests_failed": self.stats["requests_failed"],
-            "success_rate": self.stats["requests_success"] / max(1, self.stats["requests_total"]),
+            "success_rate": self.stats["requests_success"]
+            / max(1, self.stats["requests_total"]),
             "response_time_avg": self.stats["response_time_avg"],
         }
 
@@ -515,7 +567,9 @@ class BaseService(IService):
 
         # 更新状态
         self.service_info.status = ServiceStatus.RUNNING
-        self.registry.update_service_status(self.service_info.service_id, ServiceStatus.RUNNING)
+        self.registry.update_service_status(
+            self.service_info.service_id, ServiceStatus.RUNNING
+        )
 
         logger.info(f"服务已启动: {self.service_info.name}")
 
@@ -525,7 +579,9 @@ class BaseService(IService):
         self.service_info.status = ServiceStatus.STOPPING
 
         # 更新状态
-        self.registry.update_service_status(self.service_info.service_id, ServiceStatus.STOPPING)
+        self.registry.update_service_status(
+            self.service_info.service_id, ServiceStatus.STOPPING
+        )
 
         # 注销服务
         self.registry.unregister_service(self.service_info.service_id)
@@ -669,7 +725,13 @@ class MicroservicesManager:
 microservices_manager = MicroservicesManager()
 
 
-def service(service_type: ServiceType, name: str, version: str = "1.0.0", host: str = "localhost", port: int = 8000):
+def service(
+    service_type: ServiceType,
+    name: str,
+    version: str = "1.0.0",
+    host: str = "localhost",
+    port: int = 8000,
+):
     """服务装饰器
 
     Args:

@@ -42,12 +42,16 @@ class ResourceLoader(QObject):
         self.config = config or ResourceLoadConfig()
         self.resource_cache: dict[str, Any] = {}
         self.cache_size = 0
-        self.loading_queue: list[tuple[str, Callable, int]] = []  # (id, loader, priority)
+        self.loading_queue: list[
+            tuple[str, Callable, int]
+        ] = []  # (id, loader, priority)
         self.is_loading = False
 
         logger.info("资源加载器初始化完成")
 
-    def load_image(self, image_path: str, size: tuple[int, int] | None = None) -> QPixmap:
+    def load_image(
+        self, image_path: str, size: tuple[int, int] | None = None
+    ) -> QPixmap:
         """加载图片（支持缓存和大小调整）"""
         cache_key = f"img:{image_path}:{size}"
 
@@ -70,7 +74,9 @@ class ResourceLoader(QObject):
 
         # 缓存
         if self.config.cache_resources and not pixmap.isNull():
-            self._cache_resource(cache_key, pixmap, pixmap.width() * pixmap.height() * 4)
+            self._cache_resource(
+                cache_key, pixmap, pixmap.width() * pixmap.height() * 4
+            )
 
         return pixmap
 
@@ -275,9 +281,13 @@ class RequestMerger:
         self.pending_requests: list[dict[str, Any]] = []
         self.batch_timer: QTimer | None = None
 
-    def add_request(self, request_id: str, endpoint: str, data: dict[str, Any], callback: Callable):
+    def add_request(
+        self, request_id: str, endpoint: str, data: dict[str, Any], callback: Callable
+    ):
         """添加请求到批处理队列"""
-        self.pending_requests.append({"id": request_id, "endpoint": endpoint, "data": data, "callback": callback})
+        self.pending_requests.append(
+            {"id": request_id, "endpoint": endpoint, "data": data, "callback": callback}
+        )
 
         # 检查是否需要立即执行
         if len(self.pending_requests) >= self.batch_size:

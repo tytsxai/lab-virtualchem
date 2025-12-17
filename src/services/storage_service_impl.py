@@ -38,7 +38,9 @@ class StorageServiceImpl(StorageService):
                 return SaveResponse(success=False, message="保存失败")
 
         except Exception as e:
-            return SaveResponse(success=False, message=f"保存失败: {str(e)}", errors=[str(e)])
+            return SaveResponse(
+                success=False, message=f"保存失败: {str(e)}", errors=[str(e)]
+            )
 
     def query(self, request: QueryRequest) -> QueryResponse:
         """查询实体"""
@@ -56,7 +58,9 @@ class StorageServiceImpl(StorageService):
 
             # 排序
             if request.sort_by:
-                entities = self._sort_entities(entities, request.sort_by, request.sort_order)
+                entities = self._sort_entities(
+                    entities, request.sort_by, request.sort_order
+                )
 
             # 分页
             total_count = len(entities)
@@ -91,7 +95,9 @@ class StorageServiceImpl(StorageService):
                 if entity:
                     entity["_deleted"] = True
                     self.storage.save(key, entity)
-                    return DeleteResponse(success=True, deleted_count=1, message="软删除成功")
+                    return DeleteResponse(
+                        success=True, deleted_count=1, message="软删除成功"
+                    )
             else:
                 # 硬删除
                 success = self.storage.delete(key)
@@ -102,7 +108,9 @@ class StorageServiceImpl(StorageService):
                 )
 
         except Exception as e:
-            return DeleteResponse(success=False, deleted_count=0, message=f"删除失败: {str(e)}")
+            return DeleteResponse(
+                success=False, deleted_count=0, message=f"删除失败: {str(e)}"
+            )
 
     def batch_save(self, requests: list[SaveRequest]) -> list[SaveResponse]:
         """批量保存"""
@@ -151,7 +159,11 @@ class StorageServiceImpl(StorageService):
             return True
 
         for filter in filters:
-            value = getattr(entity, filter.field, None) if hasattr(entity, filter.field) else entity.get(filter.field)
+            value = (
+                getattr(entity, filter.field, None)
+                if hasattr(entity, filter.field)
+                else entity.get(filter.field)
+            )
 
             if filter.operator == QueryOperator.EQ:
                 if value != filter.value:
@@ -174,16 +186,23 @@ class StorageServiceImpl(StorageService):
             elif filter.operator == QueryOperator.IN:
                 if value not in filter.value:
                     return False
-            elif filter.operator == QueryOperator.LIKE and filter.value.lower() not in str(value).lower():
+            elif (
+                filter.operator == QueryOperator.LIKE
+                and filter.value.lower() not in str(value).lower()
+            ):
                 return False
 
         return True
 
-    def _sort_entities(self, entities: list[Any], sort_by: str, sort_order: str) -> list[Any]:
+    def _sort_entities(
+        self, entities: list[Any], sort_by: str, sort_order: str
+    ) -> list[Any]:
         """排序实体列表"""
         reverse = sort_order.lower() == "desc"
         return sorted(
             entities,
-            key=lambda e: getattr(e, sort_by, None) if hasattr(e, sort_by) else e.get(sort_by),
+            key=lambda e: getattr(e, sort_by, None)
+            if hasattr(e, sort_by)
+            else e.get(sort_by),
             reverse=reverse,
         )

@@ -182,7 +182,9 @@ class ExperimentController:
                 monitor_creator = monitor_factory or BackendMonitor
                 self._monitor = monitor_creator()
                 self._trace_manager = trace_manager or get_trace_manager()
-                self._metrics_collector = metrics_collector or get_experiment_metrics_collector()
+                self._metrics_collector = (
+                    metrics_collector or get_experiment_metrics_collector()
+                )
                 logger.info("实验监控已启用")
             except Exception as e:
                 logger.warning(f"监控初始化失败,将禁用监控: {e}")
@@ -207,7 +209,9 @@ class ExperimentController:
         # 初始化步骤记录
         try:
             for step in template.steps:
-                self.record.step_records.append(StepRecord(step_id=step.id, started_at=datetime.now()))
+                self.record.step_records.append(
+                    StepRecord(step_id=step.id, started_at=datetime.now())
+                )
         except Exception as e:
             logger.error(f"初始化步骤记录失败: {e}")
             raise ValueError(f"无法初始化步骤记录: {e}") from e
@@ -219,7 +223,11 @@ class ExperimentController:
                 experiment_id=template.id,
                 user_id=user_id,
             )
-            self._monitor.apm.set_gauge("experiment.steps.total", float(len(template.steps)), experiment_id=template.id)
+            self._monitor.apm.set_gauge(
+                "experiment.steps.total",
+                float(len(template.steps)),
+                experiment_id=template.id,
+            )
 
         logger.info(f"实验控制器已初始化: {template.title} (用户: {user_id})")
 
@@ -234,7 +242,9 @@ class ExperimentController:
                 user_id=self.user_id,
             )
             self._trace_manager.log_event(
-                "experiment_started", self._trace_context, total_steps=len(self.template.steps)
+                "experiment_started",
+                self._trace_context,
+                total_steps=len(self.template.steps),
             )
 
             # 记录实验开始指标
@@ -242,7 +252,12 @@ class ExperimentController:
                 "experiment.started",
                 experiment_id=self.template.id,
             )
-            self._monitor.apm.set_gauge("experiment.active", 1.0, experiment_id=self.template.id, user_id=self.user_id)
+            self._monitor.apm.set_gauge(
+                "experiment.active",
+                1.0,
+                experiment_id=self.template.id,
+                user_id=self.user_id,
+            )
 
         self.state = ExperimentState.IN_PROGRESS
         self.start_time = datetime.now()
@@ -254,7 +269,9 @@ class ExperimentController:
         if self.enable_auto_save:
             self._auto_save_state()
 
-        logger.info(f"实验开始: {self.template.title} (模式: {self.mode.value}, 会话: {self.session_id})")
+        logger.info(
+            f"实验开始: {self.template.title} (模式: {self.mode.value}, 会话: {self.session_id})"
+        )
 
     def get_current_step(self) -> Any | None:
         """获取当前步骤"""
@@ -264,7 +281,9 @@ class ExperimentController:
 
     @safe_execute(
         context="提交实验步骤",
-        default_return=StepResult(False, "系统错误,请稍后重试", None, errors=["系统错误,请稍后重试"]),
+        default_return=StepResult(
+            False, "系统错误,请稍后重试", None, errors=["系统错误,请稍后重试"]
+        ),
     )  # type: ignore[misc]
     def submit_step(self, user_input: dict[str, Any]) -> StepResult:
         """提交步骤
@@ -315,7 +334,9 @@ class ExperimentController:
         # 验证步骤
         try:
             validation_start = time.time()
-            passed, message = self.validator.check_step(current_step, user_input, self.record.context)
+            passed, message = self.validator.check_step(
+                current_step, user_input, self.record.context
+            )
             validation_duration = (time.time() - validation_start) * 1000
 
             # 记录验证性能
@@ -356,7 +377,9 @@ class ExperimentController:
                     severity=current_step.safety_level,
                 )
                 self.record.add_mistake(mistake)
-                logger.warning(f"步骤失败: {current_step.id} - {message} (尝试次数: {step_record.attempts})")
+                logger.warning(
+                    f"步骤失败: {current_step.id} - {message} (尝试次数: {step_record.attempts})"
+                )
 
                 # 记录失败指标
                 if self._monitoring_enabled:
@@ -391,15 +414,21 @@ class ExperimentController:
                         experiment_id=self.template.id,
                         step_id=current_step.id,
                     )
-                    self._trace_manager.log_event("step_passed", step_trace_ctx, attempts=step_record.attempts)
+                    self._trace_manager.log_event(
+                        "step_passed", step_trace_ctx, attempts=step_record.attempts
+                    )
             except Exception as e:
                 logger.error(f"更新上下文失败: {e}", exc_info=True)
 
         # 完成步骤追踪
         if self._monitoring_enabled and self._trace_context:
             self._trace_manager.set_tag("passed", passed, step_trace_ctx)
-            self._trace_manager.set_tag("attempts", step_record.attempts, step_trace_ctx)
-            self._trace_manager.finish_span(step_trace_ctx, status="ok" if passed else "failed")
+            self._trace_manager.set_tag(
+                "attempts", step_record.attempts, step_trace_ctx
+            )
+            self._trace_manager.finish_span(
+                step_trace_ctx, status="ok" if passed else "failed"
+            )
 
             # 记录步骤执行时间
             step_duration = (time.time() - step_start_time) * 1000
@@ -493,8 +522,12 @@ class ExperimentController:
             )
 
             # 设置追踪标签
-            self._trace_manager.set_tag("score", self.record.score.total, self._trace_context)
-            self._trace_manager.set_tag("completion_rate", self.record.completion_rate, self._trace_context)
+            self._trace_manager.set_tag(
+                "score", self.record.score.total, self._trace_context
+            )
+            self._trace_manager.set_tag(
+                "completion_rate", self.record.completion_rate, self._trace_context
+            )
 
             # 完成追踪
             self._trace_manager.finish_span(self._trace_context, status="ok")
@@ -505,7 +538,9 @@ class ExperimentController:
                 experiment_id=self.template.id,
             )
             self._monitor.apm.record_histogram(
-                "experiment.score", float(self.record.score.total), experiment_id=self.template.id
+                "experiment.score",
+                float(self.record.score.total),
+                experiment_id=self.template.id,
             )
             self._monitor.apm.record_histogram(
                 "experiment.duration_seconds",
@@ -517,7 +552,12 @@ class ExperimentController:
                 float(self.record.total_mistakes),
                 experiment_id=self.template.id,
             )
-            self._monitor.apm.set_gauge("experiment.active", 0.0, experiment_id=self.template.id, user_id=self.user_id)
+            self._monitor.apm.set_gauge(
+                "experiment.active",
+                0.0,
+                experiment_id=self.template.id,
+                user_id=self.user_id,
+            )
 
             # 记录实验运行数据到指标收集器
             self._metrics_collector.record_experiment_run(
@@ -530,7 +570,9 @@ class ExperimentController:
                     "score": self.record.score.model_dump(),
                     "duration_seconds": self.record.total_duration_seconds,
                     "completion_rate": self.record.completion_rate,
-                    "mistakes_summary": [m.model_dump() for m in self.record.mistakes_summary],
+                    "mistakes_summary": [
+                        m.model_dump() for m in self.record.mistakes_summary
+                    ],
                     "step_records": [
                         {
                             "step_id": sr.step_id,
@@ -552,20 +594,29 @@ class ExperimentController:
             score_context = self.record.context.copy()
 
             # 添加统计变量
-            score_context["all_steps_passed"] = all(r.passed for r in self.record.step_records)
+            score_context["all_steps_passed"] = all(
+                r.passed for r in self.record.step_records
+            )
             score_context["total_mistakes"] = self.record.total_mistakes
             score_context["completion_rate"] = self.record.completion_rate
 
             # 安全性评估
-            critical_mistakes = sum(1 for m in self.record.mistakes_summary if m.severity == "critical")
-            severe_mistakes = sum(1 for m in self.record.mistakes_summary if m.severity == "severe")
-            score_context["no_safety_warning"] = critical_mistakes == 0 and severe_mistakes == 0
+            critical_mistakes = sum(
+                1 for m in self.record.mistakes_summary if m.severity == "critical"
+            )
+            severe_mistakes = sum(
+                1 for m in self.record.mistakes_summary if m.severity == "severe"
+            )
+            score_context["no_safety_warning"] = (
+                critical_mistakes == 0 and severe_mistakes == 0
+            )
             score_context["no_critical_mistakes"] = critical_mistakes == 0
 
             # 评估评分规则
             try:
                 total_score, details = self.validator.evaluate_score_rules(
-                    [rule.model_dump() for rule in self.template.score_rules], score_context
+                    [rule.model_dump() for rule in self.template.score_rules],
+                    score_context,
                 )
                 if not self.template.score_rules:
                     auto_score = int(score_context["completion_rate"])
@@ -585,11 +636,19 @@ class ExperimentController:
             # 分项评分(简化计算)
             try:
                 self.record.score.procedural = (
-                    50 if score_context["all_steps_passed"] else int(score_context["completion_rate"] / 2)
+                    50
+                    if score_context["all_steps_passed"]
+                    else int(score_context["completion_rate"] / 2)
                 )
-                self.record.score.safety = 50 if score_context["no_safety_warning"] else 20
+                self.record.score.safety = (
+                    50 if score_context["no_safety_warning"] else 20
+                )
                 # 确保科学性得分不为负
-                scientific_score = total_score - self.record.score.procedural - self.record.score.safety
+                scientific_score = (
+                    total_score
+                    - self.record.score.procedural
+                    - self.record.score.safety
+                )
                 self.record.score.scientific = max(0, scientific_score)
             except Exception as e:
                 logger.error(f"分项评分计算失败: {e}", exc_info=True)
@@ -616,7 +675,9 @@ class ExperimentController:
         """生成实验曲线数据"""
         for curve_config in self.template.curves:
             try:
-                x_data, y_data = self.curve_generator.generate(curve_config.type.value, curve_config.params)
+                x_data, y_data = self.curve_generator.generate(
+                    curve_config.type.value, curve_config.params
+                )
 
                 self.record.curve_data[curve_config.id] = {
                     "x": x_data.tolist(),
@@ -676,7 +737,11 @@ class ExperimentController:
     def is_completed(self) -> bool:
         """实验是否已完成"""
         # 视所有步骤通过为完成状态
-        return all(r.passed for r in self.record.step_records) if self.record.step_records else False
+        return (
+            all(r.passed for r in self.record.step_records)
+            if self.record.step_records
+            else False
+        )
 
     def pause_experiment(self) -> bool:
         """暂停实验
@@ -748,7 +813,11 @@ class ExperimentController:
         if not self.start_time:
             return 0.0
 
-        end_time = datetime.now() if self.state == ExperimentState.IN_PROGRESS else self.record.completed_at
+        end_time = (
+            datetime.now()
+            if self.state == ExperimentState.IN_PROGRESS
+            else self.record.completed_at
+        )
         if not end_time:
             return 0.0
 
@@ -769,14 +838,18 @@ class ExperimentController:
         }
 
         # 检查严重错误
-        critical_mistakes = [m for m in self.record.mistakes_summary if m.severity == "critical"]
+        critical_mistakes = [
+            m for m in self.record.mistakes_summary if m.severity == "critical"
+        ]
         if critical_mistakes:
             assessment["overall_safety"] = "unsafe"
             assessment["critical_issues"] = [m.description for m in critical_mistakes]
             assessment["recommendations"].append("请重新学习安全操作规程")
 
         # 检查严重错误
-        severe_mistakes = [m for m in self.record.mistakes_summary if m.severity == "severe"]
+        severe_mistakes = [
+            m for m in self.record.mistakes_summary if m.severity == "severe"
+        ]
         if severe_mistakes:
             if assessment["overall_safety"] == "safe":
                 assessment["overall_safety"] = "caution"
@@ -823,7 +896,10 @@ class ExperimentController:
         Returns:
             是否可以重试
         """
-        return self.current_step_retries < self.max_retries and self.state == ExperimentState.IN_PROGRESS
+        return (
+            self.current_step_retries < self.max_retries
+            and self.state == ExperimentState.IN_PROGRESS
+        )
 
     def retry_current_step(self) -> bool:
         """重试当前步骤
@@ -840,9 +916,13 @@ class ExperimentController:
         # 清除当前步骤的错误记录
         current_step = self.get_current_step()
         if current_step:
-            self.record.mistakes_summary = [m for m in self.record.mistakes_summary if m.step_id != current_step.id]
+            self.record.mistakes_summary = [
+                m for m in self.record.mistakes_summary if m.step_id != current_step.id
+            ]
 
-        logger.info(f"重试步骤: {current_step.id if current_step else 'unknown'} (第{self.current_step_retries}次)")
+        logger.info(
+            f"重试步骤: {current_step.id if current_step else 'unknown'} (第{self.current_step_retries}次)"
+        )
         return True
 
     def get_performance_metrics(self) -> dict[str, Any]:
@@ -874,7 +954,9 @@ class ExperimentController:
         """获取每个步骤的结果摘要（用于报告/测试）"""
         results: list[dict[str, Any]] = []
 
-        for step, record in zip(self.template.steps, self.record.step_records, strict=False):
+        for step, record in zip(
+            self.template.steps, self.record.step_records, strict=False
+        ):
             results.append(
                 {
                     "step_id": record.step_id,
@@ -888,7 +970,9 @@ class ExperimentController:
 
     def _mark_experiment_completed(self, completed_at: datetime | None = None) -> None:
         """统一设置实验完成状态并触发自动保存"""
-        already_completed = self.record.status == "completed" and self.record.completed_at is not None
+        already_completed = (
+            self.record.status == "completed" and self.record.completed_at is not None
+        )
 
         if already_completed:
             if completed_at and self.record.completed_at != completed_at:
@@ -942,7 +1026,9 @@ class ExperimentController:
             if state_data.get("start_time"):
                 self.start_time = datetime.fromisoformat(state_data["start_time"])
             if state_data.get("end_time"):
-                self.record.completed_at = datetime.fromisoformat(state_data["end_time"])
+                self.record.completed_at = datetime.fromisoformat(
+                    state_data["end_time"]
+                )
             if state_data.get("pause_time"):
                 self.pause_time = datetime.fromisoformat(state_data["pause_time"])
 
@@ -964,7 +1050,9 @@ class ExperimentController:
             "state": self.state.value,
             "mode": self.mode.value,
             "start_time": self.start_time.isoformat() if self.start_time else None,
-            "end_time": self.record.completed_at.isoformat() if self.record.completed_at else None,
+            "end_time": self.record.completed_at.isoformat()
+            if self.record.completed_at
+            else None,
             "pause_time": self.pause_time.isoformat() if self.pause_time else None,
             "total_pause_duration": self.total_pause_duration,
             "retry_count": self.retry_count,
@@ -972,5 +1060,7 @@ class ExperimentController:
             "performance_metrics": self.performance_metrics,
             "safety_warnings": self.safety_warnings,
             "learning_suggestions": self.learning_suggestions,
-            "record": self.record.model_dump() if hasattr(self.record, "model_dump") else {},
+            "record": self.record.model_dump()
+            if hasattr(self.record, "model_dump")
+            else {},
         }

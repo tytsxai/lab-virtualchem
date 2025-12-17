@@ -53,7 +53,11 @@ class StatusBarComponent(BaseWindowComponent):
     def set_status(self, message: str, timeout: int = 0) -> None:
         """设置状态消息"""
         if self._status_label is None:
-            raise UIError("Status label not initialized", widget="StatusBarComponent", action="set_status")
+            raise UIError(
+                "Status label not initialized",
+                widget="StatusBarComponent",
+                action="set_status",
+            )
 
         self._status_label.setText(message)
         self.status_changed.emit(message)
@@ -66,7 +70,11 @@ class StatusBarComponent(BaseWindowComponent):
     def show_progress(self, value: int = 0, maximum: int = 100) -> None:
         """显示进度条"""
         if self._progress_bar is None:
-            raise UIError("Progress bar not initialized", widget="StatusBarComponent", action="show_progress")
+            raise UIError(
+                "Progress bar not initialized",
+                widget="StatusBarComponent",
+                action="show_progress",
+            )
 
         self._progress_bar.setRange(0, maximum)
         self._progress_bar.setValue(value)

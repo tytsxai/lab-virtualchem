@@ -95,7 +95,12 @@ class UserEvent:
 class FrontendMonitor:
     """前端监控器 - 错误追踪"""
 
-    def __init__(self, app_name: str = "VirtualChemLab", log_dir: Path | None = None, max_errors: int = 1000):
+    def __init__(
+        self,
+        app_name: str = "VirtualChemLab",
+        log_dir: Path | None = None,
+        max_errors: int = 1000,
+    ):
         self.app_name = app_name
         self.log_dir = log_dir or Path("logs/frontend")
         self.log_dir.mkdir(parents=True, exist_ok=True)
@@ -162,7 +167,9 @@ class FrontendMonitor:
 
         return error_id
 
-    def capture_message(self, message: str, level: ErrorLevel = ErrorLevel.INFO, **context) -> None:
+    def capture_message(
+        self, message: str, level: ErrorLevel = ErrorLevel.INFO, **context
+    ) -> None:
         """捕获消息"""
         try:
             # 创建一个临时异常来获取堆栈
@@ -174,7 +181,9 @@ class FrontendMonitor:
         """添加错误处理器"""
         self._error_handlers.append(handler)
 
-    def get_errors(self, limit: int = 100, level: ErrorLevel | None = None) -> list[ErrorReport]:
+    def get_errors(
+        self, limit: int = 100, level: ErrorLevel | None = None
+    ) -> list[ErrorReport]:
         """获取错误列表"""
         with self._lock:
             errors = list(self._errors)
@@ -200,17 +209,23 @@ class FrontendMonitor:
             by_component = {}
             for error in self._errors:
                 if error.component:
-                    by_component[error.component] = by_component.get(error.component, 0) + 1
+                    by_component[error.component] = (
+                        by_component.get(error.component, 0) + 1
+                    )
 
             # 最常见错误
-            top_errors = sorted(self._error_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+            top_errors = sorted(
+                self._error_counts.items(), key=lambda x: x[1], reverse=True
+            )[:10]
 
         return {
             "total_errors": total_errors,
             "unique_errors": unique_errors,
             "by_level": by_level,
             "by_component": by_component,
-            "top_errors": [{"error_id": eid, "count": count} for eid, count in top_errors],
+            "top_errors": [
+                {"error_id": eid, "count": count} for eid, count in top_errors
+            ],
         }
 
     def clear_errors(self) -> None:
@@ -228,7 +243,9 @@ class FrontendMonitor:
     def _write_error_log(self, error: ErrorReport) -> None:
         """写入错误日志"""
         try:
-            log_file = self.log_dir / f"errors_{datetime.now().strftime('%Y%m%d')}.jsonl"
+            log_file = (
+                self.log_dir / f"errors_{datetime.now().strftime('%Y%m%d')}.jsonl"
+            )
             with open(log_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(error.to_dict(), ensure_ascii=False) + "\n")
         except Exception as e:
@@ -301,11 +318,25 @@ class UserBehaviorTracker:
 
     def track_click(self, component: str, element: str, **kwargs) -> str:
         """追踪点击事件"""
-        return self.track_event(EventType.CLICK, component=component, action="click", element=element, **kwargs)
+        return self.track_event(
+            EventType.CLICK,
+            component=component,
+            action="click",
+            element=element,
+            **kwargs,
+        )
 
-    def track_view(self, component: str, duration_ms: float | None = None, **kwargs) -> str:
+    def track_view(
+        self, component: str, duration_ms: float | None = None, **kwargs
+    ) -> str:
         """追踪页面查看"""
-        return self.track_event(EventType.VIEW, component=component, action="view", duration_ms=duration_ms, **kwargs)
+        return self.track_event(
+            EventType.VIEW,
+            component=component,
+            action="view",
+            duration_ms=duration_ms,
+            **kwargs,
+        )
 
     def track_navigation(self, from_page: str, to_page: str, **kwargs) -> str:
         """追踪导航"""
@@ -371,7 +402,9 @@ class UserBehaviorTracker:
             transition = f"{path[i]} -> {path[i + 1]}"
             path_counts[transition] = path_counts.get(transition, 0) + 1
 
-        common_paths = sorted(path_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+        common_paths = sorted(path_counts.items(), key=lambda x: x[1], reverse=True)[
+            :10
+        ]
 
         return {
             "total_steps": len(path),
@@ -387,7 +420,9 @@ class UserBehaviorTracker:
     def _write_event_log(self, event: UserEvent) -> None:
         """写入事件日志"""
         try:
-            log_file = self.log_dir / f"events_{datetime.now().strftime('%Y%m%d')}.jsonl"
+            log_file = (
+                self.log_dir / f"events_{datetime.now().strftime('%Y%m%d')}.jsonl"
+            )
             with open(log_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(event.to_dict(), ensure_ascii=False) + "\n")
         except Exception as e:

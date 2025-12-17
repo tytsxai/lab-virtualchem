@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class AccessibilityType(Enum):
     """无障碍类型"""
+
     VISUAL = "visual"
     AUDITORY = "auditory"
     MOTOR = "motor"
@@ -27,6 +28,7 @@ class AccessibilityType(Enum):
 
 class VisualImpairmentType(Enum):
     """视觉障碍类型"""
+
     NONE = "none"
     LOW_VISION = "low_vision"
     COLOR_BLIND = "color_blind"
@@ -35,6 +37,7 @@ class VisualImpairmentType(Enum):
 
 class AuditoryImpairmentType(Enum):
     """听觉障碍类型"""
+
     NONE = "none"
     MILD = "mild"
     MODERATE = "moderate"
@@ -44,6 +47,7 @@ class AuditoryImpairmentType(Enum):
 
 class MotorImpairmentType(Enum):
     """运动障碍类型"""
+
     NONE = "none"
     LIMITED_MOBILITY = "limited_mobility"
     TREMOR = "tremor"
@@ -52,6 +56,7 @@ class MotorImpairmentType(Enum):
 
 class CognitiveImpairmentType(Enum):
     """认知障碍类型"""
+
     NONE = "none"
     ATTENTION_DEFICIT = "attention_deficit"
     MEMORY_IMPAIRMENT = "memory_impairment"
@@ -62,6 +67,7 @@ class CognitiveImpairmentType(Enum):
 @dataclass
 class AccessibilityProfile:
     """无障碍档案"""
+
     user_id: str
     visual_impairment: VisualImpairmentType
     auditory_impairment: AuditoryImpairmentType
@@ -76,6 +82,7 @@ class AccessibilityProfile:
 @dataclass
 class AccessibilityFeature:
     """无障碍功能"""
+
     feature_id: str
     name: str
     type: AccessibilityType
@@ -88,6 +95,7 @@ class AccessibilityFeature:
 @dataclass
 class AccessibilityEvent:
     """无障碍事件"""
+
     event_id: str
     user_id: str
     event_type: str
@@ -121,7 +129,7 @@ class EnhancedAccessibilitySystem:
                 description="提高界面元素的对比度，便于视觉障碍用户识别",
                 enabled=False,
                 settings={"contrast_ratio": 4.5},
-                compatibility=["all"]
+                compatibility=["all"],
             ),
             AccessibilityFeature(
                 feature_id="text_size",
@@ -130,7 +138,7 @@ class EnhancedAccessibilitySystem:
                 description="允许用户调整文字大小",
                 enabled=True,
                 settings={"min_size": 12, "max_size": 24, "default_size": 16},
-                compatibility=["all"]
+                compatibility=["all"],
             ),
             AccessibilityFeature(
                 feature_id="color_blind_support",
@@ -139,7 +147,7 @@ class EnhancedAccessibilitySystem:
                 description="为色盲用户提供颜色替代方案",
                 enabled=False,
                 settings={"color_blind_type": "protanopia"},
-                compatibility=["all"]
+                compatibility=["all"],
             ),
             AccessibilityFeature(
                 feature_id="screen_reader",
@@ -148,7 +156,7 @@ class EnhancedAccessibilitySystem:
                 description="为屏幕阅读器提供语义化标签",
                 enabled=True,
                 settings={"aria_labels": True, "semantic_markup": True},
-                compatibility=["all"]
+                compatibility=["all"],
             ),
             AccessibilityFeature(
                 feature_id="focus_indicator",
@@ -157,9 +165,8 @@ class EnhancedAccessibilitySystem:
                 description="增强键盘导航的焦点指示",
                 enabled=True,
                 settings={"indicator_style": "outline", "color": "#007ACC"},
-                compatibility=["all"]
+                compatibility=["all"],
             ),
-
             # 听觉无障碍功能
             AccessibilityFeature(
                 feature_id="audio_descriptions",
@@ -168,7 +175,7 @@ class EnhancedAccessibilitySystem:
                 description="为视觉内容提供音频描述",
                 enabled=False,
                 settings={"auto_play": False, "volume": 0.7},
-                compatibility=["all"]
+                compatibility=["all"],
             ),
             AccessibilityFeature(
                 feature_id="visual_alerts",
@@ -177,7 +184,7 @@ class EnhancedAccessibilitySystem:
                 description="将音频警报转换为视觉提示",
                 enabled=True,
                 settings={"flash_color": "#FF0000", "duration": 1000},
-                compatibility=["all"]
+                compatibility=["all"],
             ),
             AccessibilityFeature(
                 feature_id="caption_support",
@@ -186,9 +193,8 @@ class EnhancedAccessibilitySystem:
                 description="为音频内容提供字幕",
                 enabled=True,
                 settings={"font_size": 16, "background": "black", "color": "white"},
-                compatibility=["all"]
+                compatibility=["all"],
             ),
-
             # 运动无障碍功能
             AccessibilityFeature(
                 feature_id="keyboard_navigation",
@@ -197,7 +203,7 @@ class EnhancedAccessibilitySystem:
                 description="支持完全键盘操作",
                 enabled=True,
                 settings={"tab_order": "logical", "shortcuts": True},
-                compatibility=["all"]
+                compatibility=["all"],
             ),
             AccessibilityFeature(
                 feature_id="voice_control",
@@ -206,7 +212,7 @@ class EnhancedAccessibilitySystem:
                 description="支持语音命令操作",
                 enabled=False,
                 settings={"language": "zh-CN", "sensitivity": 0.7},
-                compatibility=["modern_browsers"]
+                compatibility=["modern_browsers"],
             ),
             AccessibilityFeature(
                 feature_id="gesture_control",
@@ -215,7 +221,7 @@ class EnhancedAccessibilitySystem:
                 description="支持自定义手势操作",
                 enabled=False,
                 settings={"gestures": {}, "sensitivity": 0.8},
-                compatibility=["touch_devices"]
+                compatibility=["touch_devices"],
             ),
             AccessibilityFeature(
                 feature_id="dwell_clicking",
@@ -224,9 +230,8 @@ class EnhancedAccessibilitySystem:
                 description="通过鼠标停留时间触发点击",
                 enabled=False,
                 settings={"dwell_time": 1000, "radius": 50},
-                compatibility=["all"]
+                compatibility=["all"],
             ),
-
             # 认知无障碍功能
             AccessibilityFeature(
                 feature_id="simplified_interface",
@@ -235,7 +240,7 @@ class EnhancedAccessibilitySystem:
                 description="提供简化的用户界面",
                 enabled=False,
                 settings={"complexity_level": "low"},
-                compatibility=["all"]
+                compatibility=["all"],
             ),
             AccessibilityFeature(
                 feature_id="reading_assistance",
@@ -244,7 +249,7 @@ class EnhancedAccessibilitySystem:
                 description="提供阅读辅助功能",
                 enabled=False,
                 settings={"highlight": True, "pronunciation": True},
-                compatibility=["all"]
+                compatibility=["all"],
             ),
             AccessibilityFeature(
                 feature_id="memory_aids",
@@ -253,7 +258,7 @@ class EnhancedAccessibilitySystem:
                 description="提供记忆辅助功能",
                 enabled=False,
                 settings={"reminders": True, "notes": True},
-                compatibility=["all"]
+                compatibility=["all"],
             ),
             AccessibilityFeature(
                 feature_id="attention_support",
@@ -262,8 +267,8 @@ class EnhancedAccessibilitySystem:
                 description="帮助用户保持注意力",
                 enabled=False,
                 settings={"focus_mode": True, "distraction_blocking": True},
-                compatibility=["all"]
-            )
+                compatibility=["all"],
+            ),
         ]
 
         for feature in features:
@@ -281,21 +286,23 @@ class EnhancedAccessibilitySystem:
             "sound_effects": True,
             "keyboard_shortcuts": True,
             "focus_indicators": True,
-            "aria_labels": True
+            "aria_labels": True,
         }
 
     @enhance_robustness(
         operation_name="create_accessibility_profile",
         security_level="medium",
-        enable_caching=True
+        enable_caching=True,
     )
-    @validate_input(validation_rules={
-        "user_id": {"type": str, "required": True},
-        "visual_impairment": {"type": str, "required": True},
-        "auditory_impairment": {"type": str, "required": True},
-        "motor_impairment": {"type": str, "required": True},
-        "cognitive_impairment": {"type": str, "required": True}
-    })
+    @validate_input(
+        validation_rules={
+            "user_id": {"type": str, "required": True},
+            "visual_impairment": {"type": str, "required": True},
+            "auditory_impairment": {"type": str, "required": True},
+            "motor_impairment": {"type": str, "required": True},
+            "cognitive_impairment": {"type": str, "required": True},
+        }
+    )
     @log_operation(operation_name="create_accessibility_profile")
     def create_accessibility_profile(
         self,
@@ -305,7 +312,7 @@ class EnhancedAccessibilitySystem:
         motor_impairment: str,
         cognitive_impairment: str,
         preferences: dict[str, Any] | None = None,
-        assistive_technologies: list[str] | None = None
+        assistive_technologies: list[str] | None = None,
     ) -> AccessibilityProfile:
         """创建无障碍档案"""
         logger.info(f"创建无障碍档案: {user_id}")
@@ -330,7 +337,7 @@ class EnhancedAccessibilitySystem:
             motor_impairment=motor_type,
             cognitive_impairment=cognitive_type,
             preferences=preferences or {},
-            assistive_technologies=assistive_technologies or []
+            assistive_technologies=assistive_technologies or [],
         )
 
         self.user_profiles[user_id] = profile
@@ -340,9 +347,7 @@ class EnhancedAccessibilitySystem:
 
         # 记录事件
         self._log_accessibility_event(
-            user_id,
-            "profile_created",
-            {"profile": profile.__dict__}
+            user_id, "profile_created", {"profile": profile.__dict__}
         )
 
         return profile
@@ -388,10 +393,16 @@ class EnhancedAccessibilitySystem:
             self._enable_feature("simplified_interface")
             self._enable_feature("reading_assistance")
 
-            if profile.cognitive_impairment == CognitiveImpairmentType.MEMORY_IMPAIRMENT:
+            if (
+                profile.cognitive_impairment
+                == CognitiveImpairmentType.MEMORY_IMPAIRMENT
+            ):
                 self._enable_feature("memory_aids")
 
-            if profile.cognitive_impairment == CognitiveImpairmentType.ATTENTION_DEFICIT:
+            if (
+                profile.cognitive_impairment
+                == CognitiveImpairmentType.ATTENTION_DEFICIT
+            ):
                 self._enable_feature("attention_support")
 
     def _enable_feature(self, feature_id: str) -> None:
@@ -403,13 +414,11 @@ class EnhancedAccessibilitySystem:
     @enhance_robustness(
         operation_name="update_accessibility_settings",
         security_level="low",
-        enable_caching=False
+        enable_caching=False,
     )
     @log_operation(operation_name="update_settings")
     def update_accessibility_settings(
-        self,
-        user_id: str,
-        settings: dict[str, Any]
+        self, user_id: str, settings: dict[str, Any]
     ) -> bool:
         """更新无障碍设置"""
         if user_id not in self.user_profiles:
@@ -425,9 +434,7 @@ class EnhancedAccessibilitySystem:
 
         # 记录事件
         self._log_accessibility_event(
-            user_id,
-            "settings_updated",
-            {"settings": settings}
+            user_id, "settings_updated", {"settings": settings}
         )
 
         logger.info(f"无障碍设置已更新: {user_id}")
@@ -436,7 +443,7 @@ class EnhancedAccessibilitySystem:
     @enhance_robustness(
         operation_name="get_accessibility_css",
         security_level="low",
-        enable_caching=True
+        enable_caching=True,
     )
     def get_accessibility_css(self, user_id: str) -> str:
         """获取无障碍CSS"""
@@ -518,8 +525,10 @@ h6 {{ font-size: {font_size * 0.9}px; }}
 """)
 
         # 色盲支持
-        if (profile.visual_impairment == VisualImpairmentType.COLOR_BLIND and
-            self.accessibility_features["color_blind_support"].enabled):
+        if (
+            profile.visual_impairment == VisualImpairmentType.COLOR_BLIND
+            and self.accessibility_features["color_blind_support"].enabled
+        ):
             css_rules.append("""
 /* 色盲支持 */
 .color-blind-safe {
@@ -571,7 +580,9 @@ button:focus, input:focus, select:focus, textarea:focus {
 
         return css_rules
 
-    def _get_auditory_accessibility_css(self, _profile: AccessibilityProfile) -> list[str]:
+    def _get_auditory_accessibility_css(
+        self, _profile: AccessibilityProfile
+    ) -> list[str]:
         """获取听觉无障碍CSS"""
         css_rules = []
 
@@ -683,7 +694,9 @@ button:focus, input:focus, select:focus, textarea:focus {
 
         return css_rules
 
-    def _get_cognitive_accessibility_css(self, _profile: AccessibilityProfile) -> list[str]:
+    def _get_cognitive_accessibility_css(
+        self, _profile: AccessibilityProfile
+    ) -> list[str]:
         """获取认知无障碍CSS"""
         css_rules = []
 
@@ -825,7 +838,7 @@ button, input, select, textarea {
     @enhance_robustness(
         operation_name="get_accessibility_report",
         security_level="low",
-        enable_caching=True
+        enable_caching=True,
     )
     def get_accessibility_report(self, user_id: str) -> dict[str, Any]:
         """获取无障碍报告"""
@@ -836,7 +849,8 @@ button, input, select, textarea {
 
         # 统计启用的功能
         enabled_features = [
-            feature for feature in self.accessibility_features.values()
+            feature
+            for feature in self.accessibility_features.values()
             if feature.enabled
         ]
 
@@ -846,16 +860,17 @@ button, input, select, textarea {
             feature_type = feature.type.value
             if feature_type not in features_by_type:
                 features_by_type[feature_type] = []
-            features_by_type[feature_type].append({
-                "id": feature.feature_id,
-                "name": feature.name,
-                "description": feature.description
-            })
+            features_by_type[feature_type].append(
+                {
+                    "id": feature.feature_id,
+                    "name": feature.name,
+                    "description": feature.description,
+                }
+            )
 
         # 获取用户事件
         user_events = [
-            event for event in self.accessibility_events
-            if event.user_id == user_id
+            event for event in self.accessibility_events if event.user_id == user_id
         ]
 
         return {
@@ -867,7 +882,7 @@ button, input, select, textarea {
                 "cognitive_impairment": profile.cognitive_impairment.value,
                 "assistive_technologies": profile.assistive_technologies,
                 "created_at": profile.created_at.isoformat(),
-                "last_updated": profile.last_updated.isoformat()
+                "last_updated": profile.last_updated.isoformat(),
             },
             "enabled_features": features_by_type,
             "total_features": len(enabled_features),
@@ -876,14 +891,16 @@ button, input, select, textarea {
                 {
                     "type": event.event_type,
                     "timestamp": event.timestamp.isoformat(),
-                    "success": event.success
+                    "success": event.success,
                 }
                 for event in user_events[-10:]  # 最近10个事件
             ],
-            "recommendations": self._generate_accessibility_recommendations(profile)
+            "recommendations": self._generate_accessibility_recommendations(profile),
         }
 
-    def _generate_accessibility_recommendations(self, profile: AccessibilityProfile) -> list[str]:
+    def _generate_accessibility_recommendations(
+        self, profile: AccessibilityProfile
+    ) -> list[str]:
         """生成无障碍推荐"""
         recommendations = []
 
@@ -919,7 +936,7 @@ button, input, select, textarea {
         event_type: str,
         data: dict[str, Any],
         success: bool = True,
-        error_message: str | None = None
+        error_message: str | None = None,
     ) -> None:
         """记录无障碍事件"""
         event = AccessibilityEvent(
@@ -929,7 +946,7 @@ button, input, select, textarea {
             timestamp=datetime.now(),
             data=data,
             success=success,
-            error_message=error_message
+            error_message=error_message,
         )
 
         self.accessibility_events.append(event)

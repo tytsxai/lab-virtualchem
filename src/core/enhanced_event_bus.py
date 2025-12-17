@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class EventPriority(Enum):
     """事件优先级"""
+
     LOW = 1
     NORMAL = 2
     HIGH = 3
@@ -31,6 +32,7 @@ class EventPriority(Enum):
 @dataclass
 class Event:
     """事件对象"""
+
     name: str
     data: Any = None
     source: str | None = None
@@ -46,13 +48,14 @@ class Event:
             "source": self.source,
             "timestamp": self.timestamp,
             "priority": self.priority.value,
-            "tags": self.tags
+            "tags": self.tags,
         }
 
 
 @dataclass
 class EventSubscription:
     """事件订阅"""
+
     callback: Callable[[Event], None]
     event_name: str
     priority: EventPriority = EventPriority.NORMAL
@@ -94,7 +97,7 @@ class EnhancedEventBus:
             "events_published": 0,
             "events_processed": 0,
             "subscriptions_count": 0,
-            "errors_count": 0
+            "errors_count": 0,
         }
 
     def start(self) -> None:
@@ -216,7 +219,9 @@ class EnhancedEventBus:
             except ValueError:
                 pass
 
-            self._stats["subscriptions_count"] = len(self._subscriptions) + len(self._global_subscriptions)
+            self._stats["subscriptions_count"] = len(self._subscriptions) + len(
+                self._global_subscriptions
+            )
 
     def subscribe(
         self,
@@ -225,7 +230,7 @@ class EnhancedEventBus:
         priority: EventPriority = EventPriority.NORMAL,
         tags_filter: dict[str, str] | None = None,
         once: bool = False,
-        subscriber_id: str | None = None
+        subscriber_id: str | None = None,
     ) -> EventSubscription:
         """订阅事件"""
         subscription = EventSubscription(
@@ -234,12 +239,14 @@ class EnhancedEventBus:
             priority=priority,
             tags_filter=tags_filter,
             once=once,
-            subscriber_id=subscriber_id
+            subscriber_id=subscriber_id,
         )
 
         with self._lock:
             self._subscriptions[event_name].append(subscription)
-            self._stats["subscriptions_count"] = len(self._subscriptions) + len(self._global_subscriptions)
+            self._stats["subscriptions_count"] = len(self._subscriptions) + len(
+                self._global_subscriptions
+            )
 
         logger.debug(f"Subscribed to event: {event_name}")
         return subscription
@@ -250,7 +257,7 @@ class EnhancedEventBus:
         priority: EventPriority = EventPriority.NORMAL,
         tags_filter: dict[str, str] | None = None,
         once: bool = False,
-        subscriber_id: str | None = None
+        subscriber_id: str | None = None,
     ) -> EventSubscription:
         """订阅所有事件"""
         subscription = EventSubscription(
@@ -259,12 +266,14 @@ class EnhancedEventBus:
             priority=priority,
             tags_filter=tags_filter,
             once=once,
-            subscriber_id=subscriber_id
+            subscriber_id=subscriber_id,
         )
 
         with self._lock:
             self._global_subscriptions.append(subscription)
-            self._stats["subscriptions_count"] = len(self._subscriptions) + len(self._global_subscriptions)
+            self._stats["subscriptions_count"] = len(self._subscriptions) + len(
+                self._global_subscriptions
+            )
 
         logger.debug("Subscribed to all events")
         return subscription
@@ -280,7 +289,7 @@ class EnhancedEventBus:
         data: Any = None,
         source: str | None = None,
         priority: EventPriority = EventPriority.NORMAL,
-        tags: dict[str, str] | None = None
+        tags: dict[str, str] | None = None,
     ) -> None:
         """发布事件"""
         if not self._running:
@@ -292,7 +301,7 @@ class EnhancedEventBus:
             data=data,
             source=source,
             priority=priority,
-            tags=tags or {}
+            tags=tags or {},
         )
 
         try:
@@ -315,7 +324,7 @@ class EnhancedEventBus:
         data: Any = None,
         source: str | None = None,
         priority: EventPriority = EventPriority.NORMAL,
-        tags: dict[str, str] | None = None
+        tags: dict[str, str] | None = None,
     ) -> None:
         """同步发布事件"""
         event = Event(
@@ -323,7 +332,7 @@ class EnhancedEventBus:
             data=data,
             source=source,
             priority=priority,
-            tags=tags or {}
+            tags=tags or {},
         )
 
         try:
@@ -357,7 +366,7 @@ class EnhancedEventBus:
             "events_published": 0,
             "events_processed": 0,
             "subscriptions_count": 0,
-            "errors_count": 0
+            "errors_count": 0,
         }
 
     def get_subscription_count(self, event_name: str | None = None) -> int:
@@ -387,7 +396,7 @@ def subscribe_event(
     priority: EventPriority = EventPriority.NORMAL,
     tags_filter: dict[str, str] | None = None,
     once: bool = False,
-    subscriber_id: str | None = None
+    subscriber_id: str | None = None,
 ) -> EventSubscription:
     """订阅事件"""
     return _global_event_bus.subscribe(
@@ -400,7 +409,7 @@ def publish_event(
     data: Any = None,
     source: str | None = None,
     priority: EventPriority = EventPriority.NORMAL,
-    tags: dict[str, str] | None = None
+    tags: dict[str, str] | None = None,
 ) -> None:
     """发布事件"""
     _global_event_bus.publish(event_name, data, source, priority, tags)
@@ -411,7 +420,7 @@ def publish_event_sync(
     data: Any = None,
     source: str | None = None,
     priority: EventPriority = EventPriority.NORMAL,
-    tags: dict[str, str] | None = None
+    tags: dict[str, str] | None = None,
 ) -> None:
     """同步发布事件"""
     _global_event_bus.publish_sync(event_name, data, source, priority, tags)

@@ -21,7 +21,9 @@ class ThermoKineticsCalculator:
         self._gas = None
 
     @require_plugin("cantera")
-    def initialize_gas(self, mechanism: str = "gri30.yaml", species: list[str] | None = None) -> bool:
+    def initialize_gas(
+        self, mechanism: str = "gri30.yaml", species: list[str] | None = None
+    ) -> bool:
         """初始化气体对象
 
         Args:
@@ -74,7 +76,9 @@ class ThermoKineticsCalculator:
                 "density": self._gas.density,
                 "enthalpy": self._gas.enthalpy_mass,
                 "entropy": self._gas.entropy_mass,
-                "composition": dict(zip(self._gas.species_names, self._gas.X, strict=False)),
+                "composition": dict(
+                    zip(self._gas.species_names, self._gas.X, strict=False)
+                ),
             }
 
         except Exception as e:

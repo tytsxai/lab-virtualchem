@@ -31,6 +31,7 @@ def _ensure_sensitive_filter(target: logging.Handler | logging.Logger) -> None:
 
 class LogLevel(Enum):
     """日志级别"""
+
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
@@ -40,6 +41,7 @@ class LogLevel(Enum):
 
 class LogCategory(Enum):
     """日志分类"""
+
     SYSTEM = "system"
     USER = "user"
     SECURITY = "security"
@@ -52,6 +54,7 @@ class LogCategory(Enum):
 @dataclass
 class LogContext:
     """日志上下文"""
+
     user_id: str | None = None
     session_id: str | None = None
     request_id: str | None = None
@@ -63,6 +66,7 @@ class LogContext:
 @dataclass
 class LogEntry:
     """日志条目"""
+
     timestamp: float
     level: LogLevel
     category: LogCategory
@@ -84,29 +88,31 @@ class StructuredFormatter(logging.Formatter):
         """格式化日志记录"""
         # 基础信息
         log_data = {
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(record.created)),
+            "timestamp": time.strftime(
+                "%Y-%m-%d %H:%M:%S", time.localtime(record.created)
+            ),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
             "module": record.module,
             "function": record.funcName,
-            "line": record.lineno
+            "line": record.lineno,
         }
 
         # 添加上下文信息
-        if self.include_context and hasattr(record, 'context'):
-            context = getattr(record, 'context', None)
-            if context and hasattr(context, 'user_id') and context.user_id:
+        if self.include_context and hasattr(record, "context"):
+            context = getattr(record, "context", None)
+            if context and hasattr(context, "user_id") and context.user_id:
                 log_data["user_id"] = context.user_id
-            if context and hasattr(context, 'session_id') and context.session_id:
+            if context and hasattr(context, "session_id") and context.session_id:
                 log_data["session_id"] = context.session_id
-            if context and hasattr(context, 'request_id') and context.request_id:
+            if context and hasattr(context, "request_id") and context.request_id:
                 log_data["request_id"] = context.request_id
-            if context and hasattr(context, 'operation') and context.operation:
+            if context and hasattr(context, "operation") and context.operation:
                 log_data["operation"] = context.operation
-            if context and hasattr(context, 'component') and context.component:
+            if context and hasattr(context, "component") and context.component:
                 log_data["component"] = context.component
-            if context and hasattr(context, 'extra_data') and context.extra_data:
+            if context and hasattr(context, "extra_data") and context.extra_data:
                 log_data["extra_data"] = context.extra_data
 
         # 添加异常信息
@@ -114,12 +120,12 @@ class StructuredFormatter(logging.Formatter):
             log_data["exception"] = self.formatException(record.exc_info)
 
         # 添加性能数据
-        if hasattr(record, 'performance_data'):
-            log_data["performance"] = getattr(record, 'performance_data', None)
+        if hasattr(record, "performance_data"):
+            log_data["performance"] = getattr(record, "performance_data", None)
 
         # 添加额外数据
-        if hasattr(record, 'extra_data'):
-            log_data["extra"] = getattr(record, 'extra_data', None)
+        if hasattr(record, "extra_data"):
+            log_data["extra"] = getattr(record, "extra_data", None)
 
         return json.dumps(log_data, ensure_ascii=False, default=str)
 
@@ -141,7 +147,9 @@ class PerformanceLogger:
             self.performance_data[operation].append(start_time)
         return start_time
 
-    def end_timer(self, operation: str, start_time: float, context: LogContext | None = None) -> float:
+    def end_timer(
+        self, operation: str, start_time: float, context: LogContext | None = None
+    ) -> float:
         """结束计时"""
         end_time = time.time()
         duration = end_time - start_time
@@ -151,7 +159,7 @@ class PerformanceLogger:
             "operation": operation,
             "duration": duration,
             "start_time": start_time,
-            "end_time": end_time
+            "end_time": end_time,
         }
 
         # 更新统计
@@ -163,9 +171,9 @@ class PerformanceLogger:
         self.logger.info(
             f"性能监控: {operation}",
             extra={
-                'context': context or LogContext(),
-                'performance_data': performance_data
-            }
+                "context": context or LogContext(),
+                "performance_data": performance_data,
+            },
         )
 
         return duration
@@ -181,7 +189,7 @@ class PerformanceLogger:
                         "total_time": sum(durations),
                         "avg_time": sum(durations) / len(durations),
                         "min_time": min(durations),
-                        "max_time": max(durations)
+                        "max_time": max(durations),
                     }
         return stats
 
@@ -200,13 +208,11 @@ class AuditLogger:
         description: str,
         user_id: str | None = None,
         session_id: str | None = None,
-        extra_data: dict[str, Any] | None = None
+        extra_data: dict[str, Any] | None = None,
     ) -> None:
         """记录审计事件"""
         context = LogContext(
-            user_id=user_id,
-            session_id=session_id,
-            extra_data=extra_data or {}
+            user_id=user_id, session_id=session_id, extra_data=extra_data or {}
         )
 
         entry = LogEntry(
@@ -214,15 +220,14 @@ class AuditLogger:
             level=LogLevel.INFO,
             category=LogCategory.AUDIT,
             message=f"审计事件: {event_type} - {description}",
-            context=context
+            context=context,
         )
 
         with self.lock:
             self.audit_events.append(entry)
 
         self.logger.info(
-            f"审计事件: {event_type} - {description}",
-            extra={'context': context}
+            f"审计事件: {event_type} - {description}", extra={"context": context}
         )
 
     def get_audit_events(self, limit: int | None = None) -> list[LogEntry]:
@@ -247,7 +252,7 @@ class ErrorTracker:
         self,
         error: Exception,
         context: LogContext | None = None,
-        extra_data: dict[str, Any] | None = None
+        extra_data: dict[str, Any] | None = None,
     ) -> None:
         """追踪错误"""
         error_type = type(error).__name__
@@ -256,7 +261,9 @@ class ErrorTracker:
         # 更新错误模式统计
         with self.lock:
             pattern_key = f"{error_type}:{error_message[:100]}"
-            self.error_patterns[pattern_key] = self.error_patterns.get(pattern_key, 0) + 1
+            self.error_patterns[pattern_key] = (
+                self.error_patterns.get(pattern_key, 0) + 1
+            )
 
         # 创建错误条目
         entry = LogEntry(
@@ -266,7 +273,7 @@ class ErrorTracker:
             message=f"错误追踪: {error_type} - {error_message}",
             context=context or LogContext(),
             exception_info=traceback.format_exc(),
-            metadata=extra_data or {}
+            metadata=extra_data or {},
         )
 
         with self.lock:
@@ -276,10 +283,7 @@ class ErrorTracker:
         self.logger.error(
             f"错误追踪: {error_type} - {error_message}",
             exc_info=True,
-            extra={
-                'context': context or LogContext(),
-                'extra_data': extra_data or {}
-            }
+            extra={"context": context or LogContext(), "extra_data": extra_data or {}},
         )
 
     def get_error_stats(self) -> dict[str, Any]:
@@ -288,7 +292,7 @@ class ErrorTracker:
             return {
                 "total_errors": len(self.error_history),
                 "error_patterns": self.error_patterns.copy(),
-                "recent_errors": self.error_history[-10:] if self.error_history else []
+                "recent_errors": self.error_history[-10:] if self.error_history else [],
             }
 
 
@@ -315,7 +319,6 @@ class EnhancedLogger:
 
         logger.info(f"增强日志记录器初始化完成: {name}")
 
-
     def _configure_logging(self) -> None:
         """配置日志系统"""
         if self._configured:
@@ -338,9 +341,9 @@ class EnhancedLogger:
         # 文件处理器
         file_handler = logging.handlers.RotatingFileHandler(
             log_dir / "app.log",
-            maxBytes=10*1024*1024,  # 10MB
+            maxBytes=10 * 1024 * 1024,  # 10MB
             backupCount=5,
-            encoding='utf-8'
+            encoding="utf-8",
         )
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(StructuredFormatter(include_context=True))
@@ -350,9 +353,9 @@ class EnhancedLogger:
         # 错误文件处理器
         error_handler = logging.handlers.RotatingFileHandler(
             log_dir / "error.log",
-            maxBytes=5*1024*1024,  # 5MB
+            maxBytes=5 * 1024 * 1024,  # 5MB
             backupCount=3,
-            encoding='utf-8'
+            encoding="utf-8",
         )
         error_handler.setLevel(logging.ERROR)
         error_handler.setFormatter(StructuredFormatter(include_context=True))
@@ -362,9 +365,9 @@ class EnhancedLogger:
         # 审计文件处理器
         audit_handler = logging.handlers.RotatingFileHandler(
             log_dir / "audit.log",
-            maxBytes=5*1024*1024,  # 5MB
+            maxBytes=5 * 1024 * 1024,  # 5MB
             backupCount=3,
-            encoding='utf-8'
+            encoding="utf-8",
         )
         audit_handler.setLevel(logging.INFO)
         audit_handler.setFormatter(StructuredFormatter(include_context=True))
@@ -405,7 +408,7 @@ class EnhancedLogger:
         message: str,
         category: LogCategory = LogCategory.SYSTEM,
         exc_info: bool = False,
-        extra_data: dict[str, Any] | None = None
+        extra_data: dict[str, Any] | None = None,
     ) -> None:
         """内部日志方法"""
         context = self.get_current_context() or LogContext()
@@ -441,11 +444,15 @@ class EnhancedLogger:
 
     def error(self, message: str, exc_info: bool = False, **kwargs) -> None:
         """错误日志"""
-        self._log(LogLevel.ERROR, message, LogCategory.ERROR, exc_info=exc_info, **kwargs)
+        self._log(
+            LogLevel.ERROR, message, LogCategory.ERROR, exc_info=exc_info, **kwargs
+        )
 
     def critical(self, message: str, exc_info: bool = False, **kwargs) -> None:
         """严重错误日志"""
-        self._log(LogLevel.CRITICAL, message, LogCategory.ERROR, exc_info=exc_info, **kwargs)
+        self._log(
+            LogLevel.CRITICAL, message, LogCategory.ERROR, exc_info=exc_info, **kwargs
+        )
 
     def exception(self, message: str, **kwargs) -> None:
         """异常日志"""
@@ -466,7 +473,9 @@ class EnhancedLogger:
         try:
             yield
         finally:
-            self.performance_logger.end_timer(operation, start_time, self.get_current_context())
+            self.performance_logger.end_timer(
+                operation, start_time, self.get_current_context()
+            )
 
     def get_performance_stats(self) -> dict[str, dict[str, float]]:
         """获取性能统计"""
@@ -510,9 +519,9 @@ class EnhancedLogger:
             report.append(f"总错误数: {error_stats['total_errors']}")
             report.append("")
 
-            if error_stats['error_patterns']:
+            if error_stats["error_patterns"]:
                 report.append("### 错误模式")
-                for pattern, count in error_stats['error_patterns'].items():
+                for pattern, count in error_stats["error_patterns"].items():
                     report.append(f"- {pattern}: {count} 次")
                 report.append("")
 
@@ -521,7 +530,9 @@ class EnhancedLogger:
         if audit_events:
             report.append("## 最近审计事件")
             for event in audit_events:
-                report.append(f"- {time.strftime('%H:%M:%S', time.localtime(event.timestamp))}: {event.message}")
+                report.append(
+                    f"- {time.strftime('%H:%M:%S', time.localtime(event.timestamp))}: {event.message}"
+                )
             report.append("")
 
         return "\n".join(report)
@@ -541,30 +552,37 @@ def get_enhanced_logger(name: str | None = None) -> EnhancedLogger:
 def log_context(**kwargs):
     """日志上下文装饰器"""
     import functools
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **func_kwargs):
             with enhanced_logger.context(**kwargs):
                 return func(*args, **func_kwargs)
+
         return wrapper
+
     return decorator
 
 
 def log_performance(operation: str):
     """性能日志装饰器"""
     import functools
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             with enhanced_logger.performance_timer(operation):
                 return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
 def log_errors(func):
     """错误日志装饰器"""
     import functools
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         try:
@@ -572,4 +590,5 @@ def log_errors(func):
         except Exception as e:
             enhanced_logger.track_error(e)
             raise
+
     return wrapper

@@ -37,7 +37,7 @@ class TestPluginRegistry:
                 PluginStatus.AVAILABLE,
                 PluginStatus.NOT_INSTALLED,
                 PluginStatus.ERROR,
-                PluginStatus.DISABLED
+                PluginStatus.DISABLED,
             ]
 
     def test_is_available(self):
@@ -52,7 +52,8 @@ class TestPluginRegistry:
         """测试获取模块"""
         # 获取一个可用的插件
         available_plugins = [
-            name for name, info in registry.list_plugins().items()
+            name
+            for name, info in registry.list_plugins().items()
             if info.status == PluginStatus.AVAILABLE
         ]
 
@@ -78,18 +79,20 @@ class TestChemRenderer:
     def test_import(self):
         """测试导入"""
         from src.plugins.chem_render import get_renderer
+
         renderer = get_renderer()
         assert renderer is not None
 
     def test_validate_smiles(self):
         """测试SMILES验证"""
         from src.plugins.chem_render import get_renderer
+
         renderer = get_renderer()
 
         # 测试有效SMILES
-        valid, error = renderer.validate_smiles('CCO')
+        valid, error = renderer.validate_smiles("CCO")
 
-        if registry.is_available('rdkit'):
+        if registry.is_available("rdkit"):
             assert valid is True
             assert error == ""
         else:
@@ -99,9 +102,10 @@ class TestChemRenderer:
     def test_smiles_to_image(self):
         """测试SMILES转图片"""
         from src.plugins.chem_render import get_renderer
+
         renderer = get_renderer()
 
-        img_data = renderer.smiles_to_image('CCO')
+        img_data = renderer.smiles_to_image("CCO")
         assert img_data is not None
         assert isinstance(img_data, bytes)
         assert len(img_data) > 0
@@ -109,12 +113,13 @@ class TestChemRenderer:
     def test_get_mol_properties(self):
         """测试获取分子属性"""
         from src.plugins.chem_render import get_renderer
+
         renderer = get_renderer()
 
-        props = renderer.get_mol_properties('CCO')
+        props = renderer.get_mol_properties("CCO")
         assert props is not None
         assert isinstance(props, dict)
-        assert 'molecular_weight' in props
+        assert "molecular_weight" in props
 
 
 class TestAdvancedPlotter:
@@ -123,6 +128,7 @@ class TestAdvancedPlotter:
     def test_import(self):
         """测试导入"""
         from src.plugins.advanced_plots import get_plotter, is_available
+
         plotter = get_plotter()
         assert plotter is not None
 
@@ -136,6 +142,7 @@ class TestPDFExporter:
     def test_import(self):
         """测试导入"""
         from src.plugins.pdf_export import get_exporter, is_available
+
         exporter = get_exporter()
         assert exporter is not None
 
@@ -145,25 +152,21 @@ class TestPDFExporter:
     def test_export(self):
         """测试导出功能"""
         from src.plugins.pdf_export import get_exporter
+
         exporter = get_exporter()
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            output_path = Path(tmpdir) / 'test.pdf'
+            output_path = Path(tmpdir) / "test.pdf"
 
             content = [
-                {'type': 'heading', 'data': '测试报告'},
-                {'type': 'text', 'data': '这是测试内容'},
+                {"type": "heading", "data": "测试报告"},
+                {"type": "text", "data": "这是测试内容"},
             ]
 
-            success = exporter.export(
-                output_path,
-                content,
-                method='auto',
-                title='测试'
-            )
+            success = exporter.export(output_path, content, method="auto", title="测试")
 
             # 应该成功（要么生成PDF，要么生成TXT）
-            assert success is True or output_path.with_suffix('.txt').exists()
+            assert success is True or output_path.with_suffix(".txt").exists()
 
 
 class TestThermoKinetics:
@@ -172,6 +175,7 @@ class TestThermoKinetics:
     def test_import(self):
         """测试导入"""
         from src.plugins.thermo_kinetics import get_calculator, is_available
+
         calc = get_calculator()
         assert calc is not None
 
@@ -181,17 +185,18 @@ class TestThermoKinetics:
     def test_calculate_equilibrium(self):
         """测试平衡计算"""
         from src.plugins.thermo_kinetics import get_calculator
+
         calc = get_calculator()
 
         result = calc.calculate_equilibrium(
             temperature=1000,
             pressure=101325,
-            composition={'H2': 0.5, 'O2': 0.25, 'N2': 0.25}
+            composition={"H2": 0.5, "O2": 0.25, "N2": 0.25},
         )
 
         # 应该返回结果（真实或回退）
         assert result is not None
-        assert 'temperature' in result
+        assert "temperature" in result
 
 
 class TestMoleculeAnimator:
@@ -200,6 +205,7 @@ class TestMoleculeAnimator:
     def test_import(self):
         """测试导入"""
         from src.plugins.molecule_animator import get_animator, is_available
+
         animator = get_animator()
         assert animator is not None
 
@@ -207,5 +213,5 @@ class TestMoleculeAnimator:
         assert isinstance(available, bool)
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

@@ -56,7 +56,9 @@ class LogViewerWidget(QWidget):
         # 日志级别过滤
         control_layout.addWidget(QLabel("日志级别:"))
         self.level_combo = QComboBox()
-        self.level_combo.addItems(["ALL", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
+        self.level_combo.addItems(
+            ["ALL", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        )
         self.level_combo.currentTextChanged.connect(self.filter_logs)
         control_layout.addWidget(self.level_combo)
 
@@ -207,7 +209,9 @@ class PerformanceMonitorWidget(QWidget):
             memory = psutil.virtual_memory()
             memory_mb = memory.used / (1024 * 1024)
             memory_percent = memory.percent
-            self.memory_label.setText(f"内存使用: {memory_mb:.0f} MB ({memory_percent:.1f}%)")
+            self.memory_label.setText(
+                f"内存使用: {memory_mb:.0f} MB ({memory_percent:.1f}%)"
+            )
 
             # 线程
             process = psutil.Process()
@@ -310,7 +314,9 @@ class ConfigEditorWidget(QWidget):
             with open(self.config.config_file, "w", encoding="utf-8") as f:
                 json.dump(new_config, f, indent=4, ensure_ascii=False)
 
-            QMessageBox.information(self, "成功", "配置已保存，部分配置需要重启应用后生效")
+            QMessageBox.information(
+                self, "成功", "配置已保存，部分配置需要重启应用后生效"
+            )
 
             # 重新加载
             self.config.reload()
@@ -330,7 +336,9 @@ class DeveloperConsole(QMainWindow):
     def __init__(self, dev_auth: DeveloperAuth, parent=None):
         super().__init__(parent)
         if dev_auth is None or not dev_auth.is_authenticated():
-            raise PermissionError("Developer console requires an authenticated developer session")
+            raise PermissionError(
+                "Developer console requires an authenticated developer session"
+            )
         self.dev_auth = dev_auth
         self.init_ui()
 
@@ -518,7 +526,9 @@ class DeveloperConsole(QMainWindow):
         table_widget = QTableWidget()
         table_widget.setColumnCount(5)
         table_widget.setHorizontalHeaderLabels(["ID", "名称", "类型", "值", "时间"])
-        table_widget.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        table_widget.horizontalHeader().setSectionResizeMode(
+            QHeaderView.ResizeMode.Stretch
+        )
         table_widget.setAlternatingRowColors(True)
 
         # 添加示例数据
@@ -595,7 +605,9 @@ class DeveloperConsole(QMainWindow):
 
         # 发送按钮
         send_btn = QPushButton("发送请求")
-        send_btn.setStyleSheet("background-color: #27ae60; color: white; padding: 8px; font-weight: bold;")
+        send_btn.setStyleSheet(
+            "background-color: #27ae60; color: white; padding: 8px; font-weight: bold;"
+        )
 
         def send_request():
             method = method_combo.currentText()

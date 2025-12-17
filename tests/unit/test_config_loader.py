@@ -3,7 +3,6 @@
 测试 src.core.config_loader 模块
 """
 
-
 import pytest
 
 from src import __version__ as APP_VERSION
@@ -30,7 +29,9 @@ class TestAppConfig:
 
     def test_custom_values(self):
         """测试自定义值"""
-        config = AppConfig(name="CustomApp", version="3.0.0", environment="production", debug=False)
+        config = AppConfig(
+            name="CustomApp", version="3.0.0", environment="production", debug=False
+        )
         assert config.name == "CustomApp"
         assert config.version == "3.0.0"
         assert config.environment == "production"
@@ -70,7 +71,9 @@ class TestSecurityConfig:
 
     def test_with_jwt_key(self):
         """测试JWT密钥"""
-        config = SecurityConfig(jwt_secret_key="test-jwt-secret-key-32-characters-long-12345")
+        config = SecurityConfig(
+            jwt_secret_key="test-jwt-secret-key-32-characters-long-12345"
+        )
         assert config.jwt_secret_key == "test-jwt-secret-key-32-characters-long-12345"
 
     def test_with_developer_key(self):
@@ -133,7 +136,9 @@ class TestConfigIntegration:
     def test_full_workflow(self, monkeypatch):
         """测试完整工作流"""
         # 设置环境变量
-        monkeypatch.setenv("JWT_SECRET_KEY", "test-jwt-secret-key-32-characters-long-12345")
+        monkeypatch.setenv(
+            "JWT_SECRET_KEY", "test-jwt-secret-key-32-characters-long-12345"
+        )
         monkeypatch.setenv("ENVIRONMENT", "development")
 
         # 加载配置

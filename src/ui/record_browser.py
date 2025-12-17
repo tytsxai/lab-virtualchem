@@ -307,7 +307,11 @@ class RecordBrowser(QDialog):
             self.table.setItem(row, 3, duration_item)
 
             # 状态
-            status = self.i18n.t("ui.completed") if record.get("finished_at") else self.i18n.t("ui.incomplete")
+            status = (
+                self.i18n.t("ui.completed")
+                if record.get("finished_at")
+                else self.i18n.t("ui.incomplete")
+            )
             status_item = QTableWidgetItem(status)
             status_item.setTextAlignment(Qt.AlignCenter)
             self.table.setItem(row, 4, status_item)
@@ -358,7 +362,8 @@ class RecordBrowser(QDialog):
             filtered = [
                 r
                 for r in self.all_records
-                if r.get("experiment_title") == filter_value or r.get("experiment_id") == filter_value
+                if r.get("experiment_title") == filter_value
+                or r.get("experiment_id") == filter_value
             ]
             self.display_records(filtered)
 
@@ -415,14 +420,14 @@ class RecordBrowser(QDialog):
 
         # 错误汇总
         if record.mistakes:
-            errors_html = (
-                f"<p style='color: #C62828'><b>{self.i18n.t('ui.total_errors')}: {len(record.mistakes)}</b></p>"
-            )
+            errors_html = f"<p style='color: #C62828'><b>{self.i18n.t('ui.total_errors')}: {len(record.mistakes)}</b></p>"
             for mistake in record.mistakes[:10]:  # 最多显示10条
                 errors_html += f"• {mistake.step_id}: {mistake.message}<br>"
             self.errors_text.setHtml(errors_html)
         else:
-            self.errors_text.setHtml(f"<p style='color: #2E7D32'>{self.i18n.t('ui.no_errors')}</p>")
+            self.errors_text.setHtml(
+                f"<p style='color: #2E7D32'>{self.i18n.t('ui.no_errors')}</p>"
+            )
 
     def on_delete(self):
         """删除记录"""
@@ -433,16 +438,22 @@ class RecordBrowser(QDialog):
         reply = QMessageBox.question(
             self,
             self.i18n.t("ui.confirm_delete"),
-            self.i18n.t("ui.confirm_delete_message", record_id=self.current_record.record_id),
+            self.i18n.t(
+                "ui.confirm_delete_message", record_id=self.current_record.record_id
+            ),
             QMessageBox.Yes | QMessageBox.No,
         )
 
         if reply == QMessageBox.Yes:
             if self.store.delete_record(self.user_id, self.current_record.record_id):
-                QMessageBox.information(self, self.i18n.t("ui.success"), self.i18n.t("ui.delete_success"))
+                QMessageBox.information(
+                    self, self.i18n.t("ui.success"), self.i18n.t("ui.delete_success")
+                )
                 self.load_records()
             else:
-                QMessageBox.critical(self, self.i18n.t("error.title"), self.i18n.t("error.delete_failed"))
+                QMessageBox.critical(
+                    self, self.i18n.t("error.title"), self.i18n.t("error.delete_failed")
+                )
 
     def on_export_report(self):
         """导出报告"""

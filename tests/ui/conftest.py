@@ -20,5 +20,3 @@ def qapp():
     yield app
     # 会话结束时清理
     # app.quit()
-
-

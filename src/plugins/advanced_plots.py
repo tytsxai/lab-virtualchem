@@ -20,7 +20,9 @@ class AdvancedPlotter:
         self._plot_widget = None
 
     @require_plugin("pyqtgraph")
-    def create_interactive_plot(self, parent=None, title: str = "", x_label: str = "X", y_label: str = "Y"):
+    def create_interactive_plot(
+        self, parent=None, title: str = "", x_label: str = "X", y_label: str = "Y"
+    ):
         """创建交互式图表控件
 
         Args:
@@ -70,7 +72,15 @@ class AdvancedPlotter:
         pen = pg.mkPen(color=color, width=width)
 
         if symbol:
-            plot_widget.plot(x_data, y_data, name=name, pen=pen, symbol=symbol, symbolSize=8, symbolBrush=color)
+            plot_widget.plot(
+                x_data,
+                y_data,
+                name=name,
+                pen=pen,
+                symbol=symbol,
+                symbolSize=8,
+                symbolBrush=color,
+            )
         else:
             plot_widget.plot(x_data, y_data, name=name, pen=pen)
 
@@ -95,7 +105,9 @@ class AdvancedPlotter:
         Returns:
             PlotWidget实例
         """
-        plot_widget = self.create_interactive_plot(parent=parent, title=title, x_label=x_label, y_label=y_label)
+        plot_widget = self.create_interactive_plot(
+            parent=parent, title=title, x_label=x_label, y_label=y_label
+        )
 
         colors = ["b", "r", "g", "c", "m", "y", "k"]
 
@@ -130,7 +142,9 @@ class AdvancedPlotter:
         return plot_widget, curve, data_buffer
 
     @require_plugin("pyqtgraph")
-    def update_realtime_plot(self, curve, data_buffer: dict, x_value: float, y_value: float):
+    def update_realtime_plot(
+        self, curve, data_buffer: dict, x_value: float, y_value: float
+    ):
         """更新实时图表数据
 
         Args:

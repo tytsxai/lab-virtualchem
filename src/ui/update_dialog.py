@@ -16,6 +16,7 @@ try:
         QTextEdit,
         QVBoxLayout,
     )
+
     PYSIDE6_AVAILABLE = True
 except ImportError:
     PYSIDE6_AVAILABLE = False
@@ -26,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 if PYSIDE6_AVAILABLE:
+
     class UpdateDownloadThread(QThread):
         """更新下载线程"""
 
@@ -40,12 +42,12 @@ if PYSIDE6_AVAILABLE:
         def run(self):
             """运行下载"""
             try:
+
                 def progress_callback(downloaded, total):
                     self.progress.emit(downloaded, total)
 
                 file_path = self.updater.download_update(
-                    self.version_info,
-                    progress_callback
+                    self.version_info, progress_callback
                 )
 
                 if file_path:
@@ -57,15 +59,11 @@ if PYSIDE6_AVAILABLE:
                 logger.error(f"下载线程错误: {e}")
                 self.finished.emit(False, str(e))
 
-
     class UpdateDialog(QDialog):
         """更新对话框"""
 
         def __init__(
-            self,
-            version_info: VersionInfo,
-            updater: AutoUpdater,
-            parent=None
+            self, version_info: VersionInfo, updater: AutoUpdater, parent=None
         ):
             super().__init__(parent)
             self.version_info = version_info
@@ -149,10 +147,7 @@ if PYSIDE6_AVAILABLE:
             self.status_label.setText("正在下载...")
 
             # 创建下载线程
-            self.download_thread = UpdateDownloadThread(
-                self.updater,
-                self.version_info
-            )
+            self.download_thread = UpdateDownloadThread(self.updater, self.version_info)
             self.download_thread.progress.connect(self._on_download_progress)
             self.download_thread.finished.connect(self._on_download_finished)
             self.download_thread.start()
@@ -189,6 +184,7 @@ if PYSIDE6_AVAILABLE:
                 return
 
             from pathlib import Path
+
             success = self.updater.install_update(Path(self.downloaded_file))
 
             if success:
@@ -202,9 +198,7 @@ if PYSIDE6_AVAILABLE:
 
 
 def show_update_dialog(
-    version_info: VersionInfo,
-    updater: AutoUpdater,
-    parent=None
+    version_info: VersionInfo, updater: AutoUpdater, parent=None
 ) -> bool:
     """显示更新对话框
 

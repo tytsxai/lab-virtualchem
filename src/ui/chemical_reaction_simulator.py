@@ -55,7 +55,9 @@ class ChemicalReagent:
             return ChemicalReagent("mixed", "混合溶液")
 
         # 加权平均浓度
-        mixed_concentration = (self.get_moles() + other.get_moles()) * 1000.0 / total_volume
+        mixed_concentration = (
+            (self.get_moles() + other.get_moles()) * 1000.0 / total_volume
+        )
 
         # 混合颜色（简单平均）
         mixed_color = self._blend_colors(self.color, other.color)
@@ -80,7 +82,9 @@ class ChemicalReagent:
         b = (color1.blue() + color2.blue()) // 2
         return QColor(r, g, b)
 
-    def _calculate_mixed_ph(self, reagent1: ChemicalReagent, reagent2: ChemicalReagent) -> float:
+    def _calculate_mixed_ph(
+        self, reagent1: ChemicalReagent, reagent2: ChemicalReagent
+    ) -> float:
         """计算混合溶液的pH（简化）"""
         # 对于强酸强碱的简单计算
         if reagent1.ph < 7 and reagent2.ph > 7:
@@ -93,11 +97,15 @@ class ChemicalReagent:
             elif moles_h > moles_oh:
                 # 酸性
                 excess_h = moles_h - moles_oh
-                return 7.0 - math.log10(excess_h / (reagent1.volume + reagent2.volume) * 1000)
+                return 7.0 - math.log10(
+                    excess_h / (reagent1.volume + reagent2.volume) * 1000
+                )
             else:
                 # 碱性
                 excess_oh = moles_oh - moles_h
-                return 7.0 + math.log10(excess_oh / (reagent1.volume + reagent2.volume) * 1000)
+                return 7.0 + math.log10(
+                    excess_oh / (reagent1.volume + reagent2.volume) * 1000
+                )
 
         # 其他情况简单平均
         return (reagent1.ph + reagent2.ph) / 2.0
@@ -106,7 +114,13 @@ class ChemicalReagent:
 class Indicator:
     """指示剂类"""
 
-    def __init__(self, indicator_id: str, name: str, color_range: tuple[str, str], ph_range: tuple[float, float]):
+    def __init__(
+        self,
+        indicator_id: str,
+        name: str,
+        color_range: tuple[str, str],
+        ph_range: tuple[float, float],
+    ):
         self.indicator_id = indicator_id
         self.name = name
         self.color_range = color_range
@@ -165,13 +179,28 @@ class ChemicalReactionSimulator(QObject):
         """初始化试剂库"""
         self.reagents = {
             "hcl": ChemicalReagent(
-                reagent_id="hcl", name="盐酸", concentration=0.1, color="#ffffff", ph=1.0, density=1.05
+                reagent_id="hcl",
+                name="盐酸",
+                concentration=0.1,
+                color="#ffffff",
+                ph=1.0,
+                density=1.05,
             ),
             "naoh": ChemicalReagent(
-                reagent_id="naoh", name="氢氧化钠", concentration=0.1, color="#ffffff", ph=13.0, density=1.0
+                reagent_id="naoh",
+                name="氢氧化钠",
+                concentration=0.1,
+                color="#ffffff",
+                ph=13.0,
+                density=1.0,
             ),
             "water": ChemicalReagent(
-                reagent_id="water", name="蒸馏水", concentration=0.0, color="#ffffff", ph=7.0, density=1.0
+                reagent_id="water",
+                name="蒸馏水",
+                concentration=0.0,
+                color="#ffffff",
+                ph=7.0,
+                density=1.0,
             ),
         }
 
@@ -192,14 +221,21 @@ class ChemicalReactionSimulator(QObject):
             ),
         }
 
-    def add_reagent_to_container(self, container_id: str, reagent_id: str, volume: float) -> bool:
+    def add_reagent_to_container(
+        self, container_id: str, reagent_id: str, volume: float
+    ) -> bool:
         """向容器中添加试剂"""
         if reagent_id not in self.reagents:
             logger.error(f"未知试剂: {reagent_id}")
             return False
 
         if container_id not in self.containers:
-            self.containers[container_id] = {"reagents": {}, "total_volume": 0.0, "ph": 7.0, "color": "#ffffff"}
+            self.containers[container_id] = {
+                "reagents": {},
+                "total_volume": 0.0,
+                "ph": 7.0,
+                "color": "#ffffff",
+            }
 
         container = self.containers[container_id]
         reagent = self.reagents[reagent_id]
@@ -273,7 +309,9 @@ class ChemicalReactionSimulator(QObject):
         elif total_moles_oh > total_moles_h:
             # 碱性
             excess_oh = total_moles_oh - total_moles_h
-            container["ph"] = min(14.0, 7.0 + math.log10(excess_oh / total_volume * 1000))
+            container["ph"] = min(
+                14.0, 7.0 + math.log10(excess_oh / total_volume * 1000)
+            )
         else:
             # 中性
             container["ph"] = 7.0
@@ -317,7 +355,12 @@ class ChemicalReactionSimulator(QObject):
     def clear_container(self, container_id: str) -> None:
         """清空容器"""
         if container_id in self.containers:
-            self.containers[container_id] = {"reagents": {}, "total_volume": 0.0, "ph": 7.0, "color": "#ffffff"}
+            self.containers[container_id] = {
+                "reagents": {},
+                "total_volume": 0.0,
+                "ph": 7.0,
+                "color": "#ffffff",
+            }
             self.ph_changed.emit(container_id, 7.0)
             self.color_changed.emit(container_id, "#ffffff")
             logger.info(f"清空容器 {container_id}")
@@ -348,7 +391,9 @@ class ChemicalReactionSimulator(QObject):
                         naoh_amount = reagents["naoh"]
 
                         # 计算最小反应量（限制试剂）
-                        reaction_amount = min(hcl_amount, naoh_amount) * 0.01  # 每次消耗1%
+                        reaction_amount = (
+                            min(hcl_amount, naoh_amount) * 0.01
+                        )  # 每次消耗1%
 
                         if reaction_amount > 0.001:  # 最小反应阈值
                             # 更新试剂量
@@ -362,9 +407,13 @@ class ChemicalReactionSimulator(QObject):
 
                             # 更新pH值（简化：基于酸碱剩余量）
                             if reagents["hcl"] > reagents["naoh"]:
-                                new_ph = 3.0 + (reagents["naoh"] / reagents["hcl"]) * 4.0
+                                new_ph = (
+                                    3.0 + (reagents["naoh"] / reagents["hcl"]) * 4.0
+                                )
                             elif reagents["naoh"] > reagents["hcl"]:
-                                new_ph = 11.0 - (reagents["hcl"] / reagents["naoh"]) * 4.0
+                                new_ph = (
+                                    11.0 - (reagents["hcl"] / reagents["naoh"]) * 4.0
+                                )
                             else:
                                 new_ph = 7.0
 
@@ -382,7 +431,9 @@ class ChemicalReactionSimulator(QObject):
                                         "final_ph": new_ph,
                                     },
                                 )
-                                logger.info(f"容器 {container_id} 中和反应完成，pH={new_ph:.2f}")
+                                logger.info(
+                                    f"容器 {container_id} 中和反应完成，pH={new_ph:.2f}"
+                                )
 
         except Exception as e:
             logger.error(f"更新反应状态失败: {e}", exc_info=True)

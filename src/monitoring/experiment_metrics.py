@@ -84,8 +84,12 @@ class ExperimentMetrics:
                 "avg_attempts": self.step_avg_attempts,
             },
             "timestamps": {
-                "first_run_at": self.first_run_at.isoformat() if self.first_run_at else None,
-                "last_run_at": self.last_run_at.isoformat() if self.last_run_at else None,
+                "first_run_at": self.first_run_at.isoformat()
+                if self.first_run_at
+                else None,
+                "last_run_at": self.last_run_at.isoformat()
+                if self.last_run_at
+                else None,
             },
         }
 
@@ -140,7 +144,9 @@ class ExperimentMetricsCollector:
             del self._cached_metrics[experiment_id]
             del self._cache_timestamp[experiment_id]
 
-        logger.debug(f"记录实验运行: {experiment_id}, 用户: {user_id}, 状态: {record_data.get('status')}")
+        logger.debug(
+            f"记录实验运行: {experiment_id}, 用户: {user_id}, 状态: {record_data.get('status')}"
+        )
 
     def get_experiment_metrics(
         self,
@@ -168,7 +174,9 @@ class ExperimentMetricsCollector:
                 return self._cached_metrics[experiment_id]
 
         # 计算指标
-        metrics = self._calculate_metrics(experiment_id, experiment_title, experiment_type)
+        metrics = self._calculate_metrics(
+            experiment_id, experiment_title, experiment_type
+        )
 
         # 缓存结果
         self._cached_metrics[experiment_id] = metrics
@@ -176,7 +184,9 @@ class ExperimentMetricsCollector:
 
         return metrics
 
-    def _calculate_metrics(self, experiment_id: str, experiment_title: str, experiment_type: str) -> ExperimentMetrics:
+    def _calculate_metrics(
+        self, experiment_id: str, experiment_title: str, experiment_type: str
+    ) -> ExperimentMetrics:
         """计算实验指标"""
         runs = self._experiment_data.get(experiment_id, [])
 
@@ -203,7 +213,11 @@ class ExperimentMetricsCollector:
 
         if completed_runs:
             # 性能指标
-            durations = [r.get("duration_seconds", 0) for r in completed_runs if r.get("duration_seconds")]
+            durations = [
+                r.get("duration_seconds", 0)
+                for r in completed_runs
+                if r.get("duration_seconds")
+            ]
             if durations:
                 metrics.avg_duration_seconds = sum(durations) / len(durations)
                 metrics.min_duration_seconds = min(durations)
@@ -236,11 +250,15 @@ class ExperimentMetricsCollector:
                     mistake_types[error_type] += 1
 
             metrics.total_mistakes = total_mistakes
-            metrics.avg_mistakes_per_run = total_mistakes / len(completed_runs) if completed_runs else 0
+            metrics.avg_mistakes_per_run = (
+                total_mistakes / len(completed_runs) if completed_runs else 0
+            )
             metrics.mistake_types = dict(mistake_types)
 
             # 步骤指标
-            step_stats: dict[str, dict[str, Any]] = defaultdict(lambda: {"passed": 0, "total": 0, "attempts": []})
+            step_stats: dict[str, dict[str, Any]] = defaultdict(
+                lambda: {"passed": 0, "total": 0, "attempts": []}
+            )
 
             for run in completed_runs:
                 step_records = run.get("step_records", [])
@@ -256,13 +274,19 @@ class ExperimentMetricsCollector:
             # 计算步骤通过率和平均尝试次数
             for step_id, stats in step_stats.items():
                 if stats["total"] > 0:
-                    metrics.step_pass_rates[step_id] = (stats["passed"] / stats["total"]) * 100
+                    metrics.step_pass_rates[step_id] = (
+                        stats["passed"] / stats["total"]
+                    ) * 100
                 if stats["attempts"]:
-                    metrics.step_avg_attempts[step_id] = sum(stats["attempts"]) / len(stats["attempts"])
+                    metrics.step_avg_attempts[step_id] = sum(stats["attempts"]) / len(
+                        stats["attempts"]
+                    )
 
         # 时间戳
         if runs:
-            timestamps: list[datetime] = [r.get("timestamp") for r in runs if r.get("timestamp")]  # type: ignore
+            timestamps: list[datetime] = [
+                r.get("timestamp") for r in runs if r.get("timestamp")
+            ]  # type: ignore
             if timestamps:
                 metrics.first_run_at = min(timestamps)
                 metrics.last_run_at = max(timestamps)
@@ -285,7 +309,9 @@ class ExperimentMetricsCollector:
                     "completion_rate": metrics.completion_rate,
                     "avg_score": metrics.avg_score,
                     "avg_duration_seconds": metrics.avg_duration_seconds,
-                    "last_run_at": metrics.last_run_at.isoformat() if metrics.last_run_at else None,
+                    "last_run_at": metrics.last_run_at.isoformat()
+                    if metrics.last_run_at
+                    else None,
                 }
             )
 
@@ -294,7 +320,9 @@ class ExperimentMetricsCollector:
 
         return summary
 
-    def get_user_experiment_history(self, user_id: str, limit: int = 10) -> list[dict[str, Any]]:
+    def get_user_experiment_history(
+        self, user_id: str, limit: int = 10
+    ) -> list[dict[str, Any]]:
         """
         获取用户的实验历史
 
@@ -364,7 +392,9 @@ class ExperimentMetricsCollector:
 
             # 保留最近的数据
             self._experiment_data[_exp_id] = [
-                r for r in runs if r.get("timestamp", datetime.min) > cutoff_date  # type: ignore[arg-type]
+                r
+                for r in runs
+                if r.get("timestamp", datetime.min) > cutoff_date  # type: ignore[arg-type]
             ]
 
             cleared = original_count - len(self._experiment_data[_exp_id])

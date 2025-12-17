@@ -56,6 +56,7 @@ class Quest(BaseModel):
     def serialize_expires_at(self, value: datetime | None) -> str | None:
         return value.isoformat() if value else None
 
+
 class UserQuest(BaseModel):
     """用户任务记录"""
 
@@ -183,7 +184,9 @@ class QuestManager:
         if days_until_monday == 0:
             days_until_monday = 7
         next_monday = now + timedelta(days=days_until_monday)
-        next_monday_start = datetime(next_monday.year, next_monday.month, next_monday.day, 0, 0, 0)
+        next_monday_start = datetime(
+            next_monday.year, next_monday.month, next_monday.day, 0, 0, 0
+        )
 
         quests = []
         for template in self.weekly_quest_templates:

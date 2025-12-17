@@ -65,6 +65,7 @@ class ServiceRegistry:
         if config is None:
             # 延迟导入以避免循环依赖
             from src.core.config_loader import get_config
+
             config = get_config()
 
         # 1. 注册核心配置
@@ -101,12 +102,14 @@ class ServiceRegistry:
         """注册配置服务"""
         # 新配置系统 - 延迟导入以避免循环依赖
         from src.core.config_loader import Config
+
         container.register_singleton(Config, instance=config)
 
         # 向后兼容 - 旧配置系统（已弃用，使用新配置系统）
         # 为了兼容性，创建一个适配器
         try:
             from src.core.config_loader import ConfigAdapter
+
             adapter = ConfigAdapter(config)
             container.register_singleton(IConfig, instance=adapter)
         except Exception:
@@ -211,17 +214,25 @@ class ServiceRegistry:
                     Step(
                         id="step_1",
                         text="第一步：准备实验",
-                        check=CheckPoint(type=CheckType.CONFIRM, fail_hint="请确认已准备好实验器材"),
+                        check=CheckPoint(
+                            type=CheckType.CONFIRM, fail_hint="请确认已准备好实验器材"
+                        ),
                     )
                 ],
                 score_rules=[],
             )
-            return ExperimentController(template=template, user_id="test_user", enable_monitoring=False)
+            return ExperimentController(
+                template=template, user_id="test_user", enable_monitoring=False
+            )
 
-        container.register_transient(ExperimentController, factory=create_experiment_controller)
+        container.register_transient(
+            ExperimentController, factory=create_experiment_controller
+        )
 
         # 注册实验引擎接口
-        container.register_transient(IExperimentEngine, factory=create_experiment_controller)
+        container.register_transient(
+            IExperimentEngine, factory=create_experiment_controller
+        )
 
         # 注册实验验证器接口
         container.register_singleton(IExperimentValidator, RuleValidator)
@@ -253,7 +264,9 @@ class ServiceRegistry:
                     record_store=record_store,
                 )
 
-            container.register_transient(ExperimentService, factory=create_experiment_service)
+            container.register_transient(
+                ExperimentService, factory=create_experiment_service
+            )
 
             logger.info("实验服务注册成功")
         except ImportError as e:
@@ -268,7 +281,7 @@ class ServiceRegistry:
         def create_dev_auth() -> DeveloperAuth:
             try:
                 # 创建开发者认证
-                return DeveloperAuth()
+                return DeveloperAuth(config=config)
             except Exception as e:
                 # 如果创建失败，使用默认配置
                 logger.warning(f"开发者认证初始化失败: {e}")
@@ -285,7 +298,9 @@ class ServiceRegistry:
             ServiceRegistry._seed_default_users(repo)
             return repo
 
-        container.register_singleton(SimpleUserRepository, factory=create_user_repository)
+        container.register_singleton(
+            SimpleUserRepository, factory=create_user_repository
+        )
 
         # JWT管理器
         def create_jwt_manager() -> JWTManager:
@@ -355,7 +370,9 @@ class ServiceRegistry:
         logger.info("默认管理员用户已初始化: %s", username)
 
 
-def configure_container(container: DIContainer | None = None, config: Any = None) -> DIContainer:
+def configure_container(
+    container: DIContainer | None = None, config: Any = None
+) -> DIContainer:
     """配置DI容器（快捷函数）
 
     Args:
@@ -384,6 +401,7 @@ def configure_container(container: DIContainer | None = None, config: Any = None
     if config is None:
         # 延迟导入以避免循环依赖
         from src.core.config_loader import get_config
+
         config = get_config()
 
     return ServiceRegistry.register_all(container, config)
@@ -439,6 +457,7 @@ if __name__ == "__main__":
         logger.info("\n1. 解析Config...")
         # 延迟导入以避免循环依赖
         from src.core.config_loader import Config
+
         config = container.resolve(Config)
         logger.info(f"   ✅ 应用名称: {config.app.name}")
 

@@ -5,6 +5,8 @@
 
 import atexit
 import logging
+import os
+import sys
 import threading
 import time
 from collections import OrderedDict
@@ -16,9 +18,22 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
+def _should_start_background_threads() -> bool:
+    if os.environ.get("VCL_DISABLE_BACKGROUND_THREADS") == "1":
+        return False
+    if os.environ.get("VCL_TEST_MODE") == "1":
+        return False
+    if os.environ.get("PYTEST_CURRENT_TEST"):
+        return False
+    if "pytest" in sys.modules:
+        return False
+    return True
+
+
 @dataclass
 class CacheEntry:
     """缓存条目"""
+
     key: str
     value: Any
     created_at: datetime
@@ -39,6 +54,7 @@ class CacheEntry:
 @dataclass
 class CacheStats:
     """缓存统计信息"""
+
     hits: int = 0
     misses: int = 0
     sets: int = 0
@@ -55,14 +71,14 @@ class CacheStats:
     def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
-            'hits': self.hits,
-            'misses': self.misses,
-            'sets': self.sets,
-            'deletes': self.deletes,
-            'evictions': self.evictions,
-            'expired': self.expired,
-            'total_size': self.total_size,
-            'hit_rate': self.hit_rate()
+            "hits": self.hits,
+            "misses": self.misses,
+            "sets": self.sets,
+            "deletes": self.deletes,
+            "evictions": self.evictions,
+            "expired": self.expired,
+            "total_size": self.total_size,
+            "hit_rate": self.hit_rate(),
         }
 
 
@@ -84,7 +100,7 @@ class HighPerformanceLRUCache:
         default_ttl: int = 3600,
         max_memory_mb: int = 100,
         auto_cleanup: bool = True,
-        cleanup_interval: int = 300  # 5分钟
+        cleanup_interval: int = 300,  # 5分钟
     ):
         """初始化缓存
 
@@ -107,14 +123,16 @@ class HighPerformanceLRUCache:
         self._stats = CacheStats()
 
         # 自动清理
-        self.auto_cleanup = auto_cleanup
+        self.auto_cleanup = auto_cleanup and _should_start_background_threads()
         self.cleanup_interval = cleanup_interval
         self._cleanup_thread = None
-        if auto_cleanup:
+        if self.auto_cleanup:
             self._start_cleanup_thread()
             atexit.register(self.stop)
 
-        logger.info(f"高性能LRU缓存初始化完成 (max_size={max_size}, max_memory={max_memory_mb}MB)")
+        logger.info(
+            f"高性能LRU缓存初始化完成 (max_size={max_size}, max_memory={max_memory_mb}MB)"
+        )
 
     def get(self, key: str, default: Any = None) -> Any:
         """获取缓存值 - O(1)
@@ -154,7 +172,7 @@ class HighPerformanceLRUCache:
         key: str,
         value: Any,
         ttl: int | None = None,
-        size_bytes: int | None = None
+        size_bytes: int | None = None,
     ) -> None:
         """设置缓存值 - O(1)
 
@@ -176,7 +194,7 @@ class HighPerformanceLRUCache:
             value=value,
             created_at=datetime.now(),
             expires_at=expires_at,
-            size_bytes=size_bytes
+            size_bytes=size_bytes,
         )
 
         with self._lock:
@@ -188,8 +206,10 @@ class HighPerformanceLRUCache:
                 self._cache.move_to_end(key)
             else:
                 # 检查是否需要驱逐
-                while len(self._cache) >= self.max_size or \
-                      self._stats.total_size + size_bytes > self.max_memory_bytes:
+                while (
+                    len(self._cache) >= self.max_size
+                    or self._stats.total_size + size_bytes > self.max_memory_bytes
+                ):
                     if not self._cache:
                         break
                     # 移除最旧的条目（第一个）
@@ -316,10 +336,10 @@ class HighPerformanceLRUCache:
         """获取统计信息"""
         with self._lock:
             stats = self._stats.to_dict()
-            stats['current_size'] = len(self._cache)
-            stats['max_size'] = self.max_size
-            stats['memory_mb'] = self._stats.total_size / 1024 / 1024
-            stats['max_memory_mb'] = self.max_memory_bytes / 1024 / 1024
+            stats["current_size"] = len(self._cache)
+            stats["max_size"] = self.max_size
+            stats["memory_mb"] = self._stats.total_size / 1024 / 1024
+            stats["max_memory_mb"] = self.max_memory_bytes / 1024 / 1024
             return stats
 
     def reset_stats(self) -> None:
@@ -374,7 +394,13 @@ class HighPerformanceLRUCache:
             elif isinstance(value, (list, tuple)):
                 return sum(self._estimate_size(v) for v in value) + 64
             elif isinstance(value, dict):
-                return sum(self._estimate_size(k) + self._estimate_size(v) for k, v in value.items()) + 128
+                return (
+                    sum(
+                        self._estimate_size(k) + self._estimate_size(v)
+                        for k, v in value.items()
+                    )
+                    + 128
+                )
             else:
                 # 默认估算
                 return 256
@@ -383,6 +409,7 @@ class HighPerformanceLRUCache:
 
     def _start_cleanup_thread(self) -> None:
         """启动自动清理线程"""
+
         def cleanup_loop():
             while self.auto_cleanup:
                 time.sleep(self.cleanup_interval)
@@ -411,8 +438,7 @@ class HighPerformanceLRUCache:
 
 
 def create_high_performance_cache(
-    strategy: str = "lru",
-    **kwargs
+    strategy: str = "lru", **kwargs
 ) -> HighPerformanceLRUCache:
     """创建高性能缓存实例
 

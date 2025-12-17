@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 class RobustnessLevel(Enum):
     """健壮性级别"""
+
     BASIC = "basic"
     ENHANCED = "enhanced"
     MAXIMUM = "maximum"
@@ -33,6 +34,7 @@ class RobustnessLevel(Enum):
 @dataclass
 class RobustnessConfig:
     """健壮性配置"""
+
     level: RobustnessLevel = RobustnessLevel.ENHANCED
     enable_error_recovery: bool = True
     enable_input_validation: bool = True
@@ -49,6 +51,7 @@ class RobustnessConfig:
 @dataclass
 class OperationMetrics:
     """操作指标"""
+
     operation_name: str
     start_time: float
     end_time: float | None = None
@@ -65,10 +68,10 @@ class OperationMetrics:
 class RobustnessEnhancer:
     """代码健壮性增强器"""
 
-    _instance: Optional['RobustnessEnhancer'] = None
+    _instance: Optional["RobustnessEnhancer"] = None
     _lock = threading.Lock()
 
-    def __new__(cls) -> 'RobustnessEnhancer':
+    def __new__(cls) -> "RobustnessEnhancer":
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
@@ -76,7 +79,7 @@ class RobustnessEnhancer:
         return cls._instance
 
     def __init__(self):
-        if hasattr(self, '_initialized'):
+        if hasattr(self, "_initialized"):
             return
 
         self.config = RobustnessConfig()
@@ -108,7 +111,7 @@ class RobustnessEnhancer:
         security_level: str = "medium",
         enable_caching: bool = False,
         enable_retry: bool = True,
-        timeout: float | None = None
+        timeout: float | None = None,
     ) -> Callable:
         """增强函数健壮性"""
 
@@ -117,8 +120,15 @@ class RobustnessEnhancer:
         @functools.wraps(func)
         def enhanced_wrapper(*args, **kwargs):
             return self._execute_with_enhancement(
-                func, args, kwargs, operation_name, validation_rules,
-                security_level, enable_caching, enable_retry, timeout
+                func,
+                args,
+                kwargs,
+                operation_name,
+                validation_rules,
+                security_level,
+                enable_caching,
+                enable_retry,
+                timeout,
             )
 
         return enhanced_wrapper
@@ -133,7 +143,7 @@ class RobustnessEnhancer:
         security_level: str = "medium",
         enable_caching: bool = False,
         enable_retry: bool = True,
-        timeout: float | None = None
+        timeout: float | None = None,
     ) -> Any:
         """执行增强的操作"""
 
@@ -189,8 +199,7 @@ class RobustnessEnhancer:
     def _start_operation(self, operation_name: str) -> OperationMetrics:
         """开始操作指标收集"""
         metrics = OperationMetrics(
-            operation_name=operation_name,
-            start_time=time.time()
+            operation_name=operation_name, start_time=time.time()
         )
 
         with self._metrics_lock:
@@ -217,7 +226,7 @@ class RobustnessEnhancer:
         args: tuple,
         kwargs: dict,
         validation_rules: dict[str, ValidatorChain],
-        metrics: OperationMetrics
+        metrics: OperationMetrics,
     ) -> None:
         """验证输入"""
         try:
@@ -227,29 +236,31 @@ class RobustnessEnhancer:
                 if param_name in validation_rules:
                     result = validation_rules[param_name].validate(arg)
                 if not result.is_valid:
-                    metrics.validation_errors.extend([str(error) for error in result.errors])
+                    metrics.validation_errors.extend(
+                        [str(error) for error in result.errors]
+                    )
 
             # 验证关键字参数
             for param_name, value in kwargs.items():
                 if param_name in validation_rules:
                     result = validation_rules[param_name].validate(value)
                 if not result.is_valid:
-                    metrics.validation_errors.extend([str(error) for error in result.errors])
+                    metrics.validation_errors.extend(
+                        [str(error) for error in result.errors]
+                    )
 
             # 如果有验证错误，抛出异常
             if metrics.validation_errors:
-                raise ValueError(f"输入验证失败: {'; '.join(metrics.validation_errors)}")
+                raise ValueError(
+                    f"输入验证失败: {'; '.join(metrics.validation_errors)}"
+                )
 
         except Exception as e:
             logger.error(f"输入验证失败: {e}")
             raise
 
     def _perform_security_checks(
-        self,
-        args: tuple,
-        kwargs: dict,
-        security_level: str,
-        metrics: OperationMetrics
+        self, args: tuple, kwargs: dict, security_level: str, metrics: OperationMetrics
     ) -> None:
         """执行安全检查"""
         try:
@@ -260,7 +271,9 @@ class RobustnessEnhancer:
                 if isinstance(input_value, str):
                     # 基本安全检查
                     try:
-                        is_valid, error_msg = self.input_validator.validate_experiment_name(input_value)
+                        is_valid, error_msg = (
+                            self.input_validator.validate_experiment_name(input_value)
+                        )
                         if not is_valid:
                             warning = f"检测到潜在危险内容: {input_value[:50]}... - {error_msg}"
                             metrics.security_warnings.append(warning)
@@ -271,9 +284,15 @@ class RobustnessEnhancer:
                     # 高级安全检查
                     if security_level == "high":
                         try:
-                            is_valid, error_msg = self.input_validator.validate_experiment_name(input_value)
+                            is_valid, error_msg = (
+                                self.input_validator.validate_experiment_name(
+                                    input_value
+                                )
+                            )
                             if not is_valid:
-                                raise SecurityError(f"检测到安全威胁: {input_value} - {error_msg}")
+                                raise SecurityError(
+                                    f"检测到安全威胁: {input_value} - {error_msg}"
+                                )
                         except Exception:
                             pass
 
@@ -289,7 +308,7 @@ class RobustnessEnhancer:
         operation_name: str,
         enable_retry: bool,
         timeout: float | None,
-        metrics: OperationMetrics
+        metrics: OperationMetrics,
     ) -> Any:
         """执行操作（带重试）"""
         max_attempts = self.config.max_retry_attempts if enable_retry else 1
@@ -319,14 +338,13 @@ class RobustnessEnhancer:
                     raise
                 else:
                     # 记录错误但继续重试
-                    logger.warning(f"操作 {operation_name} 第 {attempt + 1} 次尝试失败: {e}")
+                    logger.warning(
+                        f"操作 {operation_name} 第 {attempt + 1} 次尝试失败: {e}"
+                    )
                     continue
 
     def _handle_operation_error(
-        self,
-        error: Exception,
-        operation_name: str,
-        metrics: OperationMetrics
+        self, error: Exception, operation_name: str, metrics: OperationMetrics
     ) -> None:
         """处理操作错误"""
         # 转换为应用异常
@@ -334,7 +352,7 @@ class RobustnessEnhancer:
             app_error = BaseAppException(
                 message=str(error),
                 original_exception=error,
-                user_message=f"操作 {operation_name} 失败"
+                user_message=f"操作 {operation_name} 失败",
             )
         else:
             app_error = error
@@ -369,7 +387,7 @@ class RobustnessEnhancer:
             "duration": metrics.duration,
             "status": status,
             "retry_count": metrics.retry_count,
-            "error_count": metrics.error_count
+            "error_count": metrics.error_count,
         }
 
         if metrics.validation_errors:
@@ -417,12 +435,18 @@ class RobustnessEnhancer:
         report.append(f"总操作数: {total_operations}")
         report.append(f"成功操作: {successful_operations}")
         report.append(f"失败操作: {failed_operations}")
-        report.append(f"成功率: {(successful_operations/total_operations*100):.1f}%" if total_operations > 0 else "N/A")
+        report.append(
+            f"成功率: {(successful_operations / total_operations * 100):.1f}%"
+            if total_operations > 0
+            else "N/A"
+        )
         report.append("")
 
         # 性能统计
         if self.metrics:
-            durations = [m.duration for m in self.metrics.values() if m.duration is not None]
+            durations = [
+                m.duration for m in self.metrics.values() if m.duration is not None
+            ]
             if durations:
                 avg_duration = sum(durations) / len(durations)
                 max_duration = max(durations)
@@ -444,7 +468,9 @@ class RobustnessEnhancer:
         report.append("")
 
         # 安全统计
-        total_security_warnings = sum(len(m.security_warnings) for m in self.metrics.values())
+        total_security_warnings = sum(
+            len(m.security_warnings) for m in self.metrics.values()
+        )
         report.append("## 安全统计")
         report.append(f"安全警告数: {total_security_warnings}")
         report.append("")
@@ -477,7 +503,7 @@ class PerformanceMonitor:
                     "count": len(times),
                     "avg_time": sum(times) / len(times),
                     "max_time": max(times),
-                    "min_time": min(times)
+                    "min_time": min(times),
                 }
 
         return summary
@@ -492,23 +518,20 @@ class SecurityMonitor:
 
     def record_security_event(self, event_type: str, details: dict[str, Any]) -> None:
         """记录安全事件"""
-        event = {
-            "timestamp": time.time(),
-            "type": event_type,
-            "details": details
-        }
+        event = {"timestamp": time.time(), "type": event_type, "details": details}
         self.security_events.append(event)
 
     def get_security_summary(self) -> dict[str, Any]:
         """获取安全摘要"""
         return {
             "total_events": len(self.security_events),
-            "recent_events": self.security_events[-10:] if self.security_events else []
+            "recent_events": self.security_events[-10:] if self.security_events else [],
         }
 
 
 class SecurityError(Exception):
     """安全错误"""
+
     pass
 
 
@@ -522,14 +545,21 @@ def enhance_function(
     security_level: str = "medium",
     enable_caching: bool = False,
     enable_retry: bool = True,
-    timeout: float | None = None
+    timeout: float | None = None,
 ):
     """函数增强装饰器"""
+
     def decorator(func: Callable) -> Callable:
         return robustness_enhancer.enhance_function(
-            func, operation_name, validation_rules, security_level,
-            enable_caching, enable_retry, timeout
+            func,
+            operation_name,
+            validation_rules,
+            security_level,
+            enable_caching,
+            enable_retry,
+            timeout,
         )
+
     return decorator
 
 

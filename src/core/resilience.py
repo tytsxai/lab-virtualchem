@@ -192,7 +192,9 @@ class RateLimiter:
         elapsed = now - self._last_update
 
         # 添加新令牌
-        self._tokens = min(self.config.max_requests, self._tokens + elapsed * self._rate)
+        self._tokens = min(
+            self.config.max_requests, self._tokens + elapsed * self._rate
+        )
 
         self._last_update = now
 
@@ -241,7 +243,9 @@ class Retry:
     def __init__(self, config: RetryConfig | None = None):
         self.config = config or RetryConfig()
 
-    def execute(self, func: Callable[..., T], *args, retry_on: tuple = (Exception,), **kwargs) -> T:
+    def execute(
+        self, func: Callable[..., T], *args, retry_on: tuple = (Exception,), **kwargs
+    ) -> T:
         """执行带重试的函数"""
         last_exception = None
         delay = self.config.initial_delay
@@ -272,7 +276,9 @@ class Retry:
         else:
             raise RuntimeError("重试失败，没有异常信息")
 
-    async def async_execute(self, func: Callable[..., T], *args, retry_on: tuple = (Exception,), **kwargs) -> T | Any:
+    async def async_execute(
+        self, func: Callable[..., T], *args, retry_on: tuple = (Exception,), **kwargs
+    ) -> T | Any:
         """异步执行带重试的函数"""
         last_exception = None
         delay = self.config.initial_delay
@@ -358,7 +364,11 @@ def rate_limit(config: RateLimiterConfig | None = None):
         async def async_wrapper(*args, **kwargs):
             if not await limiter.async_acquire():
                 raise RateLimitException("请求频率超过限制")
-            return await func(*args, **kwargs) if asyncio.iscoroutinefunction(func) else func(*args, **kwargs)
+            return (
+                await func(*args, **kwargs)
+                if asyncio.iscoroutinefunction(func)
+                else func(*args, **kwargs)
+            )
 
         @wraps(func)
         def sync_wrapper(*args, **kwargs):
@@ -381,7 +391,9 @@ def retry(config: RetryConfig | None = None, retry_on: tuple = (Exception,)):
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
-            return await retry_handler.async_execute(func, *args, retry_on=retry_on, **kwargs)
+            return await retry_handler.async_execute(
+                func, *args, retry_on=retry_on, **kwargs
+            )
 
         @wraps(func)
         def sync_wrapper(*args, **kwargs):
@@ -401,7 +413,9 @@ async def demo():
 
     # 1. 熔断器
     logger.info("1. 熔断器演示:")
-    breaker = CircuitBreaker(CircuitBreakerConfig(failure_threshold=3, timeout_seconds=2))
+    breaker = CircuitBreaker(
+        CircuitBreakerConfig(failure_threshold=3, timeout_seconds=2)
+    )
 
     def unreliable_service():
         import random
