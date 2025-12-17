@@ -24,9 +24,10 @@
 ## Status update — 2025-12-17
 - Addressed the B104/B301/B310/B102-class issues in code by defaulting to loopback binding, removing unsafe pickle-based caching paths, switching to the safe network client, and avoiding direct `eval`/`exec` usage in the developer console.
 - Bandit medium+ now passes for the `src` tree when re-scanned locally.
+- The B602 shell invocation noted in the original scan is no longer present in the updater launch path; further authenticity checks are still recommended.
 
 ## Next steps
-- Fix the B602 high-risk path and add regression coverage for the updater launch path.
+- Updater hardening: add signature verification and regression coverage for the updater launch path.
 - Re-run pip-audit with a supported Python version (or after aligning the `pyside6` pin) to restore dependency vulnerability coverage.
 - Migrate Safety usage to `safety scan` or rely on `pip-audit` going forward to avoid deprecated commands.
 - Optionally wire `tools/security_scan.py` into CI as a non-blocking job for regular reporting.
