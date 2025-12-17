@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 
 try:
-    from flask import Flask, jsonify, request
+    from flask import Flask, jsonify, request, send_file
     from flask_cors import CORS
 
     FLASK_AVAILABLE = True
@@ -80,7 +80,7 @@ class AdminAPI:
         self.host = host
         self.port = port
 
-        # 启用CORS（默认保持兼容：允许全部 Origin；生产环境建议显式限制）
+        # 启用CORS（默认关闭，避免误配置导致对公网放开；如需跨域请显式配置）
         cors_origins_env = os.getenv("VCL_ADMIN_CORS_ORIGINS", "").strip()
         if cors_origins_env:
             CORS(
@@ -93,16 +93,24 @@ class AdminAPI:
             if self.host not in _LOCAL_HOSTS:
                 logger.warning(
                     "AdminAPI 绑定到非本地主机 (%s) 且未设置 VCL_ADMIN_CORS_ORIGINS，"
-                    "浏览器跨域访问将默认允许所有 Origin；生产环境建议显式限制。",
+                    "已默认禁用 CORS；如需浏览器跨域访问请显式设置该变量。",
                     self.host,
                 )
-            CORS(self.app)
 
         # 注册路由
         self._register_routes()
 
     def _register_routes(self):
         """注册路由"""
+
+        dashboard_path = Path(__file__).with_name("admin_dashboard.html")
+
+        @self.app.route("/", methods=["GET"])
+        def dashboard_page():
+            """管理后台页面（同源访问，避免依赖 CORS）"""
+            if not dashboard_path.exists():
+                return jsonify({"error": "管理后台页面缺失"}), 404
+            return send_file(dashboard_path, mimetype="text/html")
 
         def _auth_guard():
             """简单的共享密钥校验，保护敏感API"""

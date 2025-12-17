@@ -45,6 +45,40 @@
             font-size: 14px;
         }
 
+        .header-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .auth-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .auth-controls input {
+            padding: 8px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 12px;
+            width: 280px;
+        }
+
+        .auth-status {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .auth-status.ok {
+            color: #10b981;
+        }
+
+        .auth-status.warn {
+            color: #f59e0b;
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -316,12 +350,19 @@
     </style>
 </head>
 
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🧪 VirtualChemLab 管理后台</h1>
-            <div class="time" id="currentTime"></div>
-        </div>
+    <body>
+	    <div class="container">
+	        <div class="header">
+	            <h1>🧪 VirtualChemLab 管理后台</h1>
+                <div class="header-controls">
+	                <div class="time" id="currentTime"></div>
+                    <div class="auth-controls">
+                        <input type="password" id="adminSecret" placeholder="管理后台密钥 (X-Admin-Secret)">
+                        <button class="btn btn-primary" onclick="saveAdminSecret()">应用</button>
+                        <span class="auth-status" id="authStatus"></span>
+                    </div>
+                </div>
+	        </div>
 
         <div class="stats-grid">
             <div class="stat-card info">
@@ -394,8 +435,50 @@
     </div>
 
     <script>
-        // API基础URL
-        const API_BASE_URL = 'http://127.0.0.1:5000/api';
+        // API 基础 URL：优先同源（推荐通过 AdminAPI 的 / 页面访问），否则回退到本地默认地址
+        const DEFAULT_API_BASE_URL = 'http://127.0.0.1:5000/api';
+        const API_BASE_URL = (window.location.origin && window.location.origin !== 'null')
+            ? `${window.location.origin}/api`
+            : DEFAULT_API_BASE_URL;
+
+        // 管理后台密钥（仅存 sessionStorage，关闭页面后清除）
+        let ADMIN_SECRET = sessionStorage.getItem('vcl_admin_secret') || '';
+
+        function updateAuthStatus() {
+            const el = document.getElementById('authStatus');
+            if (!el) return;
+
+            if (!ADMIN_SECRET) {
+                el.textContent = '未配置密钥';
+                el.className = 'auth-status warn';
+                return;
+            }
+
+            el.textContent = '已配置密钥';
+            el.className = 'auth-status ok';
+        }
+
+        function saveAdminSecret() {
+            const input = document.getElementById('adminSecret');
+            ADMIN_SECRET = (input && input.value ? input.value : '').trim();
+
+            if (ADMIN_SECRET) sessionStorage.setItem('vcl_admin_secret', ADMIN_SECRET);
+            else sessionStorage.removeItem('vcl_admin_secret');
+
+            updateAuthStatus();
+        }
+
+        function buildAuthHeaders(headers) {
+            const merged = Object.assign({}, headers || {});
+            if (ADMIN_SECRET) merged['X-Admin-Secret'] = ADMIN_SECRET;
+            return merged;
+        }
+
+        async function apiFetch(path, options) {
+            const opts = options || {};
+            const headers = buildAuthHeaders(opts.headers);
+            return fetch(`${API_BASE_URL}${path}`, Object.assign({}, opts, { headers }));
+        }
 
         // 当前数据
         let devicesData = [];
@@ -404,6 +487,10 @@
 
         // 初始化
         document.addEventListener('DOMContentLoaded', function () {
+            const secretInput = document.getElementById('adminSecret');
+            if (secretInput && ADMIN_SECRET) secretInput.value = ADMIN_SECRET;
+            updateAuthStatus();
+
             updateTime();
             setInterval(updateTime, 1000);
             loadDashboardStats();
@@ -425,7 +512,7 @@
         // 加载仪表板统计
         async function loadDashboardStats() {
             try {
-                const response = await fetch(`${API_BASE_URL}/dashboard/stats`);
+                const response = await apiFetch(`/dashboard/stats`);
                 const data = await response.json();
 
                 if (data.stats) {
@@ -461,7 +548,7 @@
             container.innerHTML = '<div class="loading">加载中...</div>';
 
             try {
-                const response = await fetch(`${API_BASE_URL}/devices`);
+                const response = await apiFetch(`/devices`);
                 const data = await response.json();
 
                 devicesData = data.devices || [];
@@ -541,7 +628,7 @@
         // 查看设备详情
         async function viewDevice(deviceId) {
             try {
-                const response = await fetch(`${API_BASE_URL}/devices/${deviceId}`);
+                const response = await apiFetch(`/devices/${deviceId}`);
                 const data = await response.json();
 
                 if (data.device) {
@@ -558,7 +645,7 @@
             if (!reason) return;
 
             try {
-                const response = await fetch(`${API_BASE_URL}/devices/${deviceId}/block`, {
+                const response = await apiFetch(`/devices/${deviceId}/block`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ reason })
@@ -578,7 +665,7 @@
             if (!confirm('确定要解除该设备的封控吗？')) return;
 
             try {
-                const response = await fetch(`${API_BASE_URL}/devices/${deviceId}/unblock`, {
+                const response = await apiFetch(`/devices/${deviceId}/unblock`, {
                     method: 'POST'
                 });
 
@@ -597,7 +684,7 @@
             container.innerHTML = '<div class="loading">加载中...</div>';
 
             try {
-                const response = await fetch(`${API_BASE_URL}/licenses`);
+                const response = await apiFetch(`/licenses`);
                 const data = await response.json();
 
                 licensesData = data.licenses || [];
@@ -627,7 +714,7 @@
 
             try {
                 const limit = document.getElementById('activityLimit').value || 50;
-                const response = await fetch(`${API_BASE_URL}/activities?limit=${limit}`);
+                const response = await apiFetch(`/activities?limit=${limit}`);
                 const data = await response.json();
 
                 activitiesData = data.activities || [];
@@ -676,7 +763,7 @@
             container.innerHTML = '<div class="loading">检测中...</div>';
 
             try {
-                const response = await fetch(`${API_BASE_URL}/licenses/${licenseKey}/anomalies`);
+                const response = await apiFetch(`/licenses/${licenseKey}/anomalies`);
                 const data = await response.json();
 
                 renderAnomalies(data.anomalies || []);
