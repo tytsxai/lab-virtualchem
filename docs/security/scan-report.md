@@ -21,6 +21,10 @@
 - src/core/ip_tracker.py uses `urllib.request.urlopen` on external URLs without scheme allowlisting (B310). Consider tightening allowed schemes/hosts.
 - src/core/plugin_system.py and src/ui/developer_console.py execute dynamic code via `exec`/`eval` (B102/B307). Restrict to trusted/admin-only contexts and log usage.
 
+## Status update — 2025-12-17
+- Addressed the B104/B301/B310/B102-class issues in code by defaulting to loopback binding, removing unsafe pickle-based caching paths, switching to the safe network client, and avoiding direct `eval`/`exec` usage in the developer console.
+- Bandit medium+ now passes for the `src` tree when re-scanned locally.
+
 ## Next steps
 - Fix the B602 high-risk path and add regression coverage for the updater launch path.
 - Re-run pip-audit with a supported Python version (or after aligning the `pyside6` pin) to restore dependency vulnerability coverage.

@@ -215,6 +215,8 @@ ruff check src tests --fix
 
 - `VCL_JWT_SECRET`：JWT 密钥，至少 32 个字符，生产环境必须外部提供。
 - `VCL_ADMIN_SECRET_KEY`：管理后台/Flask 的 SECRET_KEY，建议与 JWT 密钥不同。
+- `VCL_API_HOST`：API 服务监听地址，默认 `127.0.0.1`；如需对外提供服务请显式设置为 `0.0.0.0` 并配合认证/限流/防火墙。
+- `VCL_ADMIN_CORS_ORIGINS`：管理后台 API 的 CORS 允许列表（逗号分隔，或 `*` 仅用于开发环境）；当绑定到非本地主机时建议显式配置。
 - `ENVIRONMENT`：`development` / `staging` / `production`，控制默认安全策略。
 
 写入 `.env` 或系统环境，例如：

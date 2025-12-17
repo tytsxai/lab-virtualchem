@@ -720,6 +720,9 @@ pytest -v
 
 # 启动开发服务器
 python -m src.api.server
+
+# 默认仅绑定本机回环地址（127.0.0.1）；如需对外提供服务请显式设置：
+VCL_API_HOST=0.0.0.0 python -m src.api.server
 ```
 
 ### 8.2 生产环境
@@ -782,6 +785,5 @@ create_assignment(session_id)
 ---
 
 *最后更新: 2025-10-06*
-
 
 

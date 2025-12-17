@@ -75,7 +75,7 @@ def get_experiment(exp_id: str) -> Experiment:
 
 # 多级缓存提升性能
 l1 = MemoryCache(max_size=100)  # 热数据
-l2 = RedisCache(redis_client)   # 共享缓存
+l2 = RedisCache(host="localhost", port=6379)  # 共享缓存（Redis）
 cache = MultiLevelCache(l1, l2)
 ```
 
@@ -598,7 +598,7 @@ experiment_service = container.resolve(IExperimentService)
 # 多级缓存
 l1 = MemoryCache(max_size=100)    # 热数据，速度最快
 l2 = MemoryCache(max_size=1000)   # 温数据
-l3 = RedisCache(redis_client)     # 冷数据，可共享
+l3 = RedisCache(host="localhost", port=6379)  # 冷数据，可共享（Redis）
 
 cache = MultiLevelCache(l1, l2, l3)
 ```
