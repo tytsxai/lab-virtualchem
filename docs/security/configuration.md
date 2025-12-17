@@ -6,6 +6,8 @@
 - Validation: `config/schemas/app_config.py` enforces required env secrets for production; `Config._merge_env_vars` raises during load if JWT or admin secrets are absent so deployments fail early.
 - Recommended setup: copy `env.example` to `.env`, fill the required secret values with strong random strings, and keep the filled file out of version control. Use `secrets.example.txt` as a checklist of sensitive keys.
 - Network exposure defaults: API/server entrypoints bind to loopback by default. If you need LAN/container access, explicitly set `VCL_API_HOST=0.0.0.0` and ensure firewall/auth/rate-limit controls are enabled.
+- REST API authentication: configure `VCL_API_KEYS` as a comma-separated list of API keys. If unset, a random key is generated on first start and saved under `~/.virtualchemlab/api_key.txt` for local development; production deployments should provide keys via environment variables.
+- REST API browser access: when exposing the REST API beyond localhost, set `VCL_API_CORS_ORIGINS` to a comma-separated allowlist to avoid unintentionally allowing cross-origin requests.
 - Admin API browser access: when exposing the admin API beyond localhost, set `VCL_ADMIN_CORS_ORIGINS` to a comma-separated allowlist (or `*` for development) to avoid unintentionally allowing cross-origin requests.
 - Development toggles: see `docs/security/development_flags.md` for opt-in demo defaults and other non-production switches.
 

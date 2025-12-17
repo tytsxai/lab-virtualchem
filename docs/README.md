@@ -243,10 +243,10 @@ VirtualChemLab API提供了完整的RESTful接口，支持：
 
 ### 认证
 
-所有API请求都需要JWT令牌：
+所有 API 请求都需要 API Key（推荐使用 `X-API-Key`）：
 
 ```bash
-curl -H "Authorization: Bearer <your-token>" \
+curl -H "X-API-Key: <your-api-key>" \
      http://localhost:8000/api/experiments
 ```
 

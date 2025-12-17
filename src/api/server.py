@@ -16,6 +16,7 @@
 import hashlib
 import json
 import logging
+import os
 import threading
 import time
 import uuid
@@ -50,6 +51,40 @@ from .middleware import get_auth_middleware, get_rate_limiter
 
 logger = logging.getLogger(__name__)
 access_logger = logging.getLogger("api.access")
+
+_LOCAL_ORIGIN_HOSTS = {"localhost", "127.0.0.1", "::1"}
+
+
+def _parse_cors_origins(raw: str) -> list[str]:
+    return [part.strip() for part in raw.split(",") if part.strip()]
+
+
+def _is_local_origin(origin: str) -> bool:
+    """Return True if Origin is a local loopback host.
+
+    NOTE: Avoid naive prefix matching (e.g. `http://localhost.evil.com`).
+    """
+    try:
+        parsed = urlparse(origin)
+    except Exception:  # noqa: BLE001
+        return False
+
+    if parsed.scheme not in {"http", "https"}:
+        return False
+
+    hostname = parsed.hostname
+    if not hostname:
+        return False
+
+    return hostname.lower() in _LOCAL_ORIGIN_HOSTS
+
+
+def _is_allowed_origin(origin: str, allowed: list[str]) -> bool:
+    # Exact match first
+    if origin in allowed:
+        return True
+    # Convenience: allow any localhost origin by default
+    return _is_local_origin(origin)
 
 
 class APIVersion(Enum):
@@ -110,7 +145,13 @@ class APIRequestHandler(BaseHTTPRequestHandler):
         """设置响应头"""
         self.send_response(status)
         self.send_header("Content-type", content_type)
-        self.send_header("Access-Control-Allow-Origin", "*")
+        # CORS：默认仅允许 localhost/127.0.0.1/::1（可通过环境变量显式扩展）
+        origin = self.headers.get("Origin")
+        allowed_origins_env = (os.getenv("VCL_API_CORS_ORIGINS") or "").strip()
+        allowed_origins = _parse_cors_origins(allowed_origins_env)
+        if origin and _is_allowed_origin(origin, allowed_origins):
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Vary", "Origin")
         self.send_header(
             "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"
         )
@@ -307,6 +348,15 @@ class APIRequestHandler(BaseHTTPRequestHandler):
 
     def _generate_api_docs(self) -> dict[str, Any]:
         """生成API文档"""
+        host, port = "localhost", 8080
+        try:
+            server_address = getattr(self.server, "server_address", None)
+            if isinstance(server_address, tuple) and len(server_address) >= 2:
+                host = server_address[0] or host
+                port = int(server_address[1])
+        except Exception:  # noqa: BLE001
+            pass
+
         return {
             "openapi": "3.0.0",
             "info": {
@@ -314,9 +364,39 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                 "version": self.api_version.value,
                 "description": "虚拟化学实验室API接口",
             },
-            "servers": [{"url": f"http://localhost:8080/api/{self.api_version.value}"}],
+            "servers": [{"url": f"http://{host}:{port}"}],
+            "components": {
+                "securitySchemes": {
+                    "ApiKeyAuth": {
+                        "type": "apiKey",
+                        "in": "header",
+                        "name": "X-API-Key",
+                        "description": "Provide an API key via X-API-Key header.",
+                    },
+                    "BearerAuth": {
+                        "type": "http",
+                        "scheme": "bearer",
+                        "bearerFormat": "API Key",
+                        "description": "Alternatively provide API key via Authorization: Bearer <key>.",
+                    },
+                }
+            },
+            "security": [{"ApiKeyAuth": []}],
             "paths": {
-                "/experiments": {
+                "/api/health": {
+                    "get": {
+                        "summary": "健康检查",
+                        "responses": {
+                            "200": {
+                                "description": "成功",
+                                "content": {
+                                    "application/json": {"schema": {"type": "object"}}
+                                },
+                            }
+                        },
+                    }
+                },
+                "/api/experiments": {
                     "get": {
                         "summary": "获取实验列表",
                         "responses": {
@@ -336,9 +416,14 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                             }
                         },
                     }
-                }
+                },
             },
         }
+
+    def _handle_api_docs(self, trace_id: str) -> None:
+        """返回 OpenAPI JSON 文档."""
+        _ = trace_id
+        self._send_json(self._generate_api_docs())
 
     def _send_exception(
         self, exception: BaseAppException, trace_id: str | None = None
@@ -443,6 +528,8 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                 self._handle_get_record(record_id, trace_id)
             elif path == "/api/health":
                 self._handle_health_check(trace_id)
+            elif path == "/api/docs":
+                self._handle_api_docs(trace_id)
             else:
                 # 使用统一错误系统
                 raise ResourceNotFoundError(

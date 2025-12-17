@@ -246,14 +246,16 @@ python examples/plugin_demo.py
 
 ## 环境变量配置
 
-- `VCL_JWT_SECRET`：JWT 密钥，至少 32 个字符。生产环境必须外部提供。
+- `JWT_SECRET_KEY`：JWT 密钥，至少 32 个字符。生产环境必须外部提供。
+- `SESSION_SECRET_KEY`：会话密钥，至少 32 个字符。生产环境必须外部提供。
 - `VCL_ADMIN_SECRET_KEY`：管理后台/Flask SECRET_KEY，建议独立于 JWT 密钥。
 - `ENVIRONMENT`：`development` / `staging` / `production`，用于切换默认安全策略。
 
 可通过 `.env` 或系统环境变量设置，例如：
 
 ```bash
-export VCL_JWT_SECRET="please_change_me_to_a_secure_value"
+export JWT_SECRET_KEY="please_change_me_to_a_secure_value"
+export SESSION_SECRET_KEY="please_change_me_to_a_secure_value"
 export VCL_ADMIN_SECRET_KEY="admin_panel_secret"
 export ENVIRONMENT="production"
 ```

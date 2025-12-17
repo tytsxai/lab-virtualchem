@@ -4,12 +4,16 @@
 """
 
 import logging
+import os
+import secrets
 import time
 from collections import defaultdict
 from collections.abc import Callable
 from datetime import datetime
 from functools import wraps
 from typing import Any
+
+from ..utils.config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -75,14 +79,10 @@ class AuthMiddleware:
             enabled: 是否启用认证
         """
         self.enabled = enabled
-        # API密钥存储(生产环境应使用数据库)
-        self._api_keys: dict[str, dict[str, Any]] = {
-            "demo-api-key": {
-                "name": "Demo Client",
-                "permissions": ["read", "write"],
-                "created_at": datetime.now().isoformat(),
-            }
-        }
+        # API密钥存储(生产环境应使用数据库/密钥管理服务)
+        self._api_keys: dict[str, dict[str, Any]] = {}
+        if self.enabled:
+            self._load_or_initialize_keys()
 
     def verify_api_key(self, api_key: str) -> dict[str, Any] | None:
         """验证API密钥
@@ -97,6 +97,67 @@ class AuthMiddleware:
             return {"name": "Anonymous", "permissions": ["read", "write"]}
 
         return self._api_keys.get(api_key)
+
+    def _load_or_initialize_keys(self) -> None:
+        """从环境变量/用户配置加载密钥；若未配置则生成随机密钥并落盘到用户目录。
+
+        安全默认值：不提供任何硬编码“默认密钥”，避免被浏览器跨站或本地回环攻击复用。
+        """
+        # 1) 环境变量优先（支持多把密钥，用逗号分隔）
+        raw = (os.getenv("VCL_API_KEYS") or "").strip()
+        if raw:
+            for idx, key in enumerate([p.strip() for p in raw.split(",") if p.strip()]):
+                self._api_keys[key] = {
+                    "name": f"Env Client {idx + 1}",
+                    "permissions": ["read", "write"],
+                    "created_at": datetime.now().isoformat(),
+                }
+            return
+
+        # 2) 用户配置（~/.virtualchemlab/config.json）
+        cfg = Config()
+        configured_key = cfg.get("security.api_key")
+        if isinstance(configured_key, str) and configured_key.strip():
+            key = configured_key.strip()
+            self._api_keys[key] = {
+                "name": "User Config Client",
+                "permissions": ["read", "write"],
+                "created_at": datetime.now().isoformat(),
+            }
+            return
+
+        # 3) 没有任何配置 -> 生成随机 key，并保存到用户可写目录
+        generated = secrets.token_urlsafe(32)
+
+        # 先注册到内存（确保本次进程内可用）
+        self._api_keys[generated] = {
+            "name": "Auto Generated Client",
+            "permissions": ["read", "write"],
+            "created_at": datetime.now().isoformat(),
+        }
+
+        cfg.set("security.api_key", generated)
+        try:
+            cfg.save()
+        except Exception as e:
+            raise RuntimeError(
+                "未检测到 API 密钥配置，且无法写入用户配置文件。"
+                "请设置环境变量 VCL_API_KEYS 提供至少一把密钥。"
+            ) from e
+
+        api_key_path = cfg.config_path.parent / "api_key.txt"
+        try:
+            api_key_path.write_text(generated + "\n", encoding="utf-8")
+        except Exception:  # noqa: BLE001
+            # 仅作为辅助文件；写失败不影响主配置落盘
+            pass
+
+        # 不在日志中输出密钥本体（避免落到集中日志/截图）；只提示路径
+        logger.warning(
+            "未检测到 API 密钥配置，已自动生成并保存到 %s；"
+            "请在请求头使用 X-API-Key 或 Authorization: Bearer <key>。",
+            str(api_key_path),
+        )
 
     def add_api_key(self, api_key: str, name: str, permissions: list):
         """添加API密钥"""
@@ -294,10 +355,6 @@ if __name__ == "__main__":
 
     # 认证中间件
     auth = AuthMiddleware()
-
-    # 验证有效密钥
-    client = auth.verify_api_key("demo-api-key")
-    logger.info(f"有效密钥: {client}")
 
     # 验证无效密钥
     client = auth.verify_api_key("invalid-key")
