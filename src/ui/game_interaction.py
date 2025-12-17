@@ -522,8 +522,10 @@ class GamePhysicsScene(QGraphicsScene):
 
         self.physics_updated.emit()
 
-    def _check_collisions(self, items: list[GamePhysicsItem]):
+    def _check_collisions(self, items: list[GamePhysicsItem] | None = None):
         """检测碰撞"""
+        if items is None:
+            items = list(self.physics_items.values())
         if len(items) < 2:
             return
 
@@ -659,8 +661,17 @@ class GamePhysicsView(QGraphicsView):
         # 视图设置
         self.setRenderHint(QPainter.Antialiasing)
         self.setRenderHint(QPainter.SmoothPixmapTransform)
-        # FullViewportUpdate 会导致每帧整屏重绘，开发时很容易造成高 CPU/GPU 发热
-        self.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.SmartViewportUpdate)
+        # 默认为 FullViewportUpdate（与历史行为保持一致）
+        # 如需降低整屏重绘开销，可设置环境变量 VCL_VIEWPORT_UPDATE_MODE=smart
+        viewport_mode = os.getenv("VCL_VIEWPORT_UPDATE_MODE", "").strip().lower()
+        if viewport_mode in {"smart", "smartviewportupdate"}:
+            self.setViewportUpdateMode(
+                QGraphicsView.ViewportUpdateMode.SmartViewportUpdate
+            )
+        else:
+            self.setViewportUpdateMode(
+                QGraphicsView.ViewportUpdateMode.FullViewportUpdate
+            )
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
