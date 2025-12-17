@@ -23,8 +23,10 @@
 
 ## Status update — 2025-12-17
 - Addressed the B104/B301/B310/B102-class issues in code by defaulting to loopback binding, removing unsafe pickle-based caching paths, switching to the safe network client, and avoiding direct `eval`/`exec` usage in the developer console.
+- API hardening: removed the hard-coded demo API key, generate/store a per-user API key when absent, and restrict CORS to loopback origins by default (configurable via `VCL_API_CORS_ORIGINS`).
 - Bandit medium+ now passes for the `src` tree when re-scanned locally.
 - The B602 shell invocation noted in the original scan is no longer present in the updater launch path; further authenticity checks are still recommended.
+- pip-audit: updated `requirements.lock` to address `filelock` CVE-2025-68146 (3.20.0 → 3.20.1) and added a CI job artifact (`pip-audit-report.json`) for ongoing dependency auditing.
 
 ## Next steps
 - Updater hardening: add signature verification and regression coverage for the updater launch path.

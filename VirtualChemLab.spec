@@ -14,6 +14,7 @@ Notes:
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -72,12 +73,19 @@ HIDDENIMPORTS = [
     "sqlalchemy",
 ]
 
-EXCLUDES = [
+BUILD_FLAVOR = os.environ.get("VCL_BUILD_FLAVOR", "full").strip().lower()
+if BUILD_FLAVOR not in {"full", "lite"}:
+    raise ValueError(f"Unknown VCL_BUILD_FLAVOR={BUILD_FLAVOR!r}; expected 'full' or 'lite'")
+
+EXCLUDES = ["pytest"]
+if BUILD_FLAVOR == "lite":
     # Keep distributable smaller; optional features must guard imports.
-    "matplotlib",
-    "pandas",
-    "pytest",
-]
+    EXCLUDES.extend(
+        [
+            "matplotlib",
+            "pandas",
+        ]
+    )
 
 if sys.platform == "darwin":
     # Numba is optional and often pulls in `libomp` issues on macOS bundles.

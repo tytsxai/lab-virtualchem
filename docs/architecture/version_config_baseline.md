@@ -10,7 +10,7 @@
 | `build_macos.sh`/`build_windows.bat`/脚本 banner | 2.0.0 | DMG/EXE 命名与日志 | 手工维护，容易滞后；未与 `pyproject` 绑定。 |
 | `installer_windows.iss` (`MyAppVersion`) | 2.0.0 | Inno Setup 安装器版本与文件名 | 手动同步，未与代码自动联动。 |
 | `config/base.json`、`config.json`、`config/production.yaml` | 2.0.0 | 仅作为配置文件内容；`config_loader` 会覆盖为 `__version__` | 配置文件写入版本不再生效，但仍需同步以免误导。 |
-| Git 标签（`.github/workflows/release.yml` 触发） | `v*` | Release 产物名 `VirtualChemLab-${ref_name}.zip` | 未校验标签与 `pyproject` 一致性，存在错版发布风险。 |
+| Git 标签（`.github/workflows/release.yml` 触发） | `v*` | Release 产物名 `VirtualChemLab-${APP_VERSION}-{os}.zip/tar.gz` | CI 会校验 tag（`vX.Y.Z`）与 `src.__version__` 一致，否则发布失败；仍需确保 `pyproject` 与代码版本同步。 |
 
 **建议的唯一写入者**：以 `pyproject.toml` 为权威版本号，B1 可补一个校验/同步脚本，将版本写回 `src/__init__.py`、`version_info.txt`、`build_macos.sh`、`build_windows.bat`、`installer_windows.iss`，并在 CI 校验 Git 标签前后一致。
 
@@ -37,14 +37,14 @@
 - 开发者模式：`DEVELOPER_KEY_HASH`（`tools/setup_dev_key.py` 生成）；`config.json` 里仍包含 `developer.enabled` 和按键序列，默认禁用。
 - 会话/教学密钥示例：`SESSION_SECRET_KEY`、`TEACHER_PASSWORD_HASH` 等在 `env.example` 中给出，应在本地 `.env` 或 `secrets.txt` 提供真实值。
 - 许可证/支付/通知：`LICENSE_SECRET_KEY`、`WEBHOOK_SECRET`、`SMTP_*`、`TELEGRAM_BOT_TOKEN` 等在 `config/crypto_payment_config.json` 以 `${VAR}` 形式引用，当前值为占位符。
-- 其他：`VCL_JWT_SECRET`（与 `jwt_secret_env` 对应）、`DATABASE_URL`、`REDIS_HOST/PORT` 等基础设施变量。
+- 其他：`JWT_SECRET_KEY`（默认，可通过 `JWT_SECRET_ENV` / `security.jwt_secret_env` 指向其他变量）、`DATABASE_URL`、`REDIS_HOST/PORT` 等基础设施变量。
 
 ## 依赖文件分布与 CI 安装顺序
 - 依赖分布：`requirements.txt` / `requirements-dev.txt` / 多个 `requirements-*.txt` 均首行 `-r requirements.lock`，锁文件为唯一完整清单；部分文件再追加可选包（如 `requirements-production.txt` 的 PyInstaller、Redis、RDKit 注释项）。
 - CI 流程：
   - `.github/workflows/ci.yml`（Ubuntu）：升级 pip → `pip install -r requirements.txt` → `pip install -r requirements-dev.txt` → pytest（忽略 UI 测试）。
   - `.github/workflows/test.yml`：三平台矩阵，安装同上；Ruff → MyPy（容错）→ 单元/集成/性能测试 → Codecov。
-  - `.github/workflows/release.yml`（Windows）：安装 `requirements.txt` → `pyinstaller` → 打包 ZIP，版本取自 Git 标签 `v*`。
+  - `.github/workflows/release.yml`（Ubuntu/Windows/macOS）：安装 `requirements.lock` → `pyinstaller` → 打包（Windows zip / Linux/macOS tar.gz）→ 上传 artifacts → Ubuntu job 发布 Release；并校验 tag 与 `src.__version__` 一致。
   - `.github/workflows/test.yml` `build` 作业：Windows 安装 `requirements.txt` + `pyinstaller`，验证 PyInstaller 产物。
 - 本地打包脚本：`build.sh` 自动安装 PyInstaller；`build_macos.sh`/`build_windows.bat` 手动安装特定版本的 PySide6/pymunk/numba/sqlalchemy/PyInstaller，不读取锁文件，存在漂移风险。
 

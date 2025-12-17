@@ -2,9 +2,9 @@ name: 自动化测试
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, 'upgrade/**' ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, 'upgrade/**' ]
   schedule:
     # 每天凌晨2点运行
     - cron: '0 2 * * *'
@@ -145,11 +145,16 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install --require-hashes -r requirements.lock
-        pip install safety bandit
+        pip install safety bandit pip-audit
 
     - name: 检查依赖安全性
       run: |
         safety check --file=requirements.lock --json > safety-report.json
+      continue-on-error: true
+
+    - name: 检查依赖漏洞（pip-audit）
+      run: |
+        pip-audit -r requirements.lock --require-hashes -s osv --timeout 60 -f json -o pip-audit-report.json
       continue-on-error: true
 
     - name: 运行 Bandit 安全扫描
@@ -164,6 +169,7 @@ jobs:
         name: security-reports
         path: |
           safety-report.json
+          pip-audit-report.json
           bandit-report.json
 
   build:
