@@ -340,6 +340,12 @@ class DeveloperConsole(QMainWindow):
                 "Developer console requires an authenticated developer session"
             )
         self.dev_auth = dev_auth
+        import code
+
+        # 交互式解释器（用于调试控制台），仅在开发者会话内可用
+        self._interpreter = code.InteractiveConsole(
+            locals={"dev_auth": self.dev_auth, "console": self}
+        )
         self.init_ui()
 
         logger.info("开发者控制台已启动")
@@ -458,42 +464,26 @@ class DeveloperConsole(QMainWindow):
             return
 
         self.cmd_output.append(f"\n>>> {command}")
+        import contextlib
+        from io import StringIO
 
-        try:
-            # 创建执行环境
-            import sys
-            from io import StringIO
+        stdout_buffer = StringIO()
+        stderr_buffer = StringIO()
 
-            # 捕获输出
-            old_stdout = sys.stdout
-            sys.stdout = output_buffer = StringIO()
+        with (
+            contextlib.redirect_stdout(stdout_buffer),
+            contextlib.redirect_stderr(stderr_buffer),
+        ):
+            needs_more = self._interpreter.push(command)
 
-            # 执行命令
-            result = eval(command)
-
-            # 恢复输出
-            sys.stdout = old_stdout
-            output = output_buffer.getvalue()
-
-            if output:
-                self.cmd_output.append(output)
-            if result is not None:
-                self.cmd_output.append(str(result))
-
-        except SyntaxError:
-            # 尝试作为语句执行
-            try:
-                exec(command)
-                sys.stdout = old_stdout
-                output = output_buffer.getvalue()
-                if output:
-                    self.cmd_output.append(output)
-            except Exception as e:
-                sys.stdout = old_stdout
-                self.cmd_output.append(f"错误: {e}")
-        except Exception as e:
-            sys.stdout = old_stdout
-            self.cmd_output.append(f"错误: {e}")
+        output = stdout_buffer.getvalue()
+        err_output = stderr_buffer.getvalue()
+        if output:
+            self.cmd_output.append(output)
+        if err_output:
+            self.cmd_output.append(err_output)
+        if needs_more:
+            self.cmd_output.append("... (需要更多输入)")
 
         self.cmd_input.clear()
 

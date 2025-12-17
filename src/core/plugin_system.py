@@ -246,17 +246,12 @@ class PluginManager:
             # 构建模块名
             module_name = f"plugin_{file_path.stem}_{id(self)}"
 
-            # 读取文件内容
-            with open(file_path, encoding="utf-8") as f:
-                source_code = f.read()
+            spec = importlib.util.spec_from_file_location(module_name, file_path)
+            if spec is None or spec.loader is None:
+                raise ImportError(f"Failed to create module spec for {file_path}")
 
-            # 编译模块
-            module = importlib.util.module_from_spec(
-                importlib.util.spec_from_loader(module_name, loader=None)
-            )
-
-            # 执行代码
-            exec(source_code, module.__dict__)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
 
             # 查找插件类
             plugin_class = self._find_plugin_class(module)
