@@ -106,6 +106,7 @@ class AdminAPI:
         dashboard_path = Path(__file__).with_name("admin_dashboard.html")
 
         @self.app.route("/", methods=["GET"])
+        @self.app.route("/dashboard", methods=["GET"])
         def dashboard_page():
             """管理后台页面（同源访问，避免依赖 CORS）"""
             if not dashboard_path.exists():

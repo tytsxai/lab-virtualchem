@@ -200,6 +200,11 @@ python tools/admin_server_start.py --host 127.0.0.1 --port 5000
 API文档: http://127.0.0.1:5000/api
 ```
 
+> 注意：
+> - 管理后台 API 需要在请求头携带 `X-Admin-Secret`（其值来自环境变量 `VCL_ADMIN_SECRET_KEY`）。
+> - 通过 `/dashboard` 打开的页面可在右上角输入密钥后使用；如用自定义前端/脚本访问，请自行添加该 Header。
+> - CORS 默认关闭；如需跨域访问请显式设置 `VCL_ADMIN_CORS_ORIGINS`。
+
 ### 管理后台功能
 
 #### 1. 仪表板

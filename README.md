@@ -220,7 +220,7 @@ ruff check src tests --fix
 - `VCL_API_HOST`：API 服务监听地址，默认 `127.0.0.1`；如需对外提供服务请显式设置为 `0.0.0.0` 并配合认证/限流/防火墙。
 - `VCL_API_KEYS`：REST API 访问密钥（逗号分隔，可配置多把）。未配置时会在首次启动时自动生成并写入 `~/.virtualchemlab/api_key.txt`（以及 `~/.virtualchemlab/config.json`），用于本机开发调试；生产环境建议显式配置该变量。
 - `VCL_API_CORS_ORIGINS`：REST API 的 CORS 允许列表（逗号分隔）。默认仅允许本机回环（`localhost/127.0.0.1/::1`）；当你将 API 暴露到局域网/容器时，建议显式配置允许的前端域名。
-- `VCL_ADMIN_CORS_ORIGINS`：管理后台 API 的 CORS 允许列表（逗号分隔，或 `*` 仅用于开发环境）；当绑定到非本地主机时建议显式配置。
+- `VCL_ADMIN_CORS_ORIGINS`：管理后台 API 的 CORS 允许列表（逗号分隔，或 `*` 仅用于开发环境）。默认不启用 CORS；当你需要浏览器跨域访问或绑定到非本地主机时，请显式配置。
 - `ENVIRONMENT`：`development` / `staging` / `production`，控制默认安全策略。
 
 写入 `.env` 或系统环境，例如：
