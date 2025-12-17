@@ -24,6 +24,15 @@ from ..core.license_validator import EnhancedLicenseValidator, LicenseMonitor
 
 logger = logging.getLogger(__name__)
 
+_LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1"}
+
+
+def _parse_cors_origins(raw: str) -> str | list[str]:
+    value = raw.strip()
+    if value == "*":
+        return "*"
+    return [part.strip() for part in value.split(",") if part.strip()]
+
 
 class AdminAPI:
     """管理后台API"""
@@ -68,14 +77,29 @@ class AdminAPI:
         self.app.config["SECRET_KEY"] = resolved_secret
         self.app.config["JSON_AS_ASCII"] = False
 
-        # 启用CORS
-        CORS(self.app)
+        self.host = host
+        self.port = port
+
+        # 启用CORS（默认保持兼容：允许全部 Origin；生产环境建议显式限制）
+        cors_origins_env = os.getenv("VCL_ADMIN_CORS_ORIGINS", "").strip()
+        if cors_origins_env:
+            CORS(
+                self.app,
+                resources={
+                    r"/api/*": {"origins": _parse_cors_origins(cors_origins_env)}
+                },
+            )
+        else:
+            if self.host not in _LOCAL_HOSTS:
+                logger.warning(
+                    "AdminAPI 绑定到非本地主机 (%s) 且未设置 VCL_ADMIN_CORS_ORIGINS，"
+                    "浏览器跨域访问将默认允许所有 Origin；生产环境建议显式限制。",
+                    self.host,
+                )
+            CORS(self.app)
 
         # 注册路由
         self._register_routes()
-
-        self.host = host
-        self.port = port
 
     def _register_routes(self):
         """注册路由"""

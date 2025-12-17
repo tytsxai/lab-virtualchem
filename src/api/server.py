@@ -984,6 +984,8 @@ class APIServer:
 
 
 if __name__ == "__main__":
+    import os
+
     # 统一日志配置，带敏感信息过滤
     setup_logger("virtualchemlab.api", logging.INFO)
 
@@ -994,8 +996,10 @@ if __name__ == "__main__":
     access_logger.addHandler(access_handler)
 
     # 启动服务器 (默认启用认证，需显式配置才可禁用)
+    # 默认仅绑定本地回环地址；如需对外提供服务请显式设置 VCL_API_HOST=0.0.0.0
+    host = os.getenv("VCL_API_HOST", "127.0.0.1").strip() or "127.0.0.1"
     server = APIServer(
-        host="0.0.0.0",
+        host=host,
         port=8080,
         enable_auth=True,
         enable_rate_limit=True,

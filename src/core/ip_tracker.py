@@ -4,6 +4,7 @@ IP地址追踪模块
 用于追踪和记录用户的IP地址信息，包括地理位置查询
 """
 
+import ipaddress
 import json
 import logging
 import socket
@@ -13,6 +14,14 @@ from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+
+def _is_valid_ip(ip_address: str) -> bool:
+    try:
+        ipaddress.ip_address(ip_address)
+        return True
+    except ValueError:
+        return False
 
 
 @dataclass
@@ -258,25 +267,39 @@ class IPTracker:
 
     def _get_public_ip(self) -> str:
         """获取公网IP地址"""
-        try:
-            # 尝试多个服务
-            import urllib.request
+        from src.utils.safe_network import (
+            HAS_REQUESTS,
+            RetryStrategy,
+            SafeNetworkClient,
+        )
 
-            services = [
-                "https://api.ipify.org",
-                "https://ifconfig.me/ip",
-                "https://icanhazip.com",
-            ]
+        if not HAS_REQUESTS:
+            return self._get_local_ip()
 
-            for service in services:
-                try:
-                    with urllib.request.urlopen(service, timeout=3) as response:
-                        return response.read().decode().strip()
-                except Exception:
+        services = [
+            "https://api.ipify.org",
+            "https://ifconfig.me/ip",
+            "https://icanhazip.com",
+        ]
+
+        client = SafeNetworkClient(
+            timeout=3,
+            retry_strategy=RetryStrategy(
+                max_retries=2, initial_delay=0.2, max_delay=1.0
+            ),
+        )
+
+        for service in services:
+            try:
+                result = client.request("GET", service)
+                if not isinstance(result, dict):
                     continue
 
-        except Exception as e:
-            logger.debug(f"获取公网IP失败: {e}")
+                ip_text = str(result.get("text", "")).strip()
+                if ip_text and _is_valid_ip(ip_text):
+                    return ip_text
+            except Exception:
+                continue
 
         # 返回本地IP作为fallback
         return self._get_local_ip()
@@ -298,22 +321,47 @@ class IPTracker:
         注意: 这需要使用第三方API服务，这里提供一个简单实现
         生产环境建议使用 ip2location, MaxMind GeoIP 等专业服务
         """
+        from src.utils.safe_network import (
+            HAS_REQUESTS,
+            RetryStrategy,
+            SafeNetworkClient,
+        )
+
+        if not HAS_REQUESTS:
+            return
+
+        ip_address = ip_info.ip_address.strip()
+        if not _is_valid_ip(ip_address):
+            return
+
+        client = SafeNetworkClient(
+            timeout=5,
+            retry_strategy=RetryStrategy(
+                max_retries=1, initial_delay=0.2, max_delay=0.5
+            ),
+        )
+
         try:
-            import urllib.request
+            # 使用 https 的免费服务，返回字段更丰富（proxy/vpn 等）
+            url = f"https://ipwho.is/{ip_address}"
+            data = client.request("GET", url)
+            if not isinstance(data, dict):
+                return
+            if data.get("success") is False:
+                return
 
-            # 使用免费的IP地理位置API（ip-api.com）
-            url = f"http://ip-api.com/json/{ip_info.ip_address}?fields=status,country,regionName,city,isp,proxy,mobile"
+            ip_info.country = str(data.get("country") or "")
+            ip_info.region = str(data.get("region") or "")
+            ip_info.city = str(data.get("city") or "")
 
-            with urllib.request.urlopen(url, timeout=5) as response:
-                data = json.loads(response.read().decode())
+            connection = data.get("connection")
+            if isinstance(connection, dict):
+                ip_info.isp = str(connection.get("isp") or "")
 
-                if data.get("status") == "success":
-                    ip_info.country = data.get("country", "")
-                    ip_info.region = data.get("regionName", "")
-                    ip_info.city = data.get("city", "")
-                    ip_info.isp = data.get("isp", "")
-                    ip_info.is_proxy = data.get("proxy", False)
-
+            security = data.get("security")
+            if isinstance(security, dict):
+                ip_info.is_proxy = bool(security.get("proxy") or False)
+                ip_info.is_vpn = bool(security.get("vpn") or False)
         except Exception as e:
             logger.debug(f"获取IP地理信息失败: {e}")
 
