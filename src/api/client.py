@@ -4,9 +4,12 @@
 """
 
 import logging
+import os
 from typing import Any
 
 import requests
+
+from ..utils.config import Config as UserConfig
 
 logger = logging.getLogger(__name__)
 
@@ -14,14 +17,38 @@ logger = logging.getLogger(__name__)
 class VirtualChemLabClient:
     """VirtualChemLab API客户端"""
 
-    def __init__(self, base_url: str = "http://localhost:8080"):
+    def __init__(
+        self, base_url: str = "http://localhost:8080", api_key: str | None = None
+    ):
         """初始化客户端
 
         Args:
             base_url: API服务器基础URL
+            api_key: API密钥（可选；默认从环境变量/用户配置自动读取）
         """
         self.base_url = base_url.rstrip("/")
         self.session_id: str | None = None
+        self.api_key = self._resolve_api_key(api_key)
+
+    @staticmethod
+    def _resolve_api_key(api_key: str | None) -> str | None:
+        if api_key and api_key.strip():
+            return api_key.strip()
+
+        raw = (os.getenv("VCL_API_KEY") or os.getenv("VCL_API_KEYS") or "").strip()
+        if raw:
+            # VCL_API_KEYS 支持逗号分隔多把密钥，默认取第一把
+            return raw.split(",", 1)[0].strip()
+
+        try:
+            cfg = UserConfig()
+            configured = cfg.get("security.api_key")
+            if isinstance(configured, str) and configured.strip():
+                return configured.strip()
+        except Exception:
+            return None
+
+        return None
 
     def _request(
         self,
@@ -46,12 +73,16 @@ class VirtualChemLabClient:
         """
         url = f"{self.base_url}{endpoint}"
 
+        headers: dict[str, str] = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["X-API-Key"] = self.api_key
+
         response = requests.request(
             method=method,
             url=url,
             json=data,
             params=params,
-            headers={"Content-Type": "application/json"},
+            headers=headers,
             timeout=30,  # 30秒超时
         )
 
@@ -77,7 +108,11 @@ class VirtualChemLabClient:
             实验列表
         """
         response = self._request("GET", "/api/experiments")
-        return response["experiments"]
+        if "experiments" in response:
+            return response["experiments"]
+        if "data" in response and isinstance(response["data"], dict):
+            return response["data"].get("experiments", [])
+        return []
 
     def get_experiment(self, experiment_id: str) -> dict[str, Any]:
         """获取实验详情
