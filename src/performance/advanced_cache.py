@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import hashlib
-import pickle
+import json
 import threading
 from collections import OrderedDict
 from dataclasses import dataclass
@@ -234,7 +234,9 @@ class L1Cache:
             大小（字节）
         """
         try:
-            return len(pickle.dumps(value))
+            return len(json.dumps(value, ensure_ascii=False).encode("utf-8"))
+        except TypeError:
+            return len(repr(value).encode("utf-8", errors="replace"))
         except Exception:
             return len(str(value).encode("utf-8"))
 
@@ -259,6 +261,8 @@ class L1Cache:
 
 class L2Cache:
     """L2磁盘缓存"""
+
+    _KEY_NAMESPACE = "vcl.advanced_cache.l2.v1:"
 
     def __init__(self, cache_dir: str = "cache", max_size_mb: int = 100):
         """初始化L2缓存
@@ -298,14 +302,24 @@ class L2Cache:
                 return None
 
             try:
-                with open(file_path, "rb") as f:
-                    data = pickle.load(f)
+                with open(file_path, encoding="utf-8") as f:
+                    data = json.load(f)
 
                 # 检查是否过期
-                if data.get("expires_at") and datetime.now() > data["expires_at"]:
-                    os.remove(file_path)
-                    self.stats.misses += 1
-                    return None
+                expires_at = data.get("expires_at")
+                if expires_at:
+                    try:
+                        expires_at_dt = datetime.fromisoformat(str(expires_at))
+                    except Exception:
+                        expires_at_dt = None
+                    if expires_at_dt and datetime.now() > expires_at_dt:
+                        os.remove(file_path)
+                        self.stats.misses += 1
+                        return None
+                    if expires_at_dt is None:
+                        os.remove(file_path)
+                        self.stats.misses += 1
+                        return None
 
                 self.stats.hits += 1
                 return data["value"]
@@ -313,6 +327,10 @@ class L2Cache:
             except Exception as e:
                 logger.error(f"L2缓存读取失败: {e}")
                 self.stats.misses += 1
+                try:
+                    os.remove(file_path)
+                except Exception:
+                    pass
                 return None
 
     def set(self, key: str, value: Any, ttl: timedelta | None = None) -> None:
@@ -336,12 +354,25 @@ class L2Cache:
                 }
 
                 # 写入文件
-                with open(file_path, "wb") as f:
-                    pickle.dump(data, f)
+                payload = {
+                    "value": data["value"],
+                    "created_at": data["created_at"].isoformat(),
+                    "expires_at": data["expires_at"].isoformat()
+                    if data["expires_at"] is not None
+                    else None,
+                }
+
+                with open(file_path, "w", encoding="utf-8") as f:
+                    json.dump(payload, f, ensure_ascii=False)
 
                 self.stats.entries_count += 1
                 logger.debug(f"L2缓存已设置: {key}")
 
+            except TypeError:
+                # value 不可 JSON 序列化：跳过磁盘缓存（仍可由 L1 内存缓存承载）
+                logger.debug(
+                    "L2 disk cache skipped for non-JSON-serializable value: %s", key
+                )
             except Exception as e:
                 logger.error(f"L2缓存写入失败: {e}")
 
@@ -395,7 +426,7 @@ class L2Cache:
         import os
 
         # 使用哈希避免文件名冲突
-        hash_key = hashlib.sha256(key.encode()).hexdigest()
+        hash_key = hashlib.sha256(f"{self._KEY_NAMESPACE}{key}".encode()).hexdigest()
         return os.path.join(self.cache_dir, f"{hash_key}.cache")
 
     def get_stats(self) -> dict[str, Any]:

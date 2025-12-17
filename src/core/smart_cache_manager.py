@@ -9,7 +9,6 @@ import asyncio
 import hashlib
 import json
 import logging
-import pickle
 import threading
 import time
 from abc import ABC, abstractmethod
@@ -74,8 +73,12 @@ class CacheEntry:
     def calculate_size(self) -> int:
         """计算大小"""
         try:
-            serialized = pickle.dumps(self.value)
+            serialized = json.dumps(self.value, ensure_ascii=False).encode("utf-8")
             self.size = len(serialized)
+            return self.size
+        except TypeError:
+            # 非 JSON 可序列化对象：回退到字符串估算（仅用于统计/淘汰，不用于磁盘持久化）
+            self.size = len(repr(self.value).encode("utf-8", errors="replace"))
             return self.size
         except Exception:
             self.size = 0
@@ -214,6 +217,8 @@ class MemoryCacheBackend(CacheBackend):
 class DiskCacheBackend(CacheBackend):
     """磁盘缓存后端"""
 
+    _KEY_NAMESPACE = "vcl.smart_cache_manager.disk_cache.v1:"
+
     def __init__(self, cache_dir: Path, max_size_mb: int = 100):
         self._cache_dir = cache_dir
         self._cache_dir.mkdir(parents=True, exist_ok=True)
@@ -223,7 +228,7 @@ class DiskCacheBackend(CacheBackend):
     def _get_cache_path(self, key: str) -> Path:
         """获取缓存文件路径"""
         # 使用哈希避免文件名过长
-        key_hash = hashlib.sha256(key.encode()).hexdigest()
+        key_hash = hashlib.sha256(f"{self._KEY_NAMESPACE}{key}".encode()).hexdigest()
         return self._cache_dir / f"{key_hash}.cache"
 
     def get(self, key: str) -> Any | None:
@@ -234,17 +239,25 @@ class DiskCacheBackend(CacheBackend):
             return None
 
         try:
-            with open(cache_path, "rb") as f:
-                entry = pickle.load(f)
+            with open(cache_path, encoding="utf-8") as f:
+                data = json.load(f)
 
-            if entry.is_expired():
+            created_at = float(data.get("created_at", 0.0))
+            ttl = data.get("ttl")
+            ttl_seconds = float(ttl) if ttl is not None else None
+
+            if ttl_seconds is not None and time.time() - created_at > ttl_seconds:
                 cache_path.unlink()
                 return None
 
-            entry.update_access()
-            return entry.value
+            return data.get("value")
         except Exception as e:
             logger.error(f"Failed to read cache file {cache_path}: {e}")
+            # 旧格式或损坏文件，避免重复报错
+            try:
+                cache_path.unlink()
+            except Exception:
+                pass
             return None
 
     def set(self, key: str, value: Any, ttl: float | None = None) -> bool:
@@ -261,13 +274,29 @@ class DiskCacheBackend(CacheBackend):
             )
             entry.calculate_size()
 
-            with open(cache_path, "wb") as f:
-                pickle.dump(entry, f)
+            payload = {
+                "key": entry.key,
+                "value": entry.value,
+                "created_at": entry.created_at,
+                "accessed_at": entry.accessed_at,
+                "access_count": entry.access_count,
+                "ttl": entry.ttl,
+                "tags": entry.tags,
+            }
+
+            cache_path.write_text(
+                json.dumps(payload, ensure_ascii=False),
+                encoding="utf-8",
+            )
 
             # 检查大小限制
             self._check_size_limit()
 
             return True
+        except TypeError:
+            # value 不可 JSON 序列化：跳过磁盘缓存（仍可由 L1 内存缓存承载）
+            logger.debug("Disk cache skipped for non-JSON-serializable value: %s", key)
+            return False
         except Exception as e:
             logger.error(f"Failed to write cache file {cache_path}: {e}")
             return False
@@ -299,9 +328,11 @@ class DiskCacheBackend(CacheBackend):
         try:
             for cache_file in self._cache_dir.glob("*.cache"):
                 try:
-                    with open(cache_file, "rb") as f:
-                        entry = pickle.load(f)
-                    keys.append(entry.key)
+                    with open(cache_file, encoding="utf-8") as f:
+                        data = json.load(f)
+                    key = data.get("key")
+                    if isinstance(key, str):
+                        keys.append(key)
                 except Exception:
                     continue
         except Exception as e:
@@ -437,16 +468,21 @@ class SmartCacheManager:
         if levels is None:
             levels = [CacheLevel.L1, CacheLevel.L2]
 
-        success = True
+        attempted = 0
+        success = False
         for level in levels:
             if level in self._backends:
+                attempted += 1
                 try:
                     result = self._backends[level].set(key, value, ttl)
-                    if not result:
-                        success = False
+                    if result:
+                        success = True
                 except Exception as e:
                     logger.error(f"Failed to set cache {key} at level {level}: {e}")
-                    success = False
+                    continue
+
+        if attempted == 0:
+            success = False
 
         # 记录指标
         increment_counter("cache_sets", tags={"success": str(success)})

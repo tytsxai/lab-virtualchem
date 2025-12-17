@@ -5,7 +5,6 @@ Redis缓存实现
 
 import json
 import logging
-import pickle
 from collections.abc import Callable
 from functools import wraps
 from typing import Any
@@ -34,7 +33,7 @@ class RedisCache:
         db: int = 0,
         password: str | None = None,
         prefix: str = "vcl:",
-        serializer: str = "json",  # 'json' or 'pickle'
+        serializer: str = "json",
     ):
         """
         初始化Redis缓存
@@ -48,7 +47,12 @@ class RedisCache:
             serializer: 序列化方式
         """
         self.prefix = prefix
-        self.serializer = serializer
+        self.serializer = serializer.lower().strip()
+        if self.serializer != "json":
+            raise ValueError(
+                "RedisCache only supports JSON serialization. "
+                "Pickle-based caching is intentionally disallowed for security."
+            )
         self.available = REDIS_AVAILABLE
 
         if REDIS_AVAILABLE:
@@ -58,7 +62,7 @@ class RedisCache:
                     port=port,
                     db=db,
                     password=password,
-                    decode_responses=(serializer == "json"),
+                    decode_responses=True,
                     socket_connect_timeout=5,
                     socket_timeout=5,
                 )
@@ -85,20 +89,14 @@ class RedisCache:
 
     def _serialize(self, value: Any) -> Any:
         """序列化值"""
-        if self.serializer == "json":
-            return json.dumps(value, ensure_ascii=False)
-        else:  # pickle
-            return pickle.dumps(value)
+        return json.dumps(value, ensure_ascii=False)
 
     def _deserialize(self, value: Any) -> Any:
         """反序列化值"""
         if value is None:
             return None
 
-        if self.serializer == "json":
-            return json.loads(value)
-        else:  # pickle
-            return pickle.loads(value)
+        return json.loads(value)
 
     def get(self, key: str) -> Any | None:
         """
