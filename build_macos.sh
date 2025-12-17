@@ -55,17 +55,35 @@ print_error() {
 # ============================================================================
 print_step "1/9" "检查Python环境..."
 
-if ! command -v python3 &> /dev/null; then
+# 选择Python（优先使用 3.12/3.11/3.10，避免系统默认 python3 漂移到过新版本）
+PYTHON_BIN="${PYTHON_BIN:-}"
+if [ -z "$PYTHON_BIN" ]; then
+    for candidate in python3.12 python3.11 python3.10 python3; do
+        if command -v "$candidate" >/dev/null 2>&1; then
+            PYTHON_BIN="$candidate"
+            break
+        fi
+    done
+fi
+
+if [ -z "$PYTHON_BIN" ]; then
     print_error "未找到Python 3！请先安装Python 3.10+"
     exit 1
 fi
 
-PYTHON_VERSION=$(python3 --version)
+PYTHON_VERSION=$("$PYTHON_BIN" --version 2>&1)
 print_success "Python环境: ${PYTHON_VERSION}"
+
+"$PYTHON_BIN" - <<'PY'
+import sys
+
+if sys.version_info < (3, 10):
+    raise SystemExit("Python 版本过低，要求 Python 3.10+")
+PY
 
 cd "$SCRIPT_DIR"
 
-VERSION=$(SCRIPT_DIR="$SCRIPT_DIR" python3 - <<'PY'
+VERSION=$(SCRIPT_DIR="$SCRIPT_DIR" "$PYTHON_BIN" - <<'PY'
 import os
 import sys
 from pathlib import Path
@@ -92,9 +110,9 @@ if [ ! -f "${SCRIPT_DIR}/requirements.lock" ]; then
     exit 1
 fi
 
-python3 -m pip install --upgrade pip
-python3 -m pip install --require-hashes -r "${SCRIPT_DIR}/requirements.lock"
-python3 -m pip install "pyinstaller==${PYINSTALLER_VERSION}"
+"$PYTHON_BIN" -m pip install --upgrade pip
+"$PYTHON_BIN" -m pip install --require-hashes -r "${SCRIPT_DIR}/requirements.lock"
+"$PYTHON_BIN" -m pip install "pyinstaller==${PYINSTALLER_VERSION}"
 print_success "依赖安装完成（基于锁文件）"
 
 # ============================================================================
@@ -110,11 +128,6 @@ fi
 if [ -d "dist" ]; then
     print_warning "删除 dist 目录..."
     rm -rf dist
-fi
-
-if [ -f "${APP_NAME}.spec" ]; then
-    print_warning "删除旧的spec文件..."
-    rm -f "${APP_NAME}.spec"
 fi
 
 print_success "清理完成"
@@ -175,33 +188,15 @@ print_success "权限配置文件已创建"
 print_step "6/9" "开始打包应用（这可能需要几分钟）..."
 
 PYINSTALLER_CMD=(
-    pyinstaller
-    --name="${APP_NAME}"
-    --windowed
-    --onedir
+    "$PYTHON_BIN"
+    -m
+    PyInstaller
     --clean
     --noconfirm
-    --paths="${SCRIPT_DIR}"
-    --paths="${SCRIPT_DIR}/src"
-    "${ICON_FLAG[@]}"
-    --add-data "${SCRIPT_DIR}/assets:assets"
-    --add-data "${SCRIPT_DIR}/config:config"
-    --add-data "${SCRIPT_DIR}/config.json:."
-    --hidden-import=PySide6.QtCore
-    --hidden-import=PySide6.QtGui
-    --hidden-import=PySide6.QtWidgets
-    --hidden-import=pymunk
-    --hidden-import=numba
-    --hidden-import=sqlalchemy
-    --exclude-module=matplotlib
-    --exclude-module=pandas
-    --exclude-module=pytest
-    --osx-bundle-identifier="${BUNDLE_ID}"
-    --osx-entitlements-file=entitlements.plist
-    "${ENTRY_SCRIPT}"
+    "${SCRIPT_DIR}/VirtualChemLab.spec"
 )
 
-print_warning "使用默认配置打包..."
+print_warning "使用 VirtualChemLab.spec 打包..."
 "${PYINSTALLER_CMD[@]}"
 
 if [ $? -ne 0 ]; then

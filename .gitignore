@@ -102,6 +102,12 @@ backups/
 build/
 dist/
 *.spec
+!VirtualChemLab.spec
+
+# Release archives
+*_Release_v*.tar.gz
+VirtualChemLab-*.zip
+*.dmg
 
 # Reports
 reports/

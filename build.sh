@@ -14,15 +14,35 @@ echo "VirtualChemLab 打包工具"
 echo "================================================"
 echo ""
 
-# 检查Python
-if ! command -v python3 &> /dev/null; then
+# 选择Python（优先使用 3.12/3.11/3.10，避免系统默认 python3 漂移到过新版本）
+PYTHON_BIN="${PYTHON_BIN:-}"
+if [ -z "$PYTHON_BIN" ]; then
+    for candidate in python3.12 python3.11 python3.10 python3; do
+        if command -v "$candidate" >/dev/null 2>&1; then
+            PYTHON_BIN="$candidate"
+            break
+        fi
+    done
+fi
+
+if [ -z "$PYTHON_BIN" ]; then
     echo "[错误] 未找到Python3,请先安装Python 3.10+"
     exit 1
 fi
 
+PYTHON_VERSION=$("$PYTHON_BIN" --version 2>&1)
+echo "Python环境: ${PYTHON_VERSION}"
+
+"$PYTHON_BIN" - <<'PY'
+import sys
+
+if sys.version_info < (3, 10):
+    raise SystemExit("Python 版本过低，要求 Python 3.10+")
+PY
+
 cd "$SCRIPT_DIR"
 
-VERSION=$(SCRIPT_DIR="$SCRIPT_DIR" python3 - <<'PY'
+VERSION=$(SCRIPT_DIR="$SCRIPT_DIR" "$PYTHON_BIN" - <<'PY'
 import os
 import sys
 from pathlib import Path
@@ -45,60 +65,45 @@ if [ ! -f "${SCRIPT_DIR}/requirements.lock" ]; then
 fi
 
 echo "[1/6] 安装依赖（锁定版本）..."
-python3 -m pip install --upgrade pip
-python3 -m pip install --require-hashes -r "${SCRIPT_DIR}/requirements.lock"
-python3 -m pip install "pyinstaller==${PYINSTALLER_VERSION}"
+"$PYTHON_BIN" -m pip install --upgrade pip
+"$PYTHON_BIN" -m pip install --require-hashes -r "${SCRIPT_DIR}/requirements.lock"
+"$PYTHON_BIN" -m pip install "pyinstaller==${PYINSTALLER_VERSION}"
 
 echo ""
 echo "[2/6] 清理旧的构建文件..."
-rm -rf build dist "${APP_NAME}.spec"
+rm -rf build dist
 
 echo ""
 echo "[3/6] 开始打包..."
 echo "这可能需要几分钟,请耐心等待..."
 
-ICON_FLAG=()
-if [ -f "${SCRIPT_DIR}/assets/icons/app.ico" ]; then
-    ICON_FLAG=(--icon="${SCRIPT_DIR}/assets/icons/app.ico")
-fi
-
-pyinstaller \
-    --name="${APP_NAME}" \
-    --windowed \
-    --onedir \
-    --clean \
-    --noconfirm \
-    --paths "${SCRIPT_DIR}" \
-    --paths "${SCRIPT_DIR}/src" \
-    "${ICON_FLAG[@]}" \
-    --add-data "${SCRIPT_DIR}/assets:assets" \
-    --add-data "${SCRIPT_DIR}/config:config" \
-    --add-data "${SCRIPT_DIR}/config.json:." \
-    --hidden-import=PySide6.QtCore \
-    --hidden-import=PySide6.QtGui \
-    --hidden-import=PySide6.QtWidgets \
-    --hidden-import=pymunk \
-    --hidden-import=numba \
-    --hidden-import=sqlalchemy \
-    --exclude-module=matplotlib \
-    --exclude-module=pandas \
-    --exclude-module=pytest \
-    "${SCRIPT_DIR}/${ENTRY_SCRIPT}"
+"$PYTHON_BIN" -m PyInstaller --clean --noconfirm "${SCRIPT_DIR}/VirtualChemLab.spec"
 
 echo ""
 echo "[4/6] 测试可执行文件..."
-if [ ! -f "dist/${APP_NAME}/${APP_NAME}" ]; then
-    echo "[错误] 未找到生成的可执行文件!"
-    exit 1
+if [ "$(uname -s)" = "Darwin" ]; then
+    if [ ! -d "dist/${APP_NAME}.app" ]; then
+        echo "[错误] 未找到生成的应用程序: dist/${APP_NAME}.app"
+        exit 1
+    fi
+    echo "[提示] 应用程序已生成: dist/${APP_NAME}.app"
+else
+    if [ ! -f "dist/${APP_NAME}/${APP_NAME}" ]; then
+        echo "[错误] 未找到生成的可执行文件!"
+        exit 1
+    fi
+    echo "[提示] 可执行文件已生成: dist/${APP_NAME}/${APP_NAME}"
 fi
-
-echo "[提示] 可执行文件已生成: dist/${APP_NAME}/${APP_NAME}"
 
 echo ""
 echo "[5/6] 创建发布包..."
 ARCHIVE_NAME="${APP_NAME}_Release_v${VERSION}.tar.gz"
 cd dist
-tar -czf "../${ARCHIVE_NAME}" "${APP_NAME}/"
+if [ "$(uname -s)" = "Darwin" ]; then
+    tar -czf "../${ARCHIVE_NAME}" "${APP_NAME}.app"
+else
+    tar -czf "../${ARCHIVE_NAME}" "${APP_NAME}/"
+fi
 cd ..
 
 echo ""
@@ -107,10 +112,17 @@ echo "打包完成!"
 echo "================================================"
 echo ""
 echo "发布文件位置:"
-echo "  - 文件夹: dist/VirtualChemLab/"
+if [ "$(uname -s)" = "Darwin" ]; then
+    echo "  - 应用程序: dist/VirtualChemLab.app"
+else
+    echo "  - 文件夹: dist/VirtualChemLab/"
+fi
 echo "  - 压缩包: ${ARCHIVE_NAME}"
 echo ""
 echo "测试方法:"
-echo "  ./dist/VirtualChemLab/VirtualChemLab"
+if [ "$(uname -s)" = "Darwin" ]; then
+    echo "  open \"./dist/VirtualChemLab.app\""
+else
+    echo "  ./dist/VirtualChemLab/VirtualChemLab"
+fi
 echo ""
-

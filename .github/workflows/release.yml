@@ -34,34 +34,7 @@ jobs:
       - name: Build executable
         shell: pwsh
         run: |
-          $args = @(
-            "--name=VirtualChemLab"
-            "--windowed"
-            "--onedir"
-            "--clean"
-            "--noconfirm"
-            "--paths=."
-            "--paths=src"
-            "--add-data=assets;assets"
-            "--add-data=config;config"
-            "--add-data=config.json;."
-            "--hidden-import=PySide6.QtCore"
-            "--hidden-import=PySide6.QtGui"
-            "--hidden-import=PySide6.QtWidgets"
-            "--hidden-import=pymunk"
-            "--hidden-import=numba"
-            "--hidden-import=sqlalchemy"
-            "--exclude-module=matplotlib"
-            "--exclude-module=pandas"
-            "--exclude-module=pytest"
-            "main.py"
-          )
-
-          if (Test-Path "assets\icons\app.ico") {
-            $args += "--icon=assets\icons\app.ico"
-          }
-
-          pyinstaller @args
+          pyinstaller --clean --noconfirm VirtualChemLab.spec
 
       - name: Create ZIP package
         shell: pwsh

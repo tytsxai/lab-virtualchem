@@ -115,11 +115,8 @@ jobs:
     - name: Ruff 检查
       run: ruff check src/ tests/ --output-format=github
 
-    - name: Black 格式检查
-      run: black --check src/ tests/
-
-    - name: isort 导入排序检查
-      run: isort --check-only src/ tests/
+    - name: Ruff 格式检查
+      run: ruff format --check src/ tests/
 
     - name: MyPy 类型检查
       run: mypy src/
@@ -190,7 +187,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install --require-hashes -r requirements.lock
-        pip install pyinstaller
+        pip install "pyinstaller==6.3.0"
 
     - name: 构建应用程序
       run: |

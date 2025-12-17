@@ -100,11 +100,6 @@ if exist "dist" (
     rmdir /s /q dist
 )
 
-if exist "%APP_NAME%.spec" (
-    echo 删除旧的spec文件...
-    del /q %APP_NAME%.spec
-)
-
 echo [✓] 清理完成
 
 REM ============================================================================
@@ -133,29 +128,8 @@ echo.
 echo [5/8] 开始打包应用（这可能需要几分钟）...
 echo.
 
-echo 使用默认配置打包...
-pyinstaller ^
-    --name=%APP_NAME% ^
-    --windowed ^
-    --onedir ^
-    --clean ^
-    --noconfirm ^
-    --paths="%SCRIPT_DIR%" ^
-    --paths="%SCRIPT_DIR%\src" ^
-    %ICON_FLAG% ^
-    --add-data "%SCRIPT_DIR%\assets;assets" ^
-    --add-data "%SCRIPT_DIR%\config;config" ^
-    --add-data "%SCRIPT_DIR%\config.json;." ^
-    --hidden-import=PySide6.QtCore ^
-    --hidden-import=PySide6.QtGui ^
-    --hidden-import=PySide6.QtWidgets ^
-    --hidden-import=pymunk ^
-    --hidden-import=numba ^
-    --hidden-import=sqlalchemy ^
-    --exclude-module=matplotlib ^
-    --exclude-module=pandas ^
-    --exclude-module=pytest ^
-    %ENTRY_SCRIPT%
+echo 使用 VirtualChemLab.spec 打包...
+pyinstaller --clean --noconfirm VirtualChemLab.spec
 
 if errorlevel 1 (
     echo [错误] 打包失败！
