@@ -487,9 +487,8 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             )
 
             # 应用限流(从服务器获取)
-            if hasattr(
-                self.server, "rate_limiter"
-            ) and not self.server.rate_limiter.is_allowed(self.client_address[0]):
+            limiter = getattr(self.server, "rate_limiter", None)
+            if limiter and not limiter.is_allowed(self.client_address[0]):
                 self._send_error(429, "请求过于频繁,请稍后再试")
                 return
 
@@ -594,9 +593,8 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             access_logger.info(f"POST {self.path} from {self.client_address[0]}")
 
             # 应用限流
-            if hasattr(
-                self.server, "rate_limiter"
-            ) and not self.server.rate_limiter.is_allowed(self.client_address[0]):
+            limiter = getattr(self.server, "rate_limiter", None)
+            if limiter and not limiter.is_allowed(self.client_address[0]):
                 self._send_error(429, "请求过于频繁,请稍后再试")
                 return
 
