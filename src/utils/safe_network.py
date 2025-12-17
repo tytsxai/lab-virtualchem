@@ -17,6 +17,7 @@ try:
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
+
     # Provide a stub so callers/tests can monkeypatch `safe_network.requests`
     # even when `requests` isn't installed.
     class _RequestError(Exception):

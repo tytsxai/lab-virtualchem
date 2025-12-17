@@ -312,7 +312,9 @@ class TestMemoryManager:
         assert get_time < 2.0  # 100次获取应在2秒内
         assert optimize_time < 5.0  # 5次优化应在5秒内
 
-        print(f"Get metrics performance: {get_time:.3f}s for {get_iterations} operations")
+        print(
+            f"Get metrics performance: {get_time:.3f}s for {get_iterations} operations"
+        )
         print(
             f"Optimize memory performance: {optimize_time:.3f}s for {optimize_iterations} operations"
         )
