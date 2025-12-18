@@ -94,7 +94,7 @@ class ExperimentLoadOptimizer(QObject):
 
         # 启动预加载
         if not hasattr(self, "_preload_timer"):
-            self._preload_timer = QTimer()
+            self._preload_timer = QTimer(self)
             self._preload_timer.timeout.connect(self._process_preload)
             self._preload_timer.start(100)  # 100ms间隔
 

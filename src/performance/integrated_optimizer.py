@@ -62,7 +62,7 @@ class IntegratedPerformanceOptimizer(QObject):
         self.rendering_optimizer = get_rendering_optimizer()
 
         # 性能监控
-        self.monitor_timer = QTimer()
+        self.monitor_timer = QTimer(self)
         self.monitor_timer.timeout.connect(self._collect_performance_metrics)
         self.monitor_interval = self.config.get("monitor_interval", 5000)  # 5秒
 
