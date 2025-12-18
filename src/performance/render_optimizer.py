@@ -50,7 +50,7 @@ class RenderOptimizer(QObject):
         self.max_frame_history = 60
 
         # 监控定时器
-        self.monitor_timer = QTimer()
+        self.monitor_timer = QTimer(self)
         self.monitor_timer.timeout.connect(self._collect_metrics)
 
         logger.info("渲染优化器初始化完成")

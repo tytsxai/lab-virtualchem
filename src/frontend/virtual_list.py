@@ -30,7 +30,7 @@ class VirtualListWidget(QScrollArea):
         self._item_renderer: Callable | None = None
 
         # 性能优化 - 防抖
-        self._render_timer = QTimer()
+        self._render_timer = QTimer(self)
         self._render_timer.timeout.connect(self._update_visible_items)
         self._render_timer.setInterval(50)  # 50ms防抖
         self._render_timer.setSingleShot(True)  # 单次触发

@@ -10,7 +10,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from PySide6.QtCore import QObject, QTimer, Signal
+from PySide6.QtCore import QCoreApplication, QObject, QTimer, Signal
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QWidget
 
@@ -123,7 +123,7 @@ class ResourceLoader(QObject):
         finally:
             self.is_loading = False
             if self.loading_queue:
-                QTimer.singleShot(0, self._process_queue)
+                QTimer.singleShot(0, self, self._process_queue)
 
     def _cache_resource(self, key: str, resource: Any, size_bytes: int):
         """缓存资源"""
@@ -168,7 +168,7 @@ class UIRenderOptimizer(QObject):
         super().__init__()
         self.render_queue: list[tuple[QWidget, Callable]] = []
         self.is_rendering = False
-        self.batch_timer = QTimer()
+        self.batch_timer = QTimer(self)
         self.batch_timer.timeout.connect(self._process_batch)
         self.batch_timer.setInterval(16)  # 60 FPS
 
@@ -295,7 +295,7 @@ class RequestMerger:
         else:
             # 启动超时定时器
             if not self.batch_timer:
-                self.batch_timer = QTimer()
+                self.batch_timer = QTimer(QCoreApplication.instance())
                 self.batch_timer.timeout.connect(self._execute_batch)
 
             self.batch_timer.start(int(self.batch_timeout * 1000))

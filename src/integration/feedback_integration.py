@@ -68,7 +68,7 @@ class FeedbackIntegration(QObject):
 
         # 数据同步
         self.sync_interval = 60000  # 60秒
-        self.sync_timer = QTimer()
+        self.sync_timer = QTimer(self)
         self.sync_timer.timeout.connect(self.sync_data)
         self.sync_timer.start(self.sync_interval)
 
