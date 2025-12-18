@@ -226,7 +226,7 @@ python -c "import json; json.load(open('config.json'))"
 python tools/validate_config.py
 
 # 3. 恢复默认配置
-python tools/reset_config.py --backup
+python tools/reset_config.py
 ```
 
 ### 问题：端口被占用
@@ -239,18 +239,26 @@ OSError: [Errno 48] Address already in use
 **解决方案**:
 
 ```bash
-# 1. 查找占用端口的进程
+# 说明：
+# - GUI 主应用本身不监听网络端口。
+# - 常见冲突来自 REST API 服务（默认端口 8080）或管理后台（默认端口 5000）。
+
+# 1. 查找占用端口的进程（以 API 默认端口 8080 为例）
 # Linux/macOS
-lsof -i :8000
+lsof -i :8080
 # Windows
-netstat -ano | findstr :8000
+netstat -ano | findstr :8080
 
 # 2. 终止进程
 kill -9 <PID>  # Linux/macOS
 taskkill /PID <PID> /F  # Windows
 
-# 3. 或更改端口
-python main.py --port 8001
+# 3. 或更改端口（推荐：通过环境变量显式配置）
+# REST API:
+VCL_API_PORT=8001 python -m src.api.server
+#
+# 管理后台:
+python tools/admin_server_start.py --port 5001
 ```
 
 ### 问题：GUI无法显示

@@ -47,10 +47,10 @@ pip install -r requirements.lock # 或使用 requirements.txt 重新生成锁定
 
 ```bash
 cp env.example .env
-python config/schemas/app_config.py
+python tools/validate_config.py
 ```
 
-脚本会验证关键目录并自动创建缺失项。
+脚本会根据当前实现的配置加载器（`src/core/config_loader.py`）验证关键配置与目录，并在缺失时自动创建必要目录。
 
 ### 4. 首次启动
 

@@ -229,7 +229,8 @@ X-API-Key: <your-api-key>
 Authorization: Bearer <your-api-key>
 ```
 
-> 开发环境：未设置 `VCL_API_KEYS` 时，服务会自动生成 key 并写入 `~/.virtualchemlab/api_key.txt`。
+> 开发环境：未设置 `VCL_API_KEYS` 时，服务会自动生成 key 并写入 `~/.virtualchemlab/api_key.txt`；
+> 生产环境：必须显式配置 `VCL_API_KEYS`，否则服务会拒绝启动（避免容器/多副本密钥漂移）。
 
 ### CORS（浏览器跨域）
 
@@ -240,6 +241,13 @@ Authorization: Bearer <your-api-key>
 ```bash
 # 健康检查（无需认证）
 curl http://127.0.0.1:8080/api/health
+
+# 就绪检查（无需认证；失败返回 503）
+curl http://127.0.0.1:8080/api/ready
+
+# 部署探针（无需认证；含构建信息/磁盘探测）
+curl http://127.0.0.1:8080/healthz
+curl http://127.0.0.1:8080/readyz
 
 # OpenAPI 文档（无需认证）
 curl http://127.0.0.1:8080/api/docs

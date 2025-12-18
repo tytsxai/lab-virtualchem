@@ -20,6 +20,9 @@
 除以下端点外，其余均需要 API Key：
 
 - `GET /api/health`
+- `GET /api/ready`
+- `GET /healthz`
+- `GET /readyz`
 - `GET /api/docs`
 
 请求头任选一种：
@@ -36,7 +39,7 @@ Authorization: Bearer <your-api-key>
 
 获取/配置 API Key：
 
-- 生产/CI：显式设置环境变量 `VCL_API_KEYS="key1,key2"`（逗号分隔，可配置多把）。
+- 生产/CI：必须显式提供 API Key（推荐环境变量 `VCL_API_KEYS="key1,key2"`，逗号分隔可多把）；缺失时服务会拒绝启动（避免多副本密钥漂移）。实现上也支持通过用户配置文件 `~/.virtualchemlab/config.json` 的 `security.api_key` 提供，但不建议在生产将密钥落盘到可被打包/镜像/备份带走的位置。
 - 本机开发：首次启动 API 服务时，如果未配置 `VCL_API_KEYS`，会自动生成并写入 `~/.virtualchemlab/api_key.txt`（同时写入 `~/.virtualchemlab/config.json`）。
 
 ### 1.3 CORS（浏览器跨域访问）
@@ -55,7 +58,14 @@ Authorization: Bearer <your-api-key>
 #### 健康检查 / 文档（无需认证）
 
 - `GET /api/health`
+- `GET /api/ready`（就绪：模板/存储可用性；失败返回 503）
+- `GET /healthz`（部署探针：包含构建信息与磁盘可写探测；失败返回 503）
+- `GET /readyz`（部署探针：可选探测 DB/缓存；失败返回 503）
 - `GET /api/docs`（OpenAPI JSON）
+
+#### 监控（默认需要认证）
+
+- `GET /metrics`：Prometheus 文本格式指标（建议在反向代理/采集侧统一做鉴权与访问控制）
 
 示例：
 
@@ -155,6 +165,7 @@ curl -H "X-API-Key: <key>" \
 
 - 默认会将报告写入 `reports/<record_id>.html`
 - 同时在响应中返回 `content`（HTML 字符串）与 `path`
+- 响应中的 `url` 是一个**相对路径提示**（`/reports/<record_id>.html`）。当前 stdlib `HTTPServer` 实现不会自动托管 `reports/` 静态文件：如需通过浏览器访问，请自行在反向代理/静态服务器中映射该目录，或直接打开 `path` 指向的本地文件。
 
 示例：
 
@@ -206,4 +217,3 @@ curl -X POST \
 如需浏览器跨域访问，请显式设置：
 
 - `VCL_ADMIN_CORS_ORIGINS`：逗号分隔允许列表（开发环境可用 `*`，不建议生产使用）
-

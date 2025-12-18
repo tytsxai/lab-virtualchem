@@ -21,7 +21,9 @@
 
 - `docs/README.md`：docs 目录总览
 - `docs/DEVELOPER_DOCS_INDEX.md`：开发者文档索引（仅链接已存在文件）
-- `docs/ARCHITECTURE.md`：架构概览
+- `docs/ARCHITECTURE.md`：架构概览（以当前实现为准）
+- `docs/CONFIGURATION_REFERENCE.md`：配置/环境变量权威说明（维护安全）
+- `docs/MAINTENANCE_SAFETY.md`：维护安全清单（code review 自检）
 - `docs/CODE_STYLE_GUIDE.md`：代码风格与注释规范
 - `docs/TROUBLESHOOTING.md`、`docs/FAQ.md`：排障与常见问题
 
@@ -47,4 +49,3 @@ python3 tools/check_docs_links.py --all
 
 - 如果你改了安装/运行/测试/构建入口，请同步更新 `README.md`/`QUICK_START.md`/`INSTALL.md`/`DEPLOY.md` 中至少一处“可执行命令”。
 - 如果你新增/移动文档，请同步更新 `项目文档索引.md` 与 `docs/DEVELOPER_DOCS_INDEX.md`，并跑 `make docs-check`。
-

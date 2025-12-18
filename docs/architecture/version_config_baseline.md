@@ -15,13 +15,13 @@
 **建议的唯一写入者**：以 `pyproject.toml` 为权威版本号，B1 可补一个校验/同步脚本，将版本写回 `src/__init__.py`、`version_info.txt`、`build_macos.sh`、`build_windows.bat`、`installer_windows.iss`，并在 CI 校验 Git 标签前后一致。
 
 ## 配置加载链路（主入口 `src/core/config_loader.py`）
-1. 环境判定：参数 `env` 优先，其次 `ENVIRONMENT` 环境变量，否则默认 `development`。⚠️ `.env` 在此之后才加载，`.env` 里的 `ENVIRONMENT` 不会影响选择。
-2. 加载 `.env`（若存在，且不覆盖已存在的环境变量）。
-3. 选择配置文件（首个存在即返回，不合并）：`config/{env}.json` → `config/base.json` → 根目录 `config.json`（旧格式）。环境文件存在时会跳过 `base.json`。
-4. 环境变量覆盖：`ENVIRONMENT`/`DEBUG`、`JWT_SECRET_ENV`/`JWT_SECRET_KEY`（或配置中的 `jwt_secret_env`）、`DEVELOPER_KEY_HASH`、`ADMIN_SECRET_ENV`/`VCL_ADMIN_SECRET_KEY`、`DATABASE_URL`、`REDIS_*`、`CACHE_ENABLED`、`MONITORING_ENABLED`、`LOG_LEVEL`、路径类 `*_DIR` 等。生产环境缺少 JWT 或管理密钥会抛错。
-5. 版本对齐：`app.version` 被强制写为 `src.__version__`。
-6. 运行准备：创建 `user_data`/`reports`/`logs` 等目录，以及日志/数据库/存储目录。
-7. 调用方：`main.py` → `get_config()`；DI 注册中如果 JWT 初始化失败，会回退并写入弱口令 `temporary-development-secret-token-please-change`。
+1. 加载 `.env`（若存在，且不覆盖已存在的环境变量）。因此 `.env` 中的 `ENVIRONMENT` **可以**影响后续环境选择。
+2. 环境判定：参数 `env` 优先，其次环境变量 `ENVIRONMENT`，否则默认 `development`；在桌面打包环境（`sys.frozen`）默认进入 `production`（并将生成的密钥持久化到用户目录）。
+3. 加载配置文件并深度合并：`config/base.json` → 根目录 `config.json`（本地覆盖）→ `config/{env}.json`（环境覆盖）。
+4. 环境变量覆盖（优先级最高）：`DEBUG`、`LOG_LEVEL`、`JWT_SECRET_ENV`/`JWT_SECRET_KEY`、`SESSION_SECRET_ENV`/`SESSION_SECRET_KEY`、`DEVELOPER_KEY_HASH`、`DEVELOPER_MODE_ENABLED`、`DATABASE_URL`、`REDIS_ENABLED`/`REDIS_HOST`、`CACHE_ENABLED`、`MONITORING_ENABLED`、路径类 `*_DIR` 等。
+5. 版本对齐：`app.version` 被写为 `src.__version__`，避免配置文件中版本漂移误导排障。
+6. 运行准备：必要目录创建；在不可写目录/打包环境下将日志/报告/数据重定向到用户目录（例如 `~/.virtualchemlab/`，可通过 `VCL_DATA_DIR` 指定）。
+7. 调用方：仓库根入口 `main.py` 转发到 `src.main`，并在启动前执行 `startup_preflight` 的安全校验（生产环境 fail-fast）。
 
 ### 其他配置体系（遗留/并行）
 - `src/core/config_manager.py`：用户偏好存储在 `~/.virtualchemlab/config.json`，默认版本 `2.0.0`，被 `src/ui/config_dialog.py`、`performance_dialog.py`、`refactored_main_window.py` 使用，未与 `config_loader` 同步。
@@ -50,8 +50,7 @@
 
 ## 冲突与风险提示
 - 版本号需人工多点更新（脚本、资源、安装器、Git 标签），缺少自动校验，发布易错版。
-- 环境选择在 `.env` 之前完成，`.env` 中的 `ENVIRONMENT` 无效；环境配置文件不与 `base.json` 合并，易遗漏默认项。
-- 双配置体系（`config_loader` vs `config_manager`/`unified_config_manager`）同时存在，版本号/密钥来源不一致，UI 与核心逻辑可能读取不同值。
+- 多配置体系（`config_loader` vs `config_manager`/`unified_config_manager`）同时存在，版本号/密钥来源可能不一致，UI 与核心逻辑有机会读取不同值。
 - 打包脚本与锁文件脱钩，依赖版本可能与 CI/运行时不一致。
 
 **后续动作建议**（供 B1 参考）：以 `pyproject.toml` 为唯一版本源构建同步脚本；调整 `config_loader` 先加载 `.env` 再决定环境并支持 `base.json` 合并；为生产环境移除弱口令回退；统一 UI 偏好配置的版本来源；让打包脚本使用锁文件或专用冻结清单。

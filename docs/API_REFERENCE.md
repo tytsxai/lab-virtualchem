@@ -17,7 +17,7 @@
 ```python
 from src.core import TemplateEngine
 
-engine = TemplateEngine(template_dir="assets/templates")
+engine = TemplateEngine(templates_dir="assets/templates")
 ```
 
 #### 主要方法
@@ -41,27 +41,34 @@ template = engine.load_experiment_by_id("titration_naoh_hcl_v1")
 print(template.title)  # "NaOH滴定HCl实验"
 ```
 
-##### `list_experiments() -> List[ExperimentTemplate]`
+##### `list_available_experiments() -> List[dict[str, str]]`
 
-列出所有可用的实验模板。
+列出所有可用实验的摘要信息（用于列表/选择器），不会返回完整模板对象。
 
-**返回**: `ExperimentTemplate` 对象列表
+**返回**: 字典列表（字段以当前实现为准），例如：
+- `id`
+- `title` / `title_en`
+- `level`
+- `duration_min`
+- `version`
 
 **示例**:
 ```python
-experiments = engine.list_experiments()
+experiments = engine.list_available_experiments()
 for exp in experiments:
-    print(f"{exp.id}: {exp.title}")
+    print(f"{exp['id']}: {exp['title']}")
 ```
 
-##### `validate_template(template: ExperimentTemplate) -> bool`
+##### `validate_template(template_path: Path) -> tuple[bool, list[str]]`
 
-验证模板的完整性和正确性。
+验证模板文件的完整性和正确性（包含结构/字段与部分业务规则校验）。
 
 **参数**:
-- `template` (ExperimentTemplate): 待验证的模板对象
+- `template_path` (Path): 模板文件路径
 
-**返回**: 验证是否通过 (bool)
+**返回**: `(ok, errors)`
+- `ok`：是否通过
+- `errors`：错误信息列表（为空表示无错误）
 
 ---
 
@@ -92,29 +99,30 @@ controller.start_experiment()
 print(f"当前步骤: {controller.get_current_step().title}")
 ```
 
-##### `submit_step(user_data: dict) -> Tuple[bool, str, Optional[float]]`
+##### `submit_step(user_input: dict) -> StepResult`
 
 提交当前步骤的用户数据进行验证。
 
 **参数**:
-- `user_data` (dict): 用户提交的数据
+- `user_input` (dict): 用户提交的数据
   - 确认型: `{"confirmed": bool}`
   - 输入型: `{"value": str}`
   - 选择型: `{"selected": str}` 或 `{"selected": List[str]}`
   - 顺序型: `{"sequence": List[str]}`
 
-**返回**: 元组 `(passed, message, score)`
-- `passed` (bool): 是否通过检查
-- `message` (str): 反馈消息
-- `score` (float | None): 本步骤得分
+**返回**: `StepResult`（可当作对象使用，也兼容旧代码的 tuple 解包）
+- `result.is_valid`：是否通过检查
+- `result.message`：反馈消息
+- `result.mistake`：错误详情（可选）
+- `result.errors` / `result.warnings`：错误/警告列表
 
 **示例**:
 ```python
-passed, msg, score = controller.submit_step({"confirmed": True})
-if passed:
-    print(f"通过! 得分: {score}")
+result = controller.submit_step({"confirmed": True})
+if result.is_valid:
+    print("通过!")
 else:
-    print(f"失败: {msg}")
+    print(f"失败: {result.message}")
 ```
 
 ##### `next_step() -> bool`
@@ -129,7 +137,7 @@ else:
 
 **返回**: 是否成功返回
 
-##### `finish_experiment() -> UserRecord`
+##### `complete_experiment() -> UserRecord`
 
 完成实验,计算最终得分。
 
@@ -479,7 +487,7 @@ controller.start_experiment()
 
 # ... 与外部系统交互 ...
 
-record = controller.finish_experiment()
+record = controller.complete_experiment()
 # 将record导出到外部系统
 ```
 
@@ -503,7 +511,5 @@ record = controller.finish_experiment()
 ---
 
 *最后更新: 2025-10-06*
-
-
 
 

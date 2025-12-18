@@ -150,10 +150,10 @@
 
    ```bash
    cp env.example .env
-   python config/schemas/app_config.py
+   python tools/validate_config.py
    ```
 
-   上述脚本会验证路径并在缺失时自动创建必要目录。
+   上述脚本会按当前实现验证配置/密钥/目录，并在缺失时自动创建必要目录。
 
 5. **运行应用与测试**
 
@@ -218,10 +218,11 @@ ruff check src tests --fix
 - `DEVELOPER_SECRET_KEY`：开发者模式密钥（仅在开启开发者模式时需要），建议至少 32 个字符。
 - `VCL_ADMIN_SECRET_KEY`：管理后台/Flask 的 SECRET_KEY，建议与 JWT/会话密钥不同。
 - `VCL_API_HOST`：API 服务监听地址，默认 `127.0.0.1`；如需对外提供服务请显式设置为 `0.0.0.0` 并配合认证/限流/防火墙。
-- `VCL_API_KEYS`：REST API 访问密钥（逗号分隔，可配置多把）。未配置时会在首次启动时自动生成并写入 `~/.virtualchemlab/api_key.txt`（以及 `~/.virtualchemlab/config.json`），用于本机开发调试；生产环境建议显式配置该变量。
+- `VCL_API_KEYS`：REST API 访问密钥（逗号分隔，可配置多把）。未配置时会在首次启动时自动生成并写入 `~/.virtualchemlab/api_key.txt`（以及 `~/.virtualchemlab/config.json`），用于本机开发调试；生产环境**必须**显式配置该变量（避免容器/多副本因自动生成导致密钥漂移）。
 - `VCL_API_CORS_ORIGINS`：REST API 的 CORS 允许列表（逗号分隔）。默认仅允许本机回环（`localhost/127.0.0.1/::1`）；当你将 API 暴露到局域网/容器时，建议显式配置允许的前端域名。
 - `VCL_ADMIN_CORS_ORIGINS`：管理后台 API 的 CORS 允许列表（逗号分隔，或 `*` 仅用于开发环境）。默认不启用 CORS；当你需要浏览器跨域访问或绑定到非本地主机时，请显式配置。
 - `ENVIRONMENT`：`development` / `staging` / `production`，控制默认安全策略。
+- `VCL_CONFIG_PATH`：指定用户配置文件路径（默认 `~/.virtualchemlab/config.json`），用于容器/系统服务固定挂载路径。
 
 写入 `.env` 或系统环境，例如：
 
@@ -346,6 +347,7 @@ VirtualChemLab/
 ### 快速链接
 
 - [架构设计](docs/ARCHITECTURE.md) - 系统架构说明
+- [配置/环境变量参考](docs/CONFIGURATION_REFERENCE.md) - 配置与安全默认值（维护安全）
 - [API参考](docs/API_REFERENCE.md) - 完整API文档
 - [性能优化](docs/PERFORMANCE_OPTIMIZATION.md) - 性能优化指南
 - [部署指南](DEPLOY.md) - 生产环境部署

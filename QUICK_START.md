@@ -20,7 +20,7 @@ This short guide mirrors the canonical documentation and keeps the minimal, repe
    to ensure key directories exist:
    ```bash
    cp env.example .env
-   venv311/bin/python config/schemas/app_config.py
+   venv311/bin/python tools/validate_config.py
    ```
 3. Launch the application in development mode:
    ```bash

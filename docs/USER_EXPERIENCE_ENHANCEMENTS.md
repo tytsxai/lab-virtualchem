@@ -537,8 +537,7 @@ history.add_action(
 
 ### 示例代码
 
-- [examples/enhanced_features_demo.py](../examples/enhanced_features_demo.py)
-- [examples/user_experience_demo.py](../examples/user_experience_demo.py)
+- 示例脚本：当前仓库未提供独立的 `enhanced_features_demo.py` / `user_experience_demo.py`；建议从 `src/ui/`、`src/core/` 与 `tests/` 中的对应模块与用例入手验证行为。
 
 ---
 

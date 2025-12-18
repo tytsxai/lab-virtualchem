@@ -37,6 +37,74 @@
 
 ---
 
+## 🧰 生产运行手册（最小集）
+
+### 1) 启动前安全闸（fail-fast）
+
+启动入口会在 `startup_preflight` 记录 `version/env/build_time`，并在 **production** 环境对必需密钥做强校验（缺失/长度不足会直接退出进程）。
+
+**必需环境变量（production）**
+- `ENVIRONMENT=production`
+- `JWT_SECRET_KEY`：长度 `>=32`
+- `SESSION_SECRET_KEY`：长度 `>=32`
+- `VCL_ADMIN_SECRET_KEY`：长度 `>=32`
+- `VCL_API_KEYS`：API 访问密钥（逗号分隔多把），用于 REST API
+
+**可选/高级**
+- `DEVELOPER_MODE_ENABLED=true`：显式开启开发者模式（生产默认关闭）
+  - 同时需要 `DEVELOPER_SECRET_KEY`（长度 `>=32`，或通过 `DEVELOPER_SECRET_ENV` 指定变量名）
+- `LOG_LEVEL=INFO|WARNING|ERROR`：生产环境最低为 `INFO`（即使配置为 `DEBUG` 也会被抬升）
+- `VCL_BUILD_TIME`/`VCL_BUILD_SHA`/`VCL_BUILD_ID`：构建系统写入，用于日志与探针输出
+
+### 2) 启动命令
+
+**GUI**
+```bash
+ENVIRONMENT=production python main.py
+```
+
+**REST API（默认仅绑定回环）**
+```bash
+VCL_API_HOST=127.0.0.1 VCL_API_KEYS=change-me ENVIRONMENT=production python -m src.api.server
+```
+如需对外提供服务请显式设置 `VCL_API_HOST=0.0.0.0`，并结合防火墙/反向代理做访问控制。
+
+### 3) 健康检查/就绪探针
+
+- `GET /healthz`：轻量（配置/密钥/依赖/磁盘可写），返回 `version/build`
+- `GET /readyz`：就绪（可选检查 DB/缓存；默认跳过外部依赖），返回 `version/build`
+- `GET /api/health`：兼容旧接口，同样返回 `version/build`
+- `GET /api/ready`：兼容就绪接口（模板/存储可用性；失败返回 503）
+- `GET /metrics`：Prometheus 文本指标（默认 **需要认证**，通过 `X-API-Key`）
+
+### 4) 每日/每周备份与恢复
+
+**备份（ZIP + 轮转）**
+```bash
+# 每日：默认保留 14 份
+python scripts/backup_data.py --mode daily
+
+# 每周：默认保留 8 份
+python scripts/backup_data.py --mode weekly
+```
+产物位于 `backups/daily/` 与 `backups/weekly/`，内部包含 `manifest.json`（版本/构建信息/文件清单）。
+
+**恢复（默认仅解压到 restores/，不覆盖）**
+```bash
+python scripts/restore_backup.py backups/daily/<file>.zip
+
+# 验证无误后可选择覆盖应用到项目目录（会覆盖同名文件）
+python scripts/restore_backup.py backups/daily/<file>.zip --apply
+```
+
+**建议的回滚流程（最小）**
+- 先停止服务/应用进程
+- 使用 `restore_backup.py` 解压并核对 `manifest.json`（版本/构建号）
+- 使用 `--apply` 覆盖恢复 `data/`、`user_data/`、`config.json`
+- 重新启动后用 `/healthz` + `/readyz` 验证，再逐步放量
+
+---
+
 ## 📦 打包为可执行文件
 
 ### 打包环境要求

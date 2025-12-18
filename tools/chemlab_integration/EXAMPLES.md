@@ -520,7 +520,7 @@ python -m pytest tests/
 ```
 
 更多信息请参考:
-- 📖 [完整文档](docs/CHEMLAB_INTEGRATION.md)
+- 📖 [完整文档](../../docs/CHEMLAB_INTEGRATION.md)
 - 🚀 [快速开始](QUICKSTART.md)
 - 📝 [实施总结](IMPLEMENTATION_SUMMARY.md)
 

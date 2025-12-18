@@ -7,6 +7,20 @@
 
 ---
 
+## ⚠️ 重要说明（维护安全）
+
+本仓库同时存在两类“协议/接口”文档：
+
+1. **当前实现对齐的权威说明**（推荐优先阅读）
+   - `docs/API.md`：HTTP REST / Admin API（与 `src/api/server.py`、`src/api/admin_api.py` 对齐）
+2. **历史材料 / 规划性协议**（可能与当前实现不一致）
+   - `docs/API_EVENT_PROTOCOL.md`
+   - `docs/API_PROTOCOL_QUICK_REFERENCE.md`
+
+特别注意：当前 `src/api/server.py` 中 WebSocket 升级处理为占位实现（返回 501），因此任何 WebSocket 章节不应被视为生产契约。
+
+---
+
 ## 🎯 快速导航
 
 ### 新手入门 (5分钟)
@@ -26,7 +40,7 @@
 3. **[完整协议规范](./API_EVENT_PROTOCOL.md)** 📖 详细
    - REST API规范
    - 事件驱动协议
-   - WebSocket实时通信
+   - WebSocket 实时通信（规划/历史材料）
    - 错误码体系
    - 版本控制策略
 

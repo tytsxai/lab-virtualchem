@@ -802,8 +802,8 @@ A: 禁用截图功能，减少采样率，或使用压缩格式。
 - [增强反馈 API 文档](../src/ui/enhanced_feedback.py)
 - [协作实验 API 文档](../src/ui/collaborative_experiment.py)
 - [录制回放 API 文档](../src/ui/experiment_recorder.py)
-- [交互式实验演示](../examples/interactive_experiment_demo.py)
-- [交互式实验模板](../assets/templates/interactive_experiment_template.yaml)
+- [交互式实验模板（当前可用）](../assets/templates/titration_interactive.yaml)
+- [交互式实验模板（简化版）](../assets/templates/simple_titration_interactive.yaml)
 
 ---
 

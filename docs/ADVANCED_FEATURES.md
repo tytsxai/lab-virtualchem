@@ -2,6 +2,10 @@
 
 > 企业级架构的高级功能和最佳实践
 
+> 说明：本页包含“最佳实践 + 能力清单”。其中部分能力在当前仓库可能属于可选依赖或实验性实现，
+> 不应被视为对外稳定契约。对外接口与运行方式请以 `docs/API.md`、`docs/ARCHITECTURE.md`、
+> `docs/CONFIGURATION_REFERENCE.md` 为准；文档事实边界见 `docs/DOCS_STATUS.md`。
+
 ---
 
 ## 📑 目录
@@ -707,17 +711,15 @@ logger.error("操作失败")
 ### 文档
 
 - [架构概览](ARCHITECTURE.md)
-- [快速开始](QUICK_START_ARCHITECTURE.md)
+- [快速开始](../QUICK_START_GUIDE.md)
 - [API文档](API.md)
 
 ### 示例代码
 
 ```bash
-# 运行高级特性演示
-python examples/advanced_demo.py
-
-# 运行性能测试
-python examples/performance_test.py
+# 可运行示例（与当前仓库文件对齐）
+python3 examples/api_integration_example.py
+python3 examples/error_handling_examples.py
 ```
 
 ### 社区

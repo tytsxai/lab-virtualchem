@@ -4,6 +4,14 @@
 
 ---
 
+## ⚠️ 维护安全提示
+
+本文件为“协议速查卡”，包含部分历史/规划内容（例如 WebSocket）。当前仓库对外 HTTP 接口以
+`docs/API.md` 为准（对齐 `src/api/server.py`、`src/api/admin_api.py`）。如你在这里看到与实际
+实现不一致的端点/认证方式，请优先相信 `docs/API.md`，并参考 `docs/DOCS_STATUS.md` 的来源边界。
+
+---
+
 ## 🚀 快速开始
 
 ### REST API

@@ -770,7 +770,7 @@ self.setUpdatesEnabled(True)
 - [Qt文档 - QGraphicsItem动画](https://doc.qt.io/qt-6/qgraphicsitem.html)
 - [Qt文档 - 输入验证](https://doc.qt.io/qt-6/qvalidator.html)
 - [Qt文档 - 布局管理](https://doc.qt.io/qt-6/layout.html)
-- [示例代码](../examples/ui_improvements_demo.py)
+- 示例代码：当前仓库未提供独立的 `ui_improvements_demo.py` 脚本，建议直接阅读 `src/ui/` 相关组件实现与 `tests/ui/` 用例。
 
 ---
 
@@ -787,4 +787,3 @@ self.setUpdatesEnabled(True)
 **文档版本**: 1.0.0
 **最后更新**: 2024-10-08
 **维护者**: VirtualChemLab开发团队
-

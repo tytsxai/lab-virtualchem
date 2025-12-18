@@ -13,12 +13,17 @@
 python scripts/readiness_check.py
 ```
 
+如需在部署环境使用非默认用户配置路径，可通过 `VCL_CONFIG_PATH` 指定（例如挂载到 `/etc/virtualchemlab/config.json`）。
+桌面打包应用场景下，建议只配置 `VCL_DATA_DIR`（统一运行时数据目录）；首次启动会自动生成并持久化必要密钥到该目录，避免依赖环境变量。
+
 该脚本会检查：
 
 - Python 版本与关键依赖是否齐备
 - `config.json` 与环境变量中的安全配置（JWT 密钥、开发者模式）
 - 必要的资源目录（assets/templates、knowledge、logs、reports、data 等）
 - 监控与日志配置状态
+
+配置/环境变量的权威说明请参考：`docs/CONFIGURATION_REFERENCE.md`。
 
 所有检查通过后才能进入下一阶段。
 
@@ -45,6 +50,9 @@ python scripts/readiness_check.py
 
 2. **安全配置**
    - 每个环境必须通过环境变量或密钥管理系统设置唯一的 `JWT_SECRET_KEY`。
+   - 如果对外启用 `src.api.server`（HTTP API 服务），生产环境必须显式配置 API Key：
+     - 推荐：设置 `VCL_API_KEYS`（逗号分隔多把，例如 `k1,k2`），并通过密钥管理系统注入。
+     - 备选：挂载用户配置文件并提供 `security.api_key`（不建议用于多副本/容器环境）。
    - 生产环境必须保持 `config.json` 中 `developer.enabled = false`。
    - 更新 `env`/密钥时同步刷新 `tools/generate_secrets.py` 输出。
 
@@ -53,6 +61,7 @@ python scripts/readiness_check.py
 ## 4. 日志、监控与告警
 
 - **日志**：`config.json` 中 `log.file` 默认指向 `logs/app.log`。确保部署目标具备日志轮转与外部收集方案（如 ELK、Loki）。
+- **API Access Log**：`src/api/server.py` 默认写入 `logs/api_access.log` 且开启轮转（10MB * 7），仍建议接入统一日志采集。
 - **监控**：默认启用性能与错误跟踪（`config.monitoring`）。结合已有的监控代理或 APM，将 `metrics_enabled` 与 `health_check_interval` 调整为实际需求。
 - **健康探针**：若通过 Web 包装或 API 暴露，请在探针脚本中调用 `scripts/readiness_check.py` 或实现轻量级 `/healthz` 接口。
 - **告警**：将 `logs/`、`reports/` 或指标采集系统接入现有告警平台（邮件、Slack、飞书等）。
@@ -82,4 +91,4 @@ python scripts/readiness_check.py
 
 ---
 
-通过以上流程，可以确保 VirtualChemLab 在核心功能、性能、安全、测试与运维等方面达到上线标准。欢迎根据实际环境扩展自动化脚本和 CI/CD 流程。***
+通过以上流程，可以确保 VirtualChemLab 在核心功能、性能、安全、测试与运维等方面达到上线标准。欢迎根据实际环境扩展自动化脚本和 CI/CD 流程。

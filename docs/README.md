@@ -45,14 +45,14 @@
 
    ```bash
    pip install -r requirements.lock
-   # 若需刷新依赖，可切换为 requirements.txt
+   # 如需刷新依赖，请更新 pyproject.toml 并重新生成 requirements.lock（见根目录 README.md）
    ```
 
 4. 初始化配置并检查目录
 
    ```bash
    cp env.example .env
-   python config/schemas/app_config.py
+   python tools/validate_config.py
    ```
 
 5. 运行应用

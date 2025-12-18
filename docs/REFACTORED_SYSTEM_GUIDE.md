@@ -596,10 +596,10 @@ for section_name, section_data in new_config.items():
 
 ## 📚 参考资源
 
-- [重构报告](REFACTORING_REPORT.md)
-- [代码质量报告](CODE_QUALITY_REPORT.md)
-- [测试示例](examples/refactored_system_examples.py)
-- [测试用例](tests/test_refactored_system.py)
+- [重构报告（历史材料）](../archive/v2.0.0-reports/REFACTORING_REPORT.md)
+- [代码质量报告（历史材料）](../archive/v2.0.0-reports/CODE_QUALITY_REPORT.md)
+- [测试示例](../examples/refactored_system_examples.py)
+- [测试用例](../tests/test_refactored_system.py)
 
 ---
 

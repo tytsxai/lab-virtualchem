@@ -42,6 +42,9 @@
 | 文档 | 描述 | 重要性 |
 |------|------|--------|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 系统架构设计 | ⭐⭐⭐⭐⭐ |
+| [CONFIGURATION_REFERENCE.md](CONFIGURATION_REFERENCE.md) | 配置/环境变量参考（维护安全） | ⭐⭐⭐⭐⭐ |
+| [MAINTENANCE_SAFETY.md](MAINTENANCE_SAFETY.md) | 维护安全清单（自检/评审） | ⭐⭐⭐⭐⭐ |
+| [注释与文档完善审查报告.md](注释与文档完善审查报告.md) | 注释/文档体系审查结果与风险清单 | ⭐⭐⭐⭐ |
 | [CODE_STYLE_GUIDE.md](CODE_STYLE_GUIDE.md) | 代码风格与注释规范 | ⭐⭐⭐⭐⭐ |
 | [DEVELOPER.md](DEVELOPER.md) | 开发者指南 | ⭐⭐⭐⭐⭐ |
 | [CONTRIBUTING.md](../CONTRIBUTING.md) | 贡献指南 | ⭐⭐⭐⭐ |

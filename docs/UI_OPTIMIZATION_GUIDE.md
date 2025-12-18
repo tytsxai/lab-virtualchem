@@ -316,9 +316,8 @@ class MyToolbar(QWidget):
 
 运行优化效果演示：
 
-```bash
-python examples/ui_optimization_demo.py
-```
+> 当前仓库未提供独立的 `ui_optimization_demo.py` 脚本；建议从 `src/ui/` 的组件与布局系统入手，
+> 并结合 `tests/ui/`/`tests/test_game_interaction.py` 等用例理解 UI 行为与交互约束。
 
 演示包含：
 - 📌 按钮设计系统展示
@@ -443,7 +442,7 @@ A: 目前不支持完全禁用动画，这是设计系统的核心特性。
 
 - [按钮设计系统源码](../src/ui/button_design_system.py)
 - [布局系统源码](../src/ui/layout_system.py)
-- [演示示例](../examples/ui_optimization_demo.py)
+- 演示示例：当前仓库未提供独立的 `ui_optimization_demo.py`。
 - [项目README](../README.md)
 
 ---
@@ -465,4 +464,3 @@ A: 目前不支持完全禁用动画，这是设计系统的核心特性。
 **文档版本**: v1.0  
 **最后更新**: 2025-10-07  
 **维护者**: VirtualChemLab Team
-
