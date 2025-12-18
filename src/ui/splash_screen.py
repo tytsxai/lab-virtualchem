@@ -22,6 +22,7 @@ from PySide6.QtWidgets import QApplication, QWidget
 
 from .. import __version__ as APP_VERSION
 from ..utils.logger import get_logger
+from .qt_event_utils import process_events_safely
 
 logger = get_logger(__name__)
 
@@ -71,7 +72,7 @@ class ModernSplashScreen(QWidget):
         self.center_on_screen()
 
         # 启动定时器用于动画
-        self.animation_timer = QTimer()
+        self.animation_timer = QTimer(self)
         self.animation_timer.timeout.connect(self.update_animation)
         self.animation_timer.start(30)  # 约33 FPS
 
@@ -97,7 +98,7 @@ class ModernSplashScreen(QWidget):
             logger.debug(f"启动进度: {value}% - {message}")
         self.progress_updated.emit(self.progress, self.status_message)
         self.update()
-        QApplication.processEvents()  # 强制更新界面
+        process_events_safely(5)  # 强制更新界面（受控）
 
         # 在某些关键点更换提示
         if self.progress in [25, 50, 75]:

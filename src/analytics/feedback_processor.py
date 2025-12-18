@@ -115,7 +115,7 @@ class FeedbackProcessor(QObject):
         }
 
         # 批处理定时器
-        self.batch_timer = QTimer()
+        self.batch_timer = QTimer(self)
         self.batch_timer.timeout.connect(self.process_batch)
         self.batch_queue: list[dict[str, Any]] = []
 

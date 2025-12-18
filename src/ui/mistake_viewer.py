@@ -12,9 +12,9 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDialog,
@@ -39,7 +39,7 @@ class MistakeViewer(QDialog):
     """错题查看器对话框"""
 
     # 信号
-    start_review = pyqtSignal(list)  # 开始复习信号，传递错题ID列表
+    start_review = Signal(list)  # 开始复习信号，传递错题ID列表
 
     def __init__(self, student_id: str, mistake_book=None, parent=None):
         """
@@ -444,7 +444,7 @@ class MistakeViewer(QDialog):
 
     def on_export(self):
         """导出错题"""
-        from PyQt6.QtWidgets import QFileDialog
+        from PySide6.QtWidgets import QFileDialog
 
         file_path, _ = QFileDialog.getSaveFileName(
             self,

@@ -16,6 +16,7 @@ from PySide6.QtCore import QObject, QTimer, Signal
 from PySide6.QtWidgets import QApplication, QWidget
 
 from ..utils.logger import get_logger
+from .qt_event_utils import process_events_safely
 
 logger = get_logger(__name__)
 
@@ -98,12 +99,12 @@ class PerformanceOptimizer(QObject):
     def setup_timers(self):
         """设置定时器"""
         # 性能监控定时器
-        self.metrics_timer = QTimer()
+        self.metrics_timer = QTimer(self)
         self.metrics_timer.timeout.connect(self.update_metrics)
         self.metrics_timer.start(1000)  # 每秒更新
 
         # 优化定时器
-        self.optimization_timer = QTimer()
+        self.optimization_timer = QTimer(self)
         self.optimization_timer.timeout.connect(self.run_optimizations)
         self.start_optimization_timer()
 
@@ -218,22 +219,24 @@ class PerformanceOptimizer(QObject):
     def cleanup_widgets(self):
         """清理控件"""
         try:
-            widgets = QApplication.allWidgets()
-            cleaned_count = 0
+            # 注意：遍历 QApplication.allWidgets() 并对“无父控件/不可见”的控件执行 deleteLater()
+            # 很容易误删顶层窗口或仍在使用中的控件，导致 Qt 内部状态（包括定时器队列）被破坏。
+            #
+            # 这里改为仅清理缓存中已失效的引用，不主动销毁任何 QWidget。
+            import shiboken6
 
-            for widget in widgets:
-                # 清理隐藏的控件
-                if not widget.isVisible() and hasattr(widget, "deleteLater"):
-                    widget.deleteLater()
-                    cleaned_count += 1
+            before = len(self.widget_cache)
+            invalid_keys = [
+                key
+                for key, widget in self.widget_cache.items()
+                if widget is None or not shiboken6.isValid(widget)
+            ]
+            for key in invalid_keys:
+                self.widget_cache.pop(key, None)
 
-                # 清理没有父控件的控件
-                if not widget.parent() and widget != QApplication.instance():
-                    widget.deleteLater()
-                    cleaned_count += 1
-
-            if cleaned_count > 0:
-                logger.debug(f"清理了 {cleaned_count} 个控件")
+            removed = before - len(self.widget_cache)
+            if removed:
+                logger.debug(f"从缓存中移除了 {removed} 个失效控件引用")
 
             self.optimizations_applied.add("widget_cleanup")
 
@@ -263,8 +266,8 @@ class PerformanceOptimizer(QObject):
     def optimize_ui_responsiveness(self):
         """优化UI响应性"""
         try:
-            # 处理待处理的事件
-            QApplication.processEvents()
+            # 处理待处理的事件（仅主线程、短时间片，避免重入）
+            process_events_safely(5)
 
             # 优化事件处理
             self.optimize_event_processing()
@@ -277,16 +280,9 @@ class PerformanceOptimizer(QObject):
     def optimize_event_processing(self):
         """优化事件处理"""
         try:
-            # 限制事件处理时间
-            start_time = time.time()
-            max_processing_time = 0.016  # 16ms (60 FPS)
-
-            while time.time() - start_time < max_processing_time:
-                QApplication.processEvents()
-
-                # 避免无限循环
-                if not QApplication.hasPendingEvents():
-                    break
+            # 限制事件处理时间：避免在 Python 层 while 循环反复 processEvents()（容易重入）。
+            if QApplication.hasPendingEvents():
+                process_events_safely(16)
 
         except Exception as e:
             logger.error(f"事件处理优化失败: {e}")

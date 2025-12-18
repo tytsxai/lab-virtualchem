@@ -11,9 +11,9 @@
 import logging
 from datetime import datetime
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import (
     QDialog,
     QGroupBox,
     QHBoxLayout,
@@ -33,7 +33,7 @@ class ReviewMode(QDialog):
     """复习模式对话框"""
 
     # 信号
-    review_completed = pyqtSignal(dict)  # 复习完成信号，传递结果
+    review_completed = Signal(dict)  # 复习完成信号，传递结果
 
     def __init__(
         self, student_id: str, mistake_ids: list, mistake_book=None, parent=None
