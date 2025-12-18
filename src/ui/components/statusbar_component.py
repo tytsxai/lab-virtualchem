@@ -46,7 +46,7 @@ class StatusBarComponent(BaseWindowComponent):
         self._statusbar.addPermanentWidget(self._progress_bar)
 
         # 创建定时器用于自动隐藏进度条
-        self._timer = QTimer()
+        self._timer = QTimer(self)
         self._timer.timeout.connect(self._hide_progress)
         self._timer.setSingleShot(True)
 
@@ -65,7 +65,7 @@ class StatusBarComponent(BaseWindowComponent):
 
         # 设置超时
         if timeout > 0:
-            QTimer.singleShot(timeout, lambda: self.set_status("就绪"))
+            QTimer.singleShot(timeout, self, lambda: self.set_status("就绪"))
 
     def show_progress(self, value: int = 0, maximum: int = 100) -> None:
         """显示进度条"""

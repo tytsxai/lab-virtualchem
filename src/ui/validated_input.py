@@ -46,7 +46,7 @@ class ValidatedLineEdit(QLineEdit):
         self.update_style()
 
         # 连接信号 - 延迟验证以提高性能
-        self.validation_timer = QTimer()
+        self.validation_timer = QTimer(self)
         self.validation_timer.setSingleShot(True)
         self.validation_timer.timeout.connect(self.validate)
         self.textChanged.connect(lambda: self.validation_timer.start(300))

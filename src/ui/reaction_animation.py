@@ -150,7 +150,7 @@ class ReactionAnimation(QObject):
         self.color_transitions: dict[str, ColorTransition] = {}
 
         # 动画计时器
-        self.animation_timer = QTimer()
+        self.animation_timer = QTimer(self)
         self.animation_timer.timeout.connect(self._update_animations)
         self.animation_timer.setInterval(16)  # 60 FPS
 
