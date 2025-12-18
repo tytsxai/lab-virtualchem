@@ -15,7 +15,8 @@ VirtualChemLab 提供了三种开发接口:
 ### 快速开始
 
 ```python
-from src.core import TemplateEngine, ExperimentController
+from src.core.experiment_controller import ExperimentController
+from src.core.template_engine import TemplateEngine
 from src.storage import JSONStore
 
 # 初始化组件
@@ -26,18 +27,20 @@ store = JSONStore("data/records")
 template = engine.load_experiment_by_id("titration_naoh_hcl")
 
 # 运行实验
-controller = ExperimentController(template, user_id="student_001")
+controller = ExperimentController(template, user_id="student_001", storage=store)
 controller.start_experiment()
 
-# 提交步骤
-passed, message, score = controller.submit_step({"confirmed": True})
+# 提交步骤（通过时会自动进入下一步）
+result = controller.submit_step({"confirmed": True})
 
-if passed:
-    controller.next_step()
+if not result.is_valid:
+    raise RuntimeError(result.message)
 
-# 完成实验
-record = controller.finish_experiment()
-store.save(record)
+# ... 继续提交后续步骤直到全部通过 ...
+
+# 完成实验并保存记录
+record = controller.complete_experiment()
+store.save_record(record)
 
 print(f"最终得分: {record.final_score}")
 ```
@@ -47,18 +50,20 @@ print(f"最终得分: {record.final_score}")
 #### 1.1 模板引擎 (TemplateEngine)
 
 ```python
+from pathlib import Path
+
 from src.core.template_engine import TemplateEngine
 
-engine = TemplateEngine(template_dir="assets/templates")
+engine = TemplateEngine(templates_dir="assets/templates")
 
 # 列出所有实验
-experiments = engine.list_experiments()
+experiments = engine.list_available_experiments()
 
 # 加载特定实验
 template = engine.load_experiment_by_id("exp_id")
 
-# 验证模板
-is_valid = engine.validate_template(template)
+# 验证模板文件（返回 ok, errors）
+ok, errors = engine.validate_template(Path("assets/templates/exp_id.yaml"))
 ```
 
 #### 1.2 实验控制器 (ExperimentController)
@@ -75,16 +80,16 @@ controller.start_experiment()
 step = controller.get_current_step()
 
 # 提交步骤数据
-passed, message, score = controller.submit_step({
+result = controller.submit_step({
     "confirmed": True  # 确认型
     # "value": "25.0"  # 输入型
     # "selected": "option"  # 选择型
     # "sequence": ["a", "b", "c"]  # 顺序型
 })
 
-# 导航
-controller.next_step()
-controller.previous_step()
+# 通过时会自动进入下一步；需要手动导航时可使用：
+# controller.next_step()
+# controller.previous_step()
 
 # 获取进度
 progress = controller.get_progress()
@@ -96,7 +101,7 @@ progress = controller.get_progress()
 # }
 
 # 完成实验
-record = controller.finish_experiment()
+record = controller.complete_experiment()
 ```
 
 #### 1.3 数据存储 (JSONStore)
@@ -104,21 +109,19 @@ record = controller.finish_experiment()
 ```python
 from src.storage.json_store import JSONStore
 
-store = JSONStore(data_dir="data/records")
+store = JSONStore(base_dir="data/records")
 
 # 保存记录
-store.save(record)
+store.save_record(record)
+
+# 列出记录索引（可按 user_id 过滤）
+entries = store.list_records(user_id="user_id", limit=20)
 
 # 加载记录
-record = store.load_by_id("record_id")
-
-# 查询
-records = store.find_by_user("user_id")
-records = store.find_by_experiment("exp_id")
-all_records = store.list_all()
+record = store.load_record(user_id="user_id", record_id=entries[0]["record_id"])
 
 # 删除
-store.delete("record_id")
+store.delete_record(user_id="user_id", record_id=record.record_id)
 ```
 
 #### 1.4 报告生成 (HTMLGenerator)
@@ -195,264 +198,99 @@ missing = checker.check_protection(
 
 ## 2. REST API
 
-### 启动API服务器
+> 说明：REST API 的接口契约与安全默认值请以 `docs/API.md` 与 `/api/docs`（OpenAPI JSON）为准；
+> 本章节只提供开发调用示例，避免多处维护导致文档与实现漂移。
+
+### 启动 API 服务器
 
 ```bash
-# 方法1: 直接运行
+# 方法1: 直接运行（默认绑定 127.0.0.1:8080）
 python -m src.api.server
 
 # 方法2: 使用CLI工具
 python tools/dev_cli.py api start
 
-# 服务器将运行在 http://localhost:8080
+# 如需对外监听请显式配置
+VCL_API_HOST=0.0.0.0 python -m src.api.server
 ```
 
-### API端点
+### 认证（API Key）
 
-#### 2.1 健康检查
+- 默认除 `GET /api/health` 与 `GET /api/docs` 外，均需要 API Key。
+- 请求头任选一种：
 
-```http
-GET /api/health
+```text
+X-API-Key: <your-api-key>
 ```
 
-**响应:**
-```json
-{
-  "status": "healthy",
-  "version": "1.0.0",
-  "timestamp": "2025-10-06T10:30:00"
-}
+或：
+
+```text
+Authorization: Bearer <your-api-key>
 ```
 
-#### 2.2 列出实验
+> 开发环境：未设置 `VCL_API_KEYS` 时，服务会自动生成 key 并写入 `~/.virtualchemlab/api_key.txt`。
 
-```http
-GET /api/experiments
+### CORS（浏览器跨域）
+
+安全默认值：仅允许本机回环 Origin。跨域访问需显式配置 `VCL_API_CORS_ORIGINS`。
+
+### 常用调用示例（curl）
+
+```bash
+# 健康检查（无需认证）
+curl http://127.0.0.1:8080/api/health
+
+# OpenAPI 文档（无需认证）
+curl http://127.0.0.1:8080/api/docs
+
+# 列出实验（需要 API Key）
+curl -H "X-API-Key: <key>" http://127.0.0.1:8080/api/experiments
+
+# 开始实验
+curl -X POST http://127.0.0.1:8080/api/experiments/start \
+  -H "X-API-Key: <key>" \
+  -H "Content-Type: application/json" \
+  -d '{"experiment_id":"titration_naoh_hcl","user_id":"student_001"}'
+
+# 提交步骤
+curl -X POST http://127.0.0.1:8080/api/experiments/submit \
+  -H "X-API-Key: <key>" \
+  -H "Content-Type: application/json" \
+  -d '{"session_id":"<session_id>","data":{"confirmed":true}}'
+
+# 完成实验并生成记录
+curl -X POST http://127.0.0.1:8080/api/experiments/finish \
+  -H "X-API-Key: <key>" \
+  -H "Content-Type: application/json" \
+  -d '{"session_id":"<session_id>"}'
+
+# 列出记录（可选按 user_id 过滤）
+curl -H "X-API-Key: <key>" "http://127.0.0.1:8080/api/records?user_id=student_001"
+
+# 获取单条记录（建议携带 user_id 以避免全量扫描）
+curl -H "X-API-Key: <key>" "http://127.0.0.1:8080/api/records/<record_id>?user_id=student_001"
+
+# 生成报告（写入 reports/<record_id>.html，并返回 path/url）
+curl -X POST http://127.0.0.1:8080/api/reports/generate \
+  -H "X-API-Key: <key>" \
+  -H "Content-Type: application/json" \
+  -d '{"record_id":"<record_id>","format":"html"}'
 ```
 
-**响应:**
-```json
-{
-  "experiments": [
-    {
-      "id": "titration_naoh_hcl",
-      "title": "NaOH滴定HCl实验",
-      "description": "强酸强碱滴定",
-      "difficulty": "beginner",
-      "duration_minutes": 30,
-      "tags": ["titration", "acid-base"]
-    }
-  ],
-  "count": 1
-}
-```
-
-#### 2.3 获取实验详情
-
-```http
-GET /api/experiments/{experiment_id}
-```
-
-**响应:**
-```json
-{
-  "experiment": {
-    "id": "titration_naoh_hcl",
-    "title": "NaOH滴定HCl实验",
-    "steps": [
-      {
-        "id": "step1",
-        "title": "准备工作",
-        "instruction": "准备实验器材",
-        "checkpoint_type": "confirm"
-      }
-    ],
-    "score_rule": {
-      "total_score": 100,
-      "formula": "100 - total_mistakes * 5"
-    }
-  }
-}
-```
-
-#### 2.4 开始实验
-
-```http
-POST /api/experiments/start
-Content-Type: application/json
-
-{
-  "experiment_id": "titration_naoh_hcl",
-  "user_id": "student_001"
-}
-```
-
-**响应:**
-```json
-{
-  "session_id": "student_001_titration_naoh_hcl_1696595400",
-  "experiment_id": "titration_naoh_hcl",
-  "current_step": {
-    "id": "step1",
-    "title": "准备工作",
-    "instruction": "准备实验器材",
-    "checkpoint_type": "confirm"
-  },
-  "progress": {
-    "total_steps": 10,
-    "current_step": 0,
-    "completed_steps": 0,
-    "progress_percent": 0.0
-  }
-}
-```
-
-#### 2.5 提交步骤
-
-```http
-POST /api/experiments/submit
-Content-Type: application/json
-
-{
-  "session_id": "student_001_titration_naoh_hcl_1696595400",
-  "data": {
-    "confirmed": true
-  }
-}
-```
-
-**响应:**
-```json
-{
-  "passed": true,
-  "message": "确认成功!",
-  "score": 10.0,
-  "has_next_step": true,
-  "current_step": {
-    "id": "step2",
-    "title": "下一步骤",
-    ...
-  },
-  "progress": {
-    "total_steps": 10,
-    "current_step": 1,
-    "completed_steps": 1,
-    "progress_percent": 10.0
-  }
-}
-```
-
-#### 2.6 完成实验
-
-```http
-POST /api/experiments/finish
-Content-Type: application/json
-
-{
-  "session_id": "student_001_titration_naoh_hcl_1696595400"
-}
-```
-
-**响应:**
-```json
-{
-  "record_id": "rec_1696595500_abc123",
-  "final_score": 95.0,
-  "total_mistakes": 1,
-  "duration_seconds": 450.5
-}
-```
-
-#### 2.7 列出记录
-
-```http
-GET /api/records?user_id=student_001
-```
-
-**响应:**
-```json
-{
-  "records": [
-    {
-      "id": "rec_1696595500_abc123",
-      "user_id": "student_001",
-      "experiment_id": "titration_naoh_hcl",
-      "final_score": 95.0,
-      "start_time": "2025-10-06T10:30:00",
-      "end_time": "2025-10-06T10:37:30"
-    }
-  ],
-  "count": 1
-}
-```
-
-#### 2.8 生成报告
-
-```http
-POST /api/reports/generate
-Content-Type: application/json
-
-{
-  "record_id": "rec_1696595500_abc123",
-  "format": "html"
-}
-```
-
-**响应:**
-```json
-{
-  "record_id": "rec_1696595500_abc123",
-  "format": "html",
-  "content": "<html>...</html>",
-  "url": "/reports/rec_1696595500_abc123.html"
-}
-```
-
-### 使用Python客户端
+### 使用 Python 客户端
 
 ```python
 from src.api.client import VirtualChemLabClient
 
-# 创建客户端
-client = VirtualChemLabClient("http://localhost:8080")
+client = VirtualChemLabClient("http://127.0.0.1:8080", api_key="<key>")
 
-# 健康检查
 health = client.health_check()
-
-# 列出实验
 experiments = client.list_experiments()
-
-# 开始实验
 session = client.start_experiment("titration_naoh_hcl", "student_001")
-
-# 提交步骤
 result = client.submit_step({"confirmed": True})
-
-# 完成实验
 final_result = client.finish_experiment()
-
-# 生成报告
-report = client.generate_report(final_result['record_id'])
-```
-
-### 使用curl
-
-```bash
-# 健康检查
-curl http://localhost:8080/api/health
-
-# 列出实验
-curl http://localhost:8080/api/experiments
-
-# 开始实验
-curl -X POST http://localhost:8080/api/experiments/start \
-  -H "Content-Type: application/json" \
-  -d '{"experiment_id": "titration_naoh_hcl", "user_id": "student_001"}'
-
-# 提交步骤
-curl -X POST http://localhost:8080/api/experiments/submit \
-  -H "Content-Type: application/json" \
-  -d '{"session_id": "xxx", "data": {"confirmed": true}}'
+report = client.generate_report(final_result["record_id"])
 ```
 
 ---
@@ -728,11 +566,11 @@ VCL_API_HOST=0.0.0.0 python -m src.api.server
 ### 8.2 生产环境
 
 ```bash
-# 使用gunicorn(Linux/Mac)
-gunicorn -w 4 -b 0.0.0.0:8080 src.api.server:app
-
-# 使用waitress(Windows)
-waitress-serve --port=8080 src.api.server:app
+# 当前 REST API 基于 Python 标准库 HTTPServer 实现（非 WSGI/ASGI），
+# 因此不支持 `gunicorn ... src.api.server:app` / `waitress-serve ... src.api.server:app` 这种用法。
+#
+# 推荐做法：直接以进程方式运行，并交由 systemd/supervisor/容器编排 管理。
+ENVIRONMENT=production VCL_API_HOST=0.0.0.0 python -m src.api.server
 ```
 
 ---
@@ -785,5 +623,3 @@ create_assignment(session_id)
 ---
 
 *最后更新: 2025-10-06*
-
-
