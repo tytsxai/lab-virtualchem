@@ -56,6 +56,11 @@
 - `LOG_LEVEL=INFO|WARNING|ERROR`：生产环境最低为 `INFO`（即使配置为 `DEBUG` 也会被抬升）
 - `VCL_BUILD_TIME`/`VCL_BUILD_SHA`/`VCL_BUILD_ID`：构建系统写入，用于日志与探针输出
 
+上线前建议在目标环境执行一次配置事实校验（避免“文档写了/但实际没配”）：
+```bash
+python tools/validate_config.py --env production
+```
+
 ### 2) 启动命令
 
 **GUI**
@@ -68,6 +73,9 @@ ENVIRONMENT=production python main.py
 VCL_API_HOST=127.0.0.1 VCL_API_KEYS=change-me ENVIRONMENT=production python -m src.api.server
 ```
 如需对外提供服务请显式设置 `VCL_API_HOST=0.0.0.0`，并结合防火墙/反向代理做访问控制。
+
+可选：慢连接保护（防止连接长时间占用导致服务卡死）
+- `VCL_API_CONN_TIMEOUT=10`：单连接 socket 超时时间（秒，默认 10）
 
 ### 3) 健康检查/就绪探针
 
@@ -96,6 +104,10 @@ python scripts/restore_backup.py backups/daily/<file>.zip
 # 验证无误后可选择覆盖应用到项目目录（会覆盖同名文件）
 python scripts/restore_backup.py backups/daily/<file>.zip --apply
 ```
+
+安全说明：
+- `restore_backup.py` 会对 zip 成员路径做校验，阻止 `../` 等路径穿越（zip-slip）。
+- `--apply` **仅允许**覆盖运行时可变数据：`data/`、`user_data/`、`config.json`；其余文件会被跳过并提示，避免误覆盖源码/可执行文件。
 
 **建议的回滚流程（最小）**
 - 先停止服务/应用进程

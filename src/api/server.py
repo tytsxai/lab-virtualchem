@@ -144,6 +144,19 @@ class APIRequestHandler(BaseHTTPRequestHandler):
 
         super().__init__(*args, **kwargs)
 
+    def setup(self) -> None:
+        """Set per-connection socket timeout to avoid slowloris / hung reads."""
+        super().setup()
+        raw = (os.getenv("VCL_API_CONN_TIMEOUT") or "").strip()
+        try:
+            timeout = float(raw) if raw else 10.0
+            # Avoid accidental "0" (non-blocking / busy loop) unless explicitly intended.
+            if timeout <= 0:
+                timeout = 10.0
+            self.connection.settimeout(timeout)
+        except Exception:  # noqa: BLE001
+            return
+
     def _set_headers(
         self, status: int = 200, content_type: str = "application/json"
     ) -> None:
@@ -1694,10 +1707,29 @@ class APIServer:
 
 if __name__ == "__main__":
     import os
+    import sys
     from logging.handlers import RotatingFileHandler
+
+    def _install_global_exception_hooks() -> None:
+        root_logger = logging.getLogger("virtualchemlab.api")
+
+        def _handle_unhandled(exc_type, exc, tb):  # noqa: ANN001
+            root_logger.critical("Unhandled exception", exc_info=(exc_type, exc, tb))
+
+        sys.excepthook = _handle_unhandled
+
+        if hasattr(threading, "excepthook"):
+            def _handle_thread(args):  # noqa: ANN001
+                root_logger.critical(
+                    "Unhandled thread exception",
+                    exc_info=(args.exc_type, args.exc_value, args.exc_traceback),
+                )
+
+            threading.excepthook = _handle_thread  # type: ignore[assignment]
 
     # 统一日志配置，带敏感信息过滤
     setup_logger("virtualchemlab.api", logging.INFO)
+    _install_global_exception_hooks()
 
     # 配置访问日志（同样挂载过滤器）
     Path("logs").mkdir(parents=True, exist_ok=True)

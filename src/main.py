@@ -12,6 +12,7 @@ CLI 兼容：
 
 import os
 import sys
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -41,7 +42,27 @@ from . import __version__ as APP_VERSION  # noqa: E402
 # 设置日志
 setup_logger("virtualchemlab", logging.INFO)
 logger = get_logger(__name__)
+std_logger = logging.getLogger(__name__)
 DISPLAY_VERSION = f"v{APP_VERSION}"
+
+def _install_global_exception_hooks() -> None:
+    """Ensure unexpected exceptions are visible in logs (incl. background threads)."""
+
+    root_logger = logging.getLogger("virtualchemlab")
+
+    def _handle_unhandled(exc_type, exc, tb):  # noqa: ANN001
+        root_logger.critical("Unhandled exception", exc_info=(exc_type, exc, tb))
+
+    sys.excepthook = _handle_unhandled
+
+    if hasattr(threading, "excepthook"):
+        def _handle_thread(args):  # noqa: ANN001
+            root_logger.critical(
+                "Unhandled thread exception",
+                exc_info=(args.exc_type, args.exc_value, args.exc_traceback),
+            )
+
+        threading.excepthook = _handle_thread  # type: ignore[assignment]
 
 
 def _apply_cli_environment_overrides(argv: list[str]) -> list[str]:
@@ -76,6 +97,7 @@ def main() -> int:
     Returns:
         退出代码
     """
+    _install_global_exception_hooks()
     sys.argv = _apply_cli_environment_overrides(sys.argv)
     logger.info("=" * 60)
     logger.info("VirtualChemLab - 虚拟化学实验室")
@@ -187,7 +209,7 @@ def main() -> int:
         logger.info("\n⚠️ 用户中断")
         return 0
     except Exception as e:
-        logger.error(f"❌ 应用启动失败: {e}")
+        std_logger.critical("❌ 应用启动失败", exc_info=True)
         return 1
 
 

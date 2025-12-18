@@ -10,11 +10,15 @@ If you need typed/validated app config for startup and DI, use
 """
 
 import json
+import logging
 import os
+import tempfile
 from pathlib import Path
 from typing import Any
 
 from src import __version__ as APP_VERSION
+
+logger = logging.getLogger(__name__)
 
 
 class Config:
@@ -103,21 +107,41 @@ class Config:
             self._deep_merge(self._data, user_config)
             self._normalize_language_codes()
 
-        except Exception:
-            pass  # 加载失败则使用默认配置
+        except Exception as exc:  # noqa: BLE001
+            # 生产环境中静默回退到默认配置会造成“看似正常、实际漂移”的风险。
+            # 这里保持兼容行为（不抛异常），但至少把失败原因写入日志。
+            logger.warning("加载配置失败，已回退到默认配置: %s (%s)", self.config_path, exc)
 
     def save(self) -> None:
         """保存配置到文件"""
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(self.config_path, "w", encoding="utf-8") as f:
-            json.dump(self._data, f, indent=2, ensure_ascii=False)
-        # Best-effort tighten permissions for secrets on POSIX.
-        if os.name == "posix":
-            try:
-                os.chmod(str(self.config_path), 0o600)
-            except Exception:
-                pass
+        tmp_path: Path | None = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                dir=str(self.config_path.parent),
+                delete=False,
+                suffix=".tmp",
+            ) as f:
+                tmp_path = Path(f.name)
+                json.dump(self._data, f, indent=2, ensure_ascii=False)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(str(tmp_path), str(self.config_path))
+            # Best-effort tighten permissions for secrets on POSIX.
+            if os.name == "posix":
+                try:
+                    os.chmod(str(self.config_path), 0o600)
+                except Exception:  # noqa: BLE001
+                    pass
+        finally:
+            if tmp_path is not None and tmp_path.exists():
+                try:
+                    tmp_path.unlink()
+                except Exception:  # noqa: BLE001
+                    pass
 
     def get(self, key: str, default: Any = None) -> Any:
         """获取配置值
