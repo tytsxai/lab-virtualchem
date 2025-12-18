@@ -136,6 +136,20 @@ git commit -m "feat: add amazing feature"
 git push origin feature/amazing-feature
 ```
 
+> 建议：在首次提交前先规范 Git 提交身份，避免历史提交署名不一致影响审计与协作：
+>
+> ```bash
+> git config --global user.name "Your Name"
+> git config --global user.email "you@example.com"
+> ```
+>
+> 如果你需要为不同项目使用不同身份，可去掉 `--global` 改为仅对当前仓库生效：
+>
+> ```bash
+> git config user.name "Your Name"
+> git config user.email "you@example.com"
+> ```
+
 ### 6. 创建Pull Request
 
 1. 访问您的Fork页面
