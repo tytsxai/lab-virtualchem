@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
-from PySide6.QtCore import QPoint, Qt, QTimer, Signal
+from PySide6.QtCore import QCoreApplication, QPoint, Qt, QTimer, Signal
 from PySide6.QtGui import QCursor, QFont
 from PySide6.QtWidgets import (
     QLabel,
@@ -464,7 +464,7 @@ class ContextHelpManager:
             return
 
         if not self.idle_timer:
-            self.idle_timer = QTimer()
+            self.idle_timer = QTimer(QCoreApplication.instance())
             self.idle_timer.timeout.connect(self.check_idle_state)
 
         self.idle_timer.start(5000)  # 每5秒检查一次

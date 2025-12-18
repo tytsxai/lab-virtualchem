@@ -44,7 +44,7 @@ class LogViewerWidget(QWidget):
         self.auto_refresh = False
 
         # 定时刷新
-        self.refresh_timer = QTimer()
+        self.refresh_timer = QTimer(self)
         self.refresh_timer.timeout.connect(self.load_logs)
 
     def init_ui(self):
@@ -159,7 +159,7 @@ class PerformanceMonitorWidget(QWidget):
         self.init_ui()
 
         # 定时更新
-        self.update_timer = QTimer()
+        self.update_timer = QTimer(self)
         self.update_timer.timeout.connect(self.update_metrics)
         self.update_timer.start(1000)  # 每秒更新
 

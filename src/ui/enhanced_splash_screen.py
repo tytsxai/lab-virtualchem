@@ -75,12 +75,12 @@ class EnhancedSplashScreen(QSplashScreen):
         self.init_ui()
 
         # 定时更新提示
-        self.tip_timer = QTimer()
+        self.tip_timer = QTimer(self)
         self.tip_timer.timeout.connect(self.rotate_tip)
         self.tip_timer.start(3000)  # 每3秒更换提示
 
         # 定时更新预估时间
-        self.time_timer = QTimer()
+        self.time_timer = QTimer(self)
         self.time_timer.timeout.connect(self.update_remaining_time)
 
         logger.info("增强启动画面初始化完成")
