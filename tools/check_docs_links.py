@@ -7,8 +7,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-
 LINK_PATTERN = re.compile(r"\]\(([^)]+)\)")
+INLINE_CODE_PATTERN = re.compile(r"`[^`]*`")
 
 
 DEFAULT_ENTRY_DOCS = (
@@ -47,15 +47,16 @@ class MissingLink:
     target: str
 
 
-def _is_ignored_path(path: Path) -> bool:
-    return any(part in IGNORED_DIR_NAMES for part in path.parts)
+def _is_ignored_path(path: Path, ignored_dir_names: set[str] | None = None) -> bool:
+    effective_ignored = ignored_dir_names or IGNORED_DIR_NAMES
+    return any(part in effective_ignored for part in path.parts)
 
 
-def _iter_markdown_files(root: Path) -> list[Path]:
+def _iter_markdown_files(root: Path, ignored_dir_names: set[str] | None = None) -> list[Path]:
     return sorted(
         p
         for p in root.rglob("*.md")
-        if p.is_file() and not _is_ignored_path(p)
+        if p.is_file() and not _is_ignored_path(p, ignored_dir_names=ignored_dir_names)
     )
 
 
@@ -82,13 +83,22 @@ def check_links(markdown_files: list[Path]) -> list[MissingLink]:
     missing: list[MissingLink] = []
 
     for md_path in markdown_files:
+        in_fenced_code_block = False
         try:
             lines = md_path.read_text(encoding="utf-8").splitlines()
         except UnicodeDecodeError:
             lines = md_path.read_text(encoding="utf-8", errors="replace").splitlines()
 
         for idx, line in enumerate(lines, start=1):
-            for raw_target in LINK_PATTERN.findall(line):
+            stripped = line.strip()
+            if stripped.startswith("```") or stripped.startswith("~~~"):
+                in_fenced_code_block = not in_fenced_code_block
+                continue
+            if in_fenced_code_block:
+                continue
+
+            scan_line = INLINE_CODE_PATTERN.sub("", line)
+            for raw_target in LINK_PATTERN.findall(scan_line):
                 resolved = _resolve_target(md_path, raw_target)
                 if resolved is None:
                     continue
@@ -105,12 +115,20 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Scan all Markdown files under the repo (excluding venv/build/dist/etc).",
     )
+    parser.add_argument(
+        "--include-archive",
+        action="store_true",
+        help="Include archive/ historical docs when using --all (default: excluded).",
+    )
     args = parser.parse_args(argv)
 
     root = Path(__file__).resolve().parent.parent
 
     if args.all:
-        markdown_files = _iter_markdown_files(root)
+        ignored = set(IGNORED_DIR_NAMES)
+        if not args.include_archive:
+            ignored.add("archive")
+        markdown_files = _iter_markdown_files(root, ignored_dir_names=ignored)
     else:
         markdown_files = []
         for rel in DEFAULT_ENTRY_DOCS:
@@ -135,4 +153,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

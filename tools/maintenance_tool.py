@@ -11,9 +11,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
-    from PyQt6.QtCore import QSize, Qt, QThread, pyqtSignal
-    from PyQt6.QtGui import QFont
-    from PyQt6.QtWidgets import (
+    from PySide6.QtCore import QSize, Qt, QThread, Signal
+    from PySide6.QtGui import QFont
+    from PySide6.QtWidgets import (
         QApplication,
         QCheckBox,
         QDialog,
@@ -30,10 +30,10 @@ try:
         QWidget,
     )
 
-    HAS_PYQT = True
+    HAS_QT = True
 except ImportError:
-    HAS_PYQT = False
-    print("警告: 未安装PyQt6，GUI功能不可用")
+    HAS_QT = False
+    print("警告: 未安装PySide6，GUI功能不可用")
 
 from src.contracts.maintenance_service import (
     CacheType,
@@ -47,9 +47,9 @@ from src.core.maintenance import MaintenanceServiceImpl
 class MaintenanceWorker(QThread):
     """维护任务工作线程"""
 
-    finished = pyqtSignal(object)  # 完成信号
-    progress = pyqtSignal(str)  # 进度信号
-    error = pyqtSignal(str)  # 错误信号
+    finished = Signal(object)  # 完成信号
+    progress = Signal(str)  # 进度信号
+    error = Signal(str)  # 错误信号
 
     def __init__(self, service: MaintenanceServiceImpl, task_type: str, **kwargs):
         super().__init__()
@@ -497,9 +497,9 @@ class MaintenanceDialog(QDialog):
 
 def main():
     """主函数"""
-    if not HAS_PYQT:
-        print("错误: 需要安装PyQt6才能运行GUI工具")
-        print("请运行: pip install PyQt6")
+    if not HAS_QT:
+        print("错误: 需要安装PySide6才能运行GUI工具")
+        print("请运行: pip install PySide6")
         return
 
     app = QApplication(sys.argv)
