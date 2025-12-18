@@ -28,6 +28,7 @@ _LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1"}
 
 
 def _parse_cors_origins(raw: str) -> str | list[str]:
+    """Parse `VCL_ADMIN_CORS_ORIGINS` into a Flask-CORS compatible value."""
     value = raw.strip()
     if value == "*":
         return "*"
@@ -70,6 +71,8 @@ class AdminAPI:
             raise ValueError(
                 "必须提供管理后台 SECRET_KEY，可通过参数或环境变量 VCL_ADMIN_SECRET_KEY 设置"
             )
+        if len(resolved_secret) < 32:
+            raise ValueError("管理后台密钥长度必须>=32")
         self._admin_secret = resolved_secret
 
         # 创建Flask应用

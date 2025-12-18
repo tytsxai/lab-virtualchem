@@ -1,25 +1,35 @@
-"""REST API服务器
+"""VirtualChemLab REST API server (stdlib `HTTPServer`).
 
-提供HTTP接口用于外部系统集成
+This module intentionally keeps dependencies minimal so the API can run in:
+- local development (no ASGI/WSGI stack required)
+- packaged/desktop environments (where dependency footprint matters)
 
-增强功能:
-1. 微服务架构和API网关
-2. GraphQL查询支持
-3. WebSocket实时通信
-4. API版本管理和兼容性
-5. 高级认证和授权
-6. 请求/响应缓存
-7. API文档自动生成
-8. 监控和性能分析
+**Stable operational endpoints**
+- `GET /api/health`: compatibility health endpoint (no auth)
+- `GET /api/ready`: readiness (templates/storage availability; no auth; 503 on failure)
+- `GET /healthz`: deployment probe (secrets/dirs/disk writable; no auth; 503 on failure)
+- `GET /readyz`: deployment probe (optional DB/cache connectivity; no auth; 503 on failure)
+- `GET /api/docs`: OpenAPI JSON (no auth)
+- `GET /metrics`: Prometheus text format (auth required by default)
+
+**Security defaults (easy-to-misconfigure)**
+- Binds to loopback by default (`VCL_API_HOST=127.0.0.1`)
+- CORS allowlist defaults to loopback-only (`VCL_API_CORS_ORIGINS` must be explicit)
+- API Key required for most endpoints (`VCL_API_KEYS` in production)
+
+Sections mentioning GraphQL/WebSocket exist for future expansion but are currently
+placeholders/experimental and should not be treated as production contracts.
 """
 
 import hashlib
 import json
 import logging
 import os
+import signal
 import threading
 import time
 import uuid
+from collections import deque
 from datetime import datetime, timedelta
 from enum import Enum
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -34,6 +44,9 @@ try:
     WEBSOCKETS_AVAILABLE = True
 except ImportError:
     WEBSOCKETS_AVAILABLE = False
+
+from src import __version__ as APP_VERSION
+from src.core.build_info import get_build_info
 
 from ..core.error_system import (
     BaseAppException,
@@ -54,9 +67,11 @@ logger = logging.getLogger(__name__)
 access_logger = logging.getLogger("api.access")
 
 _LOCAL_ORIGIN_HOSTS = {"localhost", "127.0.0.1", "::1"}
+MIN_SECRET_LENGTH = 32  # keep consistent with core startup_preflight/config_loader
 
 
 def _parse_cors_origins(raw: str) -> list[str]:
+    """Parse comma-separated CORS origin allowlist."""
     return [part.strip() for part in raw.split(",") if part.strip()]
 
 
@@ -81,6 +96,7 @@ def _is_local_origin(origin: str) -> bool:
 
 
 def _is_allowed_origin(origin: str, allowed: list[str]) -> bool:
+    """Return True if origin is allowed by allowlist or is loopback-local."""
     # Exact match first
     if origin in allowed:
         return True
@@ -120,23 +136,11 @@ class APIRequestHandler(BaseHTTPRequestHandler):
     """API请求处理器"""
 
     def __init__(self, *args, **kwargs):
-        # 初始化中间件和限流器
-        self.auth_middleware = None
-        self.rate_limiter = None
-
-        # 新增功能
+        # NOTE: BaseHTTPRequestHandler 会为每次请求创建新实例；
+        # 任何需要跨请求保存的状态必须挂载到 `self.server` 上。
         self.api_version = APIVersion.V2
         self.cache_enabled = True
         self.websocket_enabled = False
-        self.request_cache: dict[str, Any] = {}
-        self.websocket_connections: list[Any] = []
-        self.api_metrics: dict[str, Any] = {
-            "total_requests": 0,
-            "successful_requests": 0,
-            "failed_requests": 0,
-            "average_response_time": 0.0,
-            "endpoints": {},
-        }
 
         super().__init__(*args, **kwargs)
 
@@ -146,6 +150,15 @@ class APIRequestHandler(BaseHTTPRequestHandler):
         """设置响应头"""
         self.send_response(status)
         self.send_header("Content-type", content_type)
+        # 安全基线（对 API/JSON 一般无破坏性）
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("Permissions-Policy", "geolocation=(), microphone=()")
+
+        trace_id = getattr(self, "_current_trace_id", None)
+        if isinstance(trace_id, str) and trace_id:
+            self.send_header("X-Trace-ID", trace_id)
         # CORS：默认仅允许 localhost/127.0.0.1/::1（可通过环境变量显式扩展）
         origin = self.headers.get("Origin")
         allowed_origins_env = (os.getenv("VCL_API_CORS_ORIGINS") or "").strip()
@@ -183,6 +196,9 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             details: 详细信息
             trace_id: 追踪ID
         """
+        if trace_id is None:
+            trace_id = getattr(self, "_current_trace_id", None)
+
         error_response = {
             "success": False,
             "error": {
@@ -211,12 +227,22 @@ class APIRequestHandler(BaseHTTPRequestHandler):
         if not self.cache_enabled:
             return None
 
-        cached = self.request_cache.get(cache_key)
+        request_cache = getattr(self.server, "request_cache", {})
+        cached = request_cache.get(cache_key)
         if cached and datetime.now() < cached["expires_at"]:
+            metrics = getattr(self.server, "api_metrics", None)
+            if isinstance(metrics, dict):
+                metrics["cache_hits_total"] = metrics.get("cache_hits_total", 0) + 1
             return cached["data"]
         elif cached:
             # 缓存过期，删除
-            del self.request_cache[cache_key]
+            try:
+                del request_cache[cache_key]
+            except Exception:  # noqa: BLE001
+                pass
+            metrics = getattr(self.server, "api_metrics", None)
+            if isinstance(metrics, dict):
+                metrics["cache_misses_total"] = metrics.get("cache_misses_total", 0) + 1
 
         return None
 
@@ -237,33 +263,31 @@ class APIRequestHandler(BaseHTTPRequestHandler):
         else:
             return
 
-        self.request_cache[cache_key] = {
+        request_cache = getattr(self.server, "request_cache", None)
+        if not isinstance(request_cache, dict):
+            return
+        request_cache[cache_key] = {
             "data": data,
             "expires_at": expires_at,
             "strategy": strategy.value,
         }
 
-    def _validate_api_key(self, api_key: str) -> bool:
-        """验证API密钥"""
-        # 这里应该实现真实的API密钥验证逻辑
-        # 暂时使用简单的验证
-        valid_keys = ["test_key_123", "production_key_456"]
-        return api_key in valid_keys
-
     def _authenticate_request(self) -> dict[str, Any] | None:
-        """认证请求"""
-        auth_header = self.headers.get("Authorization")
-        api_key = self.headers.get("X-API-Key")
+        """认证请求
 
-        if api_key and self._validate_api_key(api_key):
-            return {"user_id": "api_user", "permissions": ["read", "write"]}
+        为安全起见，不再提供任何默认“测试密钥”；必须通过 AuthMiddleware 校验。
+        """
+        auth = getattr(self.server, "auth_middleware", None)
+        if auth is None or not getattr(auth, "enabled", False):
+            return None
 
-        if auth_header and auth_header.startswith("Bearer "):
-            auth_header[7:]
-            # 这里应该验证JWT token
-            return {"user_id": "token_user", "permissions": ["read"]}
+        api_key = (self.headers.get("X-API-Key") or "").strip() or (
+            self.headers.get("Authorization", "").replace("Bearer ", "").strip()
+        )
+        if not api_key:
+            return None
 
-        return None
+        return auth.verify_api_key(api_key)
 
     def _rate_limit_check(self, _client_ip: str, _endpoint: str) -> bool:
         """检查速率限制"""
@@ -278,46 +302,242 @@ class APIRequestHandler(BaseHTTPRequestHandler):
         self, endpoint: str, method: str, response_time: float, success: bool
     ) -> None:
         """更新API指标"""
-        self.api_metrics["total_requests"] += 1
+        metrics = getattr(self.server, "api_metrics", None)
+        if not isinstance(metrics, dict):
+            return
 
+        metrics["total_requests"] = metrics.get("total_requests", 0) + 1
         if success:
-            self.api_metrics["successful_requests"] += 1
+            metrics["successful_requests"] = metrics.get("successful_requests", 0) + 1
         else:
-            self.api_metrics["failed_requests"] += 1
+            metrics["failed_requests"] = metrics.get("failed_requests", 0) + 1
 
-        # 更新平均响应时间
-        total_time = self.api_metrics["average_response_time"] * (
-            self.api_metrics["total_requests"] - 1
-        )
-        self.api_metrics["average_response_time"] = (
-            total_time + response_time
-        ) / self.api_metrics["total_requests"]
+        durations = getattr(self.server, "request_durations_ms", None)
+        if isinstance(durations, deque):
+            durations.append(float(response_time))
 
-        # 更新端点统计
         endpoint_key = f"{method}:{endpoint}"
-        if endpoint_key not in self.api_metrics["endpoints"]:
-            self.api_metrics["endpoints"][endpoint_key] = {
-                "requests": 0,
-                "successful": 0,
-                "failed": 0,
-                "average_time": 0.0,
-            }
-
-        endpoint_stats = self.api_metrics["endpoints"][endpoint_key]
-        endpoint_stats["requests"] += 1
-
-        if success:
-            endpoint_stats["successful"] += 1
-        else:
-            endpoint_stats["failed"] += 1
-
-        # 更新端点平均时间
-        total_endpoint_time = endpoint_stats["average_time"] * (
-            endpoint_stats["requests"] - 1
+        endpoints = metrics.setdefault("endpoints", {})
+        if not isinstance(endpoints, dict):
+            endpoints = {}
+            metrics["endpoints"] = endpoints
+        endpoint_stats = endpoints.setdefault(
+            endpoint_key,
+            {"requests": 0, "successful": 0, "failed": 0},
         )
-        endpoint_stats["average_time"] = (
-            total_endpoint_time + response_time
-        ) / endpoint_stats["requests"]
+        if isinstance(endpoint_stats, dict):
+            endpoint_stats["requests"] = endpoint_stats.get("requests", 0) + 1
+            if success:
+                endpoint_stats["successful"] = endpoint_stats.get("successful", 0) + 1
+            else:
+                endpoint_stats["failed"] = endpoint_stats.get("failed", 0) + 1
+
+    @staticmethod
+    def _p95(values: list[float]) -> float:
+        if not values:
+            return 0.0
+        values_sorted = sorted(values)
+        idx = int(round(0.95 * (len(values_sorted) - 1)))
+        return float(values_sorted[max(0, min(idx, len(values_sorted) - 1))])
+
+    def _handle_metrics(self, trace_id: str) -> None:
+        """Prometheus 风格指标（默认需认证）"""
+        _ = trace_id
+        metrics = getattr(self.server, "api_metrics", {})
+        durations = getattr(self.server, "request_durations_ms", deque())
+        p95_ms = self._p95(list(durations)[-500:])
+
+        lines = [
+            "# HELP vcl_api_requests_total Total HTTP requests",
+            "# TYPE vcl_api_requests_total counter",
+            f"vcl_api_requests_total {int(metrics.get('total_requests', 0))}",
+            "# HELP vcl_api_request_errors_total Total HTTP errors",
+            "# TYPE vcl_api_request_errors_total counter",
+            f"vcl_api_request_errors_total {int(metrics.get('failed_requests', 0))}",
+            "# HELP vcl_api_rate_limited_total Total rate limited responses (429)",
+            "# TYPE vcl_api_rate_limited_total counter",
+            f"vcl_api_rate_limited_total {int(metrics.get('rate_limited_total', 0))}",
+            "# HELP vcl_api_auth_failed_total Total auth failures (401)",
+            "# TYPE vcl_api_auth_failed_total counter",
+            f"vcl_api_auth_failed_total {int(metrics.get('auth_failed_total', 0))}",
+            "# HELP vcl_api_request_duration_ms_p95 95th percentile request duration (ms)",
+            "# TYPE vcl_api_request_duration_ms_p95 gauge",
+            f"vcl_api_request_duration_ms_p95 {p95_ms:.2f}",
+            "# HELP vcl_api_cache_hits_total API response cache hits",
+            "# TYPE vcl_api_cache_hits_total counter",
+            f"vcl_api_cache_hits_total {int(metrics.get('cache_hits_total', 0))}",
+            "# HELP vcl_api_cache_misses_total API response cache misses",
+            "# TYPE vcl_api_cache_misses_total counter",
+            f"vcl_api_cache_misses_total {int(metrics.get('cache_misses_total', 0))}",
+        ]
+        self.send_response(200)
+        self.send_header("Content-type", "text/plain; version=0.0.4")
+        self.end_headers()
+        self.wfile.write(("\n".join(lines) + "\n").encode("utf-8"))
+
+    def _handle_healthz(self, trace_id: str) -> None:
+        """轻量健康检查：配置/密钥/依赖/磁盘可写"""
+        _ = trace_id
+        build = get_build_info()
+
+        def _env_name(var: str, default: str) -> str:
+            return (os.getenv(var) or default).strip() or default
+
+        jwt_env = _env_name("JWT_SECRET_ENV", "JWT_SECRET_KEY")
+        session_env = _env_name("SESSION_SECRET_ENV", "SESSION_SECRET_KEY")
+        admin_env = _env_name("ADMIN_SECRET_ENV", "VCL_ADMIN_SECRET_KEY")
+
+        def _secret_ok(env_key: str) -> tuple[bool, str]:
+            value = os.getenv(env_key, "")
+            if len(value) >= MIN_SECRET_LENGTH:
+                return True, "ok"
+            return False, f"missing_or_short({env_key})"
+
+        jwt_ok, jwt_msg = _secret_ok(jwt_env)
+        sess_ok, sess_msg = _secret_ok(session_env)
+        # Admin secret is only required when starting the Admin API. For the REST API
+        # process health probe we default to "report-only" to avoid false negatives.
+        require_admin_secret = (os.getenv("VCL_HEALTHZ_REQUIRE_ADMIN_SECRET") or "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        if not require_admin_secret and not (os.getenv(admin_env) or "").strip():
+            admin_ok, admin_msg = True, "skipped"
+        else:
+            admin_ok, admin_msg = _secret_ok(admin_env)
+
+        # 依赖（轻量）：模板目录、存储目录存在
+        engine = getattr(self.server, "template_engine", None)
+        templates_dir = getattr(engine, "templates_dir", None)
+        templates_ok = bool(templates_dir) and Path(str(templates_dir)).exists()
+
+        storage = getattr(self.server, "storage", None)
+        storage_dir = getattr(storage, "base_dir", None)
+        storage_ok = bool(storage_dir) and Path(str(storage_dir)).exists()
+
+        # 磁盘可写：默认在 logs/ 下写入临时文件（可通过 VCL_HEALTH_DIR 覆盖）
+        health_dir = Path((os.getenv("VCL_HEALTH_DIR") or "logs").strip() or "logs")
+        disk_ok = False
+        disk_detail = ""
+        try:
+            health_dir.mkdir(parents=True, exist_ok=True)
+            probe = health_dir / ".healthz_write_probe"
+            with open(probe, "wb") as f:
+                f.write(b"ok\n")
+                f.flush()
+                os.fsync(f.fileno())
+            probe.unlink(missing_ok=True)
+            disk_ok = True
+            disk_detail = str(health_dir)
+        except Exception as exc:  # noqa: BLE001
+            disk_ok = False
+            disk_detail = str(exc)
+
+        checks = {
+            "secrets": {
+                "jwt": {"ok": jwt_ok, "detail": jwt_msg},
+                "session": {"ok": sess_ok, "detail": sess_msg},
+                "admin": {"ok": admin_ok, "detail": admin_msg},
+            },
+            "deps": {
+                "templates_dir": {"ok": templates_ok, "path": str(templates_dir or "")},
+                "storage_dir": {"ok": storage_ok, "path": str(storage_dir or "")},
+            },
+            "disk_writable": {"ok": disk_ok, "detail": disk_detail},
+        }
+
+        ok = all(
+            [
+                jwt_ok,
+                sess_ok,
+                admin_ok,
+                templates_ok,
+                storage_ok,
+                disk_ok,
+            ]
+        )
+        self._send_json(
+            {
+                "status": "ok" if ok else "degraded",
+                "version": build.version,
+                "build": build.as_dict(),
+                "timestamp": datetime.now().isoformat(),
+                "checks": checks,
+            },
+            status=200 if ok else 503,
+        )
+
+    def _handle_readyz(self, trace_id: str) -> None:
+        """就绪探针：可选检查外部依赖（DB/缓存）。"""
+        _ = trace_id
+        build = get_build_info()
+
+        checks: dict[str, Any] = {}
+
+        # DB: 仅在显式开启时探测，避免开发环境无 DB 时误判
+        db_check_enabled = (os.getenv("VCL_READY_CHECK_DB") or "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        db_url = (os.getenv("DATABASE_URL") or "").strip()
+        if db_check_enabled or db_url:
+            ok = False
+            detail = ""
+            try:
+                if db_url.startswith("sqlite:///"):
+                    db_path = db_url.replace("sqlite:///", "", 1)
+                    ok = Path(db_path).exists()
+                    detail = db_path
+                else:
+                    ok = True
+                    detail = "skipped_non_sqlite"
+            except Exception as exc:  # noqa: BLE001
+                ok = False
+                detail = str(exc)
+            checks["db"] = {"ok": ok, "detail": detail}
+        else:
+            checks["db"] = {"ok": True, "detail": "skipped"}
+
+        # Cache/Redis: 仅在 REDIS_ENABLED=true 时检查 socket 可达性
+        redis_enabled = (os.getenv("REDIS_ENABLED") or "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        if redis_enabled:
+            ok = False
+            detail = ""
+            try:
+                import socket
+
+                host = (os.getenv("REDIS_HOST") or "localhost").strip() or "localhost"
+                port = int((os.getenv("REDIS_PORT") or "6379").strip() or "6379")
+                with socket.create_connection((host, port), timeout=1.0):
+                    ok = True
+                    detail = f"{host}:{port}"
+            except Exception as exc:  # noqa: BLE001
+                ok = False
+                detail = str(exc)
+            checks["cache"] = {"ok": ok, "detail": detail}
+        else:
+            checks["cache"] = {"ok": True, "detail": "skipped"}
+
+        ok = all(bool(v.get("ok")) for v in checks.values() if isinstance(v, dict))
+        self._send_json(
+            {
+                "status": "ready" if ok else "not_ready",
+                "version": build.version,
+                "build": build.as_dict(),
+                "timestamp": datetime.now().isoformat(),
+                "checks": checks,
+            },
+            status=200 if ok else 503,
+        )
 
     def _handle_graphql_query(
         self, _query: str, _variables: dict[str, Any]
@@ -422,7 +642,17 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                                             "type": "object",
                                             "properties": {
                                                 "success": {"type": "boolean"},
-                                                "data": {"type": "array"},
+                                                "data": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "experiments": {
+                                                            "type": "array",
+                                                            "items": {"type": "object"},
+                                                        },
+                                                        "count": {"type": "integer"},
+                                                    },
+                                                },
+                                                "trace_id": {"type": "string"},
                                             },
                                         }
                                     }
@@ -527,7 +757,18 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                             "200": {
                                 "description": "成功",
                                 "content": {
-                                    "application/json": {"schema": {"type": "object"}}
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "records": {
+                                                    "type": "array",
+                                                    "items": {"type": "object"},
+                                                },
+                                                "count": {"type": "integer"},
+                                            },
+                                        }
+                                    }
                                 },
                             }
                         },
@@ -555,7 +796,12 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                             "200": {
                                 "description": "成功",
                                 "content": {
-                                    "application/json": {"schema": {"type": "object"}}
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {"record": {"type": "object"}},
+                                        }
+                                    }
                                 },
                             },
                             "404": {"description": "记录不存在"},
@@ -575,7 +821,18 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                             "200": {
                                 "description": "成功",
                                 "content": {
-                                    "application/json": {"schema": {"type": "object"}}
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "record_id": {"type": "string"},
+                                                "format": {"type": "string"},
+                                                "content": {"type": ["string", "null"]},
+                                                "url": {"type": "string"},
+                                                "path": {"type": "string"},
+                                            },
+                                        }
+                                    }
                                 },
                             },
                             "404": {"description": "记录不存在"},
@@ -644,6 +901,9 @@ class APIRequestHandler(BaseHTTPRequestHandler):
         """处理GET请求"""
         start_time = time.time()
         trace_id = self._get_trace_id()
+        self._current_trace_id = trace_id
+        success = True
+        path = ""
 
         try:
             # 记录请求开始(包含追踪ID)
@@ -654,7 +914,11 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             # 应用限流(从服务器获取)
             limiter = getattr(self.server, "rate_limiter", None)
             if limiter and not limiter.is_allowed(self.client_address[0]):
-                self._send_error(429, "请求过于频繁,请稍后再试")
+                metrics = getattr(self.server, "api_metrics", None)
+                if isinstance(metrics, dict):
+                    metrics["rate_limited_total"] = metrics.get("rate_limited_total", 0) + 1
+                success = False
+                self._send_error(429, "请求过于频繁,请稍后再试", trace_id=trace_id)
                 return
 
             parsed = urlparse(self.path)
@@ -662,20 +926,36 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             params = parse_qs(parsed.query)
 
             # 白名单路径(不需要认证)
-            whitelist_paths = ["/api/health", "/api/docs"]
+            whitelist_paths = ["/api/health", "/api/ready", "/api/docs", "/healthz", "/readyz"]
 
-            # 应用认证中间件(除白名单外)
-            if path not in whitelist_paths and hasattr(self.server, "auth_middleware"):
-                api_key = self.headers.get("X-API-Key") or self.headers.get(
-                    "Authorization", ""
-                ).replace("Bearer ", "")
-
-                client_info = self.server.auth_middleware.verify_api_key(api_key)
-                if not client_info:
-                    self._send_error(401, "未授权: 无效的API密钥")
+            # 应用认证中间件(除白名单外)：fail-closed
+            if path not in whitelist_paths:
+                auth = getattr(self.server, "auth_middleware", None)
+                if auth is None or not getattr(auth, "enabled", False):
+                    success = False
+                    self._send_error(503, "认证中间件未启用", trace_id=trace_id)
                     return
 
-                # 附加客户端信息
+                api_key = (self.headers.get("X-API-Key") or "").strip() or (
+                    self.headers.get("Authorization", "").replace("Bearer ", "").strip()
+                )
+                if not api_key:
+                    metrics = getattr(self.server, "api_metrics", None)
+                    if isinstance(metrics, dict):
+                        metrics["auth_failed_total"] = metrics.get("auth_failed_total", 0) + 1
+                    success = False
+                    self._send_error(401, "未授权: 缺少API密钥", trace_id=trace_id)
+                    return
+
+                client_info = auth.verify_api_key(api_key)
+                if not client_info:
+                    metrics = getattr(self.server, "api_metrics", None)
+                    if isinstance(metrics, dict):
+                        metrics["auth_failed_total"] = metrics.get("auth_failed_total", 0) + 1
+                    success = False
+                    self._send_error(401, "未授权: 无效的API密钥", trace_id=trace_id)
+                    return
+
                 self.client_info = client_info
 
             # 路由分发
@@ -693,8 +973,16 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                 self._handle_get_record(record_id, user_id, trace_id)
             elif path == "/api/health":
                 self._handle_health_check(trace_id)
+            elif path == "/api/ready":
+                self._handle_ready_check(trace_id)
             elif path == "/api/docs":
                 self._handle_api_docs(trace_id)
+            elif path == "/healthz":
+                self._handle_healthz(trace_id)
+            elif path == "/readyz":
+                self._handle_readyz(trace_id)
+            elif path == "/metrics":
+                self._handle_metrics(trace_id)
             else:
                 # 使用统一错误系统
                 raise ResourceNotFoundError(
@@ -706,6 +994,7 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                 )
 
         except BaseAppException as e:
+            success = False
             # 应用异常 - 使用统一错误响应
             logger.warning(f"[{trace_id}] API error: {e.error_code.name} - {e.message}")
 
@@ -721,6 +1010,7 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             self._send_exception(e, trace_id)
 
         except Exception as e:
+            success = False
             # 未预期的异常
             logger.error(f"[{trace_id}] Unexpected error: {e}", exc_info=True)
 
@@ -749,19 +1039,33 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             access_logger.info(
                 f"[{trace_id}] GET {self.path} completed in {duration:.2f}ms"
             )
+            try:
+                self._update_metrics(path, "GET", duration, success)
+            except Exception:  # noqa: BLE001
+                pass
 
     def do_POST(self):
         """处理POST请求"""
         start_time = time.time()
+        trace_id = self._get_trace_id()
+        self._current_trace_id = trace_id
+        success = True
+        path = ""
 
         try:
             # 记录请求
-            access_logger.info(f"POST {self.path} from {self.client_address[0]}")
+            access_logger.info(
+                f"[{trace_id}] POST {self.path} from {self.client_address[0]}"
+            )
 
             # 应用限流
             limiter = getattr(self.server, "rate_limiter", None)
             if limiter and not limiter.is_allowed(self.client_address[0]):
-                self._send_error(429, "请求过于频繁,请稍后再试")
+                metrics = getattr(self.server, "api_metrics", None)
+                if isinstance(metrics, dict):
+                    metrics["rate_limited_total"] = metrics.get("rate_limited_total", 0) + 1
+                success = False
+                self._send_error(429, "请求过于频繁,请稍后再试", trace_id=trace_id)
                 return
 
             parsed = urlparse(self.path)
@@ -770,26 +1074,48 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             # 验证Content-Type
             content_type = self.headers.get("Content-Type", "")
             if not content_type.startswith("application/json"):
-                self._send_error(415, "不支持的媒体类型,请使用application/json")
+                success = False
+                self._send_error(
+                    415,
+                    "不支持的媒体类型,请使用application/json",
+                    trace_id=trace_id,
+                )
                 return
 
-            # 应用认证
-            if hasattr(self.server, "auth_middleware"):
-                api_key = self.headers.get("X-API-Key") or self.headers.get(
-                    "Authorization", ""
-                ).replace("Bearer ", "")
+            # 应用认证（POST 全部需认证）：fail-closed
+            auth = getattr(self.server, "auth_middleware", None)
+            if auth is None or not getattr(auth, "enabled", False):
+                success = False
+                self._send_error(503, "认证中间件未启用", trace_id=trace_id)
+                return
 
-                client_info = self.server.auth_middleware.verify_api_key(api_key)
-                if not client_info:
-                    self._send_error(401, "未授权: 无效的API密钥")
-                    return
+            api_key = (self.headers.get("X-API-Key") or "").strip() or (
+                self.headers.get("Authorization", "").replace("Bearer ", "").strip()
+            )
+            if not api_key:
+                metrics = getattr(self.server, "api_metrics", None)
+                if isinstance(metrics, dict):
+                    metrics["auth_failed_total"] = metrics.get("auth_failed_total", 0) + 1
+                success = False
+                self._send_error(401, "未授权: 缺少API密钥", trace_id=trace_id)
+                return
 
-                self.client_info = client_info
+            client_info = auth.verify_api_key(api_key)
+            if not client_info:
+                metrics = getattr(self.server, "api_metrics", None)
+                if isinstance(metrics, dict):
+                    metrics["auth_failed_total"] = metrics.get("auth_failed_total", 0) + 1
+                success = False
+                self._send_error(401, "未授权: 无效的API密钥", trace_id=trace_id)
+                return
+
+            self.client_info = client_info
 
             body = self._parse_body()
 
             if body is None:
-                self._send_error(400, "JSON格式错误")
+                success = False
+                self._send_error(400, "JSON格式错误", trace_id=trace_id)
                 return
 
             # 路由分发
@@ -802,14 +1128,22 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             elif path == "/api/reports/generate":
                 self._handle_generate_report(body)
             else:
-                self._send_error(404, f"路径未找到: {path}")
+                success = False
+                self._send_error(404, f"路径未找到: {path}", trace_id=trace_id)
 
         except Exception as e:
-            logger.error(f"POST request error: {e}", exc_info=True)
-            self._send_error(500, "服务器内部错误")
+            success = False
+            logger.error(f"[{trace_id}] POST request error: {e}", exc_info=True)
+            self._send_error(500, "服务器内部错误", trace_id=trace_id)
         finally:
             duration = (time.time() - start_time) * 1000
-            access_logger.info(f"POST {self.path} completed in {duration:.2f}ms")
+            access_logger.info(
+                f"[{trace_id}] POST {self.path} completed in {duration:.2f}ms"
+            )
+            try:
+                self._update_metrics(path, "POST", duration, success)
+            except Exception:  # noqa: BLE001
+                pass
 
     # ============ 路由处理方法 ============
 
@@ -820,12 +1154,77 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             trace_id: 请求追踪ID（用于日志追踪）
         """
         _ = trace_id  # 保留参数以保持接口统一
+        build = get_build_info()
         self._send_json(
             {
                 "status": "healthy",
-                "version": "1.0.0",
+                "version": APP_VERSION,
+                "build": build.as_dict(),
                 "timestamp": datetime.now().isoformat(),
             }
+        )
+
+    @staticmethod
+    def _is_writable_directory(path: Path) -> bool:
+        try:
+            path.mkdir(parents=True, exist_ok=True)
+            test_file = path / ".write_test"
+            test_file.write_text("ok", encoding="utf-8")
+            test_file.unlink(missing_ok=True)
+            return True
+        except Exception:  # noqa: BLE001
+            return False
+
+    def _handle_ready_check(self, trace_id: str) -> None:
+        """就绪检查（Readiness）
+
+        目标：用于生产部署探针，验证关键依赖路径是否可用。
+        """
+        _ = trace_id
+        build = get_build_info()
+
+        checks: dict[str, Any] = {}
+        ok = True
+
+        # 1) 模板引擎是否可列出实验（可读）
+        engine = getattr(self.server, "template_engine", None)
+        try:
+            if engine is None or not hasattr(engine, "list_available_experiments"):
+                raise RuntimeError("template_engine unavailable")
+            experiments = engine.list_available_experiments()
+            checks["templates"] = {"ok": True, "count": len(experiments or [])}
+        except Exception as exc:  # noqa: BLE001
+            ok = False
+            checks["templates"] = {"ok": False, "error": str(exc)}
+
+        # 2) 存储目录是否可写
+        store = getattr(self.server, "storage", None)
+        base_dir = getattr(store, "base_dir", None)
+        try:
+            if isinstance(base_dir, Path):
+                writable = self._is_writable_directory(base_dir)
+                if not writable:
+                    raise RuntimeError(f"storage not writable: {base_dir}")
+                checks["storage"] = {"ok": True, "path": str(base_dir)}
+            else:
+                # 不强制要求具体存储实现，但必须可用
+                if store is None:
+                    raise RuntimeError("storage unavailable")
+                checks["storage"] = {"ok": True, "type": type(store).__name__}
+        except Exception as exc:  # noqa: BLE001
+            ok = False
+            checks["storage"] = {"ok": False, "error": str(exc)}
+
+        status = 200 if ok else 503
+        self._send_json(
+            {
+                "status": "ready" if ok else "not_ready",
+                "version": APP_VERSION,
+                "build": build.as_dict(),
+                "timestamp": datetime.now().isoformat(),
+                "checks": checks,
+            },
+            status=status,
         )
 
     def _handle_list_experiments(self, trace_id: str) -> None:
@@ -1231,6 +1630,18 @@ class APIServer:
             self.server.template_engine = self.template_engine
             self.server.storage = self.storage
             self.server.sessions = self.sessions
+            self.server.request_cache = {}
+            self.server.api_metrics = {
+                "total_requests": 0,
+                "successful_requests": 0,
+                "failed_requests": 0,
+                "rate_limited_total": 0,
+                "auth_failed_total": 0,
+                "cache_hits_total": 0,
+                "cache_misses_total": 0,
+                "endpoints": {},
+            }
+            self.server.request_durations_ms = deque(maxlen=2000)
 
             # 附加中间件到服务器
             self.server.auth_middleware = self.auth_middleware
@@ -1250,6 +1661,8 @@ class APIServer:
                 f"📚 API Documentation: http://{self.host}:{self.port}/api/docs"
             )
             logger.info(f"💚 Health Check: http://{self.host}:{self.port}/api/health")
+            logger.info(f"💚 Healthz: http://{self.host}:{self.port}/healthz")
+            logger.info(f"✅ Readyz: http://{self.host}:{self.port}/readyz")
             logger.info(
                 f"🔒 认证: {'已启用' if self.auth_middleware.enabled else '已禁用'}"
             )
@@ -1281,12 +1694,19 @@ class APIServer:
 
 if __name__ == "__main__":
     import os
+    from logging.handlers import RotatingFileHandler
 
     # 统一日志配置，带敏感信息过滤
     setup_logger("virtualchemlab.api", logging.INFO)
 
     # 配置访问日志（同样挂载过滤器）
-    access_handler = logging.FileHandler("logs/api_access.log")
+    Path("logs").mkdir(parents=True, exist_ok=True)
+    access_handler = RotatingFileHandler(
+        "logs/api_access.log",
+        maxBytes=10 * 1024 * 1024,
+        backupCount=7,
+        encoding="utf-8",
+    )
     access_handler.addFilter(SensitiveDataFilter())
     access_handler.setFormatter(logging.Formatter("%(asctime)s - %(message)s"))
     access_logger.addHandler(access_handler)
@@ -1294,18 +1714,32 @@ if __name__ == "__main__":
     # 启动服务器 (默认启用认证，需显式配置才可禁用)
     # 默认仅绑定本地回环地址；如需对外提供服务请显式设置 VCL_API_HOST=0.0.0.0
     host = os.getenv("VCL_API_HOST", "127.0.0.1").strip() or "127.0.0.1"
+    # 默认端口：8080。为避免“文档建议改端口但实现不支持”的维护风险，这里提供显式环境变量开关。
+    # 注意：如果将服务暴露到局域网/公网，请确保同时配置 VCL_API_KEYS 并做好网络访问控制。
+    try:
+        port = int((os.getenv("VCL_API_PORT") or "8080").strip())
+    except ValueError:
+        port = 8080
     server = APIServer(
         host=host,
-        port=8080,
+        port=port,
         enable_auth=True,
         enable_rate_limit=True,
     )
     server.start()
 
     try:
-        # 保持运行
-        while True:
+        stop_event = threading.Event()
+
+        def _handle_signal(signum, _frame):  # noqa: ANN001
+            logger.info("⏹️  收到信号 %s，开始优雅退出...", signum)
+            stop_event.set()
+
+        signal.signal(signal.SIGTERM, _handle_signal)
+        signal.signal(signal.SIGINT, _handle_signal)
+
+        # 保持运行（等待 SIGTERM/SIGINT）
+        while not stop_event.is_set():
             time.sleep(1)
-    except KeyboardInterrupt:
-        logger.info("\n⏹️  Shutting down...")
+    finally:
         server.stop()

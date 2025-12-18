@@ -1,6 +1,14 @@
-"""API中间件
+"""REST API middleware helpers (auth / validation / rate limiting).
 
-提供认证、验证、限流等中间件功能
+This module is shared by the stdlib-based REST API server (`src/api/server.py`).
+
+Maintenance-safety notes:
+- `AuthMiddleware` is the only supported API Key verifier; there is intentionally
+  no hard-coded default key.
+- API keys are loaded from `VCL_API_KEYS` (comma-separated). In non-production
+  development, a key can be generated and persisted under the user runtime
+  directory (`~/.virtualchemlab/config.json` + `api_key.txt`) to make local
+  testing easy without weakening production defaults.
 """
 
 import logging
@@ -103,6 +111,9 @@ class AuthMiddleware:
 
         安全默认值：不提供任何硬编码“默认密钥”，避免被浏览器跨站或本地回环攻击复用。
         """
+        environment = (os.getenv("ENVIRONMENT") or "").strip().lower()
+        is_production = environment == "production"
+
         # 1) 环境变量优先（支持多把密钥，用逗号分隔）
         raw = (os.getenv("VCL_API_KEYS") or "").strip()
         if raw:
@@ -125,6 +136,13 @@ class AuthMiddleware:
                 "created_at": datetime.now().isoformat(),
             }
             return
+
+        # 生产环境禁止自动生成/落盘（容器/多副本会导致 key 漂移且难以回收）
+        if is_production:
+            raise RuntimeError(
+                "生产环境必须显式配置 API Key：请设置环境变量 VCL_API_KEYS（可逗号分隔多把）"
+                "或在挂载的用户配置文件中提供 security.api_key。"
+            )
 
         # 3) 没有任何配置 -> 生成随机 key，并保存到用户可写目录
         generated = secrets.token_urlsafe(32)

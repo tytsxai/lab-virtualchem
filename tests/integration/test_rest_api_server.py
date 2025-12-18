@@ -10,6 +10,7 @@ import pytest
 import requests
 import yaml
 
+from src import __version__ as APP_VERSION
 from src.api.server import APIServer
 
 
@@ -21,6 +22,11 @@ def running_api_server(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> str:
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("USERPROFILE", str(tmp_path))
     monkeypatch.setenv("VCL_API_KEYS", "test_api_key")
+    # Probes expect these secrets to exist and be strong enough.
+    monkeypatch.setenv("JWT_SECRET_KEY", "x" * 32)
+    monkeypatch.setenv("SESSION_SECRET_KEY", "y" * 32)
+    monkeypatch.setenv("VCL_ADMIN_SECRET_KEY", "z" * 32)
+    monkeypatch.setenv("VCL_HEALTH_DIR", str(tmp_path / "health"))
 
     config_dir = tmp_path / ".virtualchemlab"
     config_dir.mkdir(parents=True, exist_ok=True)
@@ -232,3 +238,26 @@ def test_rest_api_flow_creates_record_and_report(running_api_server: str) -> Non
     assert report["path"] == str(Path("reports") / f"{record_id}.html")
     assert Path(report["path"]).exists()
 
+
+def test_probes_and_metrics(running_api_server: str) -> None:
+    base_url = running_api_server
+    headers = {"X-API-Key": "test_api_key"}
+
+    healthz = requests.get(f"{base_url}/healthz", timeout=5)
+    assert healthz.status_code == 200
+    payload = healthz.json()
+    assert payload["version"] == APP_VERSION
+    assert payload["build"]["version"] == APP_VERSION
+
+    readyz = requests.get(f"{base_url}/readyz", timeout=5)
+    assert readyz.status_code == 200
+    assert readyz.json()["status"] == "ready"
+
+    metrics_unauth = requests.get(f"{base_url}/metrics", timeout=5)
+    assert metrics_unauth.status_code == 401
+
+    metrics = requests.get(
+        f"{base_url}/metrics", headers=headers, timeout=5
+    )
+    assert metrics.status_code == 200
+    assert "vcl_api_requests_total" in metrics.text

@@ -30,6 +30,7 @@ def test_cors_allows_explicit_allowlist():
 def test_auth_middleware_loads_keys_from_env(monkeypatch, tmp_path: Path):
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("USERPROFILE", str(tmp_path))
+    monkeypatch.setenv("ENVIRONMENT", "production")
     monkeypatch.setenv("VCL_API_KEYS", "k1, k2")
 
     auth = AuthMiddleware(enabled=True)
@@ -45,6 +46,7 @@ def test_auth_middleware_loads_keys_from_env(monkeypatch, tmp_path: Path):
 def test_auth_middleware_generates_key_when_missing(monkeypatch, tmp_path: Path):
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("USERPROFILE", str(tmp_path))
+    monkeypatch.setenv("ENVIRONMENT", "development")
     monkeypatch.delenv("VCL_API_KEYS", raising=False)
 
     auth = AuthMiddleware(enabled=True)
@@ -63,10 +65,28 @@ def test_auth_middleware_generates_key_when_missing(monkeypatch, tmp_path: Path)
 def test_auth_middleware_disabled_has_no_side_effects(monkeypatch, tmp_path: Path):
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("USERPROFILE", str(tmp_path))
+    monkeypatch.setenv("ENVIRONMENT", "production")
     monkeypatch.delenv("VCL_API_KEYS", raising=False)
 
     auth = AuthMiddleware(enabled=False)
     assert auth.verify_api_key("anything")["name"] == "Anonymous"
+
+    config_path = tmp_path / ".virtualchemlab" / "config.json"
+    assert not config_path.exists()
+
+
+def test_auth_middleware_requires_explicit_keys_in_production(monkeypatch, tmp_path: Path):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.delenv("VCL_API_KEYS", raising=False)
+
+    try:
+        AuthMiddleware(enabled=True)
+    except RuntimeError as exc:
+        assert "VCL_API_KEYS" in str(exc)
+    else:  # pragma: no cover
+        raise AssertionError("Expected RuntimeError in production when keys are missing")
 
     config_path = tmp_path / ".virtualchemlab" / "config.json"
     assert not config_path.exists()
