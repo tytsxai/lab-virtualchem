@@ -148,7 +148,7 @@ class CollaborativeSession(QObject):
         }
 
         # 心跳检测
-        self.heartbeat_timer = QTimer()
+        self.heartbeat_timer = QTimer(self)
         self.heartbeat_timer.timeout.connect(self._check_collaborators_status)
         self.heartbeat_timer.start(5000)  # 5秒检测一次
 

@@ -303,9 +303,11 @@ class ThemeOptimizer(QObject):
 class ThemeTransitionManager:
     """主题过渡管理器"""
 
-    def __init__(self):
+    def __init__(self, parent: QObject | None = None):
+        if parent is None:
+            parent = QApplication.instance()
         self._transition_duration_ms = 300
-        self._transition_timer = QTimer()
+        self._transition_timer = QTimer(parent)
         self._transition_timer.timeout.connect(self._update_transition)
         self._transition_timer.setSingleShot(False)
 

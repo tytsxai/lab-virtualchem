@@ -116,7 +116,7 @@ class InteractionOptimizer(QObject):
         self.skill_assessment_threshold = 10
 
         # 定时器
-        self.analysis_timer = QTimer()
+        self.analysis_timer = QTimer(self)
         self.analysis_timer.timeout.connect(self.analyze_patterns)
         self.analysis_timer.start(60000)  # 每分钟分析一次
 
