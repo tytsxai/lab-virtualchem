@@ -8,14 +8,14 @@ data_file = temp/.coverage
 # excluded to avoid inflating denominators with code paths that are not run in
 # headless environments.
 include =
-    src/api/server.py
-    src/api/middleware.py
-    src/core/config_loader.py
-    src/core/startup_preflight.py
-    src/core/build_info.py
-    src/utils/config.py
-    src/utils/logger.py
-    src/storage/json_store.py
+    */src/api/server.py
+    */src/api/middleware.py
+    */src/core/config_loader.py
+    */src/core/startup_preflight.py
+    */src/core/build_info.py
+    */src/utils/config.py
+    */src/utils/logger.py
+    */src/storage/json_store.py
 
 # Exclude large, UI-heavy, or optional modules from the CI coverage gate.
 # The CI job already skips UI tests; omitting these keeps coverage focused on
