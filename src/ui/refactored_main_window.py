@@ -86,7 +86,7 @@ class RefactoredMainWindow(QMainWindow):
         self._current_view: QWidget | None = None
 
         # 初始化定时器
-        self._init_timer = QTimer()
+        self._init_timer = QTimer(self)
         self._init_timer.timeout.connect(self._delayed_initialize)
         self._init_timer.setSingleShot(True)
 

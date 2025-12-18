@@ -166,7 +166,7 @@ class ChemicalReactionSimulator(QObject):
         self.containers: dict[str, dict[str, Any]] = {}
 
         # 反应计时器
-        self.reaction_timer = QTimer()
+        self.reaction_timer = QTimer(self)
         self.reaction_timer.timeout.connect(self._update_reactions)
         self.reaction_timer.setInterval(100)  # 100ms更新一次
 

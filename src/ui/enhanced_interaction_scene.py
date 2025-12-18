@@ -184,7 +184,7 @@ class EnhancedInteractiveScene(InteractiveExperimentScene):
         self.show_hints = True
 
         # 创建提示文本项（待实现）
-        self.hint_timer = QTimer()
+        self.hint_timer = QTimer(self)
         self.hint_timer.setSingleShot(True)
         self.hint_timer.timeout.connect(self._hide_hint)
 

@@ -288,7 +288,7 @@ class FeedbackToast(QWidget):
         """设置动画"""
         # 自动关闭定时器
         if not self.message.persistent and self.message.duration > 0:
-            self.auto_close_timer = QTimer()
+            self.auto_close_timer = QTimer(self)
             self.auto_close_timer.setSingleShot(True)
             self.auto_close_timer.timeout.connect(self.close_toast)
             self.auto_close_timer.start(self.message.duration)
@@ -598,7 +598,7 @@ class StatusBarFeedback:
             self.message_timer.stop()
 
         if duration > 0:
-            self.message_timer = QTimer()
+            self.message_timer = QTimer(self.status_bar)
             self.message_timer.setSingleShot(True)
             self.message_timer.timeout.connect(lambda: self.status_bar.clearMessage())
             self.message_timer.start(duration)
