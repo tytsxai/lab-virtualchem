@@ -19,3 +19,27 @@ omit =
     src/mobile/*
     src/plugins/*
     src/voice/*
+
+# Explicitly scope measurement and reporting to headless-critical modules that
+# have CI coverage. This keeps the gate meaningful without pulling in UI-only
+# stacks.
+include =
+    src/api/server.py
+    src/api/middleware.py
+    src/core/config_loader.py
+    src/core/startup_preflight.py
+    src/core/build_info.py
+    src/utils/config.py
+    src/utils/logger.py
+    src/storage/json_store.py
+
+[report]
+include =
+    src/api/server.py
+    src/api/middleware.py
+    src/core/config_loader.py
+    src/core/startup_preflight.py
+    src/core/build_info.py
+    src/utils/config.py
+    src/utils/logger.py
+    src/storage/json_store.py
