@@ -472,8 +472,8 @@ class VisualEffects:
                     current_color.setAlpha(alpha)
                     particle.setBrush(QBrush(current_color))
 
-            # 定时器
-            timer = QTimer()
+            # 定时器：绑定 parent，避免视图提前销毁后仍触发 timeout
+            timer = QTimer(view)
             timer.timeout.connect(animate_particles)
             timer.start(50)  # 20 FPS
 
@@ -483,7 +483,8 @@ class VisualEffects:
                 view.deleteLater()
                 scene.deleteLater()
 
-            QTimer.singleShot(2000, cleanup)  # 2秒后清理
+            # 绑定 receiver，若 view 已销毁则不会再回调 cleanup
+            QTimer.singleShot(2000, view, cleanup)  # 2秒后清理
 
             logger.debug(f"创建粒子效果: {particle_count} 个粒子")
 
@@ -542,8 +543,8 @@ class VisualEffects:
                     particle.setBrush(QBrush(current_color))
                     particle.setPen(QPen(QColor(100, 150, 255, alpha)))
 
-            # 定时器
-            timer = QTimer()
+            # 定时器：绑定 parent，避免 scene 生命周期结束后仍触发 timeout
+            timer = QTimer(scene)
             timer.timeout.connect(update_trail)
             timer.start(30)  # 30ms 更新一次
 
@@ -552,10 +553,9 @@ class VisualEffects:
                 timer.stop()
                 for particle in trail_particles:
                     scene.removeItem(particle)
-                    # QGraphicsItem 没有 deleteLater()，使用 del
-                    scene.removeItem(particle)
 
-            QTimer.singleShot(1000, cleanup)  # 1秒后清理
+            # 绑定 receiver，若 scene 已销毁则不会再回调 cleanup
+            QTimer.singleShot(1000, scene, cleanup)  # 1秒后清理
 
             logger.debug(f"创建拖尾效果: 长度 {trail_length}")
 

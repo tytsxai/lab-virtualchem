@@ -133,7 +133,7 @@ class PerformanceMonitor(QDialog):
 
     def setup_timer(self):
         """设置定时器"""
-        self.timer = QTimer()
+        self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_stats)
         self.timer.start(2000)  # 每2秒更新一次
 

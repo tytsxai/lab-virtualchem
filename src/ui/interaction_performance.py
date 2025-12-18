@@ -144,14 +144,16 @@ class InteractionPerformanceMonitor(QObject):
 class DebounceHelper:
     """防抖动辅助类"""
 
-    def __init__(self, delay_ms: int = 300):
+    def __init__(self, delay_ms: int = 300, parent: QObject | None = None):
         """
         Args:
             delay_ms: 防抖延迟（毫秒）
+            parent: Qt 父对象（可选，用于自动销毁定时器）
         """
         self.delay_ms = delay_ms
         self.timer: QTimer | None = None
         self.callback: Callable | None = None
+        self._parent = parent
 
     def debounce(self, callback: Callable):
         """防抖动执行
@@ -163,7 +165,7 @@ class DebounceHelper:
             self.timer.stop()
 
         self.callback = callback
-        self.timer = QTimer()
+        self.timer = QTimer(self._parent)
         self.timer.setSingleShot(True)
         self.timer.timeout.connect(self._execute)
         self.timer.start(self.delay_ms)
@@ -178,15 +180,17 @@ class DebounceHelper:
 class ThrottleHelper:
     """节流辅助类"""
 
-    def __init__(self, interval_ms: int = 100):
+    def __init__(self, interval_ms: int = 100, parent: QObject | None = None):
         """
         Args:
             interval_ms: 节流间隔（毫秒）
+            parent: Qt 父对象（可选，用于自动销毁定时器）
         """
         self.interval_ms = interval_ms
         self.last_exec_time = 0.0
         self.pending_callback: Callable | None = None
         self.timer: QTimer | None = None
+        self._parent = parent
 
     def throttle(self, callback: Callable):
         """节流执行
@@ -207,7 +211,7 @@ class ThrottleHelper:
 
         if not self.timer or not self.timer.isActive():
             delay = int(self.interval_ms - (now - self.last_exec_time))
-            self.timer = QTimer()
+            self.timer = QTimer(self._parent)
             self.timer.setSingleShot(True)
             self.timer.timeout.connect(self._execute_pending)
             self.timer.start(delay)
@@ -223,16 +227,23 @@ class ThrottleHelper:
 class BatchUpdateHelper:
     """批量更新辅助类"""
 
-    def __init__(self, batch_size: int = 10, delay_ms: int = 16):
+    def __init__(
+        self,
+        batch_size: int = 10,
+        delay_ms: int = 16,
+        parent: QObject | None = None,
+    ):
         """
         Args:
             batch_size: 批量大小
             delay_ms: 延迟时间（默认16ms = 60fps）
+            parent: Qt 父对象（可选，用于自动销毁定时器）
         """
         self.batch_size = batch_size
         self.delay_ms = delay_ms
         self.pending_updates: list[Callable] = []
         self.timer: QTimer | None = None
+        self._parent = parent
 
     def add_update(self, update_func: Callable):
         """添加更新
@@ -249,7 +260,7 @@ class BatchUpdateHelper:
 
         # 否则，延迟执行
         if not self.timer or not self.timer.isActive():
-            self.timer = QTimer()
+            self.timer = QTimer(self._parent)
             self.timer.setSingleShot(True)
             self.timer.timeout.connect(self.flush)
             self.timer.start(self.delay_ms)
