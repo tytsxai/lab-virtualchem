@@ -170,7 +170,7 @@ class UserFeedbackSystem(QObject):
         self.improvement_suggestions_enabled = True
 
         # 定时器
-        self.analysis_timer = QTimer()
+        self.analysis_timer = QTimer(self)
         self.analysis_timer.timeout.connect(self.analyze_trends)
         self.analysis_timer.start(300000)  # 5分钟分析一次
 

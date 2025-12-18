@@ -181,7 +181,7 @@ class PerformanceMonitorDialog(QDialog):
         self.apply_theme()
 
         # 启动实时更新
-        self.update_timer = QTimer()
+        self.update_timer = QTimer(self)
         self.update_timer.timeout.connect(self.update_display)
         self.update_timer.start(1000)  # 1秒更新一次
 

@@ -39,12 +39,12 @@ class IntegrationManager(QObject):
         self.scene: InteractiveExperimentScene | None = None
 
         # 优化定时器
-        self.optimization_timer = QTimer()
+        self.optimization_timer = QTimer(self)
         self.optimization_timer.timeout.connect(self._perform_optimization)
         self.optimization_timer.start(300000)  # 5分钟
 
         # 缓存清理定时器
-        self.cache_cleanup_timer = QTimer()
+        self.cache_cleanup_timer = QTimer(self)
         self.cache_cleanup_timer.timeout.connect(self._cleanup_cache)
         self.cache_cleanup_timer.start(600000)  # 10分钟
 

@@ -294,7 +294,7 @@ class SmoothScroller:
 
     def __init__(self, target_widget: QWidget):
         self.target_widget = target_widget
-        self._scroll_timer = QTimer()
+        self._scroll_timer = QTimer(target_widget)
         self._scroll_timer.timeout.connect(self._scroll_step)
         self._scroll_timer.setSingleShot(False)
 
