@@ -435,7 +435,7 @@ class GamePhysicsScene(QGraphicsScene):
         self.gravity_enabled = True
         self.collision_enabled = True
         self.physics_speed = 1.0
-        self.physics_timer = QTimer()
+        self.physics_timer = QTimer(self)
         self.physics_timer.timeout.connect(self.update_physics)
         self.physics_timer.setInterval(self._physics_interval_ms)
         # 注意：定时器采用“按需启动”，避免场景空闲时仍以 60FPS 空转发热
