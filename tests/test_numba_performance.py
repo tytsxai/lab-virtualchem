@@ -2,11 +2,34 @@
 """
 Numba性能对比测试
 对比原始版本和Numba加速版本的性能差异
+
+维护安全说明：
+- 本文件更接近“基准测试脚本”而不是稳定的单元测试。
+- Numba 在首次运行时会触发 JIT 编译；在某些 CI / 沙箱 / 不同平台组合下，
+  该编译过程可能导致解释器崩溃（例如 SIGSEGV/SIGBUS），从而让 `pytest` 变得不可靠。
+- 因此：当作为 pytest 测试收集时，本文件默认跳过；需要显式设置开关才会执行。
+
+开启方式（在 pytest 下执行）：
+    VCL_ENABLE_NUMBA_PERF_TESTS=1 pytest -q tests/test_numba_performance.py
+
+直接作为脚本运行（不经过 pytest）：
+    python tests/test_numba_performance.py
 """
 
+import os
 import sys
 import time
 from pathlib import Path
+
+# 当在 pytest 环境中运行时，默认跳过此“性能/基准”用例，避免 JIT 崩溃导致整套测试不可用。
+# 这里通过 `pytest` 是否已被导入来判断“是否处于 pytest 收集/执行阶段”。
+if "pytest" in sys.modules and os.getenv("VCL_ENABLE_NUMBA_PERF_TESTS") != "1":
+    import pytest  # noqa: E402
+
+    pytest.skip(
+        "Numba 性能基准测试默认跳过；如需运行请设置 VCL_ENABLE_NUMBA_PERF_TESTS=1",
+        allow_module_level=True,
+    )
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent

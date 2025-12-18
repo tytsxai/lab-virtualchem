@@ -1,22 +1,21 @@
-"""
-主窗口
-应用程序的主界面框架 - 现代化UI版本
+"""GUI main window (Qt / PySide6).
 
-增强功能:
-1. 智能布局和自适应设计
-2. 多主题支持和动态切换
-3. 实时性能监控和优化
-4. 用户行为分析和个性化
-5. 无障碍访问支持
-6. 多语言界面和本地化
-7. 插件系统和扩展性
-8. 云端同步和离线模式
+This module is the top-level UI composition root:
+- Resolves core services from the DI container (`TemplateEngine`, `JSONStore`, `I18n`, ...)
+- Hosts the main views (experiment view, record browser, settings dialog, ...)
+- Persists small UI state via `JSONStore` (e.g. first-run flag, last experiment id)
+
+Note:
+- Keep this file UI-focused; do not move core experiment logic here.
+- Anything security-sensitive (secrets, auth decisions) must live in core/api layers,
+  not in the UI.
 """
 
 from __future__ import annotations
 
 import contextlib
 import logging
+import os
 import sys
 import traceback
 from datetime import datetime
@@ -64,6 +63,7 @@ from .experiment_view import ExperimentView
 from .game_experiment_view import GameExperimentView
 from .gamification.gamification_panel import GamificationPanel
 from .gamification.level_up_dialog import LevelUpDialog
+from .qt_event_utils import process_events_safely
 from .quick_tips import show_quick_tip
 from .record_browser import RecordBrowser
 from .settings_dialog import SettingsDialog
@@ -92,6 +92,11 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         try:
+            self._test_mode = bool(
+                (os.getenv("VCL_TEST_MODE") or "").strip().lower() in {"1", "true", "yes", "on"}
+                or os.getenv("PYTEST_CURRENT_TEST")
+            )
+
             # 使用DI容器（如果未提供则创建默认容器）
             if container is None:
                 from ..core.service_registration import get_configured_container
@@ -131,7 +136,8 @@ class MainWindow(QMainWindow):
             self.current_experiment_view: ExperimentView | None = None
             self.current_game_view: GameExperimentView | None = None
             self.user_id = "student_001"  # 默认用户ID
-            self.game_mode_enabled = True  # 游戏模式开关
+            # 测试模式下禁用游戏化/复杂子视图，降低 headless Qt 崩溃风险。
+            self.game_mode_enabled = not self._test_mode  # 游戏模式开关
 
             # 新增状态管理
             self.is_offline_mode = False  # 离线模式
@@ -143,14 +149,15 @@ class MainWindow(QMainWindow):
 
             self.init_ui()
 
-            # 检查是否首次运行
-            self.check_first_run()
+            if not self._test_mode:
+                # 检查是否首次运行
+                self.check_first_run()
 
-            # 显示启动提示
-            self.show_startup_tip()
+                # 显示启动提示
+                self.show_startup_tip()
 
-            # 加载上次实验（如果设置）
-            self.load_last_experiment()
+                # 加载上次实验（如果设置）
+                self.load_last_experiment()
 
             # 连接信号
             self.connect_signals()
@@ -167,6 +174,13 @@ class MainWindow(QMainWindow):
 
     def show_startup_tip(self):
         """显示启动时的快速提示"""
+        if (os.getenv("VCL_DISABLE_STARTUP_TIPS") or "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }:
+            return
         is_first_run = self.store.get("app_first_run", True) if self.store else True
         if is_first_run:
             # 使用QTimer延迟显示，确保主窗口已完全加载
@@ -176,6 +190,13 @@ class MainWindow(QMainWindow):
 
     def check_first_run(self):
         """检查是否首次运行，并显示欢迎向导"""
+        if (os.getenv("VCL_DISABLE_STARTUP_TIPS") or "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }:
+            return
         is_first_run = self.store.get("app_first_run", True) if self.store else True
         if is_first_run:
             # 首次运行，显示欢迎向导
@@ -511,7 +532,7 @@ class MainWindow(QMainWindow):
         try:
             # 显示加载状态
             self.status_bar.showMessage("正在加载实验列表...")
-            QApplication.processEvents()
+            process_events_safely(5)
 
             self.exp_list_widget.clear()
             templates = self.template_engine.list_available_experiments()

@@ -6,7 +6,7 @@ Pytest 全局配置
 
 import asyncio
 import inspect
-
+from pathlib import Path
 
 # 一些子项目自带的测试文件会与主项目的测试入口重名，
 # 比如 `tools/chemlab_integration/tests/test_converters.py`，
@@ -28,6 +28,19 @@ collect_ignore = [
 def pytest_configure(config):
     """注册额外的markers，避免第三方插件缺失导致的警告"""
     config.addinivalue_line("markers", "asyncio: 标记异步测试")
+
+    # 覆盖率数据文件使用 `temp/.coverage`（见 `.coveragerc`）。
+    # 当上一次 pytest 进程异常退出（例如 segfault/bus error）时，该文件可能损坏，
+    # 导致后续运行直接报错 "no such table: tracer" 并把总覆盖率记为 0。
+    #
+    # 维护安全策略：每次测试运行都从干净的 coverage 文件开始。
+    coverage_path = Path("temp") / ".coverage"
+    if coverage_path.exists():
+        try:
+            coverage_path.unlink()
+        except OSError:
+            # 不因清理失败阻断测试；pytest-cov 仍可能覆盖该文件
+            pass
 
 
 def pytest_pyfunc_call(pyfuncitem):

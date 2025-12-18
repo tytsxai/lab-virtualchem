@@ -396,6 +396,7 @@ def setup_logger(
     max_bytes: int = 10 * 1024 * 1024,  # 10MB
     backup_count: int = 5,
     enable_console: bool = True,
+    replace_handlers: bool = False,
 ) -> logging.Logger:
     """配置日志器（优化版本）
 
@@ -414,6 +415,15 @@ def setup_logger(
     resolved_level = _resolve_log_level(level)
     logger.setLevel(resolved_level)
     log_file_path = Path(log_file).expanduser().resolve() if log_file else None
+
+    if replace_handlers and logger.handlers:
+        for handler in list(logger.handlers):
+            try:
+                handler.flush()
+                handler.close()
+            except Exception:  # noqa: BLE001
+                pass
+            logger.removeHandler(handler)
 
     # 格式化器
     formatter = logging.Formatter(

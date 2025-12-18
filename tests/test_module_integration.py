@@ -1,11 +1,23 @@
 """
 模块间集成测试
 验证修复后的模块互通性
+
+维护安全说明：
+- 该文件会构建完整的 DI 容器（`configure_container()`），并可能触发后台线程/定时任务。
+- 在 pytest 的“整套测试”执行顺序中，后台线程与全局单例可能导致非确定性崩溃。
+- 为保证测试套件稳定性，本模块默认开启测试降级开关：
+  - `VCL_DISABLE_BACKGROUND_THREADS=1`：禁用后台线程
+  - `VCL_TEST_MODE=1`：让部分组件在测试环境降级运行
 """
 
+import os
 import unittest
 from typing import Any
 from unittest.mock import Mock
+
+# 在导入项目模块前就设置，确保 configure_container 读取到正确的开关。
+os.environ.setdefault("VCL_DISABLE_BACKGROUND_THREADS", "1")
+os.environ.setdefault("VCL_TEST_MODE", "1")
 
 from src.core.curve_generator import CurveGenerator
 from src.core.event_bus import Event, EventPriority

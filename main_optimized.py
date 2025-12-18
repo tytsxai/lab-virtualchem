@@ -110,9 +110,12 @@ def main():
     print("\n[5/5] 启动应用...")
 
     try:
+        from src.ui.qt_sanity import ensure_single_qt_binding
+
+        ensure_single_qt_binding(abort=True)
         # 导入Qt（这是启动时必需的）
-        from PySide6.QtWidgets import QApplication
         from PySide6.QtCore import Qt
+        from PySide6.QtWidgets import QApplication
 
         # 设置Qt属性
         if hasattr(Qt, 'AA_EnableHighDpiScaling'):

@@ -2,6 +2,9 @@
 测试配置文件
 """
 
+from __future__ import annotations
+
+import os
 import sys
 import time
 from collections.abc import Callable
@@ -10,11 +13,23 @@ from typing import Any
 
 import pytest
 
+# Headless safety: ensure Qt uses an offscreen backend before importing PySide6.
+# This avoids common segfault/bus-error crashes in CI or sandboxed environments.
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+os.environ.setdefault("QT_OPENGL", "software")
+
+# Make tests deterministic and avoid background threads/timers that can crash
+# in headless Qt environments.
+os.environ.setdefault("VCL_TEST_MODE", "1")
+os.environ.setdefault("VCL_DISABLE_BACKGROUND_THREADS", "1")
+os.environ.setdefault("VCL_DISABLE_STARTUP_TIPS", "1")
+
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from PySide6.QtCore import QEventLoop, QTimer  # noqa: E402
+from PySide6.QtTest import QTest  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
 
@@ -89,13 +104,13 @@ class SimpleQtBot:
         self._widgets.append(widget)
 
     def wait(self, ms: int) -> None:
-        end_time = time.monotonic() + ms / 1000
-        while time.monotonic() < end_time:
-            self._app.processEvents()
-            time.sleep(0.001)
+        # QTest.qWait processes the Qt event loop safely in the main thread.
+        QTest.qWait(ms)
 
     def waitExposed(self, widget, timeout: int = 200) -> None:
-        widget.repaint()
+        # In offscreen mode there is no "exposed" window; just let events settle.
+        # Avoid forcing repaint on complex widgets (OpenGL) which may crash headless.
+        _ = widget
         self.wait(timeout)
 
     def waitSignal(self, signal, timeout: int = 1000) -> _SignalBlocker:

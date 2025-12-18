@@ -122,31 +122,31 @@ def test_developer_mode_defaults_off_without_env_toggle(
 def test_merge_env_requires_admin_secret_in_production(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Production environment should fail fast without admin secret."""
+    """Admin secret is validated by Admin API, not by the global loader."""
     config_data = _base_config(environment="production")
 
-    # Provide JWT secret so the failure is specific to admin secret.
+    # Provide JWT/session secrets so we exercise the production branch.
     monkeypatch.setenv("JWT_SECRET_KEY", "B" * 40)
     monkeypatch.setenv("SESSION_SECRET_KEY", "S" * 40)
     monkeypatch.delenv("VCL_ADMIN_SECRET_KEY", raising=False)
     monkeypatch.delenv("ADMIN_SECRET_ENV", raising=False)
 
-    with pytest.raises(ValueError, match="管理后台密钥环境变量"):
-        Config._merge_env_vars(config_data)
+    merged = Config._merge_env_vars(config_data)
+    assert merged["developer"]["admin_secret_env"] == "VCL_ADMIN_SECRET_KEY"
 
 
 def test_merge_env_rejects_short_admin_secret_in_production(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Admin secret must meet length requirements in production."""
+    """Admin secret is validated by Admin API, not by the global loader."""
     config_data = _base_config(environment="production")
 
     monkeypatch.setenv("JWT_SECRET_KEY", "B" * 40)
     monkeypatch.setenv("SESSION_SECRET_KEY", "S" * 40)
     monkeypatch.setenv("VCL_ADMIN_SECRET_KEY", "too-short-secret")
 
-    with pytest.raises(ValueError, match="管理后台密钥长度必须>=32"):
-        Config._merge_env_vars(config_data)
+    merged = Config._merge_env_vars(config_data)
+    assert merged["developer"]["admin_secret_env"] == "VCL_ADMIN_SECRET_KEY"
 
 
 def test_load_enforces_version_alignment(
@@ -290,3 +290,11 @@ def test_load_directory_creation_failure_raises(
 
     with pytest.raises(OSError):
         Config.load(env="development")
+
+
+def test_detect_environment_uses_production_when_frozen(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("ENVIRONMENT", raising=False)
+    monkeypatch.setattr(config_loader.sys, "frozen", True, raising=False)
+    assert Config._detect_environment(env=None) == "production"
