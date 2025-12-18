@@ -9,7 +9,7 @@ from __future__ import annotations
 import importlib.util
 import os
 import sys
-from typing import Iterable
+from collections.abc import Iterable
 
 
 def _is_installed(module_name: str) -> bool:
@@ -80,4 +80,3 @@ def warn_if_qt_path_polluted() -> str | None:
         f"Environment variable {key} is set; if you see random Qt crashes, "
         "try launching with a clean environment to avoid loading mismatched Qt libraries."
     )
-
