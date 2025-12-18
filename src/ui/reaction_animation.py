@@ -324,6 +324,9 @@ class AnimatedContainer(QGraphicsPixmapItem):
     def start_bubble_effect(self) -> None:
         """开始气泡效果"""
         self.showing_bubbles = True
+        # QGraphicsItem 不是 QObject，无法作为 parent；尽量绑定到所属 scene，避免无主定时器长期存活。
+        if self.bubble_timer.parent() is None and self.scene() is not None:
+            self.bubble_timer.setParent(self.scene())
         self.bubble_timer.start()
 
     def stop_bubble_effect(self) -> None:
@@ -333,7 +336,14 @@ class AnimatedContainer(QGraphicsPixmapItem):
 
     def _create_bubbles(self) -> None:
         """创建气泡"""
-        if self.showing_bubbles and self.scene():
+        scene = self.scene()
+        if not scene:
+            # 物体已不在场景中，停止定时器避免空转与潜在回调风险
+            self.bubble_timer.stop()
+            self.showing_bubbles = False
+            return
+
+        if self.showing_bubbles:
             # 在容器底部创建气泡
             rect = self.boundingRect()
             x = rect.center().x()

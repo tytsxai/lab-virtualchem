@@ -240,7 +240,7 @@ class ExperimentPlayer(QObject):
         self.start_time = 0.0
 
         # 播放定时器
-        self.playback_timer = QTimer()
+        self.playback_timer = QTimer(self)
         self.playback_timer.timeout.connect(self._on_playback_tick)
 
         # 动作处理器
@@ -452,7 +452,7 @@ class RecorderControlWidget(QWidget):
         layout.addLayout(btn_layout)
 
         # 时间更新定时器
-        self.time_timer = QTimer()
+        self.time_timer = QTimer(self)
         self.time_timer.timeout.connect(self._update_time_display)
 
     def _connect_signals(self) -> None:
