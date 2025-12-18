@@ -19,6 +19,39 @@ from src.utils.logger import get_logger  # noqa: E402
 
 logger = get_logger("admin_server")
 
+_DEFAULT_LICENSE_SECRET_ENV = "LICENSE_SECRET_KEY"
+
+
+def resolve_license_secret(config: dict[Any, Any], environment: str) -> str:
+    """Resolve license signing secret from env/config placeholder.
+
+    `config/crypto_payment_config.json` stores `license.secret_key` as a `${VAR}`
+    placeholder; production must provide that env var.
+    """
+
+    raw = config.get("license", {}).get("secret_key", "")
+    raw_str = str(raw).strip()
+
+    env_name = _DEFAULT_LICENSE_SECRET_ENV
+    if raw_str.startswith("${") and raw_str.endswith("}") and len(raw_str) > 3:
+        env_name = raw_str[2:-1].strip() or env_name
+
+    secret = (os.getenv(env_name) or "").strip()
+    if not secret:
+        message = f"未设置 {env_name}（用于许可证签名/校验）"
+        if environment == "production":
+            raise ValueError(f"{message}，生产环境禁止使用默认/占位值")
+        logger.warning("%s，将使用配置中的占位值，许可证校验可能失败。", message)
+        return raw_str
+
+    if secret.startswith("YOUR_") or "change" in secret.lower() or len(secret) < 32:
+        message = f"{env_name} 长度不足或仍为占位值，请提供>=32位的生产密钥"
+        if environment == "production":
+            raise ValueError(message)
+        logger.warning("%s（当前为非生产环境，将继续运行）", message)
+
+    return secret
+
 
 def load_config() -> dict[Any, Any]:
     """加载配置"""
@@ -57,7 +90,8 @@ def main() -> None:
     # 参数优先级: 命令行 > 配置文件 > 默认值
     host = args.host or config.get("admin_api", {}).get("host", "127.0.0.1")
     port = args.port or config.get("admin_api", {}).get("port", 5000)
-    secret_key = config.get("license", {}).get("secret_key", "default_secret_key")
+    environment = os.getenv("ENVIRONMENT", "development").strip() or "development"
+    secret_key = resolve_license_secret(config, environment=environment)
 
     admin_secret_env = config.get("developer", {}).get("admin_secret_env", "VCL_ADMIN_SECRET_KEY")
     admin_secret = (
@@ -65,12 +99,36 @@ def main() -> None:
         or os.getenv(admin_secret_env)
         or os.getenv("VCL_ADMIN_SECRET_KEY")
     )
-    environment = os.getenv("ENVIRONMENT", "development")
     if not admin_secret:
         if environment == "production":
             raise ValueError(f"生产环境必须设置管理后台密钥 ({admin_secret_env})")
         admin_secret = secrets.token_urlsafe(48)
-        logger.warning("未提供管理后台密钥，在%s环境生成临时密钥（仅当前会话有效）", environment)
+        os.environ.setdefault(admin_secret_env, admin_secret)
+
+        # 与 API Key 行为保持一致：不在日志中打印密钥本体，仅写入用户目录供本机调试
+        secret_dir = Path.home() / ".virtualchemlab"
+        secret_path = secret_dir / "admin_secret.txt"
+        try:
+            secret_dir.mkdir(parents=True, exist_ok=True)
+            secret_path.write_text(admin_secret + "\n", encoding="utf-8")
+            try:
+                os.chmod(secret_path, 0o600)
+            except Exception:
+                pass
+
+            logger.warning(
+                "未提供管理后台密钥，在%s环境生成临时密钥并写入 %s（仅当前会话有效）；"
+                "请在管理面板右上角输入该值。",
+                environment,
+                str(secret_path),
+            )
+        except Exception:
+            logger.warning(
+                "未提供管理后台密钥，在%s环境生成临时密钥（仅当前会话有效）；"
+                "请通过 --admin-secret 或环境变量 %s 提供。",
+                environment,
+                admin_secret_env,
+            )
 
     license_file = Path(args.license_file) if args.license_file else PROJECT_ROOT / "data" / "license.json"
 
@@ -97,16 +155,6 @@ def main() -> None:
         logger.info(f"📊 管理面板: http://{host}:{port}/dashboard")
         logger.info(f"🔌 API地址: http://{host}:{port}/api")
         logger.info("\n按 Ctrl+C 停止服务器\n")
-
-        # 添加静态文件路由（管理面板）
-        @api.app.route("/dashboard")
-        def dashboard() -> tuple[str, int] | str:
-            """管理面板"""
-            dashboard_file = PROJECT_ROOT / "src" / "api" / "admin_dashboard.html"
-            if dashboard_file.exists():
-                with open(dashboard_file, encoding="utf-8") as f:
-                    return f.read()
-            return "管理面板未找到", 404
 
         # 启动服务器
         api.run(debug=args.debug)
