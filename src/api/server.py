@@ -23,6 +23,7 @@ import uuid
 from datetime import datetime, timedelta
 from enum import Enum
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
@@ -396,6 +397,19 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                         },
                     }
                 },
+                "/api/docs": {
+                    "get": {
+                        "summary": "OpenAPI 文档(JSON)",
+                        "responses": {
+                            "200": {
+                                "description": "成功",
+                                "content": {
+                                    "application/json": {"schema": {"type": "object"}}
+                                },
+                            }
+                        },
+                    }
+                },
                 "/api/experiments": {
                     "get": {
                         "summary": "获取实验列表",
@@ -414,6 +428,157 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                                     }
                                 },
                             }
+                        },
+                    }
+                },
+                "/api/experiments/{experiment_id}": {
+                    "get": {
+                        "summary": "获取实验详情",
+                        "parameters": [
+                            {
+                                "name": "experiment_id",
+                                "in": "path",
+                                "required": True,
+                                "schema": {"type": "string"},
+                            }
+                        ],
+                        "responses": {
+                            "200": {
+                                "description": "成功",
+                                "content": {
+                                    "application/json": {"schema": {"type": "object"}}
+                                },
+                            },
+                            "404": {"description": "实验不存在"},
+                        },
+                    }
+                },
+                "/api/experiments/start": {
+                    "post": {
+                        "summary": "开始实验",
+                        "requestBody": {
+                            "required": True,
+                            "content": {
+                                "application/json": {"schema": {"type": "object"}}
+                            },
+                        },
+                        "responses": {
+                            "201": {
+                                "description": "成功",
+                                "content": {
+                                    "application/json": {"schema": {"type": "object"}}
+                                },
+                            }
+                        },
+                    }
+                },
+                "/api/experiments/submit": {
+                    "post": {
+                        "summary": "提交当前步骤",
+                        "requestBody": {
+                            "required": True,
+                            "content": {
+                                "application/json": {"schema": {"type": "object"}}
+                            },
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "成功",
+                                "content": {
+                                    "application/json": {"schema": {"type": "object"}}
+                                },
+                            },
+                            "404": {"description": "会话不存在"},
+                        },
+                    }
+                },
+                "/api/experiments/finish": {
+                    "post": {
+                        "summary": "完成实验并生成记录",
+                        "requestBody": {
+                            "required": True,
+                            "content": {
+                                "application/json": {"schema": {"type": "object"}}
+                            },
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "成功",
+                                "content": {
+                                    "application/json": {"schema": {"type": "object"}}
+                                },
+                            },
+                            "404": {"description": "会话不存在"},
+                        },
+                    }
+                },
+                "/api/records": {
+                    "get": {
+                        "summary": "列出实验记录",
+                        "parameters": [
+                            {
+                                "name": "user_id",
+                                "in": "query",
+                                "required": False,
+                                "schema": {"type": "string"},
+                            }
+                        ],
+                        "responses": {
+                            "200": {
+                                "description": "成功",
+                                "content": {
+                                    "application/json": {"schema": {"type": "object"}}
+                                },
+                            }
+                        },
+                    }
+                },
+                "/api/records/{record_id}": {
+                    "get": {
+                        "summary": "获取实验记录详情",
+                        "parameters": [
+                            {
+                                "name": "record_id",
+                                "in": "path",
+                                "required": True,
+                                "schema": {"type": "string"},
+                            },
+                            {
+                                "name": "user_id",
+                                "in": "query",
+                                "required": False,
+                                "schema": {"type": "string"},
+                                "description": "可选：指定 user_id 以避免全量扫描",
+                            },
+                        ],
+                        "responses": {
+                            "200": {
+                                "description": "成功",
+                                "content": {
+                                    "application/json": {"schema": {"type": "object"}}
+                                },
+                            },
+                            "404": {"description": "记录不存在"},
+                        },
+                    }
+                },
+                "/api/reports/generate": {
+                    "post": {
+                        "summary": "生成实验报告",
+                        "requestBody": {
+                            "required": True,
+                            "content": {
+                                "application/json": {"schema": {"type": "object"}}
+                            },
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "成功",
+                                "content": {
+                                    "application/json": {"schema": {"type": "object"}}
+                                },
+                            },
+                            "404": {"description": "记录不存在"},
                         },
                     }
                 },
@@ -524,7 +689,8 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                 self._handle_list_records(user_id, trace_id)
             elif path.startswith("/api/records/"):
                 record_id = path.split("/")[-1]
-                self._handle_get_record(record_id, trace_id)
+                user_id = params.get("user_id", [None])[0]
+                self._handle_get_record(record_id, user_id, trace_id)
             elif path == "/api/health":
                 self._handle_health_check(trace_id)
             elif path == "/api/docs":
@@ -688,6 +854,19 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                 user_message="无法加载实验列表，请稍后重试",
             ) from e
 
+    @staticmethod
+    def _serialize_step(step: Any) -> dict[str, Any]:
+        check = getattr(step, "check", None)
+        check_type = getattr(check, "type", None)
+        if hasattr(check_type, "value"):
+            check_type = check_type.value
+        return {
+            "id": getattr(step, "id", ""),
+            "text": getattr(step, "text", ""),
+            "check_type": check_type,
+            "safety_level": getattr(step, "safety_level", None),
+        }
+
     def _handle_get_experiment(self, exp_id: str, trace_id: str) -> None:
         """获取实验详情
 
@@ -706,25 +885,25 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                         "id": template.id,
                         "title": template.title,
                         "description": template.description,
-                        "difficulty": template.difficulty,
-                        "duration_minutes": template.duration_minutes,
-                        "steps": [
+                        "category": getattr(template, "category", ""),
+                        "level": getattr(template, "level", ""),
+                        "difficulty": getattr(template, "difficulty", None)
+                        or getattr(template, "level", None),
+                        "duration_min": getattr(template, "duration_min", None),
+                        "version": getattr(template, "version", None),
+                        "steps": [self._serialize_step(step) for step in template.steps],
+                        "score_rules": [
                             {
-                                "id": step.id,
-                                "title": step.title,
-                                "instruction": step.instruction,
-                                "checkpoint_type": step.checkpoint.type,
+                                "when": getattr(rule, "when", None),
+                                "then": getattr(rule, "then", None),
                             }
-                            for step in template.steps
+                            for rule in getattr(template, "score_rules", []) or []
                         ],
-                        "score_rule": {
-                            "total_score": template.score_rule.total_score,
-                            "formula": template.score_rule.formula,
-                        },
                     }
                 }
             )
-        except FileNotFoundError:
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("加载实验详情失败: %s", exc, exc_info=True)
             self._send_error(404, f"Experiment not found: {exp_id}")
 
     def _handle_start_experiment(self, body: dict[str, Any]) -> None:
@@ -741,11 +920,15 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             template = engine.load_experiment_by_id(exp_id)
 
             # 创建控制器
-            controller = ExperimentController(template, user_id)
+            controller = ExperimentController(
+                template=template,
+                user_id=user_id,
+                storage=getattr(self.server, "storage", None),
+            )
             controller.start_experiment()
 
             # 保存会话
-            session_id = f"{user_id}_{exp_id}_{datetime.now().timestamp()}"
+            session_id = getattr(controller, "session_id", None) or str(uuid.uuid4())
             self.server.sessions[session_id] = controller
 
             current_step = controller.get_current_step()
@@ -756,10 +939,18 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                     "experiment_id": exp_id,
                     "current_step": (
                         {
-                            "id": current_step.id,
-                            "title": current_step.title,
-                            "instruction": current_step.instruction,
-                            "checkpoint_type": current_step.checkpoint.type,
+                            "id": getattr(current_step, "id", ""),
+                            "text": getattr(current_step, "text", ""),
+                            "check_type": (
+                                current_step.check.type.value
+                                if getattr(current_step, "check", None)
+                                and hasattr(current_step.check.type, "value")
+                                else (
+                                    current_step.check.type
+                                    if getattr(current_step, "check", None)
+                                    else None
+                                )
+                            ),
                         }
                         if current_step
                         else None
@@ -786,30 +977,37 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             return
 
         try:
-            passed, message, score = controller.submit_step(user_data)
+            before_index = getattr(controller, "current_step_index", None)
+            result = controller.submit_step(user_data)
+            passed = bool(getattr(result, "is_valid", False))
+            message = str(getattr(result, "message", ""))
 
-            # 如果通过,自动前进到下一步
-            has_next = False
-            if passed:
-                has_next = controller.next_step()
+            after_index = getattr(controller, "current_step_index", before_index)
+            has_next = bool(passed and before_index is not None and after_index != before_index)
 
-            current_step = controller.get_current_step()
+            current_step = None if getattr(controller, "is_completed", lambda: False)() else controller.get_current_step()
+
+            mistake = getattr(result, "mistake", None)
+            mistake_payload: dict[str, Any] | None = None
+            if mistake is not None:
+                mistake_payload = {
+                    "step_id": getattr(mistake, "step_id", None),
+                    "error_type": getattr(mistake, "error_type", None),
+                    "description": getattr(mistake, "description", None),
+                    "hint": getattr(mistake, "hint", None),
+                    "severity": getattr(mistake, "severity", None),
+                }
 
             self._send_json(
                 {
                     "passed": passed,
                     "message": message,
-                    "score": score,
+                    "errors": getattr(result, "errors", []) or [],
+                    "warnings": getattr(result, "warnings", []) or [],
+                    "mistake": mistake_payload,
                     "has_next_step": has_next,
                     "current_step": (
-                        {
-                            "id": current_step.id,
-                            "title": current_step.title,
-                            "instruction": current_step.instruction,
-                            "checkpoint_type": current_step.checkpoint.type,
-                        }
-                        if current_step
-                        else None
+                        self._serialize_step(current_step) if current_step else None
                     ),
                     "progress": controller.get_progress(),
                 }
@@ -831,23 +1029,32 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             return
 
         try:
-            record = controller.finish_experiment()
+            record = controller.complete_experiment()
 
-            # 保存记录
-            store = self.server.storage
-            store.save(record)
+            # 保存记录（优先使用 JSONStore.save_record）
+            store = getattr(self.server, "storage", None)
+            saved = False
+            if store is not None:
+                save_record = getattr(store, "save_record", None)
+                if callable(save_record):
+                    saved = bool(save_record(record))
+                else:
+                    save_generic = getattr(store, "save", None)
+                    if callable(save_generic):
+                        saved = bool(save_generic(f"records/{record.user_id}/{record.record_id}", record))
 
             # 清理会话
             del self.server.sessions[session_id]
 
+            if store is not None and not saved:
+                logger.warning("实验记录保存失败: record_id=%s", getattr(record, "record_id", None))
+
             self._send_json(
                 {
-                    "record_id": record.id,
+                    "record_id": record.record_id,
                     "final_score": record.final_score,
-                    "total_mistakes": len(record.mistakes),
-                    "duration_seconds": (
-                        record.end_time - record.start_time
-                    ).total_seconds(),
+                    "total_mistakes": record.total_mistakes,
+                    "duration_seconds": record.total_duration_seconds,
                 }
             )
         except Exception as e:
@@ -862,80 +1069,81 @@ class APIRequestHandler(BaseHTTPRequestHandler):
         """
         _ = trace_id  # 保留参数以保持接口统一
         try:
-            store = self.server.storage
-            records = store.list_all()
+            store = getattr(self.server, "storage", None)
+            if store is None or not hasattr(store, "list_records"):
+                self._send_error(500, "Storage backend does not support list_records")
+                return
 
-            # 按用户ID过滤
-            if user_id:
-                records = [r for r in records if r.user_id == user_id]
-
-            self._send_json(
+            entries = store.list_records(user_id=user_id)
+            records = [
                 {
-                    "records": [
-                        {
-                            "id": r.id,
-                            "user_id": r.user_id,
-                            "experiment_id": r.experiment_id,
-                            "final_score": r.final_score,
-                            "start_time": r.start_time.isoformat(),
-                            "end_time": r.end_time.isoformat() if r.end_time else None,
-                        }
-                        for r in records
-                    ],
-                    "count": len(records),
+                    "id": entry.get("record_id"),
+                    "user_id": entry.get("user_id"),
+                    "experiment_id": entry.get("experiment_id"),
+                    "experiment_title": entry.get("experiment_title"),
+                    "final_score": entry.get("final_score"),
+                    "start_time": entry.get("started_at"),
+                    "end_time": entry.get("finished_at"),
+                    "status": entry.get("status"),
                 }
-            )
+                for entry in entries
+            ]
+
+            self._send_json({"records": records, "count": len(records)})
         except Exception as e:
             self._send_error(500, f"Failed to list records: {str(e)}")
 
-    def _handle_get_record(self, record_id: str, trace_id: str) -> None:
+    def _find_record_owner(self, record_id: str) -> str | None:
+        store = getattr(self.server, "storage", None)
+        if store is None or not hasattr(store, "list_records"):
+            return None
+        try:
+            entries = store.list_records(user_id=None)
+        except Exception:  # noqa: BLE001
+            return None
+        for entry in entries:
+            if entry.get("record_id") == record_id and entry.get("user_id"):
+                return str(entry["user_id"])
+        return None
+
+    def _load_record(self, record_id: str, user_id: str | None = None) -> Any | None:
+        store = getattr(self.server, "storage", None)
+        if store is None:
+            return None
+        load_record = getattr(store, "load_record", None)
+        if not callable(load_record):
+            return None
+
+        resolved_user = user_id or self._find_record_owner(record_id)
+        if not resolved_user:
+            return None
+        return load_record(resolved_user, record_id)
+
+    def _handle_get_record(
+        self, record_id: str, user_id: str | None, trace_id: str
+    ) -> None:
         """获取记录详情
 
         Args:
             record_id: 记录ID
+            user_id: 用户ID（可选，用于加速查找）
             trace_id: 请求追踪ID（用于日志追踪）
         """
         _ = trace_id  # 保留参数以保持接口统一
         try:
-            store = self.server.storage
-            record = store.load_by_id(record_id)
+            record = self._load_record(record_id, user_id=user_id)
 
-            if not record:
+            if record is None:
                 self._send_error(404, f"Record not found: {record_id}")
                 return
 
-            self._send_json(
-                {
-                    "record": {
-                        "id": record.id,
-                        "user_id": record.user_id,
-                        "experiment_id": record.experiment_id,
-                        "final_score": record.final_score,
-                        "start_time": record.start_time.isoformat(),
-                        "end_time": record.end_time.isoformat()
-                        if record.end_time
-                        else None,
-                        "step_records": [
-                            {
-                                "step_id": sr.step_id,
-                                "passed": sr.passed,
-                                "score": sr.score,
-                                "timestamp": sr.timestamp.isoformat(),
-                            }
-                            for sr in record.step_records
-                        ],
-                        "mistakes": [
-                            {
-                                "step_id": m.step_id,
-                                "user_input": m.user_input,
-                                "expected": m.expected,
-                                "timestamp": m.timestamp.isoformat(),
-                            }
-                            for m in record.mistakes
-                        ],
-                    }
-                }
+            # UserRecord 是 pydantic 模型，优先使用 model_dump 输出可 JSON 化的数据
+            payload = (
+                record.model_dump(mode="json")
+                if hasattr(record, "model_dump")
+                else record
             )
+            self._send_json({"record": payload})
         except Exception as e:
             self._send_error(500, f"Failed to get record: {str(e)}")
 
@@ -949,10 +1157,8 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             return
 
         try:
-            store = self.server.storage
-            record = store.load_by_id(record_id)
-
-            if not record:
+            record = self._load_record(record_id)
+            if record is None:
                 self._send_error(404, f"Record not found: {record_id}")
                 return
 
@@ -960,9 +1166,12 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             engine = self.server.template_engine
             template = engine.load_experiment_by_id(record.experiment_id)
 
-            # 生成报告
+            # 生成报告（默认写入 reports/ 目录，便于桌面/本地环境查看）
             generator = HTMLGenerator()
-            html_content = generator.generate(record, template)
+            report_path = Path("reports") / f"{record_id}.html"
+            report_path.parent.mkdir(parents=True, exist_ok=True)
+
+            html_content = generator.generate(record, template, output_path=report_path)
 
             self._send_json(
                 {
@@ -970,6 +1179,7 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                     "format": format_type,
                     "content": html_content if format_type == "html" else None,
                     "url": f"/reports/{record_id}.html",
+                    "path": str(report_path),
                 }
             )
         except Exception as e:
@@ -1056,6 +1266,7 @@ class APIServer:
         if self.server:
             logger.info("Stopping API server...")
             self.server.shutdown()
+            self.server.server_close()
             self.server = None
             logger.info("API server stopped")
 
