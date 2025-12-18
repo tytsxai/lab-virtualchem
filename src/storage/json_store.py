@@ -1,22 +1,23 @@
-"""
-JSON存储引擎
-使用JSON文件存储用户实验记录，提供兼容IStorage的键值访问能力
+"""JSON 文件存储（记录 + 键值）.
 
-增强功能:
-1. 数据压缩和加密存储
-2. 增量备份和版本控制
-3. 数据完整性校验
-4. 多级缓存和性能优化
-5. 数据迁移和同步
-6. 数据分析和统计
-7. 数据清理和归档
-8. 云端同步支持
+本模块承担两类落盘职责：
+
+1) **实验记录**：以 `UserRecord` 为核心，把每次实验过程/结果保存为 JSON 文件。
+2) **轻量键值**：提供与 `IStorage` 兼容的 `save/load/delete/list_keys`，用于偏好设置、
+   首次运行标记等“小而多”的状态。
+
+维护安全注意：
+- 写入采用“临时文件 + fsync + rename”的原子策略，避免断电/崩溃导致 JSON 破损。
+- `StorageMode`/`DataIntegrityLevel` 中部分枚举值是“预留/扩展点”，并非都已实现
+  （例如加密/云同步）；请以方法实现为准，而不要只看枚举名。
 """
 
 import dataclasses
 import hashlib
 import json
+import os
 import shutil
+import tempfile
 import zlib
 from collections.abc import Iterable
 from datetime import datetime, timedelta
@@ -38,8 +39,8 @@ class StorageMode(Enum):
 
     STANDARD = "standard"  # 标准模式
     COMPRESSED = "compressed"  # 压缩模式
-    ENCRYPTED = "encrypted"  # 加密模式
-    CLOUD_SYNC = "cloud_sync"  # 云端同步模式
+    ENCRYPTED = "encrypted"  # 预留：加密模式（当前未实现真正加密）
+    CLOUD_SYNC = "cloud_sync"  # 预留：云端同步模式（当前未实现）
 
 
 class DataIntegrityLevel(Enum):
@@ -128,9 +129,7 @@ class JSONStore:
                 "metadata": metadata or {},
                 "saved_at": datetime.utcnow().isoformat(),
             }
-
-            with open(filepath, "w", encoding="utf-8") as f:
-                json.dump(payload, f, ensure_ascii=False, indent=2)
+            self._atomic_write_json(filepath, payload)
 
             # 缓存命中
             cache_key = str(filepath)
@@ -139,6 +138,47 @@ class JSONStore:
         except Exception as e:  # noqa: BLE001
             logger.error(f"保存键值数据失败({key}): {e}")
             return False
+
+    @staticmethod
+    def _fsync_dir(path: Path) -> None:
+        """Best-effort fsync directory for durability (POSIX)."""
+        try:
+            if os.name != "posix":
+                return
+            fd = os.open(str(path), os.O_RDONLY)
+            try:
+                os.fsync(fd)
+            finally:
+                os.close(fd)
+        except Exception:  # noqa: BLE001
+            return
+
+    @classmethod
+    def _atomic_write_json(cls, path: Path, data: Any) -> None:
+        """原子写入 + fsync，避免断电/崩溃导致 JSON 破损。"""
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path: Path | None = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                dir=str(path.parent),
+                delete=False,
+                suffix=".tmp",
+            ) as f:
+                tmp_path = Path(f.name)
+                json.dump(data, f, ensure_ascii=False, indent=2)
+                f.flush()
+                os.fsync(f.fileno())
+
+            os.replace(str(tmp_path), str(path))
+            cls._fsync_dir(path.parent)
+        finally:
+            if tmp_path is not None and tmp_path.exists():
+                try:
+                    tmp_path.unlink()
+                except Exception:  # noqa: BLE001
+                    pass
 
     def load(self, key: str) -> Any | None:
         """加载任意键值数据"""
@@ -566,8 +606,7 @@ class JSONStore:
         index_file = self._get_index_file(user_id)
 
         try:
-            with open(index_file, "w", encoding="utf-8") as f:
-                json.dump(index_data, f, ensure_ascii=False, indent=2)
+            self._atomic_write_json(index_file, index_data)
         except Exception as e:
             logger.error(f"保存索引文件失败: {e}")
             raise
@@ -603,19 +642,7 @@ class JSONStore:
             user_dir = self._get_user_dir(record.user_id)
             filename = self._generate_filename(record)
             filepath = user_dir / filename
-            temp_filepath = filepath.with_suffix(".tmp")
-
-            # 先写入临时文件
-            try:
-                with open(temp_filepath, "w", encoding="utf-8") as f:
-                    json.dump(
-                        record.model_dump(mode="json"), f, ensure_ascii=False, indent=2
-                    )
-            except Exception as e:
-                logger.error(f"写入临时文件失败: {e}")
-                if temp_filepath.exists():
-                    temp_filepath.unlink()
-                raise
+            payload = record.model_dump(mode="json")
 
             # 备份旧文件(如果存在)
             if filepath.exists():
@@ -629,13 +656,10 @@ class JSONStore:
                 except Exception as e:
                     logger.warning(f"备份旧文件失败: {e}")
 
-            # 原子性重命名
             try:
-                temp_filepath.replace(filepath)
+                self._atomic_write_json(filepath, payload)
             except Exception as e:
-                logger.error(f"文件重命名失败: {e}")
-                if temp_filepath.exists():
-                    temp_filepath.unlink()
+                logger.error(f"写入记录文件失败: {e}")
                 raise
 
             # 更新索引
@@ -963,8 +987,7 @@ class JSONStore:
             config[key] = value
 
             # 保存配置
-            with open(config_file, "w", encoding="utf-8") as f:
-                json.dump(config, f, ensure_ascii=False, indent=2)
+            self._atomic_write_json(config_file, config)
 
         except Exception as e:
             logger.error(f"保存配置失败: {e}")

@@ -1,7 +1,12 @@
-"""
-数据库管理器
-提供统一的数据访问接口，使用SQLAlchemy ORM
-性能提升：10-50倍相比JSON文件
+"""Database access layer (SQLAlchemy).
+
+This module provides an optional persistence backend (SQLite by default).
+It is primarily used for scenarios where JSON file storage (`JSONStore`) becomes
+too slow or needs relational querying.
+
+Maintenance-safety notes:
+- SQLite is configured with WAL + `check_same_thread=False` for multithreaded use.
+- Treat `DATABASE_URL`/db path changes as data migration concerns.
 """
 
 import logging
@@ -9,7 +14,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import and_, create_engine, func
+from sqlalchemy import and_, create_engine, event, func
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import QueuePool
 
@@ -67,6 +72,7 @@ class DatabaseManager:
             pool_pre_ping=True,  # 连接池预检测
             connect_args={"check_same_thread": False},  # SQLite多线程支持
         )
+        self._configure_sqlite_pragmas()
 
         # 创建会话工厂
         self.SessionLocal = sessionmaker(
@@ -80,6 +86,21 @@ class DatabaseManager:
         self._init_database_version()
 
         logger.info(f"数据库管理器初始化完成: {db_path}")
+
+    def _configure_sqlite_pragmas(self) -> None:
+        """配置 SQLite 性能/一致性策略（WAL + 同步策略）"""
+
+        @event.listens_for(self.engine, "connect")
+        def _set_sqlite_pragma(dbapi_connection, _connection_record):  # type: ignore[no-redef]
+            try:
+                cursor = dbapi_connection.cursor()
+                cursor.execute("PRAGMA journal_mode=WAL;")
+                cursor.execute("PRAGMA synchronous=NORMAL;")
+                cursor.execute("PRAGMA foreign_keys=ON;")
+                cursor.execute("PRAGMA busy_timeout=5000;")
+                cursor.close()
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("SQLite PRAGMA 设置失败: %s", exc)
 
     def _init_database_version(self):
         """初始化数据库版本"""
