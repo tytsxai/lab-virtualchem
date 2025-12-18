@@ -1,3 +1,9 @@
+"""Cache manager (in-memory with optional Redis backend).
+
+The in-memory cache tracks entry metadata (timestamps, access counts) so
+different eviction strategies (LRU/LFU/FIFO/TTL) can be applied consistently.
+"""
+
 import hashlib
 import json
 import logging
@@ -15,8 +21,6 @@ try:
 except ImportError:
     REDIS_AVAILABLE = False
     redis = None  # type: ignore
-
-"""智能缓存管理器"""
 
 logger = logging.getLogger(__name__)
 

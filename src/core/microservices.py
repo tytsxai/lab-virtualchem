@@ -1,3 +1,9 @@
+"""Microservices-oriented primitives (registry, client helpers).
+
+This is a generic utility module that models service registration/health checks.
+It does not imply that VirtualChemLab is deployed as microservices by default.
+"""
+
 import asyncio
 import logging
 import threading
@@ -24,8 +30,6 @@ try:
 except ImportError:
     REQUESTS_AVAILABLE = False
     requests = None
-
-"""微服务架构"""
 
 logger = logging.getLogger(__name__)
 

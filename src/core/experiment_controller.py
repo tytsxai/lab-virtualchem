@@ -1,14 +1,17 @@
-"""实验控制器 - 管理实验流程与状态
+"""Experiment flow controller (core business logic).
 
-增强功能:
-1. 智能错误恢复和重试机制
-2. 实验进度持久化和恢复
-3. 实时性能监控和优化建议
-4. 多用户协作支持
-5. 实验数据分析和学习建议
-6. 自适应难度调整
-7. 安全检查和风险评估
-8. 实验回放和重放功能
+`ExperimentController` is the authoritative state machine for an experiment:
+
+- Validates and advances steps (`submit_step`, `next_step`, `previous_step`)
+- Maintains runtime session state (`session_id`, current step index, timings)
+- Produces a `UserRecord` (step records + scoring summary) for persistence/reporting
+- Optionally integrates with monitoring hooks (when available)
+
+Maintenance-safety notes (easy-to-break behaviors):
+- `template.steps` must be non-empty; controller fails fast otherwise.
+- `user_id` must be a non-empty string (many storage/index paths depend on it).
+- Some “enhanced” capabilities exist behind optional imports; do not assume they
+  are always available in minimal installs or CI.
 """
 
 import logging
@@ -95,7 +98,12 @@ class StepResult:
 
 
 class ExperimentController:
-    """实验流程控制器"""
+    """实验流程控制器（步骤状态机 + 记录生成）。
+
+    This class is designed to be usable from both:
+    - GUI (`src/ui/*`)
+    - REST API (`src/api/server.py`)
+    """
 
     def __init__(
         self,

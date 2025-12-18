@@ -1,11 +1,22 @@
+"""Role-based access control (RBAC).
+
+Note:
+This module provides an in-memory RBAC model (roles/permissions) plus simple
+decorators for guarding functions.
+
+Maintenance-safety:
+- The decorators (`require_permission` / `require_role` / `require_any_permission`)
+  locate a `User` instance from positional arguments only. If you pass user
+  objects via keyword arguments, the check will not find it and will raise.
+  Keep this behavior in mind when refactoring call sites.
+"""
+
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from functools import wraps
 from typing import Any
-
-"""基于角色的访问控制 (RBAC) 系统"""
 
 logger = logging.getLogger(__name__)
 

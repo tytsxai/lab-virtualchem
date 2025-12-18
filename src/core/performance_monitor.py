@@ -141,7 +141,7 @@ class PerformanceMonitor(QObject):
         self.last_disk_io = 0
 
         # 定时器
-        self.monitor_timer = QTimer()
+        self.monitor_timer = QTimer(self)
         self.monitor_timer.timeout.connect(self.update_metrics)
 
         # 进程信息

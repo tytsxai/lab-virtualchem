@@ -100,6 +100,13 @@ def log_operation(operation_name: str = ""):
 
 # 模拟健壮性集成管理器
 class MockRobustnessIntegration:
+    """Minimal in-file stand-in for the real robustness integration layer.
+
+    This module is an executable example, so it intentionally avoids importing
+    the full production stack. The mock provides the smallest surface needed by
+    the demos below (settings + report + performance stubs).
+    """
+
     def __init__(self):
         self.settings: RobustnessSettings | None = None
 
@@ -115,6 +122,8 @@ robustness_integration = MockRobustnessIntegration()
 
 
 class RobustnessSettings:
+    """Example settings container used by the demo integration."""
+
     def __init__(self, **kwargs):
         self.integration_level = kwargs.get("integration_level", "basic")
         for key, value in kwargs.items():
@@ -122,6 +131,8 @@ class RobustnessSettings:
 
 
 class IntegrationLevel:
+    """Pseudo-enum of integration levels used by the examples."""
+
     BASIC = "basic"
     ENHANCED = "enhanced"
     MAXIMUM = "maximum"

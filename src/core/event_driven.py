@@ -1,3 +1,10 @@
+"""Event-driven primitives (EventBus).
+
+This module implements an in-process event bus with optional async handling.
+It is designed for decoupling components within a single process, not for
+distributed messaging.
+"""
+
 import logging
 import queue
 import threading
@@ -8,8 +15,6 @@ from datetime import datetime
 from enum import Enum
 from functools import wraps
 from typing import Any
-
-"""事件驱动架构"""
 
 logger = logging.getLogger(__name__)
 

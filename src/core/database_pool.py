@@ -1,3 +1,13 @@
+"""Database connection pool implementations.
+
+This module supports SQLite by default, and can optionally support PostgreSQL
+and MySQL when the respective drivers are installed.
+
+Maintenance-safety:
+- The pool is a shared mutable resource; changes to timeout/idle eviction logic
+  can affect data consistency and performance under load.
+"""
+
 import logging
 import queue
 import sqlite3
@@ -27,8 +37,6 @@ try:
 except ImportError:
     MYSQL_AVAILABLE = False
     pymysql = None
-
-"""数据库连接池管理器"""
 
 logger = logging.getLogger(__name__)
 

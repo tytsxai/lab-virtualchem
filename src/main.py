@@ -1,7 +1,18 @@
-"""VirtualChemLab 应用入口"""
+"""VirtualChemLab 应用入口（包内入口）。
+
+说明：
+- 仓库根目录的 `main.py` 是“薄转发”入口，用于兼容 `python main.py` 并统一启动链路。
+- 本文件是实际的应用启动实现：配置加载 -> 启动前安全闸 -> DI 容器 -> Qt 应用。
+
+CLI 兼容：
+文档与部分脚本会使用 `--env development` 选择环境；底层配置系统以环境变量
+`ENVIRONMENT` 为准，因此这里会把 `--env` 映射到 `ENVIRONMENT`，并从 `sys.argv`
+移除该参数，避免 Qt 将其当作未知选项。
+"""
 
 import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 # 设置Python环境编码为UTF-8（Windows系统）
@@ -33,12 +44,39 @@ logger = get_logger(__name__)
 DISPLAY_VERSION = f"v{APP_VERSION}"
 
 
+def _apply_cli_environment_overrides(argv: list[str]) -> list[str]:
+    """Parse `--env`/`--env=...` from argv and map it to `ENVIRONMENT`."""
+    if len(argv) <= 1:
+        return argv
+
+    cleaned: list[str] = [argv[0]]
+    idx = 1
+    while idx < len(argv):
+        token = argv[idx]
+        if token == "--env":
+            value = argv[idx + 1] if idx + 1 < len(argv) else ""
+            if value:
+                os.environ["ENVIRONMENT"] = value.strip()
+            idx += 2
+            continue
+        if token.startswith("--env="):
+            value = token.split("=", 1)[1].strip()
+            if value:
+                os.environ["ENVIRONMENT"] = value
+            idx += 1
+            continue
+        cleaned.append(token)
+        idx += 1
+    return cleaned
+
+
 def main() -> int:
     """应用主入口
 
     Returns:
         退出代码
     """
+    sys.argv = _apply_cli_environment_overrides(sys.argv)
     logger.info("=" * 60)
     logger.info("VirtualChemLab - 虚拟化学实验室")
     logger.info("版本: %s", DISPLAY_VERSION)
@@ -46,7 +84,36 @@ def main() -> int:
 
     try:
         # 1. 加载配置
-        config = get_config()
+        try:
+            config = get_config()
+        except OSError as exc:
+            # 桌面打包应用最常见问题：用户数据目录不可写/被占用/磁盘满
+            sys.stderr.write(
+                "\n[ERROR] 配置/数据目录不可写或不可访问，应用无法启动。\n"
+                "建议：\n"
+                "  1) 关闭程序后重试（避免文件被占用）\n"
+                "  2) 确保磁盘空间充足\n"
+                "  3) 设置环境变量 VCL_DATA_DIR 指向可写目录\n"
+                "  4) 或设置 VCL_CONFIG_PATH 指向可写的 config.json 路径\n"
+                f"原始错误: {exc}\n\n"
+            )
+            return 1
+
+        # 1.0 桌面版必须写入文件日志，便于用户反馈与长期排障
+        setup_logger(
+            "virtualchemlab",
+            level=getattr(config.log, "level", "INFO"),
+            log_file=Path(getattr(config.log, "file", "logs/app.log")),
+            max_bytes=int(getattr(config.log, "max_size", 10 * 1024 * 1024)),
+            backup_count=int(getattr(config.log, "backup_count", 5)),
+            enable_console=True,
+            replace_handlers=True,
+        )
+        logger.info(
+            "logging initialized: file=%s utc=%s",
+            getattr(config.log, "file", "logs/app.log"),
+            datetime.now(timezone.utc).isoformat(),
+        )
         logger.info("✅ 配置加载完成")
         logger.info(f"   环境: {config.app.environment}")
         logger.info(f"   调试模式: {config.app.debug}")
@@ -55,11 +122,18 @@ def main() -> int:
         ensure_secure_startup(config=config)
 
         # 2. 检查依赖
+        from src.ui.qt_sanity import ensure_single_qt_binding  # noqa: E402
+
+        # 如果外部代码/插件误导入了 PyQt*，直接中止，避免后续出现 SIGBUS/SIGSEGV。
+        ensure_single_qt_binding(abort=True)
+
         try:
             from PySide6.QtCore import Qt  # type: ignore
             from PySide6.QtWidgets import QApplication  # type: ignore
         except ImportError:
-            logger.error("❌ PySide6 未安装，请运行: pip install -r requirements.txt")
+            logger.error(
+                "❌ PySide6 未安装，请运行: pip install -r requirements.lock"
+            )
             return 1
 
         # 3. 配置DI容器

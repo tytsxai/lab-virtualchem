@@ -1,3 +1,10 @@
+"""CQRS helpers (Command/Query buses).
+
+This module provides a lightweight CQRS-style abstraction for in-process usage.
+It is not currently used as the system-wide orchestration layer; treat it as an
+internal utility unless explicitly wired into the DI container.
+"""
+
 import asyncio
 import contextlib
 import logging
@@ -9,8 +16,6 @@ from datetime import datetime
 from enum import Enum
 from functools import wraps
 from typing import Any
-
-"""CQRS (命令查询职责分离) 架构"""
 
 logger = logging.getLogger(__name__)
 

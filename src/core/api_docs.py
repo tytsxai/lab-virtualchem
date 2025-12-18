@@ -1,3 +1,10 @@
+"""API documentation generator utilities.
+
+This module can generate OpenAPI/Markdown documentation. It is optional: when
+FastAPI is not installed, it still supports building a minimal OpenAPI dict via
+the internal dataclasses.
+"""
+
 import json
 import logging
 from dataclasses import dataclass, field
@@ -15,8 +22,6 @@ except ImportError:
     FASTAPI_AVAILABLE = False
     FastAPI = None  # type: ignore
     get_openapi = None  # type: ignore
-
-"""API文档生成器"""
 
 logger = logging.getLogger(__name__)
 

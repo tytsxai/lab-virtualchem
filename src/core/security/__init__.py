@@ -1,3 +1,9 @@
+"""Security helpers (RBAC / input validation / encryption).
+
+This package is imported by the core runtime and some tools. Keep its public
+exports stable to avoid breaking downstream imports.
+"""
+
 from .encryption import (
     DataEncryption,
     DataSanitizer,
@@ -24,8 +30,6 @@ from .rbac import (
     require_permission,
     require_role,
 )
-
-"""安全模块初始化"""
 
 __all__ = [
     # 输入验证

@@ -1,3 +1,13 @@
+"""Input validation and sanitization helpers.
+
+This module is intentionally conservative: it favors rejecting/sanitizing
+potentially dangerous input over trying to be permissive.
+
+Maintenance-safety:
+- Keep the allowlists (extensions, regex) and max limits aligned with the UI/API
+  behaviors; relaxing them is a security-sensitive change.
+"""
+
 import html
 import logging
 import re
@@ -8,8 +18,6 @@ try:
     import bleach
 except ImportError:
     bleach = None
-
-"""输入验证和清理模块"""
 
 logger = logging.getLogger(__name__)
 

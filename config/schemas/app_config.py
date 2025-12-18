@@ -1,6 +1,14 @@
 """
-应用配置数据模型
-使用Pydantic进行配置验证和管理
+应用配置数据模型（历史/兼容）。
+
+重要说明（维护安全）：
+- 运行时“主配置系统”的事实来源是 `src/core/config_loader.py`，并由
+  `src/core/startup_preflight.py` 负责生产环境 fail-fast 的安全校验。
+- 本模块位于 `config/schemas/`，主要用于历史脚本/示例/测试中的配置模型或迁移尝试；
+  **不应** 被当作当前运行时的权威配置加载器。
+
+如果你想验证本机/部署环境的配置是否完整，请使用：
+    `python tools/validate_config.py`
 """
 
 import json

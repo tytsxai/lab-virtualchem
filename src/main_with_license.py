@@ -180,6 +180,9 @@ def main() -> int:
 
         # 检查依赖
         try:
+            from src.ui.qt_sanity import ensure_single_qt_binding
+
+            ensure_single_qt_binding(abort=True)
             from PySide6.QtWidgets import QApplication  # noqa: F401
         except ImportError:
             logger.error("PySide6 未安装, 请运行: pip install -r requirements.txt")

@@ -1,12 +1,37 @@
-"""
-统一配置加载器
-支持多环境配置和环境变量
+"""Unified application configuration loader (source-of-truth for GUI startup).
+
+This module provides a single, validated configuration object (`Config`) for
+the GUI entrypoints and DI container wiring.
+
+Key behaviors (maintenance-safety):
+- Loads `.env` (if present) so local development can be configured without
+  exporting shell variables.
+- Merges config files in order: defaults → `config/base.json` → root `config.json`
+  → `config/<environment>.json` → environment variables.
+- Resolves a per-user runtime directory (default `~/.virtualchemlab`) so packaged
+  apps can persist mutable data even when install locations are not writable.
+- Secret handling:
+  - Strict production (`ENVIRONMENT=production` and **not** `sys.frozen`) requires
+    strong secrets (>=32 chars) and fails fast if missing/weak. Environment
+    variables are the recommended delivery mechanism; config-file secrets are
+    accepted but emit warnings (to discourage committing/persisting secrets in
+    plaintext files).
+  - Packaged builds (`sys.frozen`) default to production but are allowed to
+    generate per-machine secrets and persist them under the runtime directory.
+  - Admin API secret (`VCL_ADMIN_SECRET_KEY`) is validated by `src/api/admin_api.py`
+    at Admin API startup, not here, to avoid blocking the GUI.
+
+Note: the repository also contains lightweight/legacy config readers (e.g.
+`src/utils/config.py`) used by some tools and the REST API; do not confuse them
+with this module's security baseline.
 """
 
 import json
 import logging
 import os
 import secrets
+import sys
+import tempfile
 import threading
 from pathlib import Path
 from typing import Any, Literal
@@ -18,6 +43,77 @@ from src import __version__ as APP_VERSION
 logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_DIR = PROJECT_ROOT / "config"
+
+
+def _default_runtime_home() -> Path:
+    """Default per-user writable runtime directory.
+
+    Desktop packaged apps often run from non-writable install locations; keep
+    mutable data under a stable per-user directory by default.
+    """
+    if sys.platform == "win32":
+        base = os.getenv("APPDATA") or os.getenv("LOCALAPPDATA") or str(Path.home())
+        return Path(base) / ".virtualchemlab"
+    return Path.home() / ".virtualchemlab"
+
+
+DEFAULT_RUNTIME_HOME = _default_runtime_home()
+
+
+def _user_config_path(runtime_root: Path | None = None) -> Path:
+    """Resolve the user config.json path for desktop/runtime secrets."""
+    explicit = (os.getenv("VCL_CONFIG_PATH") or "").strip()
+    if explicit:
+        return Path(explicit).expanduser()
+    root = runtime_root or DEFAULT_RUNTIME_HOME
+    return root / "config.json"
+
+
+def _read_json_file(path: Path) -> dict[str, Any]:
+    """Best-effort JSON loader for config merge.
+
+    Returns an empty dict when the file is missing or invalid. This keeps config
+    loading robust in end-user environments (packaged apps, first-run, etc.).
+    """
+    try:
+        if not path.exists():
+            return {}
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def _atomic_write_json(path: Path, data: dict[str, Any]) -> None:
+    """Atomically write JSON to disk (best-effort permission hardening)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=str(path.parent),
+            delete=False,
+            suffix=".tmp",
+        ) as f:
+            tmp_path = Path(f.name)
+            json.dump(data, f, ensure_ascii=False, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(str(tmp_path), str(path))
+        # Best-effort tighten permissions for secrets on POSIX.
+        if os.name == "posix":
+            try:
+                os.chmod(str(path), 0o600)
+            except Exception:  # noqa: BLE001
+                pass
+    finally:
+        if tmp_path is not None and tmp_path.exists():
+            try:
+                tmp_path.unlink()
+            except Exception:  # noqa: BLE001
+                pass
 
 
 class PathsConfig(BaseModel):
@@ -111,7 +207,7 @@ class LogConfig(BaseModel):
 
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     file: str = "logs/app.log"
-    max_size: int = 10485760  # 10MB
+    max_size: int = 10485760  # 10MB (bytes)
     backup_count: int = 5
     format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
@@ -122,6 +218,7 @@ class AppConfig(BaseModel):
     name: str = "VirtualChemLab"
     version: str = APP_VERSION
     environment: Literal["development", "staging", "production"] = "development"
+    language: str = "zh_CN"
     debug: bool = False
     port: int = 8000
 
@@ -167,9 +264,8 @@ class Config(BaseModel):
         # 1. 加载环境变量 (优先级最高，允许 .env 中的 ENVIRONMENT 生效)
         load_env_file()
 
-        # 2. 确定环境
-        environment = env or os.getenv("ENVIRONMENT") or "development"
-        environment = str(environment).strip().lower() or "development"
+        # 2. 确定环境（尊重显式传参/环境变量，其次读取配置文件声明）
+        environment = cls._detect_environment(env)
 
         # 3. 加载配置文件
         config_data = cls._load_config_file(environment)
@@ -180,10 +276,16 @@ class Config(BaseModel):
         # 5. 对齐版本号
         config_data = cls._ensure_version_alignment(config_data)
 
-        # 6. 准备运行环境（创建目录等）
+        # 6. 统一语言代码格式（zh-CN -> zh_CN）
+        config_data = cls._normalize_language_codes(config_data)
+
+        # 7. 解析运行时数据目录（打包/不可写目录时自动落到用户目录）
+        config_data = cls._apply_runtime_data_root(config_data)
+
+        # 8. 准备运行环境（创建目录等）
         cls._prepare_runtime_environment(config_data)
 
-        # 7. 验证并返回
+        # 9. 验证并返回
         return cls(**config_data)
 
     @classmethod
@@ -258,6 +360,23 @@ class Config(BaseModel):
 
         env_name = config_data["app"]["environment"]
         is_prod = env_name == "production"
+        is_frozen = bool(getattr(sys, "frozen", False))
+
+        runtime_env = (os.getenv("VCL_DATA_DIR") or "").strip()
+        runtime_root = Path(runtime_env).expanduser() if runtime_env else DEFAULT_RUNTIME_HOME
+        user_cfg_path = _user_config_path(runtime_root)
+        user_cfg = _read_json_file(user_cfg_path)
+
+        def _persist_secret(path_key: str, value: str) -> None:
+            if not value:
+                return
+            current = user_cfg.setdefault("security", {})
+            if not isinstance(current, dict):
+                user_cfg["security"] = {}
+                current = user_cfg["security"]
+            if not current.get(path_key):
+                current[path_key] = value
+                _atomic_write_json(user_cfg_path, user_cfg)
 
         # 安全配置
         security_cfg = config_data.setdefault("security", {})
@@ -267,12 +386,16 @@ class Config(BaseModel):
         )
         security_cfg["jwt_secret_env"] = secret_env_name
 
-        jwt_secret = os.getenv(secret_env_name) or os.getenv("JWT_SECRET_KEY")
+        jwt_secret = (
+            os.getenv(secret_env_name)
+            or os.getenv("JWT_SECRET_KEY")
+            or (user_cfg.get("security", {}) or {}).get("jwt_secret_key")
+        )
         config_secret = security_cfg.get("jwt_secret_key")
         jwt_secret_value: str | None = None
         if jwt_secret:
             if len(jwt_secret) < 32:
-                if is_prod:
+                if is_prod and not is_frozen:
                     raise ValueError("生产环境 JWT 密钥长度必须>=32")
                 logger.warning(
                     "检测到 JWT_SECRET_KEY 长度不足，已为%s环境生成临时密钥", env_name
@@ -294,7 +417,7 @@ class Config(BaseModel):
                     "检测到JWT密钥来自配置文件，建议改用环境变量 %s", secret_env_name
                 )
         else:
-            if is_prod:
+            if is_prod and not is_frozen:
                 raise ValueError(
                     f"生产环境必须设置 JWT 密钥环境变量 ({secret_env_name}) 且长度>=32"
                 )
@@ -305,8 +428,10 @@ class Config(BaseModel):
 
         if jwt_secret_value:
             security_cfg["jwt_secret_key"] = jwt_secret_value
-            if not is_prod:
+            if not is_prod or is_frozen:
                 os.environ.setdefault(secret_env_name, jwt_secret_value)
+            if is_frozen:
+                _persist_secret("jwt_secret_key", jwt_secret_value)
 
         # 开发者密钥
         dev_key = os.getenv("DEVELOPER_KEY_HASH")
@@ -340,12 +465,14 @@ class Config(BaseModel):
             or "SESSION_SECRET_KEY"
         )
         security_cfg["session_secret_env"] = session_secret_env
-        session_secret = os.getenv(session_secret_env) or security_cfg.get(
-            "session_secret_key"
+        session_secret = (
+            os.getenv(session_secret_env)
+            or security_cfg.get("session_secret_key")
+            or (user_cfg.get("security", {}) or {}).get("session_secret_key")
         )
         if session_secret:
             if len(session_secret) < 32:
-                if is_prod:
+                if is_prod and not is_frozen:
                     raise ValueError(
                         f"生产环境必须设置会话密钥环境变量 ({session_secret_env}) 且长度>=32"
                     )
@@ -353,7 +480,7 @@ class Config(BaseModel):
                 session_secret = secrets.token_urlsafe(48)
             else:
                 security_cfg["session_secret_key"] = session_secret
-        elif is_prod:
+        elif is_prod and not is_frozen:
             raise ValueError(
                 f"生产环境必须设置会话密钥环境变量 ({session_secret_env}) 且长度>=32"
             )
@@ -364,8 +491,10 @@ class Config(BaseModel):
             )
         if session_secret:
             security_cfg["session_secret_key"] = session_secret
-            if not is_prod:
+            if not is_prod or is_frozen:
                 os.environ.setdefault(session_secret_env, session_secret)
+            if is_frozen:
+                _persist_secret("session_secret_key", session_secret)
 
         developer_secret_env = (
             os.getenv("DEVELOPER_SECRET_ENV")
@@ -379,7 +508,7 @@ class Config(BaseModel):
         if developer_cfg["enabled"]:
             if developer_secret:
                 if len(developer_secret) < 32:
-                    if is_prod:
+                    if is_prod and not is_frozen:
                         raise ValueError(
                             f"生产环境启用开发者模式时必须设置开发者密钥环境变量 ({developer_secret_env}) 且长度>=32"
                         )
@@ -400,35 +529,11 @@ class Config(BaseModel):
                 )
             if developer_secret:
                 security_cfg["developer_secret_key"] = developer_secret
-                if not is_prod:
+                if not is_prod or is_frozen:
                     os.environ.setdefault(developer_secret_env, developer_secret)
 
-        # 管理后台密钥环境变量校验
-        admin_secret = os.getenv(admin_secret_env)
-        if env_name == "production":
-            if not admin_secret:
-                raise ValueError(
-                    f"生产环境必须设置管理后台密钥环境变量 ({admin_secret_env})"
-                )
-            if len(admin_secret) < 32:
-                raise ValueError(
-                    f"生产环境管理后台密钥长度必须>=32: {admin_secret_env}"
-                )
-        else:
-            if not admin_secret:
-                admin_secret = secrets.token_urlsafe(48)
-                os.environ.setdefault(admin_secret_env, admin_secret)
-                logger.warning(
-                    "未配置管理后台密钥，已为%s环境生成临时密钥，仅用于本次运行",
-                    env_name,
-                )
-            elif len(admin_secret) < 32:
-                admin_secret = secrets.token_urlsafe(48)
-                os.environ[admin_secret_env] = admin_secret
-                logger.warning(
-                    "管理后台密钥长度不足，已为%s环境生成临时密钥，仅用于本次运行",
-                    env_name,
-                )
+        # 管理后台密钥：不在全局配置加载阶段强制要求，避免阻断主应用启动。
+        # Admin API 自身（src/api/admin_api.py）启动时会强校验该密钥。
 
         # 数据库配置
         if not config_data.get("database"):
@@ -488,6 +593,114 @@ class Config(BaseModel):
                 config_data["paths"][path_key] = env_value
 
         return config_data
+
+    @classmethod
+    def _detect_environment(cls, env: str | None) -> str:
+        """按优先级确定运行环境"""
+        # 1) 显式传参
+        if env:
+            return str(env).strip().lower() or "development"
+
+        # 2) 环境变量
+        env_var = os.getenv("ENVIRONMENT")
+        if env_var:
+            return str(env_var).strip().lower() or "development"
+
+        # 3) 桌面打包默认进入 production（但会通过用户目录持久化生成的密钥）
+        if bool(getattr(sys, "frozen", False)):
+            return "production"
+
+        # 4) 默认：必须由部署方显式设置 ENVIRONMENT=production 才进入严格模式
+        return "development"
+
+    @classmethod
+    def _normalize_language_codes(cls, config_data: dict[str, Any]) -> dict[str, Any]:
+        """规范语言代码（例如 zh-CN -> zh_CN）"""
+
+        def _norm(value: str | None) -> str | None:
+            if not value:
+                return value
+            normalized = value.replace("-", "_")
+            parts = normalized.split("_")
+            if len(parts) == 2:
+                return f"{parts[0].lower()}_{parts[1].upper()}"
+            return normalized
+
+        app_cfg = config_data.setdefault("app", {})
+        lang = _norm(app_cfg.get("language"))
+        if lang:
+            app_cfg["language"] = lang
+
+        ui_cfg = config_data.get("ui")
+        if isinstance(ui_cfg, dict):
+            ui_lang = _norm(ui_cfg.get("language"))
+            if ui_lang:
+                ui_cfg["language"] = ui_lang
+
+        return config_data
+
+    @classmethod
+    def _apply_runtime_data_root(cls, config_data: dict[str, Any]) -> dict[str, Any]:
+        """在打包或不可写目录环境下，将可写路径落到用户目录。
+
+        目标：避免 macOS .app / Windows Program Files 等不可写目录导致
+        日志/数据库/报告无法写入，从而造成运行时不稳定。
+        """
+
+        runtime_env = (os.getenv("VCL_DATA_DIR") or "").strip()
+        runtime_root = Path(runtime_env).expanduser() if runtime_env else DEFAULT_RUNTIME_HOME
+
+        # 触发条件：显式强制、PyInstaller 打包、或项目根目录不可写
+        force_user_dir = str(os.getenv("VCL_FORCE_USER_DATA_DIR", "")).lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        is_frozen = bool(getattr(sys, "frozen", False))
+        project_writable = cls._is_directory_writable(PROJECT_ROOT)
+        should_redirect = force_user_dir or is_frozen or not project_writable
+
+        if not should_redirect:
+            return config_data
+
+        logger.warning(
+            "检测到运行目录不可写或为打包环境，已将可写数据目录重定向到: %s",
+            runtime_root,
+        )
+
+        paths_cfg = config_data.setdefault("paths", {})
+        paths_cfg["logs"] = str(runtime_root / "logs")
+        paths_cfg["reports"] = str(runtime_root / "reports")
+        paths_cfg["user_data"] = str(runtime_root / "user_data")
+
+        log_cfg = config_data.setdefault("log", {})
+        log_cfg["file"] = str(runtime_root / "logs" / "app.log")
+
+        storage_cfg = config_data.setdefault("storage", {})
+        storage_cfg["base_path"] = str(runtime_root / "storage")
+
+        db_cfg = config_data.setdefault("database", {})
+        db_cfg["path"] = str(runtime_root / "data" / "virtualchemlab.db")
+
+        # 若未通过环境变量显式提供 DATABASE_URL，则保持 url 与 path 一致，避免重定向后仍指向旧路径。
+        # 注意：DatabaseConfig.set_url 仅在 url 为空时生成，因此这里需要显式修正。
+        if not (os.getenv("DATABASE_URL") or "").strip():
+            db_type = str(db_cfg.get("type") or "sqlite").strip().lower()
+            url = db_cfg.get("url")
+            if db_type == "sqlite" and isinstance(url, str) and url.startswith("sqlite:///"):
+                db_cfg["url"] = f"sqlite:///{db_cfg['path']}"
+
+        return config_data
+
+    @staticmethod
+    def _is_directory_writable(path: Path) -> bool:
+        try:
+            path.mkdir(parents=True, exist_ok=True)
+            with tempfile.NamedTemporaryFile(dir=path, delete=True):
+                return True
+        except Exception:
+            return False
 
     @classmethod
     def _ensure_version_alignment(cls, config_data: dict[str, Any]) -> dict[str, Any]:

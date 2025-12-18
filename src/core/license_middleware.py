@@ -313,6 +313,11 @@ class LicenseUIHelper:
     def show_activation_dialog(self) -> bool:
         """显示激活对话框
 
+        当前实现为“离线激活”：
+        - 仅对本机已存在的许可证文件执行激活（写入 activated_at/is_activated 并重新签名）
+        - 不包含联网拉取/兑换许可证的逻辑
+        - 若本机不存在许可证文件，或输入密钥与本机许可证不匹配，则激活失败
+
         Returns:
             是否激活成功
         """
@@ -364,7 +369,7 @@ class LicenseUIHelper:
             if dialog.exec() == QDialog.Accepted:
                 license_key = dialog.get_key()
 
-                # 验证并激活许可证
+                # 验证输入
                 if not license_key or not license_key.strip():
                     from PySide6.QtWidgets import QMessageBox
 
@@ -372,10 +377,35 @@ class LicenseUIHelper:
                     return False
 
                 try:
-                    # 调用许可证管理器激活
-                    success = self.manager.activate(license_key.strip())
+                    license_obj = self.license_manager.load_license()
+                    if not license_obj:
+                        from PySide6.QtWidgets import QMessageBox
+
+                        QMessageBox.warning(
+                            None,
+                            "缺少许可证文件",
+                            "未找到许可证文件。请先导入/安装许可证文件后再执行激活。",
+                        )
+                        return False
+
+                    key = license_key.strip()
+                    if key != license_obj.license_key:
+                        from PySide6.QtWidgets import QMessageBox
+
+                        QMessageBox.warning(
+                            None,
+                            "密钥不匹配",
+                            "输入的许可证密钥与本机许可证文件不匹配，请检查是否选择了正确的许可证文件。",
+                        )
+                        return False
+
+                    machine_id = get_machine_id()
+                    success, error_msg = self.license_manager.activate_license(
+                        license_obj, machine_id
+                    )
 
                     if success:
+                        self.license_manager.save_license(license_obj)
                         from PySide6.QtWidgets import QMessageBox
 
                         QMessageBox.information(None, "成功", "许可证激活成功！")
@@ -385,7 +415,9 @@ class LicenseUIHelper:
                         from PySide6.QtWidgets import QMessageBox
 
                         QMessageBox.warning(
-                            None, "失败", "许可证激活失败，请检查密钥是否正确"
+                            None,
+                            "失败",
+                            f"许可证激活失败：{error_msg or '请检查许可证状态与设备绑定信息'}",
                         )
                         logger.warning("许可证激活失败")
                         return False

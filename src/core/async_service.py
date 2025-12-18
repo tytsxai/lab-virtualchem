@@ -1,3 +1,9 @@
+"""Async task execution helpers (thread/process pools).
+
+This module provides a thin abstraction for running CPU/IO tasks asynchronously
+via thread/process executors and tracking their status.
+"""
+
 import logging
 import threading
 import time
@@ -7,8 +13,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from functools import wraps
 from typing import Any, TypeVar
-
-"""异步服务基础模块"""
 
 logger = logging.getLogger(__name__)
 

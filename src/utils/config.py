@@ -1,6 +1,16 @@
-"""配置管理"""
+"""Lightweight JSON config helper (legacy/compat).
+
+This class provides a small, dependency-free config reader/writer used by some
+utility code and the REST API stack. It intentionally does *not* enforce the
+security baseline (secrets, production fail-fast) — that logic lives in
+`src/core/config_loader.py` and `src/core/startup_preflight.py`.
+
+If you need typed/validated app config for startup and DI, use
+`src/core/config_loader.get_config()` instead of this module.
+"""
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -16,10 +26,22 @@ class Config:
         Args:
             config_path: 配置文件路径
         """
-        self.config_path = (
-            config_path or Path.home() / ".virtualchemlab" / "config.json"
-        )
+        env_path = (os.getenv("VCL_CONFIG_PATH") or "").strip()
+        resolved_env_path = Path(env_path).expanduser() if env_path else None
+
+        default_root = Path.home() / ".virtualchemlab"
+        if os.name == "nt":
+            base = os.getenv("APPDATA") or os.getenv("LOCALAPPDATA")
+            if base:
+                default_root = Path(base) / ".virtualchemlab"
+
+        self.config_path = config_path or resolved_env_path or (default_root / "config.json")
         self._data: dict[str, Any] = self._load_default_config()
+
+        # 运行时数据目录重定向（生产/打包环境常见需求）
+        runtime_env = (os.getenv("VCL_DATA_DIR") or "").strip()
+        if runtime_env:
+            self._apply_runtime_root(Path(runtime_env).expanduser())
 
         # 如果存在用户配置,加载并合并
         if self.config_path.exists():
@@ -41,6 +63,7 @@ class Config:
                 "i18n": "assets/i18n",
                 "logs": "logs",
                 "reports": "reports",
+                "data_dir": "data/records",
                 "user_data_dir": "user_data",
             },
             "ui": {
@@ -63,6 +86,13 @@ class Config:
             },
         }
 
+    def _apply_runtime_root(self, root: Path) -> None:
+        paths = self._data.setdefault("paths", {})
+        paths["logs"] = str(root / "logs")
+        paths["reports"] = str(root / "reports")
+        paths["data_dir"] = str(root / "data" / "records")
+        paths["user_data_dir"] = str(root / "user_data")
+
     def load(self) -> None:
         """从文件加载配置"""
         try:
@@ -71,6 +101,7 @@ class Config:
 
             # 深度合并配置
             self._deep_merge(self._data, user_config)
+            self._normalize_language_codes()
 
         except Exception:
             pass  # 加载失败则使用默认配置
@@ -81,6 +112,12 @@ class Config:
 
         with open(self.config_path, "w", encoding="utf-8") as f:
             json.dump(self._data, f, indent=2, ensure_ascii=False)
+        # Best-effort tighten permissions for secrets on POSIX.
+        if os.name == "posix":
+            try:
+                os.chmod(str(self.config_path), 0o600)
+            except Exception:
+                pass
 
     def get(self, key: str, default: Any = None) -> Any:
         """获取配置值
@@ -119,6 +156,28 @@ class Config:
             data = data[k]
 
         data[keys[-1]] = value
+        if key in ("app.language", "ui.language") or key.endswith(".language"):
+            self._normalize_language_codes()
+
+    def _normalize_language_codes(self) -> None:
+        """规范语言代码（例如 zh-CN -> zh_CN），避免 i18n 文件名匹配失败。"""
+
+        def _norm(value: Any) -> Any:
+            if not isinstance(value, str) or not value:
+                return value
+            normalized = value.replace("-", "_")
+            parts = normalized.split("_")
+            if len(parts) == 2:
+                return f"{parts[0].lower()}_{parts[1].upper()}"
+            return normalized
+
+        app = self._data.get("app")
+        if isinstance(app, dict) and "language" in app:
+            app["language"] = _norm(app.get("language"))
+
+        ui = self._data.get("ui")
+        if isinstance(ui, dict) and "language" in ui:
+            ui["language"] = _norm(ui.get("language"))
 
     def _deep_merge(self, base: dict, update: dict) -> None:
         """深度合并字典

@@ -1,3 +1,9 @@
+"""Internal lightweight testing helpers.
+
+Note: The repository primarily uses `pytest` under `tests/`. This module exists
+to support some optional self-test tooling and experimentation.
+"""
+
 import logging
 import queue
 import threading
@@ -26,8 +32,6 @@ except ImportError:
     HYPOTHESIS_AVAILABLE = False
     given = None
     st = None
-
-"""测试框架"""
 
 logger = logging.getLogger(__name__)
 

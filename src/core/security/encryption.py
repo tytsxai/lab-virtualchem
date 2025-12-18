@@ -1,3 +1,13 @@
+"""Encryption and password utilities.
+
+This module is best-effort: if `cryptography` is not installed, encryption is
+disabled and callers get plaintext pass-through with warnings.
+
+Maintenance-safety:
+- Do not treat the plaintext fallback as "secure". In production, ensure the
+  `cryptography` dependency is installed when you rely on these APIs.
+"""
+
 import base64
 import hashlib
 import json
@@ -17,8 +27,6 @@ except ImportError:
     Fernet = None
     hashes = None
     PBKDF2HMAC = None
-
-"""数据加密和安全模块"""
 
 logger = logging.getLogger(__name__)
 

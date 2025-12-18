@@ -1,11 +1,24 @@
-"""
-配置管理系统 - 增强版
-提供应用程序配置的加载、保存和管理功能，支持验证和模式
+"""User/runtime configuration manager (JSON Schema validated).
+
+This module manages *mutable, per-user* settings stored under the runtime
+directory (default `~/.virtualchemlab/config.json` or `VCL_DATA_DIR`).
+
+It is intentionally different from the startup config loader:
+- Startup/DI config (secrets, env precedence, production fail-fast) lives in
+  `src/core/config_loader.py` and returns a typed Pydantic model.
+- This module focuses on UI/preferences and other user-adjustable knobs and
+  persists them using a JSON Schema (Draft7).
+
+Maintenance-safety notes:
+- Do not store production secrets here for server deployments; prefer env vars.
+- Treat schema changes as migrations (existing user configs may be older).
 """
 
 from __future__ import annotations
 
 import json
+import os
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -140,7 +153,17 @@ class ConfigManager:
 
     def __init__(self) -> None:
         if not self._initialized:
-            self.config_dir = Path.home() / ".virtualchemlab"
+            runtime_env = (os.getenv("VCL_DATA_DIR") or "").strip()
+            if runtime_env:
+                self.config_dir = Path(runtime_env).expanduser()
+            else:
+                if sys.platform == "win32":
+                    base = os.getenv("APPDATA") or os.getenv("LOCALAPPDATA")
+                    self.config_dir = (
+                        (Path(base) if base else Path.home()) / ".virtualchemlab"
+                    )
+                else:
+                    self.config_dir = Path.home() / ".virtualchemlab"
             self.config_file = self.config_dir / "config.json"
             self.schema_file = self.config_dir / "config.schema.json"
             self._config: dict[str, Any] = {}
