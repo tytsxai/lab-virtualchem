@@ -64,18 +64,68 @@ def check_dependencies() -> CheckResult:
     return CheckResult("关键依赖", False, f"缺少依赖: {', '.join(missing)}")
 
 
+def _resolve_path(raw: str | Path) -> Path:
+    path = Path(raw).expanduser()
+    return path if path.is_absolute() else (PROJECT_ROOT / path)
+
+
+def check_environment_alignment(config: Config) -> CheckResult:
+    """Ensure ENVIRONMENT aligns with intended deployment mode."""
+    env_var = (os.getenv("ENVIRONMENT") or "").strip().lower()
+    config_env = str(getattr(config.app, "environment", "development")).lower()
+    detected_env = env_var or (
+        "production" if bool(getattr(sys, "frozen", False)) else "development"
+    )
+
+    if detected_env != config_env:
+        hint = (
+            "请设置 ENVIRONMENT 以加载对应的 config/<env>.json"
+            if not env_var
+            else "请对齐 ENVIRONMENT 与配置环境"
+        )
+        return CheckResult(
+            "环境变量一致性",
+            False,
+            f"ENVIRONMENT={env_var or '未设置'} -> 加载环境={detected_env}, 配置环境={config_env}; {hint}",
+        )
+    detail = f"ENVIRONMENT={env_var or config_env}"
+    return CheckResult("环境变量一致性", True, detail)
+
+
 def check_config_security(config: Config) -> List[CheckResult]:
     """Run security oriented validations."""
     results: List[CheckResult] = []
-    secret = getattr(config.security, "jwt_secret_key", "")
-    if secret and len(secret) >= 32 and "change-in-production" not in secret:
-        results.append(CheckResult("JWT 密钥", True, "密钥长度与内容安全"))
+    env = str(getattr(config.app, "environment", "development")).lower()
+    raw_security = _read_config_json().get("security", {})
+    jwt_env = (
+        os.getenv("JWT_SECRET_ENV")
+        or raw_security.get("jwt_secret_env")
+        or "JWT_SECRET_KEY"
+    ).strip()
+    jwt_secret = (os.getenv(jwt_env) or "").strip()
+    if env == "production":
+        if jwt_secret and len(jwt_secret) >= 32 and "change-in-production" not in jwt_secret:
+            results.append(CheckResult("JWT 密钥", True, f"{jwt_env} 已设置"))
+        else:
+            results.append(
+                CheckResult(
+                    "JWT 密钥",
+                    False,
+                    f"缺少安全的 {jwt_env}，生产环境必须提供 >=32 位密钥",
+                )
+            )
     else:
-        results.append(
-            CheckResult("JWT 密钥", False, "缺少安全的 JWT_SECRET_KEY，请在环境变量中配置")
-        )
-
-    env = config.app.environment
+        secret = getattr(config.security, "jwt_secret_key", "")
+        if secret and len(secret) >= 32 and "change-in-production" not in secret:
+            results.append(CheckResult("JWT 密钥", True, "密钥长度与内容安全"))
+        else:
+            results.append(
+                CheckResult(
+                    "JWT 密钥",
+                    False,
+                    "缺少安全的 JWT_SECRET_KEY，请在环境变量中配置",
+                )
+            )
     dev_section = _read_config_json().get("developer", {})
     dev_enabled = dev_section.get("enabled", False)
     if env == "production" and dev_enabled:
@@ -85,18 +135,37 @@ def check_config_security(config: Config) -> List[CheckResult]:
     else:
         detail = "开发者模式仅在非生产环境启用" if dev_enabled else "开发者模式默认关闭"
         results.append(CheckResult("开发者模式", True, detail))
+    session_env = (
+        os.getenv("SESSION_SECRET_ENV")
+        or raw_security.get("session_secret_env")
+        or "SESSION_SECRET_KEY"
+    ).strip()
+    session_secret = (os.getenv(session_env) or "").strip()
+    if env == "production":
+        if session_secret and len(session_secret) >= 32:
+            results.append(CheckResult("会话密钥", True, f"{session_env} 已设置"))
+        else:
+            results.append(
+                CheckResult(
+                    "会话密钥",
+                    False,
+                    f"缺少安全的 {session_env}，生产环境必须提供 >=32 位密钥",
+                )
+            )
+    else:
+        results.append(CheckResult("会话密钥", True, "非生产环境跳过强校验"))
     return results
 
 
-def check_filesystem() -> List[CheckResult]:
+def check_filesystem(config: Config) -> List[CheckResult]:
     """Ensure required directories and files exist."""
     required_paths = {
-        PROJECT_ROOT / "assets" / "templates": "实验模板目录",
-        PROJECT_ROOT / "assets" / "knowledge": "知识库目录",
-        PROJECT_ROOT / "assets" / "i18n": "国际化目录",
-        PROJECT_ROOT / "logs": "日志目录",
-        PROJECT_ROOT / "reports": "报告目录",
-        PROJECT_ROOT / "data": "数据目录",
+        _resolve_path(getattr(config.paths, "templates", "assets/templates")): "实验模板目录",
+        _resolve_path(getattr(config.paths, "knowledge", "assets/knowledge")): "知识库目录",
+        _resolve_path(getattr(config.paths, "i18n", "assets/i18n")): "国际化目录",
+        _resolve_path(getattr(config.paths, "logs", "logs")): "日志目录",
+        _resolve_path(getattr(config.paths, "reports", "reports")): "报告目录",
+        _resolve_path(getattr(config.paths, "user_data", "user_data")): "用户数据目录",
     }
     results: List[CheckResult] = []
     for path, description in required_paths.items():
@@ -123,12 +192,25 @@ def check_monitoring(config: Config) -> List[CheckResult]:
         results.append(CheckResult("监控配置", False, "监控已关闭或配置不完整"))
 
     log_cfg = config.log
-    log_path = PROJECT_ROOT / log_cfg.file
+    log_path = _resolve_path(log_cfg.file)
     log_dir = log_path.parent
     if log_dir.exists():
         results.append(CheckResult("日志目录", True, f"{log_dir} 已存在"))
     else:
         results.append(CheckResult("日志目录", False, f"{log_dir} 不存在，请创建"))
+
+    # 日志目录可写性探测（与 /healthz 保持一致的核心条件）
+    try:
+        log_dir.mkdir(parents=True, exist_ok=True)
+        probe = log_dir / ".readiness_write_probe"
+        with open(probe, "wb") as f:
+            f.write(b"ok\n")
+            f.flush()
+            os.fsync(f.fileno())
+        probe.unlink(missing_ok=True)
+        results.append(CheckResult("日志目录可写", True, f"{log_dir}"))
+    except Exception as exc:  # noqa: BLE001
+        results.append(CheckResult("日志目录可写", False, str(exc)))
     return results
 
 
@@ -137,16 +219,42 @@ def _read_config_json() -> dict:
     config_path = PROJECT_ROOT / "config.json"
     if not config_path.exists():
         return {}
-    with open(config_path, encoding="utf-8") as handle:
-        return json.load(handle)
+    try:
+        with open(config_path, encoding="utf-8") as handle:
+            return json.load(handle)
+    except Exception:
+        return {}
+
+
+def check_config_json_integrity() -> CheckResult:
+    """Validate config.json syntax without stopping the whole check."""
+    config_path = PROJECT_ROOT / "config.json"
+    if not config_path.exists():
+        return CheckResult("config.json", True, "未找到（可选）")
+    try:
+        with open(config_path, encoding="utf-8") as handle:
+            json.load(handle)
+        return CheckResult("config.json", True, "JSON 格式有效")
+    except Exception as exc:  # noqa: BLE001
+        return CheckResult("config.json", False, f"JSON 解析失败: {exc}")
 
 
 def run_all_checks() -> List[CheckResult]:
     """Execute every readiness check."""
-    config = get_config()
-    results: List[CheckResult] = [check_python_version(), check_dependencies()]
+    results: List[CheckResult] = [
+        check_python_version(),
+        check_dependencies(),
+        check_config_json_integrity(),
+    ]
+    try:
+        config = get_config()
+    except Exception as exc:  # noqa: BLE001
+        results.append(CheckResult("配置加载", False, f"加载失败: {exc}"))
+        return results
+
+    results.append(check_environment_alignment(config))
     results.extend(check_config_security(config))
-    results.extend(check_filesystem())
+    results.extend(check_filesystem(config))
     results.extend(check_monitoring(config))
     return results
 
