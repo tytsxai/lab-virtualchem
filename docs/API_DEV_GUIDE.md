@@ -623,9 +623,9 @@ create_assignment(session_id)
 
 ## 10. 资源链接
 
-- **源代码**: https://github.com/yourorg/VirtualChemLab
+- **源代码**: https://github.com/yourorg/virtualchemlab
 - **API文档**: http://localhost:8080/api/docs
-- **问题追踪**: https://github.com/yourorg/VirtualChemLab/issues
+- **问题追踪**: https://github.com/yourorg/virtualchemlab/issues
 - **开发指南**: docs/DEVELOPMENT_GUIDE.md
 
 ---

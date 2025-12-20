@@ -469,7 +469,7 @@ filters:
 3. VirtualChemLab 版本
 4. Python 版本和操作系统
 
-提交 Issue: [GitHub Issues](https://github.com/tytsxai/VirtualChemLab/issues)
+提交 Issue: [GitHub Issues](https://github.com/tytsxai/virtualchemlab/issues)
 
 ### 贡献改进
 
@@ -485,7 +485,7 @@ filters:
 ### 联系方式
 
 - 📧 邮箱: <your-email>
-- 💬 讨论: [GitHub Discussions](https://github.com/tytsxai/VirtualChemLab/discussions)
+- 💬 讨论: [GitHub Discussions](https://github.com/tytsxai/virtualchemlab/discussions)
 
 ---
 

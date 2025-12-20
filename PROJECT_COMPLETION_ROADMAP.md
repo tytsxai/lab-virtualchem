@@ -412,8 +412,8 @@
 
 ## 📞 联系与支持
 
-- **项目主页**: https://github.com/tytsxai/VirtualChemLab
-- **问题反馈**: https://github.com/tytsxai/VirtualChemLab/issues
+- **项目主页**: https://github.com/tytsxai/virtualchemlab
+- **问题反馈**: https://github.com/tytsxai/virtualchemlab/issues
 - **邮箱**: team@virtualchemlab.com
 
 ---

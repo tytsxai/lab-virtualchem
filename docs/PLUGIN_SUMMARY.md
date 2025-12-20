@@ -207,7 +207,7 @@ python -m src.plugins.manager list
 
 ```bash
 git clone <repo>
-cd VirtualChemLab
+cd virtualchemlab
 pip install -r requirements.txt
 python setup_plugins.py  # 交互式向导
 ```

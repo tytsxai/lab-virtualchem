@@ -1,6 +1,6 @@
 # VirtualChemLab
 
-一个具有游戏化交互体验的虚拟化学实验室应用程序。
+VirtualChemLab · 游戏化虚拟化学实验室 | Gamified virtual chemistry lab for teaching & simulation.
 
 > 📘 想要最短路径？使用 `QUICK_START.md`（English）或 `README_快速开始.md`（中文），并在完成后按照 `QUICK_START_COMPLETION.md` 检查剩余事项。需要更完整的引导可参考 `QUICK_START_GUIDE.md`。
 
@@ -130,8 +130,8 @@
 1. **克隆仓库**
 
    ```bash
-   git clone https://github.com/tytsxai/VirtualChemLab.git
-   cd VirtualChemLab
+   git clone https://github.com/tytsxai/virtualchemlab.git
+   cd virtualchemlab
    ```
 
 2. **创建并激活 Python 3.11 虚拟环境**
@@ -390,8 +390,8 @@ VirtualChemLab/
 
 ## 联系方式
 
-- 项目主页: [https://github.com/tytsxai/VirtualChemLab](https://github.com/tytsxai/VirtualChemLab)
-- 问题反馈: [Issues](https://github.com/tytsxai/VirtualChemLab/issues)
+- 项目主页: [https://github.com/tytsxai/virtualchemlab](https://github.com/tytsxai/virtualchemlab)
+- 问题反馈: [Issues](https://github.com/tytsxai/virtualchemlab/issues)
 - 邮箱: <team@virtualchemlab.com>
 
 ## 更新日志

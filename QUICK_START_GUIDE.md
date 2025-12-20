@@ -37,8 +37,8 @@
 ### 1. 克隆或下载项目
 
 ```bash
-git clone https://github.com/tytsxai/VirtualChemLab.git
-cd VirtualChemLab
+git clone https://github.com/tytsxai/virtualchemlab.git
+cd virtualchemlab
 ```
 
 ### 2. 准备环境并安装依赖

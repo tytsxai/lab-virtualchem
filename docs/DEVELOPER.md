@@ -200,7 +200,7 @@ microservices_manager.register_service(service)
 
 ```bash
 # 克隆项目
-git clone https://github.com/tytsxai/VirtualChemLab.git
+git clone https://github.com/tytsxai/virtualchemlab.git
 cd virtualchemlab
 
 # 创建虚拟环境

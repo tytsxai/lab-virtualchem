@@ -491,7 +491,7 @@ item.unhighlight()
 ### 运行示例
 
 ```bash
-cd VirtualChemLab开发
+cd virtualchemlab开发
 python examples/enhanced_interaction_demo.py
 ```
 

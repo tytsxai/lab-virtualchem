@@ -73,15 +73,15 @@
 ```bash
 # Fork项目到您的GitHub账号
 # 然后克隆您的Fork
-git clone https://github.com/YOUR_USERNAME/VirtualChemLab.git
-cd VirtualChemLab
+git clone https://github.com/YOUR_USERNAME/virtualchemlab.git
+cd virtualchemlab
 ```
 
 ### 2. 设置开发环境
 
 ```bash
 # 添加upstream远程仓库
-git remote add upstream https://github.com/ORIGINAL_OWNER/VirtualChemLab.git
+git remote add upstream https://github.com/ORIGINAL_OWNER/virtualchemlab.git
 
 # 创建虚拟环境
 python -m venv venv
@@ -463,8 +463,8 @@ BREAKING CHANGE: API endpoint changed from /v1 to /v2"
 
 需要帮助？
 
-- 💡 [GitHub Discussions](https://github.com/yourusername/VirtualChemLab/discussions)
-- 💬 [Issue Tracker](https://github.com/yourusername/VirtualChemLab/issues)
+- 💡 [GitHub Discussions](https://github.com/yourusername/virtualchemlab/discussions)
+- 💬 [Issue Tracker](https://github.com/yourusername/virtualchemlab/issues)
 - 📧 Email: dev@virtualchemlab.com
 
 ---
@@ -474,7 +474,7 @@ BREAKING CHANGE: API endpoint changed from /v1 to /v2"
 感谢所有贡献者！
 
 您的贡献将被记录在：
-- [贡献者列表](https://github.com/yourusername/VirtualChemLab/graphs/contributors)
+- [贡献者列表](https://github.com/yourusername/virtualchemlab/graphs/contributors)
 - [变更日志](CHANGELOG.md)
 
 ---

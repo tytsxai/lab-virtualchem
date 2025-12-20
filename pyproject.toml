@@ -86,10 +86,10 @@ plugins = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/tytsxai/VirtualChemLab"
+Homepage = "https://github.com/tytsxai/virtualchemlab"
 Documentation = "https://virtualchemlab.readthedocs.io"
-Repository = "https://github.com/tytsxai/VirtualChemLab.git"
-Issues = "https://github.com/tytsxai/VirtualChemLab/issues"
+Repository = "https://github.com/tytsxai/virtualchemlab.git"
+Issues = "https://github.com/tytsxai/virtualchemlab/issues"
 
 [tool.setuptools.dynamic]
 version = {attr = "src.__version__"}

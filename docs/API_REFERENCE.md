@@ -504,9 +504,9 @@ record = controller.complete_experiment()
 
 ## 联系我们
 
-- **GitHub**: https://github.com/yourorg/VirtualChemLab
+- **GitHub**: https://github.com/yourorg/virtualchemlab
 - **文档**: https://virtualchemlab.readthedocs.io
-- **问题反馈**: https://github.com/yourorg/VirtualChemLab/issues
+- **问题反馈**: https://github.com/yourorg/virtualchemlab/issues
 
 ---
 

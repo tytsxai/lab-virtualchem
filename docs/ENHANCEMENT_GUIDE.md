@@ -940,13 +940,13 @@ report = profiler.get_report()
 
 ### 官方文档
 
-- [项目主页](https://github.com/tytsxai/VirtualChemLab)
+- [项目主页](https://github.com/tytsxai/virtualchemlab)
 - [API文档](https://docs.virtualchemlab.com/api)
 - [用户手册](https://docs.virtualchemlab.com/user-guide)
 
 ### 社区资源
 
-- [GitHub Issues](https://github.com/tytsxai/VirtualChemLab/issues)
+- [GitHub Issues](https://github.com/tytsxai/virtualchemlab/issues)
 - [社区论坛](https://community.virtualchemlab.com)
 - [开发者文档](https://docs.virtualchemlab.com/developer)
 

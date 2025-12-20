@@ -811,7 +811,7 @@ A: 禁用截图功能，减少采样率，或使用压缩格式。
 
 如有问题或建议，请联系：
 
-- GitHub Issues: https://github.com/VirtualChemLab/issues
+- GitHub Issues: https://github.com/tytsxai/virtualchemlab/issues
 - Email: support@virtualchemlab.com
 - 文档反馈: docs@virtualchemlab.com
 

@@ -1,6 +1,7 @@
 # 快速开始（简版）
 
 为了方便中文用户快速上手，这份文件概述了最重要的准备步骤，详细内容请参考 `README.md` 和 `QUICK_START_GUIDE.md`。
+VirtualChemLab · 游戏化虚拟化学实验室。
 
 > 推荐使用场景：本地桌面单机（macOS/Windows/Linux）。REST API/管理后台为可选组件，默认仅在本机/内网使用。
 

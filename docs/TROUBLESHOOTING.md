@@ -895,7 +895,7 @@ export HTTPS_PROXY=http://127.0.0.1:8888
 ### 在线资源
 
 1. **官方文档**: https://docs.virtualchemlab.com
-2. **GitHub Issues**: https://github.com/virtualchemlab/issues
+2. **GitHub Issues**: https://github.com/tytsxai/virtualchemlab/issues
 3. **社区论坛**: https://forum.virtualchemlab.com
 4. **Stack Overflow**: 标签 `virtualchemlab`
 

@@ -658,7 +658,7 @@ events = auditor.get_security_events()
 ### 联系方式
 
 - **邮箱**: <support@virtualchemlab.com>
-- **GitHub**: <https://github.com/tytsxai/VirtualChemLab>
+- **GitHub**: <https://github.com/tytsxai/virtualchemlab>
 - **文档**: <https://docs.virtualchemlab.com>
 - **社区**: <https://community.virtualchemlab.com>
 

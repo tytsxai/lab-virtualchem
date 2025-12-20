@@ -1182,4 +1182,4 @@ bus.publish(Event(
 **📞 需要帮助?**
 - 📧 Email: support@virtualchemlab.com
 - 📚 文档: https://docs.virtualchemlab.com
-- 💬 Issues: https://github.com/virtualchemlab/issues
+- 💬 Issues: https://github.com/tytsxai/virtualchemlab/issues

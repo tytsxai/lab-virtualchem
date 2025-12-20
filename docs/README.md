@@ -1,6 +1,6 @@
 # VirtualChemLab 文档
 
-欢迎使用 VirtualChemLab 虚拟化学实验室！
+VirtualChemLab · 游戏化虚拟化学实验室 | Gamified virtual chemistry lab for teaching & simulation.
 
 > 默认定位：**本地桌面单机应用**（macOS/Windows/Linux）。REST API 与管理后台为可选组件，通常仅用于本机或内网。
 
@@ -30,8 +30,8 @@
 1. 克隆项目
 
    ```bash
-   git clone https://github.com/tytsxai/VirtualChemLab.git
-   cd VirtualChemLab
+   git clone https://github.com/tytsxai/virtualchemlab.git
+   cd virtualchemlab
    ```
 
 2. 创建虚拟环境
@@ -448,7 +448,7 @@ kubectl get services
 如果您遇到问题，可以通过以下方式获取帮助：
 
 1. 查看[FAQ](FAQ.md) 或 [故障排除指南](TROUBLESHOOTING.md)
-2. 提交[Issue](https://github.com/tytsxai/VirtualChemLab/issues)
+2. 提交[Issue](https://github.com/tytsxai/virtualchemlab/issues)
 3. 联系技术支持: <support@virtualchemlab.com>
 
 ## 更新日志
