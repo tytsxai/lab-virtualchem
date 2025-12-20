@@ -2,6 +2,8 @@
 
 为了方便中文用户快速上手，这份文件概述了最重要的准备步骤，详细内容请参考 `README.md` 和 `QUICK_START_GUIDE.md`。
 
+> 推荐使用场景：本地桌面单机（macOS/Windows/Linux）。REST API/管理后台为可选组件，默认仅在本机/内网使用。
+
 ## 环境要求
 
 - Python 3.11（推荐使用独立虚拟环境）
@@ -20,9 +22,9 @@
 2. **初始化配置并验证目录**
    ```bash
    cp env.example .env
-   venv311/bin/python config/schemas/app_config.py
+   venv311/bin/python tools/validate_config.py
    ```
-   上述脚本会检查关键路径并自动创建缺失目录。
+   上述脚本会按当前实现的配置加载器检查关键路径并自动创建缺失目录。
 
 3. **运行应用**
    ```bash

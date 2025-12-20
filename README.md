@@ -4,6 +4,12 @@
 
 > 📘 想要最短路径？使用 `QUICK_START.md`（English）或 `README_快速开始.md`（中文），并在完成后按照 `QUICK_START_COMPLETION.md` 检查剩余事项。需要更完整的引导可参考 `QUICK_START_GUIDE.md`。
 
+## 使用场景与推荐部署
+
+- ✅ **推荐**：本地桌面单机（教学/实验室/内网环境），macOS/Windows/Linux 均可。
+- ✅ **macOS 兼容**：支持打包为 `.app` 并分发给本机用户（见 `DEPLOY.md` 与 `build_macos.sh`）。
+- ⚠️ **API/管理后台可选**：用于内网集成或运维辅助，默认仅绑定回环地址；不建议直接对公网暴露。
+
 ## 快速导航
 
 - [功能特性](#功能特性)
@@ -216,9 +222,9 @@ ruff check src tests --fix
 - `JWT_SECRET_KEY`：JWT 密钥，至少 32 个字符，生产环境必须外部提供。
 - `SESSION_SECRET_KEY`：会话密钥，至少 32 个字符，生产环境必须外部提供。
 - `DEVELOPER_SECRET_KEY`：开发者模式密钥（仅在开启开发者模式时需要），建议至少 32 个字符。
-- `VCL_ADMIN_SECRET_KEY`：管理后台/Flask 的 SECRET_KEY，建议与 JWT/会话密钥不同。
+- `VCL_ADMIN_SECRET_KEY`：管理后台/Flask 的 SECRET_KEY（**仅在启动 Admin API 时需要**），建议与 JWT/会话密钥不同。
 - `VCL_API_HOST`：API 服务监听地址，默认 `127.0.0.1`；如需对外提供服务请显式设置为 `0.0.0.0` 并配合认证/限流/防火墙。
-- `VCL_API_KEYS`：REST API 访问密钥（逗号分隔，可配置多把）。未配置时会在首次启动时自动生成并写入 `~/.virtualchemlab/api_key.txt`（以及 `~/.virtualchemlab/config.json`），用于本机开发调试；生产环境**必须**显式配置该变量（避免容器/多副本因自动生成导致密钥漂移）。
+- `VCL_API_KEYS`：REST API 访问密钥（逗号分隔，可配置多把，**仅在启动 REST API 时需要**）。未配置时会在首次启动时自动生成并写入 `~/.virtualchemlab/api_key.txt`（以及 `~/.virtualchemlab/config.json`），用于本机开发调试；生产环境**必须**显式配置该变量（避免容器/多副本因自动生成导致密钥漂移）。
 - `VCL_API_CORS_ORIGINS`：REST API 的 CORS 允许列表（逗号分隔）。默认仅允许本机回环（`localhost/127.0.0.1/::1`）；当你将 API 暴露到局域网/容器时，建议显式配置允许的前端域名。
 - `VCL_ADMIN_CORS_ORIGINS`：管理后台 API 的 CORS 允许列表（逗号分隔，或 `*` 仅用于开发环境）。默认不启用 CORS；当你需要浏览器跨域访问或绑定到非本地主机时，请显式配置。
 - `ENVIRONMENT`：`development` / `staging` / `production`，控制默认安全策略。
@@ -233,7 +239,7 @@ export VCL_ADMIN_SECRET_KEY="admin_panel_secret"
 export ENVIRONMENT="production"
 ```
 
-生产环境缺少上述密钥会导致程序拒绝启动。
+生产环境缺少必需密钥会导致程序拒绝启动；仅在启用 Admin API/REST API 时才要求各自的密钥。
 
 ## 使用指南
 

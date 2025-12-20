@@ -1,6 +1,7 @@
 # Configuration hardening
 
 - Secrets load from environment variables by default. For desktop packaged builds (`sys.frozen`), the app will generate per-machine secrets on first start and persist them under the user runtime directory (e.g. `~/.virtualchemlab/config.json`, or via `VCL_DATA_DIR` / `VCL_CONFIG_PATH`). Enterprise deployments can still override secrets via environment variables. `VCL_ADMIN_SECRET_KEY` is required when starting the Admin API (`src/api/admin_api.py`) and is validated there (including a minimum length check).
+- Recommended deployment is single-machine desktop (macOS/Windows/Linux). REST/Admin APIs are optional and intended for local/lan use, not public exposure.
 - Configuration precedence: environment variables override `config/*.json` and `config.json`. Non-production can fall back to generated placeholders for local runs, but production never accepts file-stored secrets.
 - Developer/debug defaults: production sets `app.debug=false` and `developer.enabled=false`. To explicitly enable developer mode, set `DEVELOPER_MODE_ENABLED=true`; otherwise it is forced off even if a config file flips it on.
 - Validation: `src/core/config_loader.py` (merge + directory preparation) and `src/core/startup_preflight.py` (fail-fast secret checks) are the runtime "source of truth". For local verification use `python tools/validate_config.py`. `config/schemas/app_config.py` is a legacy schema helper and should not be treated as the authoritative validator.

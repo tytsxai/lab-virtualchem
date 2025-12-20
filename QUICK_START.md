@@ -2,6 +2,9 @@
 
 This short guide mirrors the canonical documentation and keeps the minimal, repeatable steps in one place.
 
+Note: VirtualChemLab is primarily a single-machine desktop app (macOS/Windows/Linux).
+REST/Admin APIs are optional and intended for local/lan use, not public exposure.
+
 ## Prerequisites
 
 - Python 3.11 (virtual environment strongly recommended)

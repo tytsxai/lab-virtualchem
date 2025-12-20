@@ -4,6 +4,12 @@
 
 ✅ **可以运行了!** 项目已经过测试,核心功能正常。
 
+## 🎯 推荐部署方式
+
+- **本地桌面单机**（教学/实验室/内网环境）：主应用 + 可选管理工具。
+- **macOS 兼容**：通过 `build_macos.sh` 打包为 `.app`，适合分发给单机用户。
+- REST API/管理后台为**可选组件**，默认仅绑定本机回环地址；不建议直接公网暴露。
+
 ---
 
 ## 🚀 快速运行(开发模式)
@@ -45,10 +51,12 @@
 
 **必需环境变量（production）**
 - `ENVIRONMENT=production`
-- `JWT_SECRET_KEY`：长度 `>=32`
-- `SESSION_SECRET_KEY`：长度 `>=32`
-- `VCL_ADMIN_SECRET_KEY`：长度 `>=32`
-- `VCL_API_KEYS`：API 访问密钥（逗号分隔多把），用于 REST API
+- `JWT_SECRET_KEY`：长度 `>=32`（主应用/REST API）
+- `SESSION_SECRET_KEY`：长度 `>=32`（主应用/REST API）
+
+**仅在启用对应组件时需要**
+- `VCL_ADMIN_SECRET_KEY`：长度 `>=32`（Admin API）
+- `VCL_API_KEYS`：API 访问密钥（逗号分隔多把，用于 REST API）
 
 **可选/高级**
 - `DEVELOPER_MODE_ENABLED=true`：显式开启开发者模式（生产默认关闭）
@@ -72,7 +80,7 @@ ENVIRONMENT=production python main.py
 ```bash
 VCL_API_HOST=127.0.0.1 VCL_API_KEYS=change-me ENVIRONMENT=production python -m src.api.server
 ```
-如需对外提供服务请显式设置 `VCL_API_HOST=0.0.0.0`，并结合防火墙/反向代理做访问控制。
+如需对外提供服务请显式设置 `VCL_API_HOST=0.0.0.0`，并结合防火墙/反向代理做访问控制；不建议直接对公网暴露。
 
 可选：慢连接保护（防止连接长时间占用导致服务卡死）
 - `VCL_API_CONN_TIMEOUT=10`：单连接 socket 超时时间（秒，默认 10）

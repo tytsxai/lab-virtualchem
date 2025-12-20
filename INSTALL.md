@@ -1,5 +1,7 @@
 # VirtualChemLab 安装指南
 
+> 推荐使用场景：本地桌面单机（macOS/Windows/Linux）。REST API/管理后台为可选组件，默认仅在本机/内网使用。
+
 ## 系统要求
 
 - **Python**: 3.10 或更高（推荐 3.11）
@@ -248,7 +250,8 @@ python examples/plugin_demo.py
 
 - `JWT_SECRET_KEY`：JWT 密钥，至少 32 个字符。生产环境必须外部提供。
 - `SESSION_SECRET_KEY`：会话密钥，至少 32 个字符。生产环境必须外部提供。
-- `VCL_ADMIN_SECRET_KEY`：管理后台/Flask SECRET_KEY，建议独立于 JWT 密钥。
+- `VCL_ADMIN_SECRET_KEY`：管理后台/Flask SECRET_KEY（仅在启动 Admin API 时需要），建议独立于 JWT 密钥。
+- `VCL_API_KEYS`：REST API 访问密钥（仅在启动 REST API 时需要，逗号分隔多把）。
 - `ENVIRONMENT`：`development` / `staging` / `production`，用于切换默认安全策略。
 
 可通过 `.env` 或系统环境变量设置，例如：
@@ -257,10 +260,11 @@ python examples/plugin_demo.py
 export JWT_SECRET_KEY="please_change_me_to_a_secure_value"
 export SESSION_SECRET_KEY="please_change_me_to_a_secure_value"
 export VCL_ADMIN_SECRET_KEY="admin_panel_secret"
+export VCL_API_KEYS="api-key-1,api-key-2"
 export ENVIRONMENT="production"
 ```
 
-生产环境缺少必需密钥将导致程序拒绝启动。
+生产环境缺少必需密钥将导致程序拒绝启动；仅在启用 Admin API/REST API 时才要求各自密钥。
 
 ---
 

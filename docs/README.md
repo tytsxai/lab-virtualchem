@@ -2,13 +2,15 @@
 
 欢迎使用 VirtualChemLab 虚拟化学实验室！
 
+> 默认定位：**本地桌面单机应用**（macOS/Windows/Linux）。REST API 与管理后台为可选组件，通常仅用于本机或内网。
+
 ## 目录
 
 - [快速开始](#快速开始) — 最小可行的环境搭建步骤与快捷链接
 - [用户指南](#用户指南) — 实验、模板和权限等常见操作
 - [开发者文档](#开发者文档) — 模块结构、编码规范和测试方式
-- [API文档](#api文档) — REST API 概览与示例
-- [部署指南](#部署指南) — Docker/K8s/传统部署与配置要点
+- [API文档](#api文档) — REST API 概览与示例（可选）
+- [部署指南](#部署指南) — 桌面打包与可选服务部署说明
 - [故障排除](#故障排除) — 常见问题、日志分析与支持渠道
 - [文档维护状态](DOCS_STATUS.md) — 哪些文档是当前事实来源
 
@@ -305,6 +307,9 @@ curl -H "X-API-Key: <your-api-key>" \
 
 ## 部署指南
 
+> 桌面单机使用建议参考 `DEPLOY.md` 中的打包与分发流程（macOS `.app` 等）。
+> Docker/K8s 更适用于 API/管理后台等可选组件，不建议用于 GUI 主应用。
+
 ### 开发环境
 
 1. 按照[快速开始](#快速开始)指南设置开发环境
@@ -353,9 +358,12 @@ kubectl get services
 
 #### 环境变量
 
-- `DATABASE_URL`: 数据库连接字符串
-- `REDIS_URL`: Redis连接字符串
-- `JWT_SECRET`: JWT密钥
+- `DATABASE_URL`: 数据库连接字符串（可选）
+- `REDIS_ENABLED`/`REDIS_HOST`/`REDIS_PORT`: Redis 连接配置（可选）
+- `JWT_SECRET_KEY`: JWT 密钥（生产环境必须）
+- `SESSION_SECRET_KEY`: 会话密钥（生产环境必须）
+- `VCL_API_KEYS`: REST API 密钥（仅在启用 REST API 时需要）
+- `VCL_ADMIN_SECRET_KEY`: Admin API 密钥（仅在启用管理后台时需要）
 - `LOG_LEVEL`: 日志级别
 
 #### 配置文件
