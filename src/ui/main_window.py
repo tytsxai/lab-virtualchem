@@ -2988,7 +2988,7 @@ class MainWindow(QMainWindow):
     def on_open_online_docs(self) -> None:
         """打开在线文档"""
         # Note: 在部署时需要更新为实际的文档链接
-        docs_url = "https://github.com/VirtualChemLab/docs"
+        docs_url = "https://github.com/tytsxai/virtualchemlab/docs"
 
         try:
             self._open_url(docs_url)
@@ -3037,7 +3037,7 @@ class MainWindow(QMainWindow):
             "检查更新",
             f"当前版本: v{APP_VERSION}\n\n"
             "自动更新检查功能将在v2.1版本推出。\n"
-            "您可以访问 https://github.com/VirtualChemLab/releases 查看最新版本。",
+            "您可以访问 https://github.com/tytsxai/virtualchemlab/releases 查看最新版本。",
         )
 
     def _setup_performance_monitoring(self) -> None:
