@@ -3,6 +3,9 @@
         "environment": "production",
         "debug": false
     },
+    "log": {
+        "level": "WARNING"
+    },
     "monitoring": {
         "log_level": "WARNING"
     },

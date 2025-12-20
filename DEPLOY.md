@@ -104,6 +104,8 @@ python scripts/backup_data.py --mode daily
 python scripts/backup_data.py --mode weekly
 ```
 产物位于 `backups/daily/` 与 `backups/weekly/`，内部包含 `manifest.json`（版本/构建信息/文件清单）。
+运行时数据目录会自动识别（`VCL_DATA_DIR` / `VCL_CONFIG_PATH` / 不可写目录重定向），
+避免“备份了仓库目录，但实际数据写在用户目录”的偏差。
 
 **恢复（默认仅解压到 restores/，不覆盖）**
 ```bash
@@ -122,6 +124,11 @@ python scripts/restore_backup.py backups/daily/<file>.zip --apply
 - 使用 `restore_backup.py` 解压并核对 `manifest.json`（版本/构建号）
 - 使用 `--apply` 覆盖恢复 `data/`、`user_data/`、`config.json`
 - 重新启动后用 `/healthz` + `/readyz` 验证，再逐步放量
+
+### 5) 生产日志级别（配置一致性）
+
+项目的实际日志级别读取 `log.level` 或环境变量 `LOG_LEVEL`。
+请确保生产配置中设置的是 `log.level`（而非 `monitoring.log_level`），否则不会生效。
 
 ---
 
