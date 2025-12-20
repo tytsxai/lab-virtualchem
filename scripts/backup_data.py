@@ -14,6 +14,7 @@ import json
 import os
 import shutil
 import sys
+import tempfile
 import time
 import zipfile
 from dataclasses import asdict, dataclass
@@ -34,6 +35,43 @@ class BackupSpec:
     include_data: bool
     include_user_data: bool
     include_config: bool
+
+
+def _env_flag(name: str) -> bool:
+    return str(os.getenv(name, "")).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _default_runtime_home() -> Path:
+    if sys.platform == "win32":
+        base = os.getenv("APPDATA") or os.getenv("LOCALAPPDATA") or str(Path.home())
+        return Path(base) / ".virtualchemlab"
+    return Path.home() / ".virtualchemlab"
+
+
+def _is_directory_writable(path: Path) -> bool:
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(dir=path, delete=True):
+            return True
+    except Exception:
+        return False
+
+
+def _resolve_runtime_root() -> tuple[Path, bool]:
+    runtime_env = (os.getenv("VCL_DATA_DIR") or "").strip()
+    if runtime_env:
+        return Path(runtime_env).expanduser(), True
+
+    config_path_env = (os.getenv("VCL_CONFIG_PATH") or "").strip()
+    if config_path_env:
+        return Path(config_path_env).expanduser().parent, True
+
+    runtime_root = _default_runtime_home()
+    force_user_dir = _env_flag("VCL_FORCE_USER_DATA_DIR")
+    is_frozen = bool(getattr(sys, "frozen", False))
+    project_writable = _is_directory_writable(PROJECT_ROOT)
+    should_redirect = force_user_dir or is_frozen or not project_writable
+    return runtime_root, should_redirect
 
 
 def _iter_files(base: Path) -> list[Path]:
@@ -82,26 +120,43 @@ def create_backup(spec: BackupSpec) -> Path:
     included_roots: list[str] = []
     files_added: list[str] = []
 
+    runtime_root, should_redirect = _resolve_runtime_root()
+
     # Collect targets
     targets: list[Path] = []
     if spec.include_data:
-        included_roots.append("data/")
-        targets.extend(_iter_files(PROJECT_ROOT / "data"))
-        # SQLite WAL/shm (if exists)
-        for suffix in ("", "-wal", "-shm"):
-            candidate = PROJECT_ROOT / "data" / f"virtualchemlab.db{suffix}"
-            if candidate.exists():
-                targets.append(candidate)
+        data_roots = [runtime_root] if should_redirect else [PROJECT_ROOT]
+        for root in data_roots:
+            data_dir = root / "data"
+            if data_dir.exists():
+                included_roots.append(f"{root}/data/")
+                targets.extend(_iter_files(data_dir))
+            # SQLite WAL/shm (if exists)
+            for suffix in ("", "-wal", "-shm"):
+                candidate = root / "data" / f"virtualchemlab.db{suffix}"
+                if candidate.exists():
+                    targets.append(candidate)
 
     if spec.include_user_data:
-        included_roots.append("user_data/")
-        targets.extend(_iter_files(PROJECT_ROOT / "user_data"))
+        user_roots = [runtime_root] if should_redirect else [PROJECT_ROOT]
+        for root in user_roots:
+            user_dir = root / "user_data"
+            if user_dir.exists():
+                included_roots.append(f"{root}/user_data/")
+                targets.extend(_iter_files(user_dir))
 
     if spec.include_config:
-        config_json = PROJECT_ROOT / "config.json"
-        if config_json.exists():
-            included_roots.append("config.json")
-            targets.append(config_json)
+        config_env = (os.getenv("VCL_CONFIG_PATH") or "").strip()
+        config_candidates = [PROJECT_ROOT / "config.json"]
+        if should_redirect:
+            config_candidates.insert(0, runtime_root / "config.json")
+        if config_env:
+            config_candidates.insert(0, Path(config_env).expanduser())
+        for config_json in config_candidates:
+            if config_json.exists():
+                included_roots.append(str(config_json))
+                targets.append(config_json)
+                break
 
     # De-dup
     targets = sorted({p.resolve() for p in targets if p.exists()})
@@ -110,6 +165,8 @@ def create_backup(spec: BackupSpec) -> Path:
         "created_at": datetime.now().isoformat(),
         "mode": spec.mode,
         "project_root": str(PROJECT_ROOT),
+        "runtime_root": str(runtime_root),
+        "runtime_redirected": bool(should_redirect),
         "included_roots": included_roots,
         "build": build.as_dict(),
         "python": sys.version,
@@ -193,4 +250,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

@@ -12,8 +12,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import sys
+import tempfile
 import zipfile
 from datetime import datetime
 from pathlib import Path
@@ -24,6 +26,43 @@ ALLOWED_APPLY_PREFIXES: tuple[str, ...] = ("data/", "user_data/", "config.json")
 
 class UnsafeBackupError(RuntimeError):
     pass
+
+
+def _env_flag(name: str) -> bool:
+    return str(os.getenv(name, "")).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _default_runtime_home() -> Path:
+    if sys.platform == "win32":
+        base = os.getenv("APPDATA") or os.getenv("LOCALAPPDATA") or str(Path.home())
+        return Path(base) / ".virtualchemlab"
+    return Path.home() / ".virtualchemlab"
+
+
+def _is_directory_writable(path: Path) -> bool:
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(dir=path, delete=True):
+            return True
+    except Exception:
+        return False
+
+
+def _resolve_runtime_root() -> tuple[Path, bool]:
+    runtime_env = (os.getenv("VCL_DATA_DIR") or "").strip()
+    if runtime_env:
+        return Path(runtime_env).expanduser(), True
+
+    config_path_env = (os.getenv("VCL_CONFIG_PATH") or "").strip()
+    if config_path_env:
+        return Path(config_path_env).expanduser().parent, True
+
+    runtime_root = _default_runtime_home()
+    force_user_dir = _env_flag("VCL_FORCE_USER_DATA_DIR")
+    is_frozen = bool(getattr(sys, "frozen", False))
+    project_writable = _is_directory_writable(PROJECT_ROOT)
+    should_redirect = force_user_dir or is_frozen or not project_writable
+    return runtime_root, should_redirect
 
 
 def _is_safe_member(name: str) -> bool:
@@ -146,6 +185,15 @@ def main(argv: list[str] | None = None) -> int:
         print("To apply: run again with --apply after verifying extracted contents.")
         return 0
 
+    runtime_root, should_redirect = _resolve_runtime_root()
+    config_env = (os.getenv("VCL_CONFIG_PATH") or "").strip()
+    if config_env:
+        config_path = Path(config_env).expanduser()
+    else:
+        config_path = (runtime_root / "config.json") if should_redirect else (PROJECT_ROOT / "config.json")
+
+    apply_root = runtime_root if should_redirect else PROJECT_ROOT
+
     # Apply: copy back into project root, overwriting.
     # Safety: only allow runtime mutable data. Never overwrite code.
     for path in target_dir.rglob("*"):
@@ -158,10 +206,13 @@ def main(argv: list[str] | None = None) -> int:
         if not _is_allowed_apply_path(rel_posix):
             print(f"skip (not allowlisted): {rel_posix}")
             continue
-        dest = PROJECT_ROOT / rel
+        if rel_posix == "config.json":
+            dest = config_path
+        else:
+            dest = apply_root / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(path, dest)
-    print(f"applied_to: {PROJECT_ROOT}")
+    print(f"applied_to: {apply_root}")
     return 0
 
 
