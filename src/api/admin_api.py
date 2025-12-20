@@ -142,9 +142,21 @@ class AdminAPI:
             if unauthorized:
                 return unauthorized
             try:
-                # 这里需要实现获取所有许可证的逻辑
-                # 暂时返回空列表
-                return jsonify({"licenses": [], "total": 0})
+                license_obj = self.license_manager.load_license()
+                if not license_obj:
+                    return jsonify({"licenses": [], "total": 0})
+
+                info = self.license_manager.get_license_info(license_obj)
+                days_remaining = info.get("days_remaining")
+                if isinstance(days_remaining, int) and days_remaining <= 0:
+                    status = "expired"
+                elif info.get("is_activated"):
+                    status = "active"
+                else:
+                    status = "inactive"
+                info["status"] = status
+
+                return jsonify({"licenses": [info], "total": 1})
             except Exception as e:
                 logger.error(f"获取许可证列表失败: {e}")
                 return jsonify({"error": str(e)}), 500

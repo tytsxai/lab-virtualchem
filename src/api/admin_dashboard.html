@@ -740,8 +740,66 @@
                 return;
             }
 
-            // 这里可以添加许可证表格渲染逻辑
-            container.innerHTML = '<div class="empty-state">许可证功能开发中...</div>';
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>许可证</th>
+                            <th>类型</th>
+                            <th>邮箱</th>
+                            <th>到期日</th>
+                            <th>剩余天数</th>
+                            <th>已激活</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            licenses.forEach(license => {
+                const fullKey = license.license_key || '';
+                const escapedFullKey = escapeHtml(fullKey);
+                const shortKey = escapeHtml(shortId(fullKey, 18));
+                const licenseType = escapeHtml(license.license_type || '-');
+                const email = escapeHtml(license.email || '-');
+                const expiryDate = escapeHtml(license.expiry_date || '-');
+                const daysRemaining = Number(license.days_remaining);
+                const daysText = Number.isFinite(daysRemaining) ? String(daysRemaining) : '-';
+                const activated = Boolean(license.is_activated);
+                const activatedText = activated ? '是' : '否';
+
+                let statusLabel = '未知';
+                let badgeClass = 'info';
+                const statusValue = String(license.status || '').toLowerCase();
+                if (statusValue === 'expired' || (Number.isFinite(daysRemaining) && daysRemaining <= 0)) {
+                    statusLabel = '已过期';
+                    badgeClass = 'danger';
+                } else if (statusValue === 'inactive' || !activated) {
+                    statusLabel = '未激活';
+                    badgeClass = 'warning';
+                } else if (statusValue === 'active') {
+                    statusLabel = '有效';
+                    badgeClass = 'success';
+                } else if (activated) {
+                    statusLabel = '有效';
+                    badgeClass = 'success';
+                }
+
+                html += `
+                    <tr>
+                        <td><span title="${escapedFullKey}">${shortKey || '-'}</span></td>
+                        <td>${licenseType}</td>
+                        <td>${email}</td>
+                        <td>${expiryDate}</td>
+                        <td>${daysText}</td>
+                        <td>${activatedText}</td>
+                        <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
         }
 
         // 刷新活动记录
