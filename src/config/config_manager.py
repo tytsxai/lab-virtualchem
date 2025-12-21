@@ -5,8 +5,11 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import logging
+import os
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -72,7 +75,10 @@ class ConfigManager:
     def __init__(self):
         """初始化配置管理器"""
         if not hasattr(self, "_initialized"):
-            self._config = self._defaults.copy()
+            self._config = copy.deepcopy(self._defaults)
+            self._max_config_bytes = int(
+                os.environ.get("VCL_MAX_CONFIG_BYTES", "1048576")
+            )
             self._initialized = True
 
     def load(self, config_file: str | Path) -> None:
@@ -82,21 +88,37 @@ class ConfigManager:
         Args:
             config_file: 配置文件路径
         """
-        config_path = Path(config_file)
+        config_path = self._resolve_config_path(config_file)
         self._config_file = config_path
 
         try:
             if config_path.exists():
+                self._enforce_file_size_limit(config_path)
                 with open(config_path, encoding="utf-8") as f:
                     user_config = json.load(f)
 
+                if not isinstance(user_config, dict):
+                    raise ConfigError("配置文件内容必须为 JSON 对象")
+
+                # 仅允许更新默认配置中存在的键，防止配置注入
+                user_config = self._filter_by_whitelist(user_config, self._defaults)
+
                 # 深度合并配置
-                self._config = self._deep_merge(self._defaults.copy(), user_config)
+                self._config = self._deep_merge(copy.deepcopy(self._defaults), user_config)
+
+                # 强制验证配置
+                errors = self.validate()
+                if errors:
+                    raise ConfigError("配置验证失败: " + "; ".join(errors))
+
                 logger.info(f"配置加载成功: {config_path}")
             else:
                 logger.warning(f"配置文件不存在，使用默认配置: {config_path}")
-                # 创建默认配置文件
-                self.save()
+                # 使用默认配置即可；避免在 load() 中强制写盘导致不必要的失败/副作用。
+                try:
+                    self.save()
+                except ConfigError as exc:
+                    logger.warning("默认配置写入失败，继续使用内存默认配置: %s", exc)
         except json.JSONDecodeError as e:
             msg = f"配置文件格式错误: {e}"
             logger.error(msg)
@@ -113,11 +135,44 @@ class ConfigManager:
             return
 
         try:
+            # 强制验证配置
+            errors = self.validate()
+            if errors:
+                raise ConfigError("配置验证失败: " + "; ".join(errors))
+
+            # 强制路径限制到 user_data/ 目录
+            self._config_file = self._resolve_config_path(self._config_file)
+
             # 确保目录存在
             self._config_file.parent.mkdir(parents=True, exist_ok=True)
 
-            with open(self._config_file, "w", encoding="utf-8") as f:
-                json.dump(self._config, f, indent=2, ensure_ascii=False)
+            content = json.dumps(self._config, indent=2, ensure_ascii=False)
+            encoded = content.encode("utf-8")
+            if len(encoded) > self._max_config_bytes:
+                raise ConfigError(
+                    f"配置内容过大（{len(encoded)} bytes），超过限制（{self._max_config_bytes} bytes）"
+                )
+
+            # 原子写入：临时文件 + os.replace（同目录）
+            tmp_dir = str(self._config_file.parent)
+            fd, tmp_path_str = tempfile.mkstemp(
+                prefix=self._config_file.name + ".",
+                suffix=".tmp",
+                dir=tmp_dir,
+            )
+            tmp_path = Path(tmp_path_str)
+            try:
+                with os.fdopen(fd, "wb") as f:
+                    f.write(encoded)
+                    f.flush()
+                    os.fsync(f.fileno())
+                os.replace(tmp_path, self._config_file)
+            finally:
+                try:
+                    if tmp_path.exists():
+                        tmp_path.unlink()
+                except OSError:
+                    pass
 
             logger.info(f"配置保存成功: {self._config_file}")
         except Exception as e:
@@ -157,18 +212,30 @@ class ConfigManager:
             save: 是否立即保存到文件
         """
         try:
+            if not self._is_key_allowed(key):
+                raise ConfigError(f"不允许的配置键: {key}")
+
+            candidate_config = copy.deepcopy(self._config)
             keys = key.split(".")
-            config = self._config
+            config = candidate_config
 
             # 导航到最后一个键的父级
             for k in keys[:-1]:
-                if k not in config:
-                    config[k] = {}
+                if k not in config or not isinstance(config[k], dict):
+                    raise ConfigError(f"无效的配置路径: {key}")
                 config = config[k]
 
             # 设置值
             config[keys[-1]] = value
             logger.debug(f"配置已更新: {key} = {value}")
+
+            # 强制验证配置（不通过则不提交）
+            previous_config = self._config
+            self._config = candidate_config
+            errors = self.validate()
+            if errors:
+                self._config = previous_config
+                raise ConfigError("配置验证失败: " + "; ".join(errors))
 
             if save:
                 self.save()
@@ -185,7 +252,7 @@ class ConfigManager:
             key: 要重置的配置键，None表示重置全部
         """
         if key is None:
-            self._config = self._defaults.copy()
+            self._config = copy.deepcopy(self._defaults)
             logger.info("所有配置已重置为默认值")
         else:
             default_value = self._get_from_defaults(key)
@@ -278,7 +345,7 @@ class ConfigManager:
         Returns:
             配置字典
         """
-        return self._config.copy()
+        return copy.deepcopy(self._config)
 
     def import_config(self, config: dict[str, Any], merge: bool = True) -> None:
         """
@@ -288,12 +355,84 @@ class ConfigManager:
             config: 配置字典
             merge: 是否与现有配置合并
         """
+        if not isinstance(config, dict):
+            raise ConfigError("导入配置必须为字典")
+
+        # 仅允许默认配置内的键（白名单），防止注入
+        filtered = self._filter_by_whitelist(config, self._defaults)
+
         if merge:
-            self._config = self._deep_merge(self._config, config)
+            candidate_config = self._deep_merge(copy.deepcopy(self._config), filtered)
         else:
-            self._config = config
+            # “替换”也必须保持默认配置结构，否则 validate() 会失败
+            candidate_config = self._deep_merge(copy.deepcopy(self._defaults), filtered)
+
+        previous_config = self._config
+        self._config = candidate_config
+        errors = self.validate()
+        if errors:
+            self._config = previous_config
+            raise ConfigError("配置验证失败: " + "; ".join(errors))
+
+        if merge:
+            self._config = candidate_config
+        else:
+            self._config = candidate_config
 
         logger.info("配置已导入")
+
+    def _get_user_data_dir(self) -> Path:
+        override = os.environ.get("VCL_USER_DATA_DIR")
+        if override:
+            return Path(override).expanduser().resolve()
+        project_root = Path(__file__).resolve().parents[2]
+        return (project_root / "user_data").resolve()
+
+    def _resolve_config_path(self, config_file: str | Path) -> Path:
+        base_dir = self._get_user_data_dir()
+        path = Path(config_file)
+        if not path.is_absolute():
+            path = base_dir / path
+        resolved = path.expanduser().resolve()
+        try:
+            resolved.relative_to(base_dir)
+        except ValueError as e:
+            raise ConfigError(f"配置文件路径必须位于 {base_dir} 目录内") from e
+        return resolved
+
+    def _enforce_file_size_limit(self, config_path: Path) -> None:
+        try:
+            size = config_path.stat().st_size
+        except OSError as e:
+            raise ConfigError(f"无法读取配置文件大小: {e}") from e
+        if size > self._max_config_bytes:
+            raise ConfigError(
+                f"配置文件过大（{size} bytes），超过限制（{self._max_config_bytes} bytes）"
+            )
+
+    def _filter_by_whitelist(self, incoming: dict[str, Any], whitelist: dict[str, Any]) -> dict[str, Any]:
+        filtered: dict[str, Any] = {}
+        for key, value in incoming.items():
+            if key not in whitelist:
+                logger.warning("忽略未允许的配置键: %s", key)
+                continue
+            allowed_value = whitelist[key]
+            if isinstance(allowed_value, dict) and isinstance(value, dict):
+                filtered[key] = self._filter_by_whitelist(value, allowed_value)
+            else:
+                filtered[key] = value
+        return filtered
+
+    def _is_key_allowed(self, dotted_key: str) -> bool:
+        keys = dotted_key.split(".")
+        node: Any = self._defaults
+        for idx, key in enumerate(keys):
+            if not isinstance(node, dict) or key not in node:
+                return False
+            node = node[key]
+            if idx < len(keys) - 1 and not isinstance(node, dict):
+                return False
+        return True
 
 
 # 全局单例
@@ -329,7 +468,7 @@ def set_setting(key: str, value: Any, save: bool = True) -> None:
     get_config().set(key, value, save)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     """测试配置管理器"""
     import tempfile
 

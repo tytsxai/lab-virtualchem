@@ -12,11 +12,12 @@
 import asyncio
 import logging
 import time
-import traceback
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, TypeVar
+
+from ..security.error_redaction import safe_error_message
 
 logger = logging.getLogger(__name__)
 
@@ -198,9 +199,8 @@ class ErrorHandlingMiddleware(Middleware):
                 # 默认错误处理
                 return {
                     "success": False,
-                    "error": str(e),
+                    "error": safe_error_message(e),
                     "type": type(e).__name__,
-                    "traceback": traceback.format_exc(),
                 }
 
 

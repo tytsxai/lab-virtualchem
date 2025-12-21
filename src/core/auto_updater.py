@@ -7,7 +7,6 @@ import hashlib
 import logging
 import platform
 import shutil
-import subprocess
 import tempfile
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -15,6 +14,8 @@ from datetime import datetime
 from pathlib import Path
 
 from .. import __version__ as APP_VERSION
+from .security.safe_subprocess import popen as safe_popen
+from .security.safe_subprocess import run as safe_run
 
 try:
     import requests
@@ -65,7 +66,11 @@ class AutoUpdater:
             check_interval: 检查间隔（秒）
         """
         self.current_version = current_version or APP_VERSION
+        if not isinstance(update_url, str) or not update_url:
+            raise ValueError("update_url 必须为非空字符串")
         self.update_url = update_url
+        if not isinstance(check_interval, int) or check_interval <= 0:
+            raise ValueError("check_interval 必须为正整数（秒）")
         self.check_interval = check_interval
 
         # 更新信息
@@ -251,6 +256,15 @@ class AutoUpdater:
             是否成功
         """
         try:
+            if not isinstance(update_file, Path):
+                raise TypeError("update_file 必须为 pathlib.Path")
+            if not update_file.exists():
+                logger.error("安装文件不存在")
+                return False
+            if not update_file.is_file():
+                logger.error("安装路径不是文件")
+                return False
+
             if self.platform == "windows":
                 # Windows: 启动安装程序（避免使用shell以减少注入风险）
                 logger.info("启动Windows安装程序...")
@@ -258,13 +272,13 @@ class AutoUpdater:
                 if not installer_path.exists():
                     logger.error(f"安装文件不存在: {installer_path}")
                     return False
-                subprocess.run([str(installer_path)], check=True)
+                safe_run([str(installer_path)], check=True, shell=False)
                 return True
 
             elif self.platform == "macos":
                 # macOS: 打开DMG
                 logger.info("打开macOS DMG镜像...")
-                subprocess.Popen(["open", str(update_file)])
+                safe_popen(["open", str(update_file)], shell=False)
                 return True
 
             else:

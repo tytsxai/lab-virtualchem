@@ -8,6 +8,7 @@ import json
 import logging
 import time
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +22,7 @@ from ...contracts.maintenance_service import (
     FixRequest,
     FixResponse,
     HealthCheckResponse,
+    MaintenanceReportFormat,
     MaintenanceService,
     MaintenanceServiceConfig,
     MaintenanceTaskRequest,
@@ -471,13 +473,15 @@ class MaintenanceServiceImpl(MaintenanceService):
         """
         return self.history[-limit:] if limit > 0 else self.history
 
-    def export_report(self, output_path: str, format: str = "json") -> bool:
+    def export_report(
+        self, output_path: str, format: MaintenanceReportFormat = MaintenanceReportFormat.JSON
+    ) -> bool:
         """
         导出报告
 
         Args:
             output_path: 输出路径
-            format: 格式(json/csv/html)
+            format: 格式枚举
 
         Returns:
             是否成功
@@ -486,7 +490,8 @@ class MaintenanceServiceImpl(MaintenanceService):
             output_file = Path(output_path)
             output_file.parent.mkdir(parents=True, exist_ok=True)
 
-            if format == "json":
+            resolved_format = format.value if isinstance(format, Enum) else str(format)
+            if resolved_format == MaintenanceReportFormat.JSON.value:
                 with open(output_file, "w", encoding="utf-8") as f:
                     json.dump(
                         {
@@ -500,7 +505,7 @@ class MaintenanceServiceImpl(MaintenanceService):
                     )
                 return True
             else:
-                logger.warning(f"不支持的导出格式: {format}")
+                logger.warning(f"不支持的导出格式: {resolved_format}")
                 return False
 
         except Exception as e:

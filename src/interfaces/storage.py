@@ -65,6 +65,10 @@ class IStorage(ABC, Generic[T]):
         pass
 
 
+# 兼容性别名：历史代码/测试期望 StorageInterface
+StorageInterface = IStorage
+
+
 class ILogger(ABC):
     """日志接口"""
 
@@ -160,3 +164,7 @@ class IRepository(ABC, Generic[T]):
     def count(self) -> int:
         """统计数量"""
         pass
+
+
+# Backward-compatible alias (older modules/tests import StorageInterface).
+StorageInterface = IStorage

@@ -83,6 +83,23 @@ from .robustness_integration import (
     validate_input,
 )
 
+# Experiment engine exports
+try:
+    from .experiment_engine import ExperimentController, ExperimentState
+except ImportError:
+    ExperimentController = None  # type: ignore
+    ExperimentState = None  # type: ignore
+
+# Experiment controller compatibility (ExperimentMode)
+try:
+    from .experiment_engine import ExperimentMode
+except ImportError:
+    from enum import Enum
+    class ExperimentMode(Enum):
+        GUIDED = "guided"
+        FREE = "free"
+        ASSESSMENT = "assessment"
+
 __all__ = [
     # 集成管理器
     "RobustnessIntegrationManager",

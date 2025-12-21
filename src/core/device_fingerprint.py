@@ -19,13 +19,14 @@ import json
 import logging
 import platform
 import socket
-import subprocess
 import uuid
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
+
+from .security.safe_subprocess import run as safe_run
 
 logger = logging.getLogger(__name__)
 
@@ -275,7 +276,7 @@ class DeviceFingerprintCollector:
     def _get_cpu_info_windows(self) -> str:
         """Windows系统获取CPU信息"""
         try:
-            result = subprocess.run(
+            result = safe_run(
                 ["wmic", "cpu", "get", "ProcessorId"],
                 capture_output=True,
                 text=True,
@@ -304,7 +305,7 @@ class DeviceFingerprintCollector:
     def _get_cpu_info_macos(self) -> str:
         """macOS系统获取CPU信息"""
         try:
-            result = subprocess.run(
+            result = safe_run(
                 ["sysctl", "-n", "machdep.cpu.brand_string"],
                 capture_output=True,
                 text=True,
@@ -322,7 +323,7 @@ class DeviceFingerprintCollector:
             system = platform.system()
 
             if system == "Windows":
-                result = subprocess.run(
+                result = safe_run(
                     ["wmic", "csproduct", "get", "UUID"],
                     capture_output=True,
                     text=True,
@@ -343,7 +344,7 @@ class DeviceFingerprintCollector:
                         return f.read().strip()
 
             elif system == "Darwin":
-                result = subprocess.run(
+                result = safe_run(
                     ["ioreg", "-rd1", "-c", "IOPlatformExpertDevice"],
                     capture_output=True,
                     text=True,
@@ -366,7 +367,7 @@ class DeviceFingerprintCollector:
             system = platform.system()
 
             if system == "Windows":
-                result = subprocess.run(
+                result = safe_run(
                     ["wmic", "diskdrive", "get", "SerialNumber"],
                     capture_output=True,
                     text=True,
@@ -378,7 +379,7 @@ class DeviceFingerprintCollector:
                     return lines[1].strip()
 
             elif system == "Linux":
-                result = subprocess.run(
+                result = safe_run(
                     ["lsblk", "-o", "SERIAL", "-n"],
                     capture_output=True,
                     text=True,
@@ -388,7 +389,7 @@ class DeviceFingerprintCollector:
                 return result.stdout.strip().split("\n")[0]
 
             elif system == "Darwin":
-                result = subprocess.run(
+                result = safe_run(
                     ["system_profiler", "SPSerialATADataType"],
                     capture_output=True,
                     text=True,
@@ -578,7 +579,7 @@ class DeviceFingerprintCollector:
         try:
             if platform.system() == "Windows":
                 # Windows安全启动检测
-                result = subprocess.run(
+                result = safe_run(
                     ["powershell", "-Command", "Get-SecureBootUEFI"],
                     capture_output=True,
                     text=True,
@@ -593,7 +594,7 @@ class DeviceFingerprintCollector:
         """检测是否有TPM"""
         try:
             if platform.system() == "Windows":
-                result = subprocess.run(
+                result = safe_run(
                     ["powershell", "-Command", "Get-Tpm"],
                     capture_output=True,
                     text=True,
@@ -608,7 +609,7 @@ class DeviceFingerprintCollector:
         """检测是否有防火墙"""
         try:
             if platform.system() == "Windows":
-                result = subprocess.run(
+                result = safe_run(
                     ["netsh", "advfirewall", "show", "allprofiles", "state"],
                     capture_output=True,
                     text=True,

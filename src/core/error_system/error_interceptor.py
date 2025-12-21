@@ -10,6 +10,8 @@ import traceback
 from datetime import datetime
 from typing import Any
 
+from ..security.error_redaction import redact_paths
+
 from .error_codes import ErrorCodeRegistry
 from .error_handler import error_handler
 from .error_recovery import recovery_manager
@@ -381,9 +383,10 @@ class ErrorInterceptor(QObject if HAS_PYQT else object):  # type: ignore
             # 使用os.execl重启（Unix系统）或subprocess（Windows）
             if sys.platform == "win32":
                 import subprocess
+                from ..security.safe_subprocess import popen as safe_popen
 
                 # Windows系统使用subprocess
-                subprocess.Popen([python, script] + sys.argv[1:])
+                safe_popen([python, script, *sys.argv[1:]], shell=False)
                 # 退出当前进程
                 if self.app:
                     self.app.quit()
@@ -441,10 +444,8 @@ class ErrorInterceptor(QObject if HAS_PYQT else object):  # type: ignore
                 details += "\n"
 
             if hasattr(exception, "__traceback__") and exception.__traceback__:
-                import traceback
-
                 details += "堆栈跟踪:\n"
-                details += traceback.format_exc()
+                details += redact_paths(traceback.format_exc())
 
             details_text.setPlainText(details)
             layout.addWidget(details_text)

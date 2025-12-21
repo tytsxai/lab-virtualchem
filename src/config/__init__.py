@@ -9,8 +9,13 @@ from .config_manager import (
     set_setting,
 )
 
-# 添加settings别名以保持兼容性
-settings = None  # 实际的settings对象将在运行时设置
+class _SettingsProxy:
+    def get(self, key: str, default=None):
+        return get_setting(key, default)
+
+
+def get_settings() -> _SettingsProxy:
+    return _SettingsProxy()
 
 __all__ = [
     "ConfigManager",
@@ -19,5 +24,5 @@ __all__ = [
     "load_config",
     "get_setting",
     "set_setting",
-    "settings",
+    "get_settings",
 ]

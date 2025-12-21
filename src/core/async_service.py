@@ -49,7 +49,17 @@ class AsyncServiceManager:
 
         # 创建线程池和进程池
         self.thread_pool = ThreadPoolExecutor(max_workers=max_workers)
-        self.process_pool = ProcessPoolExecutor(max_workers=max_processes)
+        try:
+            self.process_pool: ProcessPoolExecutor | None = ProcessPoolExecutor(
+                max_workers=max_processes
+            )
+        except (PermissionError, OSError) as exc:
+            self.process_pool = None
+            logger.warning(
+                "进程池初始化失败，将退化为线程池执行 (max_processes=%s): %s",
+                max_processes,
+                exc,
+            )
 
         # 任务管理
         self.tasks: dict[str, AsyncTask] = {}
@@ -93,7 +103,9 @@ class AsyncServiceManager:
         self.tasks[task_id] = task
 
         # 选择执行器
-        executor = self.process_pool if use_process else self.thread_pool
+        executor = self.thread_pool
+        if use_process:
+            executor = self.process_pool or self.thread_pool
 
         # 提交任务
         future = executor.submit(self._execute_task, task)
@@ -266,7 +278,8 @@ class AsyncServiceManager:
                 time.sleep(0.1)
 
         self.thread_pool.shutdown(wait=wait)
-        self.process_pool.shutdown(wait=wait)
+        if self.process_pool is not None:
+            self.process_pool.shutdown(wait=wait)
 
         logger.info("异步服务管理器已关闭")
 
