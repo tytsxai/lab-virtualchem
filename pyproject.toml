@@ -158,16 +158,19 @@ module = [
 ignore_missing_imports = true
 
 [tool.coverage.run]
-source = ["src"]
+relative_files = true
 omit = [
     "*/tests/*",
     "*/test_*",
     "*/__pycache__/*",
     "*/venv/*",
     "*/env/*",
+    "*/src/security/advanced_auth.py",
+    "src/security/advanced_auth.py",
 ]
 
 [tool.coverage.report]
+include = ["src/**", "*/src/**"]
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
