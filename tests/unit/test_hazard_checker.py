@@ -23,7 +23,8 @@ def create_test_reagent(
         id=reagent_id,
         type=KnowledgeType.REAGENT,
         title=name,
-        content="",
+        # KnowledgeCard.content 在当前实现中要求非空(min_length=1)
+        content=f"{name} (test card)",
         cas=cas,
         properties=properties,
         hazards=hazards or [],

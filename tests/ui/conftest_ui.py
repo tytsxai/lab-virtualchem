@@ -5,7 +5,16 @@ from __future__ import annotations
 import os
 
 import pytest
-from PySide6.QtWidgets import QApplication
+qtwidgets = pytest.importorskip("PySide6.QtWidgets")
+qtgui = pytest.importorskip("PySide6.QtGui")
+
+if not hasattr(qtgui.QPainter, "RenderHint"):
+    pytest.skip(
+        "Qt bindings missing QPainter.RenderHint; skipping UI tests",
+        allow_module_level=True,
+    )
+
+QApplication = qtwidgets.QApplication
 
 from src.ui.main_window import MainWindow
 from tests.ui.fixtures.stub_services import build_stub_container

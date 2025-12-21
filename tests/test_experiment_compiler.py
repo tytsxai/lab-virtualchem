@@ -21,7 +21,7 @@ def test_compile_from_yaml():
     print("测试1: 从YAML文件编译实验")
     print("=" * 60)
 
-    yaml_file = project_root / "examples" / "new_experiment_example.yaml"
+    yaml_file = Path("examples") / "new_experiment_example.yaml"
 
     if not yaml_file.exists():
         pytest.skip(f"缺少示例文件: {yaml_file}")

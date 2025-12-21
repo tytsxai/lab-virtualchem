@@ -272,10 +272,11 @@ class TestReportStorage:
     """报告存储测试"""
 
     @pytest.fixture
-    def temp_storage(self, tmp_path):
+    def temp_storage(self, tmp_path, monkeypatch):
         """临时存储"""
-        storage_dir = tmp_path / "reports"
-        storage_dir.mkdir()
+        monkeypatch.chdir(tmp_path)
+        storage_dir = tmp_path / "data" / "reports"
+        storage_dir.mkdir(parents=True)
         return storage_dir
 
     def test_save_report_to_file(self, temp_storage):
@@ -289,14 +290,15 @@ class TestReportStorage:
         experiment.complete()
 
         # 保存报告
-        output_path = temp_storage / "report.json"
-        experiment.save_report(output_path, format="json")
+        output_path = Path("report.json")
+        saved_path = experiment.save_report(output_path, format="json")
 
         # 验证文件存在
-        assert output_path.exists()
+        assert saved_path == temp_storage / "report.json"
+        assert saved_path.exists()
 
         # 验证内容
-        with open(output_path, encoding="utf-8") as f:
+        with open(saved_path, encoding="utf-8") as f:
             data = json.load(f)
             assert "experiment_type" in data
 
@@ -315,8 +317,9 @@ class TestReportStorage:
 
         # 批量保存
         for i, exp in enumerate(experiments):
-            output_path = temp_storage / f"report_{i}.json"
-            exp.save_report(output_path)
+            output_path = Path(f"report_{i}.json")
+            saved_path = exp.save_report(output_path)
+            assert saved_path.exists()
 
         # 验证所有文件
         report_files = list(temp_storage.glob("report_*.json"))
@@ -333,8 +336,8 @@ class TestReportStorage:
         experiment.complete()
 
         # 保存第一版
-        output_path = temp_storage / "report.json"
-        experiment.save_report(output_path)
+        output_path = Path("report.json")
+        saved_path = experiment.save_report(output_path)
 
         # 修改数据
         experiment.record_data("additional_note", "补充说明")
@@ -343,7 +346,7 @@ class TestReportStorage:
         experiment.save_report(output_path, version=2)
 
         # 验证版本信息
-        with open(output_path, encoding="utf-8") as f:
+        with open(saved_path, encoding="utf-8") as f:
             data = json.load(f)
             # 如果实现了版本控制
             if "version" in data:

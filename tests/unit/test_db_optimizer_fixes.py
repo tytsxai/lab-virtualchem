@@ -289,7 +289,14 @@ class TestIndexAnalyzer:
             "SELECT * FROM users ORDER BY created_at DESC",
         ]
 
-        report = analyzer.auto_optimize_table("users", query_patterns)
+        # 当前实现要求管理员权限上下文
+        from src.core.auth import Role
+
+        class _AdminContext:
+            def has_role(self, role):
+                return role == Role.ADMIN
+
+        report = analyzer.auto_optimize_table("users", query_patterns, context=_AdminContext())
 
         assert "table" in report
         assert report["table"] == "users"

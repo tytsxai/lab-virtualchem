@@ -26,10 +26,17 @@ def test_compile_experiment_with_yaml_string():
 
 def test_compile_experiment_with_yaml_file(tmp_path: Path):
     """当传入文件路径且显式声明为 yaml 时，应读取文件内容。"""
-    yaml_file = tmp_path / "sample.yaml"
+    project_root = Path(__file__).resolve().parents[2]
+    allowed_dir = project_root / "data" / "_pytest"
+    allowed_dir.mkdir(parents=True, exist_ok=True)
+
+    yaml_file = allowed_dir / f"sample_{tmp_path.name}.yaml"
     yaml_file.write_text(_basic_yaml(), encoding="utf-8")
 
-    result = compile_experiment(yaml_file, format_type="yaml")
-    assert result.success
-    assert result.template is not None
-    assert result.template.steps[0].text == "步骤1"
+    try:
+        result = compile_experiment(yaml_file.relative_to(project_root), format_type="yaml")
+        assert result.success
+        assert result.template is not None
+        assert result.template.steps[0].text == "步骤1"
+    finally:
+        yaml_file.unlink(missing_ok=True)

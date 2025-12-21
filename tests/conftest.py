@@ -27,10 +27,18 @@ os.environ.setdefault("VCL_DISABLE_STARTUP_TIPS", "1")
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
-
-from PySide6.QtCore import QEventLoop, QTimer  # noqa: E402
-from PySide6.QtTest import QTest  # noqa: E402
-from PySide6.QtWidgets import QApplication  # noqa: E402
+# Prefer a lightweight PySide6 stub during test collection to avoid importing the
+# real Qt bindings in sandboxed/headless environments (can segfault at import time).
+stub_root = Path(__file__).parent / "fixtures" / "pyside6_stub"
+if stub_root.is_dir() and os.environ.get("VCL_FORCE_PYSIDE6_STUB") in {"1", "true", "yes"}:
+    sys.path.insert(0, str(stub_root))
+else:
+    # Only fall back to the stub when PySide6 is not importable in the current env.
+    try:
+        import PySide6  # noqa: F401
+    except Exception:
+        if stub_root.is_dir():
+            sys.path.insert(0, str(stub_root))
 
 
 class _SignalBlocker:
@@ -44,6 +52,8 @@ class _SignalBlocker:
         self._timer: QTimer | None = None
 
     def __enter__(self):
+        from PySide6.QtCore import QEventLoop, QTimer
+
         self._loop = QEventLoop()
         self._timer = QTimer()
         self._timer.setSingleShot(True)
@@ -96,7 +106,7 @@ class _SignalBlocker:
 class SimpleQtBot:
     """简化版qtbot，提供常用辅助方法"""
 
-    def __init__(self, app: QApplication):
+    def __init__(self, app: Any):
         self._app = app
         self._widgets: list[Any] = []
 
@@ -105,6 +115,8 @@ class SimpleQtBot:
 
     def wait(self, ms: int) -> None:
         # QTest.qWait processes the Qt event loop safely in the main thread.
+        from PySide6.QtTest import QTest
+
         QTest.qWait(ms)
 
     def waitExposed(self, widget, timeout: int = 200) -> None:
@@ -131,6 +143,8 @@ class SimpleQtBot:
 @pytest.fixture(scope="session")
 def qapp():
     """Qt应用程序fixture"""
+    from PySide6.QtWidgets import QApplication
+
     app = QApplication.instance()
     if app is None:
         app = QApplication([])

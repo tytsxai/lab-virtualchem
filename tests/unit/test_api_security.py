@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from src.api.middleware import AuthMiddleware
+from src.api.middleware import require_role
 from src.api.server import _is_allowed_origin, _parse_cors_origins
 
 
@@ -25,6 +26,10 @@ def test_cors_allows_explicit_allowlist():
     allowlist = _parse_cors_origins("https://example.com, https://app.example.com")
     assert _is_allowed_origin("https://example.com", allowlist)
     assert not _is_allowed_origin("https://evil.example.com", allowlist)
+
+
+def test_cors_rejects_wildcard_origin():
+    assert _parse_cors_origins("*") == []
 
 
 def test_auth_middleware_loads_keys_from_env(monkeypatch, tmp_path: Path):
@@ -90,3 +95,58 @@ def test_auth_middleware_requires_explicit_keys_in_production(monkeypatch, tmp_p
 
     config_path = tmp_path / ".virtualchemlab" / "config.json"
     assert not config_path.exists()
+
+
+def test_require_role_denies_when_missing_role():
+    class _Auth:
+        enabled = True
+
+        @staticmethod
+        def verify_api_key(_key: str):
+            return {"roles": ["user"]}
+
+    class _Server:
+        auth_middleware = _Auth()
+
+    class _Handler:
+        headers = {"X-API-Key": "k"}
+        server = _Server()
+
+    called: dict[str, bool] = {"ok": False}
+
+    @require_role(["admin"])
+    def _endpoint(handler):  # noqa: ARG001
+        called["ok"] = True
+        return "ok"
+
+    try:
+        _endpoint(_Handler())
+    except Exception as exc:
+        # AuthorizationError is a BaseAppException; type details are not important here.
+        assert "权限" in str(exc) or "permission" in str(exc).lower()
+    else:  # pragma: no cover
+        raise AssertionError("Expected role check to fail")
+
+    assert called["ok"] is False
+
+
+def test_require_role_allows_with_matching_role():
+    class _Auth:
+        enabled = True
+
+        @staticmethod
+        def verify_api_key(_key: str):
+            return {"roles": ["admin", "user"]}
+
+    class _Server:
+        auth_middleware = _Auth()
+
+    class _Handler:
+        headers = {"Authorization": "Bearer k"}
+        server = _Server()
+
+    @require_role(["admin"])
+    def _endpoint(handler):  # noqa: ARG001
+        return "ok"
+
+    assert _endpoint(_Handler()) == "ok"

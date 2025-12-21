@@ -21,7 +21,8 @@ def running_api_server(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> str:
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("USERPROFILE", str(tmp_path))
-    monkeypatch.setenv("VCL_API_KEYS", "test_api_key")
+    monkeypatch.setenv("VCL_API_KEYS", "test_api_key,test_admin_key")
+    monkeypatch.setenv("VCL_API_ADMIN_KEYS", "test_admin_key")
     # Probes expect these secrets to exist and be strong enough.
     monkeypatch.setenv("JWT_SECRET_KEY", "x" * 32)
     monkeypatch.setenv("SESSION_SECRET_KEY", "y" * 32)
@@ -123,7 +124,12 @@ def running_api_server(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> str:
         enable_auth=True,
         enable_rate_limit=False,
     )
-    server.start()
+    try:
+        server.start()
+    except PermissionError as exc:
+        pytest.skip(f"Sandbox forbids binding local HTTP server: {exc}")
+    except OSError as exc:
+        pytest.skip(f"Cannot start local HTTP server in this environment: {exc}")
     assert server.server is not None
     port = int(server.server.server_address[1])
     base_url = f"http://127.0.0.1:{port}"
@@ -239,9 +245,54 @@ def test_rest_api_flow_creates_record_and_report(running_api_server: str) -> Non
     assert Path(report["path"]).exists()
 
 
+def test_rest_api_does_not_allow_query_param_auth_bypass(running_api_server: str) -> None:
+    base_url = running_api_server
+    resp = requests.get(
+        f"{base_url}/api/experiments",
+        params={"api_key": "test_api_key"},
+        timeout=5,
+    )
+    assert resp.status_code == 401
+
+
+def test_rest_api_rejects_unknown_fields_in_post_body(running_api_server: str) -> None:
+    base_url = running_api_server
+    headers = {"X-API-Key": "test_api_key"}
+    resp = requests.post(
+        f"{base_url}/api/experiments/start",
+        headers=headers,
+        json={
+            "experiment_id": "test_exp_001",
+            "user_id": "test_user",
+            "unexpected": "nope",
+        },
+        timeout=5,
+    )
+    assert resp.status_code in (400, 422)  # 422 is standard for Pydantic validation errors
+    payload = resp.json()
+    assert payload["success"] is False
+    assert payload["error"]["type"] == "DATA_VALIDATION_FAILED"
+
+
+def test_rest_api_rejects_unknown_fields_in_query(running_api_server: str) -> None:
+    base_url = running_api_server
+    headers = {"X-API-Key": "test_api_key"}
+    resp = requests.get(
+        f"{base_url}/api/records",
+        headers=headers,
+        params={"user_id": "test_user", "unexpected": "nope"},
+        timeout=5,
+    )
+    assert resp.status_code in (400, 422)  # 422 is standard for Pydantic validation errors
+    payload = resp.json()
+    assert payload["success"] is False
+    assert payload["error"]["type"] == "DATA_VALIDATION_FAILED"
+
+
 def test_probes_and_metrics(running_api_server: str) -> None:
     base_url = running_api_server
     headers = {"X-API-Key": "test_api_key"}
+    admin_headers = {"X-API-Key": "test_admin_key"}
 
     healthz = requests.get(f"{base_url}/healthz", timeout=5)
     assert healthz.status_code == 200
@@ -259,5 +310,10 @@ def test_probes_and_metrics(running_api_server: str) -> None:
     metrics = requests.get(
         f"{base_url}/metrics", headers=headers, timeout=5
     )
-    assert metrics.status_code == 200
-    assert "vcl_api_requests_total" in metrics.text
+    assert metrics.status_code == 403
+
+    metrics_admin = requests.get(
+        f"{base_url}/metrics", headers=admin_headers, timeout=5
+    )
+    assert metrics_admin.status_code == 200
+    assert "vcl_api_requests_total" in metrics_admin.text
