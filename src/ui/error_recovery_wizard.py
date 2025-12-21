@@ -24,6 +24,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from .security_utils import force_plain_text, set_plain_text
+
 logger = logging.getLogger(__name__)
 
 
@@ -70,11 +72,15 @@ class ErrorRecoveryWizard(QDialog):
         error_group = QGroupBox("错误信息")
         error_layout = QVBoxLayout(error_group)
 
-        self.error_label = QLabel(f"<b>错误类型:</b> {self.error_type}")
+        self.error_label = QLabel()
+        force_plain_text(self.error_label)
+        set_plain_text(self.error_label, f"错误类型: {self.error_type}")
         self.error_label.setWordWrap(True)
         error_layout.addWidget(self.error_label)
 
-        self.message_label = QLabel(f"<b>错误描述:</b> {self.error_message}")
+        self.message_label = QLabel()
+        force_plain_text(self.message_label)
+        set_plain_text(self.message_label, f"错误描述: {self.error_message}")
         self.message_label.setWordWrap(True)
         error_layout.addWidget(self.message_label)
 

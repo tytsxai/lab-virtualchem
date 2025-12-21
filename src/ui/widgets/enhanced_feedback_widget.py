@@ -32,6 +32,7 @@ from PySide6.QtWidgets import (
 )
 
 from ...utils.logger import get_logger
+from ..security_utils import force_plain_text, set_plain_text
 
 logger = get_logger(__name__)
 
@@ -72,11 +73,13 @@ class EnhancedFeedbackWidget(QWidget):
 
         # 图标
         self.icon_label = QLabel()
+        force_plain_text(self.icon_label)
         self.icon_label.setStyleSheet("font-size: 20px;")
         feedback_layout.addWidget(self.icon_label)
 
         # 消息
         self.message_label = QLabel()
+        force_plain_text(self.message_label)
         self.message_label.setWordWrap(True)
         self.message_label.setStyleSheet("font-size: 13px;")
         feedback_layout.addWidget(self.message_label, 1)
@@ -110,6 +113,7 @@ class EnhancedFeedbackWidget(QWidget):
         help_layout.setContentsMargins(15, 10, 15, 10)
 
         self.help_label = QLabel()
+        force_plain_text(self.help_label)
         self.help_label.setWordWrap(True)
         self.help_label.setStyleSheet("font-size: 12px; color: #666;")
         help_layout.addWidget(self.help_label, 1)
@@ -163,7 +167,7 @@ class EnhancedFeedbackWidget(QWidget):
         self.help_callback = help_callback
 
         # 更新内容
-        self.message_label.setText(message)
+        set_plain_text(self.message_label, message)
 
         # 设置图标
         icons = {
@@ -173,7 +177,7 @@ class EnhancedFeedbackWidget(QWidget):
             FeedbackType.INFO: "ℹ",
             FeedbackType.VALIDATING: "⏳",
         }
-        self.icon_label.setText(icons.get(feedback_type, "ℹ"))
+        set_plain_text(self.icon_label, icons.get(feedback_type, "ℹ"))
 
         # 设置样式
         styles = {
@@ -229,9 +233,10 @@ class EnhancedFeedbackWidget(QWidget):
 
         # 帮助区域
         if help_text and help_callback:
-            self.help_label.setText(help_text)
+            set_plain_text(self.help_label, help_text)
             self.help_widget.show()
         else:
+            set_plain_text(self.help_label, "")
             self.help_widget.hide()
 
         # 显示动画

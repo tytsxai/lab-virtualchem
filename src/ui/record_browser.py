@@ -31,6 +31,8 @@ from ..storage.json_store import JSONStore
 from ..utils.i18n import I18n
 from ..utils.logger import get_logger
 
+from .html_utils import escape_html
+
 logger = get_logger(__name__)
 
 
@@ -401,13 +403,29 @@ class RecordBrowser(QDialog):
             return
 
         # 基本信息
-        info_html = """
-        <h3>{getattr(record, 'experiment_title', record.experiment_id)}</h3>
-        <p><b>{self.i18n.t("ui.record_id")}:</b> {record.record_id}</p>
-        <p><b>{self.i18n.t("ui.user_id")}:</b> {record.user_id}</p>
-        <p><b>{self.i18n.t("ui.final_score")}:</b> <span style='color: {"#2E7D32" if record.final_score >= 90 else "#F57C00" if record.final_score >= 70 else "#C62828"}'>{record.final_score:.1f}</span></p>
-        <p><b>{self.i18n.t("ui.started_at")}:</b> {record.started_at.strftime("%Y-%m-%d %H:%M:%S")}</p>
-        <p><b>{self.i18n.t("ui.finished_at")}:</b> {record.finished_at.strftime("%Y-%m-%d %H:%M:%S") if record.finished_at else self.i18n.t("ui.incomplete")}</p>
+        title = escape_html(getattr(record, "experiment_title", record.experiment_id))
+        record_id = escape_html(record.record_id)
+        user_id = escape_html(record.user_id)
+        started_at = escape_html(record.started_at.strftime("%Y-%m-%d %H:%M:%S"))
+        finished_at = escape_html(
+            record.finished_at.strftime("%Y-%m-%d %H:%M:%S")
+            if record.finished_at
+            else self.i18n.t("ui.incomplete")
+        )
+        score_color = (
+            "#2E7D32"
+            if record.final_score >= 90
+            else "#F57C00"
+            if record.final_score >= 70
+            else "#C62828"
+        )
+        info_html = f"""
+        <h3>{title}</h3>
+        <p><b>{escape_html(self.i18n.t("ui.record_id"))}:</b> {record_id}</p>
+        <p><b>{escape_html(self.i18n.t("ui.user_id"))}:</b> {user_id}</p>
+        <p><b>{escape_html(self.i18n.t("ui.final_score"))}:</b> <span style='color: {score_color}'>{record.final_score:.1f}</span></p>
+        <p><b>{escape_html(self.i18n.t("ui.started_at"))}:</b> {started_at}</p>
+        <p><b>{escape_html(self.i18n.t("ui.finished_at"))}:</b> {finished_at}</p>
         """
         self.info_label.setText(info_html)
 
@@ -415,18 +433,27 @@ class RecordBrowser(QDialog):
         steps_html = ""
         for step in record.step_records:
             icon = "✅" if step.passed else "❌"
-            steps_html += f"{icon} <b>{step.step_id}</b> - {self.i18n.t('ui.score')}: {step.score}<br>"
+            steps_html += (
+                f"{icon} <b>{escape_html(step.step_id)}</b> - "
+                f"{escape_html(self.i18n.t('ui.score'))}: {escape_html(step.score)}<br>"
+            )
         self.steps_text.setHtml(steps_html)
 
         # 错误汇总
         if record.mistakes:
-            errors_html = f"<p style='color: #C62828'><b>{self.i18n.t('ui.total_errors')}: {len(record.mistakes)}</b></p>"
+            errors_html = (
+                "<p style='color: #C62828'><b>"
+                f"{escape_html(self.i18n.t('ui.total_errors'))}: {len(record.mistakes)}"
+                "</b></p>"
+            )
             for mistake in record.mistakes[:10]:  # 最多显示10条
-                errors_html += f"• {mistake.step_id}: {mistake.message}<br>"
+                errors_html += (
+                    f"• {escape_html(mistake.step_id)}: {escape_html(mistake.message)}<br>"
+                )
             self.errors_text.setHtml(errors_html)
         else:
             self.errors_text.setHtml(
-                f"<p style='color: #2E7D32'>{self.i18n.t('ui.no_errors')}</p>"
+                f"<p style='color: #2E7D32'>{escape_html(self.i18n.t('ui.no_errors'))}</p>"
             )
 
     def on_delete(self):
@@ -472,13 +499,17 @@ class RecordBrowser(QDialog):
 
         if filename:
             try:
+                # 确保扩展名后再校验保存路径
+                if not filename.endswith(".pdf") and not filename.endswith(".html"):
+                    filename += ".html"
+                from .path_security import validate_dialog_path
+
+                filename = str(validate_dialog_path(filename))
+
                 # 根据选择的格式导出
                 if filename.endswith(".pdf"):
                     self.report_gen.generate_pdf_report(self.current_record, filename)
                 else:
-                    # 确保HTML扩展名
-                    if not filename.endswith(".html"):
-                        filename += ".html"
                     self.report_gen.generate_html_report(self.current_record, filename)
 
                 QMessageBox.information(

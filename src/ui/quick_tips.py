@@ -11,7 +11,7 @@ from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QPainter
 from PySide6.QtWidgets import QApplication, QWidget
 
-from ..config import settings
+from ..config import get_settings
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -167,7 +167,7 @@ class QuickTipsManager:
 
         # 获取持续时间
         if duration is None:
-            tip_duration = settings.get("tips.duration", 5000)
+            tip_duration = get_settings().get("tips.duration", 5000)
         else:
             tip_duration = duration
 

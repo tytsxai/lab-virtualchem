@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import html
+
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -107,13 +109,15 @@ class TooltipEnhancer:
             # 添加快捷键提示
             if shortcut:
                 if tooltip_text:
-                    tooltip_text += f"\n\n<b>快捷键:</b> {shortcut}"
+                    tooltip_text += f"\n\n快捷键: {html.escape(shortcut, quote=True)}"
                 else:
-                    tooltip_text = f"<b>快捷键:</b> {shortcut}"
+                    tooltip_text = f"快捷键: {html.escape(shortcut, quote=True)}"
             elif tooltip_key and tooltip_key in TooltipEnhancer.SHORTCUT_HINTS:
                 shortcut_hint = TooltipEnhancer.SHORTCUT_HINTS[tooltip_key]
                 if tooltip_text:
-                    tooltip_text += f"\n\n<b>快捷键:</b> {shortcut_hint}"
+                    tooltip_text += f"\n\n快捷键: {html.escape(shortcut_hint, quote=True)}"
+                else:
+                    tooltip_text = f"快捷键: {html.escape(shortcut_hint, quote=True)}"
 
             # 添加类型特定的提示
             if isinstance(widget, QPushButton):
@@ -154,7 +158,7 @@ class TooltipEnhancer:
         """增强按钮工具提示"""
         # 如果按钮被禁用，添加说明
         if not button.isEnabled():
-            base_tooltip += "\n\n<i>（当前不可用）</i>"
+            base_tooltip += "\n\n（当前不可用）"
         return base_tooltip
 
     @staticmethod
@@ -163,13 +167,14 @@ class TooltipEnhancer:
         if isinstance(widget, QLineEdit):
             # 添加占位符提示
             if widget.placeholderText():
-                base_tooltip += f"\n<i>示例: {widget.placeholderText()}</i>"
+                example = html.escape(widget.placeholderText(), quote=True)
+                base_tooltip += f"\n<i>示例: {example}</i>"
 
         elif isinstance(widget, (QSpinBox, QDoubleSpinBox)):
             # 添加范围提示
             min_val = widget.minimum()
             max_val = widget.maximum()
-            base_tooltip += f"\n\n<b>有效范围:</b> {min_val} ~ {max_val}"
+            base_tooltip += f"\n\n有效范围: {min_val} ~ {max_val}"
 
         return base_tooltip
 
@@ -178,25 +183,29 @@ class TooltipEnhancer:
         """增强下拉框工具提示"""
         count = combobox.count()
         if count > 0:
-            base_tooltip += f"\n\n<i>共有 {count} 个选项</i>"
+            base_tooltip += f"\n\n共有 {count} 个选项"
         return base_tooltip
 
     @staticmethod
     def _enhance_checkbox_tooltip(checkbox: QCheckBox, base_tooltip: str) -> str:
         """增强复选框工具提示"""
         state = "已启用" if checkbox.isChecked() else "已禁用"
-        base_tooltip += f"\n\n<i>当前状态: {state}</i>"
+        base_tooltip += f"\n\n当前状态: {state}"
         return base_tooltip
 
     @staticmethod
     def _format_as_html(text: str) -> str:
         """将文本格式化为HTML"""
+        # 统一转义，避免将外部输入当作HTML解析（仅保留本函数生成的标签）
+        escaped = html.escape(text, quote=True)
+
         # 如果已经是HTML，直接返回
+        # 注意：不信任输入中的任何标签；如果调用方刻意传入富文本，应在上游自行生成安全 HTML。
         if text.startswith("<") or "<b>" in text or "<i>" in text:
-            return f'<div style="font-size: 11pt; line-height: 1.5;">{text}</div>'
+            return f'<div style="font-size: 11pt; line-height: 1.5;">{escaped}</div>'
 
         # 转换纯文本为HTML
-        lines = text.split("\n")
+        lines = escaped.split("\n")
         html_lines = []
 
         for line in lines:

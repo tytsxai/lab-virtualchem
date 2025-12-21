@@ -22,6 +22,7 @@ except ImportError:
     PYSIDE6_AVAILABLE = False
 
 from ..core.auto_updater import AutoUpdater, VersionInfo
+from .security_utils import force_plain_text, set_plain_text
 
 logger = logging.getLogger(__name__)
 
@@ -82,29 +83,43 @@ if PYSIDE6_AVAILABLE:
             layout = QVBoxLayout(self)
 
             # 标题
-            title = QLabel(f"发现新版本 v{self.version_info.version}")
+            title = QLabel()
+            force_plain_text(title)
+            set_plain_text(title, f"发现新版本 v{self.version_info.version}")
             title.setStyleSheet("font-size: 16px; font-weight: bold;")
             layout.addWidget(title)
 
             # 版本信息
             info_layout = QVBoxLayout()
 
-            info_layout.addWidget(QLabel(f"当前版本: v{self.updater.current_version}"))
-            info_layout.addWidget(QLabel(f"最新版本: v{self.version_info.version}"))
-            info_layout.addWidget(QLabel(f"发布日期: {self.version_info.release_date}"))
+            for line in (
+                f"当前版本: v{self.updater.current_version}",
+                f"最新版本: v{self.version_info.version}",
+                f"发布日期: {self.version_info.release_date}",
+            ):
+                label = QLabel()
+                force_plain_text(label)
+                set_plain_text(label, line)
+                info_layout.addWidget(label)
 
             size_mb = self.version_info.size_bytes / 1024 / 1024
-            info_layout.addWidget(QLabel(f"文件大小: {size_mb:.1f} MB"))
+            size_label = QLabel()
+            force_plain_text(size_label)
+            set_plain_text(size_label, f"文件大小: {size_mb:.1f} MB")
+            info_layout.addWidget(size_label)
 
             if self.version_info.is_critical:
                 critical_label = QLabel("⚠ 关键更新 - 强烈建议安装")
+                force_plain_text(critical_label)
                 critical_label.setStyleSheet("color: red; font-weight: bold;")
                 info_layout.addWidget(critical_label)
 
             layout.addLayout(info_layout)
 
             # 更新日志
-            layout.addWidget(QLabel("更新内容:"))
+            changelog_title = QLabel("更新内容:")
+            force_plain_text(changelog_title)
+            layout.addWidget(changelog_title)
 
             self.changelog_text = QTextEdit()
             self.changelog_text.setReadOnly(True)
@@ -119,6 +134,7 @@ if PYSIDE6_AVAILABLE:
 
             # 状态标签
             self.status_label = QLabel("")
+            force_plain_text(self.status_label)
             layout.addWidget(self.status_label)
 
             # 按钮
@@ -144,7 +160,7 @@ if PYSIDE6_AVAILABLE:
             self.download_btn.setEnabled(False)
             self.progress_bar.setVisible(True)
             self.progress_bar.setValue(0)
-            self.status_label.setText("正在下载...")
+            set_plain_text(self.status_label, "正在下载...")
 
             # 创建下载线程
             self.download_thread = UpdateDownloadThread(self.updater, self.version_info)
@@ -160,8 +176,9 @@ if PYSIDE6_AVAILABLE:
 
                 downloaded_mb = downloaded / 1024 / 1024
                 total_mb = total / 1024 / 1024
-                self.status_label.setText(
-                    f"正在下载... {downloaded_mb:.1f} / {total_mb:.1f} MB ({progress}%)"
+                set_plain_text(
+                    self.status_label,
+                    f"正在下载... {downloaded_mb:.1f} / {total_mb:.1f} MB ({progress}%)",
                 )
 
         def _on_download_finished(self, success: bool, result: str):
@@ -169,12 +186,12 @@ if PYSIDE6_AVAILABLE:
             if success:
                 self.downloaded_file = result
                 self.progress_bar.setValue(100)
-                self.status_label.setText("下载完成！")
+                set_plain_text(self.status_label, "下载完成！")
                 self.install_btn.setEnabled(True)
                 logger.info(f"更新已下载: {result}")
             else:
                 self.progress_bar.setVisible(False)
-                self.status_label.setText(f"下载失败: {result}")
+                set_plain_text(self.status_label, f"下载失败: {result}")
                 self.download_btn.setEnabled(True)
                 logger.error(f"下载失败: {result}")
 
@@ -188,12 +205,12 @@ if PYSIDE6_AVAILABLE:
             success = self.updater.install_update(Path(self.downloaded_file))
 
             if success:
-                self.status_label.setText("正在安装更新，应用将重启...")
+                set_plain_text(self.status_label, "正在安装更新，应用将重启...")
                 # 关闭对话框和应用
                 self.accept()
                 # 应用将自动退出，安装程序接管
             else:
-                self.status_label.setText("安装失败，请手动安装")
+                set_plain_text(self.status_label, "安装失败，请手动安装")
                 logger.error("安装更新失败")
 
 

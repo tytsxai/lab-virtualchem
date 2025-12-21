@@ -367,12 +367,13 @@ class ShortcutHint:
         layout = QVBoxLayout(widget)
 
         # 标题
-        title = QLabel("<h3>键盘快捷键</h3>")
+        title = QLabel("键盘快捷键")
+        title.setStyleSheet("font-size: 14px; font-weight: bold;")
         layout.addWidget(title)
 
         # 快捷键列表
         for name, keys in ShortcutHint.COMMON_SHORTCUTS.items():
-            label = QLabel(f"<b>{name}:</b> <code>{keys}</code>")
+            label = QLabel(f"{name}: {keys}")
             layout.addWidget(label)
 
         widget.setStyleSheet(

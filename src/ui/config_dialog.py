@@ -617,6 +617,9 @@ class ConfigDialog(QDialog):
 
             if file_path:
                 try:
+                    from .path_security import validate_dialog_path
+
+                    file_path = str(validate_dialog_path(file_path))
                     with open(file_path, encoding="utf-8") as f:
                         import json
 
@@ -668,6 +671,9 @@ class ConfigDialog(QDialog):
 
             if file_path:
                 try:
+                    from .path_security import validate_dialog_path
+
+                    file_path = str(validate_dialog_path(file_path))
                     # 获取当前配置
                     config_data = self.config_manager.get_ui_config()
 
@@ -711,6 +717,13 @@ class ConfigDialog(QDialog):
             )
 
             if folder_path:
+                try:
+                    from .path_security import validate_dialog_path
+
+                    folder_path = str(validate_dialog_path(folder_path))
+                except ValueError:
+                    QMessageBox.warning(self, "错误", "选择的目录不在允许的目录内")
+                    return
                 line_edit.setText(folder_path)
                 logger.info(f"选择文件夹: {folder_path}")
 

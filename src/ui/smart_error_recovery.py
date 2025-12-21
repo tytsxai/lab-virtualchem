@@ -16,6 +16,7 @@ from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QDialog, QMessageBox, QWidget
 
 from ..utils.logger import get_logger
+from .security_utils import force_plain_text, set_plain_text
 
 logger = get_logger(__name__)
 
@@ -245,17 +246,23 @@ class SmartErrorRecovery(QObject):
         layout = QVBoxLayout(dialog)
 
         # 错误信息
-        error_label = QLabel(f"<b>错误：</b>{context.error_message}")
+        error_label = QLabel()
+        force_plain_text(error_label)
+        set_plain_text(error_label, f"错误: {context.error_message}")
         error_label.setWordWrap(True)
         layout.addWidget(error_label)
 
         # 用户操作
-        action_label = QLabel(f"<b>操作：</b>{context.user_action}")
+        action_label = QLabel()
+        force_plain_text(action_label)
+        set_plain_text(action_label, f"操作: {context.user_action}")
         action_label.setWordWrap(True)
         layout.addWidget(action_label)
 
         # 恢复选项
-        layout.addWidget(QLabel("\n<b>恢复选项：</b>"))
+        options_title = QLabel("恢复选项：")
+        force_plain_text(options_title)
+        layout.addWidget(options_title)
 
         for recovery in strategies:
             btn = QPushButton(f"{recovery.strategy.value}: {recovery.description}")

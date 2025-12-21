@@ -424,6 +424,9 @@ class ChartWidget(QWidget):
 
             if filename:
                 try:
+                    from .path_security import validate_dialog_path
+
+                    filename = str(validate_dialog_path(filename))
                     self.figure.savefig(filename, dpi=300, bbox_inches="tight")
                     logger.info(f"图表已保存: {filename}")
                     QMessageBox.information(

@@ -644,7 +644,7 @@ class GamePhysicsScene(QGraphicsScene):
 class GamePhysicsView(QGraphicsView):
     """游戏化物理视图"""
 
-    RenderHint = QPainter.RenderHint
+    RenderHint = getattr(QPainter, "RenderHint", object)
     ViewportUpdateMode = QGraphicsView.ViewportUpdateMode
     FullViewportUpdate = QGraphicsView.ViewportUpdateMode.FullViewportUpdate
 

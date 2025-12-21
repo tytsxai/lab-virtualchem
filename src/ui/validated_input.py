@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import html
 import re
 from collections.abc import Callable
 
@@ -18,6 +19,8 @@ from PySide6.QtWidgets import (
     QSpinBox,
     QWidget,
 )
+
+from .security_utils import apply_text_constraints
 
 
 class ValidatedLineEdit(QLineEdit):
@@ -33,6 +36,7 @@ class ValidatedLineEdit(QLineEdit):
         required: bool = False,
     ):
         super().__init__(parent)
+        apply_text_constraints(self, max_length=200)
         self.validator_func = validator
         self.required = required
         self._is_valid = False
@@ -130,7 +134,8 @@ class ValidatedLineEdit(QLineEdit):
                     border-color: #c0392b;
                 }
             """)
-            self.setToolTip(f"✗ {self._error_message}")
+            # tooltip 可能按富文本解析，这里对错误消息做转义以避免 UI XSS
+            self.setToolTip(f"✗ {html.escape(self._error_message, quote=True)}")
 
     def is_valid(self) -> bool:
         """检查是否有效"""

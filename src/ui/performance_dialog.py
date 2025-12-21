@@ -692,6 +692,15 @@ class PerformanceDialog(QDialog):
                 self, "导出性能数据", "performance_data.json", "JSON文件 (*.json)"
             )
             if file_path:
+                try:
+                    from .path_security import validate_dialog_path
+
+                    file_path = str(validate_dialog_path(file_path))
+                except ValueError:
+                    from PySide6.QtWidgets import QMessageBox
+
+                    QMessageBox.warning(self, "失败", "保存路径不在允许的目录内")
+                    return
                 success = self.performance_monitor.export_performance_data(file_path)
                 if success:
                     from PySide6.QtWidgets import QMessageBox

@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
 )
 
 from ..utils.logger import get_logger
+from .security_utils import apply_text_constraints
 
 logger = get_logger(__name__)
 
@@ -401,6 +402,7 @@ class CollaborativeExperimentWidget(QWidget):
         self.chat_input = QTextEdit()
         self.chat_input.setMaximumHeight(60)
         self.chat_input.setPlaceholderText("输入消息...")
+        apply_text_constraints(self.chat_input, max_length=500)
         input_layout.addWidget(self.chat_input)
 
         self.send_btn = QPushButton("发送")

@@ -694,6 +694,15 @@ class LayoutRatioDialog(QDialog):
             )
 
             if file_path:
+                try:
+                    from .path_security import validate_dialog_path
+
+                    file_path = str(validate_dialog_path(file_path))
+                except ValueError:
+                    from PySide6.QtWidgets import QMessageBox
+
+                    QMessageBox.warning(self, "导出失败", "保存路径不在允许的目录内")
+                    return
                 success = export_layout_analysis_report(file_path)
                 if success:
                     from PySide6.QtWidgets import QMessageBox

@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
 
 from ..utils.logger import get_logger
 from .modern_widgets import ModernButton
+from .security_utils import force_plain_text, set_plain_text
 from .themes import ThemeManager
 
 logger = get_logger(__name__)
@@ -129,12 +130,14 @@ class FeedbackToast(QWidget):
         # 图标
         self.icon_label = QLabel()
         self.icon_label.setObjectName("feedbackIcon")
+        force_plain_text(self.icon_label)
         self.icon_label.setFixedSize(24, 24)
         title_layout.addWidget(self.icon_label)
 
         # 标题
         self.title_label = QLabel()
         self.title_label.setObjectName("feedbackTitle")
+        force_plain_text(self.title_label)
         self.title_label.setFont(QFont("Arial", 10, QFont.Weight.Bold))
         title_layout.addWidget(self.title_label)
 
@@ -152,6 +155,7 @@ class FeedbackToast(QWidget):
         # 消息内容
         self.message_label = QLabel()
         self.message_label.setObjectName("feedbackMessage")
+        force_plain_text(self.message_label)
         self.message_label.setWordWrap(True)
         self.message_label.setFont(QFont("Arial", 9))
         content_layout.addWidget(self.message_label)
@@ -194,11 +198,11 @@ class FeedbackToast(QWidget):
             FeedbackType.PROGRESS: "📊",
         }
 
-        self.icon_label.setText(icon_map.get(self.message.type, "ℹ️"))
+        set_plain_text(self.icon_label, icon_map.get(self.message.type, "ℹ️"))
 
         # 设置文本
-        self.title_label.setText(self.message.title)
-        self.message_label.setText(self.message.message)
+        set_plain_text(self.title_label, self.message.title)
+        set_plain_text(self.message_label, self.message.message)
 
     def apply_theme(self) -> None:
         """应用主题"""

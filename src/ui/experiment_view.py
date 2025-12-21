@@ -34,6 +34,7 @@ from ..models.user_record import UserRecord
 from ..utils.i18n import I18n
 from ..utils.logger import get_logger
 from .equipment_library import CompactEquipmentLibrary
+from .security_utils import apply_text_constraints, force_plain_text, set_plain_text
 from .interactive_scene import (
     ExperimentSceneBuilder,
     InteractiveExperimentScene,
@@ -386,17 +387,21 @@ class ExperimentView(QWidget):
         group = QGroupBox(self.i18n.t("ui.experiment_info"))
         layout = QVBoxLayout()
 
-        title_label = QLabel(f"<b>{self.template.title}</b>")
-        title_label.setStyleSheet("font-size: 16px;")
+        title_label = QLabel()
+        force_plain_text(title_label)
+        set_plain_text(title_label, self.template.title)
+        title_label.setStyleSheet("font-size: 16px; font-weight: bold;")
         layout.addWidget(title_label)
 
         desc_label = QLabel(self.template.description)
+        force_plain_text(desc_label)
         desc_label.setWordWrap(True)
         layout.addWidget(desc_label)
 
         meta_text = f"{self.i18n.t('ui.difficulty')}: {self.i18n.t(f'difficulty.{self.template.difficulty}')} | "
         meta_text += f"{self.i18n.t('ui.duration')}: {self.template.duration_minutes} {self.i18n.t('ui.minutes')}"
         meta_label = QLabel(meta_text)
+        force_plain_text(meta_label)
         meta_label.setStyleSheet("color: gray;")
         layout.addWidget(meta_label)
 
@@ -531,7 +536,7 @@ class ExperimentView(QWidget):
         """
         try:
             # 显示加载指示器
-            self.feedback_label.setText("⏳ 加载中...")
+            set_plain_text(self.feedback_label, "⏳ 加载中...")
             self.feedback_label.setStyleSheet("color: #666; padding: 10px;")
 
             # 清除旧内容
@@ -547,7 +552,7 @@ class ExperimentView(QWidget):
             # 获取当前步骤
             step = self.controller.get_current_step()
             if not step:
-                self.feedback_label.setText("⚠️ 无法加载步骤")
+                set_plain_text(self.feedback_label, "⚠️ 无法加载步骤")
                 self.feedback_label.setStyleSheet(
                     "color: #856404; padding: 10px; background-color: #fff3cd;"
                 )
@@ -556,8 +561,12 @@ class ExperimentView(QWidget):
 
             # 步骤标题（使用步骤ID作为标题）
             step_title = f"步骤 {self.controller.record.current_step_index + 1}: {step.id.replace('_', ' ').title()}"
-            title = QLabel(f"<h2>{step_title}</h2>")
-            title.setStyleSheet("color: #2c3e50; margin: 10px 0;")
+            title = QLabel()
+            force_plain_text(title)
+            set_plain_text(title, step_title)
+            title.setStyleSheet(
+                "color: #2c3e50; margin: 10px 0; font-size: 18px; font-weight: bold;"
+            )
             self.step_layout.addWidget(title)
 
             # 显示图片（如果有）
@@ -768,6 +777,7 @@ class ExperimentView(QWidget):
 
             line_edit = QLineEdit()
             line_edit.setPlaceholderText(self.i18n.t("ui.enter_value"))
+            apply_text_constraints(line_edit, max_length=200)
             self.input_widgets["value"] = line_edit
             input_layout.addWidget(line_edit)
 
