@@ -64,6 +64,7 @@ class UserQuest(BaseModel):
 
     quest_id: str = Field(..., description="任务ID")
     user_id: str = Field(..., description="用户ID")
+    version: int = Field(default=0, ge=0, description="版本号（乐观锁）")
     status: QuestStatus = Field(default=QuestStatus.ACTIVE, description="状态")
     progress: int = Field(default=0, ge=0, description="当前进度")
     target: int = Field(..., description="目标值")

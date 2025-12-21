@@ -9,6 +9,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any
 
+from .log_safety import sanitize_log_data
+
 logger = logging.getLogger(__name__)
 
 
@@ -145,7 +147,9 @@ class ExperimentMetricsCollector:
             del self._cache_timestamp[experiment_id]
 
         logger.debug(
-            f"记录实验运行: {experiment_id}, 用户: {user_id}, 状态: {record_data.get('status')}"
+            sanitize_log_data(
+                f"记录实验运行: {experiment_id}, 用户: {user_id}, 状态: {record_data.get('status')}"
+            )
         )
 
     def get_experiment_metrics(
@@ -408,7 +412,7 @@ class ExperimentMetricsCollector:
         self._cached_metrics.clear()
         self._cache_timestamp.clear()
 
-        logger.info(f"清理了 {total_cleared} 条超过 {days} 天的实验记录")
+        logger.info(sanitize_log_data(f"清理了 {total_cleared} 条超过 {days} 天的实验记录"))
         return total_cleared
 
 

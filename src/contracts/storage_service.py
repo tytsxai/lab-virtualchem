@@ -249,13 +249,25 @@ class InMemoryStorageService(StorageService):
         if operator == QueryOperator.NE:
             return value != expected
         if operator == QueryOperator.GT:
-            return value > expected
+            try:
+                return value > expected
+            except TypeError:
+                return False
         if operator == QueryOperator.GTE:
-            return value >= expected
+            try:
+                return value >= expected
+            except TypeError:
+                return False
         if operator == QueryOperator.LT:
-            return value < expected
+            try:
+                return value < expected
+            except TypeError:
+                return False
         if operator == QueryOperator.LTE:
-            return value <= expected
+            try:
+                return value <= expected
+            except TypeError:
+                return False
         if operator == QueryOperator.IN:
             return (
                 value in expected if isinstance(expected, (list, tuple, set)) else False
@@ -264,10 +276,25 @@ class InMemoryStorageService(StorageService):
             return str(expected).lower() in str(value).lower()
         if operator == QueryOperator.BETWEEN:
             if isinstance(expected, (list, tuple)) and len(expected) == 2:
-                return expected[0] <= value <= expected[1]
+                try:
+                    return expected[0] <= value <= expected[1]
+                except TypeError:
+                    return False
         return False
 
     def save(self, request: SaveRequest) -> SaveResponse:
+        if not request.entity_type:
+            return SaveResponse(
+                success=False,
+                message="实体类型不能为空",
+                errors=["entity_type is required"],
+            )
+        if request.entity is None:
+            return SaveResponse(
+                success=False,
+                message="实体不能为空",
+                errors=["entity is required"],
+            )
         entity_id = getattr(request.entity, "id", None) or self._resolve_id(
             request.entity
         )
@@ -298,7 +325,7 @@ class InMemoryStorageService(StorageService):
             data = [item for item in data if _apply_filters(item)]
 
         total = len(data)
-        if request.sort_by:
+        if request.sort_by and data:
             key_fn: Callable[[Any], Any] = (
                 (lambda x: getattr(x, request.sort_by, None))
                 if not isinstance(data[0], dict)
@@ -308,14 +335,19 @@ class InMemoryStorageService(StorageService):
             data.sort(key=key_fn, reverse=reverse)
 
         if request.offset or request.limit is not None:
-            data = data[
-                request.offset : request.offset + request.limit
-                if request.limit
-                else None
-            ]
+            start = request.offset
+            if request.limit is None:
+                end = None
+            else:
+                end = start + max(request.limit, 0)
+            data = data[start:end]
+
+        has_more = False
+        if request.offset or request.limit is not None:
+            has_more = (request.offset + len(data)) < total
 
         return QueryResponse(
-            success=True, data=data, total_count=total, has_more=len(data) < total
+            success=True, data=data, total_count=total, has_more=has_more
         )
 
     def get_by_id(self, entity_type: str, entity_id: str) -> Any | None:

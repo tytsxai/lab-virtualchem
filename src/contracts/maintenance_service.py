@@ -26,6 +26,14 @@ class CacheType(str, Enum):
     ALL = "all"  # 所有缓存
 
 
+class MaintenanceReportFormat(str, Enum):
+    """维护报告导出格式"""
+
+    JSON = "json"
+    CSV = "csv"
+    HTML = "html"
+
+
 @dataclass
 class MaintenanceServiceConfig:
     """维护服务配置"""
@@ -262,13 +270,17 @@ class MaintenanceService(ABC):
         pass
 
     @abstractmethod
-    def export_report(self, output_path: str, format: str = "json") -> bool:
+    def export_report(
+        self,
+        output_path: str,
+        format: MaintenanceReportFormat = MaintenanceReportFormat.JSON,
+    ) -> bool:
         """
         导出报告
 
         Args:
             output_path: 输出路径
-            format: 格式(json/csv/html)
+            format: 格式枚举
 
         Returns:
             是否成功

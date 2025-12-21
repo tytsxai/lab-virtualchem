@@ -3,10 +3,27 @@
 import logging
 from pathlib import Path
 
+from pydantic import BaseModel, Field, ValidationError
+
 from src.knowledge.loader import KnowledgeLoader
 from src.models.knowledge import HazardLevel, KnowledgeCard, KnowledgeType
 
 logger = logging.getLogger(__name__)
+
+MAX_INCOMPATIBLE_PAIRS = 500
+MAX_TEXT_CHARS = 512
+
+
+class SafetyIncompatiblePair(BaseModel):
+    reagent1: str = Field(default="", max_length=64)
+    reagent2: str = Field(default="", max_length=64)
+    risk: str = Field(default="未知", max_length=32)
+    description: str = Field(default="", max_length=MAX_TEXT_CHARS)
+
+
+class SafetyEntry(BaseModel):
+    name: str = Field(..., max_length=128)
+    incompatible_pairs: list[SafetyIncompatiblePair] = Field(default_factory=list)
 
 
 class ReagentDatabase:
@@ -114,14 +131,7 @@ class ReagentDatabase:
         try:
             # 从安全知识库加载配伍禁忌数据
             import json
-            from pathlib import Path
-
-            safety_file = (
-                Path(__file__).parent.parent.parent
-                / "assets"
-                / "knowledge"
-                / "safety.json"
-            )
+            safety_file = self._get_safety_file_path()
 
             if not safety_file.exists():
                 logger.warning("安全知识库文件不存在，返回默认配伍禁忌")
@@ -130,18 +140,22 @@ class ReagentDatabase:
             with open(safety_file, encoding="utf-8") as f:
                 safety_data = json.load(f)
 
+            if not isinstance(safety_data, list):
+                raise ValueError("safety.json 顶层必须为数组")
+
             # 查找配伍禁忌条目
             incompatible_pairs = []
             for item in safety_data:
                 if item.get("name") == "试剂配伍禁忌":
-                    pairs = item.get("incompatible_pairs", [])
+                    entry = SafetyEntry.model_validate(item)
+                    pairs = entry.incompatible_pairs[:MAX_INCOMPATIBLE_PAIRS]
                     for pair in pairs:
                         incompatible_pairs.append(
                             (
-                                pair.get("reagent1", ""),
-                                pair.get("reagent2", ""),
-                                pair.get("risk", "未知"),
-                                pair.get("description", ""),
+                                pair.reagent1,
+                                pair.reagent2,
+                                pair.risk,
+                                pair.description,
                             )
                         )
                     break
@@ -153,9 +167,17 @@ class ReagentDatabase:
                 logger.warning("安全知识库中未找到配伍禁忌数据，返回默认值")
                 return self._get_default_incompatible_pairs()
 
+        except ValidationError as e:
+            logger.error(f"安全知识库 schema 校验失败: {e}")
+            return self._get_default_incompatible_pairs()
         except Exception as e:
             logger.error(f"加载配伍禁忌数据失败: {e}")
             return self._get_default_incompatible_pairs()
+
+    def _get_safety_file_path(self) -> Path:
+        return (
+            Path(__file__).parent.parent.parent / "assets" / "knowledge" / "safety.json"
+        )
 
     def _get_default_incompatible_pairs(self) -> list[tuple[str, str, str, str]]:
         """获取默认的不兼容试剂对（当数据文件不可用时）

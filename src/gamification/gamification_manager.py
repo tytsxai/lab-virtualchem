@@ -3,7 +3,13 @@
 统一管理所有游戏化功能
 """
 
+import hashlib
+import hmac
+import json
+import os
+from collections.abc import Mapping
 from datetime import datetime
+from threading import Lock
 from typing import Any
 
 from pydantic import BaseModel, Field, field_serializer
@@ -53,6 +59,10 @@ class UserStats(BaseModel):
     midnight_experiment: int = Field(default=0, ge=0, description="午夜实验数")
     early_morning_experiment: int = Field(default=0, ge=0, description="早晨实验数")
 
+    settled_experiment_ids: list[str] = Field(
+        default_factory=list, description="已结算实验ID列表（幂等）"
+    )
+
     updated_at: datetime = Field(default_factory=datetime.now, description="更新时间")
 
     @field_serializer("updated_at")
@@ -71,6 +81,8 @@ class GamificationData(BaseModel):
     )
     quests: list[UserQuest] = Field(default_factory=list, description="任务列表")
     rewards: list[UserReward] = Field(default_factory=list, description="奖励列表")
+    integrity_version: int = Field(default=1, ge=1, description="数据完整性版本")
+    integrity_signature: str | None = Field(default=None, description="HMAC签名")
 
 
 class GamificationManager:
@@ -87,8 +99,61 @@ class GamificationManager:
         self.achievement_manager = AchievementManager()
         self.quest_manager = QuestManager()
         self.reward_manager = RewardManager()
+        self._user_locks: dict[str, Lock] = {}
+        self._user_locks_guard = Lock()
 
         logger.info("游戏化管理器初始化完成")
+
+    def _get_user_lock(self, user_id: str) -> Lock:
+        with self._user_locks_guard:
+            lock = self._user_locks.get(user_id)
+            if lock is None:
+                lock = Lock()
+                self._user_locks[user_id] = lock
+            return lock
+
+    @staticmethod
+    def _get_hmac_secret() -> bytes:
+        secret = (os.getenv("GAMIFICATION_HMAC_SECRET") or "").strip()
+        if secret:
+            return secret.encode("utf-8")
+
+        fallback = (
+            (os.getenv("SESSION_SECRET_KEY") or "").strip()
+            or (os.getenv("JWT_SECRET_KEY") or "").strip()
+        )
+        if fallback:
+            return fallback.encode("utf-8")
+
+        logger.warning(
+            "未配置 GAMIFICATION_HMAC_SECRET/SESSION_SECRET_KEY/JWT_SECRET_KEY，"
+            "将使用弱默认密钥（仅用于开发/测试）"
+        )
+        return b"virtualchemlab-dev-unsafe-secret"
+
+    @classmethod
+    def _sign_integrity_payload(cls, payload: Mapping[str, Any]) -> str:
+        key = cls._get_hmac_secret()
+        message = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode(
+            "utf-8"
+        )
+        return hmac.new(key, message, hashlib.sha256).hexdigest()
+
+    @classmethod
+    def _build_integrity_payload(cls, data_dict: dict[str, Any]) -> dict[str, Any]:
+        payload = dict(data_dict)
+        payload.pop("integrity_signature", None)
+        return payload
+
+    @classmethod
+    def _verify_integrity_dict(cls, data_dict: dict[str, Any]) -> bool:
+        signature = data_dict.get("integrity_signature")
+        if not signature:
+            return True
+
+        payload = cls._build_integrity_payload(data_dict)
+        expected = cls._sign_integrity_payload(payload)
+        return hmac.compare_digest(str(signature), expected)
 
     def get_or_create_user_data(self, user_id: str) -> GamificationData:
         """获取或创建用户游戏化数据
@@ -107,6 +172,10 @@ class GamificationManager:
 
         if data_dict:
             try:
+                if not isinstance(data_dict, dict):
+                    raise TypeError("invalid gamification payload type")
+                if not self._verify_integrity_dict(data_dict):
+                    raise ValueError("gamification data integrity check failed")
                 return GamificationData(**data_dict)
             except Exception as e:
                 logger.warning(f"加载游戏化数据失败: {e}，创建新数据")
@@ -137,81 +206,121 @@ class GamificationManager:
         Args:
             data: 游戏化数据
         """
-        self.storage.set(f"gamification/{data.user_id}", data.dict())
+        data_dict = data.model_dump(mode="json")
+        payload = self._build_integrity_payload(data_dict)
+        data.integrity_signature = self._sign_integrity_payload(payload)
+        self.storage.set(f"gamification/{data.user_id}", data.model_dump(mode="json"))
 
     def on_experiment_completed(
-        self, user_id: str, score: float, duration_seconds: int, mistake_count: int
+        self, user_id: str, experiment_id: str
     ) -> dict[str, Any]:
         """实验完成事件处理
 
         Args:
             user_id: 用户ID
-            score: 分数
-            duration_seconds: 耗时（秒）
-            mistake_count: 错误数
+            experiment_id: 实验ID（只接受ID，从服务端记录计算分数）
 
         Returns:
             事件结果（包含升级、解锁成就等信息）
         """
-        data = self.get_or_create_user_data(user_id)
-        result = {
-            "level_up": False,
-            "new_achievements": [],
-            "completed_quests": [],
-            "exp_gained": 0,
-        }
+        with self._get_user_lock(user_id):
+            data = self.get_or_create_user_data(user_id)
+            result: dict[str, Any] = {
+                "level_up": False,
+                "new_achievements": [],
+                "completed_quests": [],
+                "exp_gained": 0,
+                "already_settled": False,
+            }
 
-        # 更新统计数据
-        self._update_stats_on_experiment(
-            data.stats, score, duration_seconds, mistake_count
-        )
+            if not experiment_id or not isinstance(experiment_id, str):
+                raise ValueError("experiment_id is required")
 
-        # 计算经验值
-        base_exp = int(score)  # 基础经验 = 分数
-        if mistake_count == 0:
-            base_exp = int(base_exp * 1.2)  # 零失误额外20%
-        if duration_seconds < 300:  # 5分钟内完成
-            base_exp = int(base_exp * 1.1)  # 快速完成额外10%
+            if experiment_id in set(data.stats.settled_experiment_ids):
+                result["already_settled"] = True
+                return result
 
-        # 增加经验值
-        level_result = self.level_system.add_exp(data.level, base_exp)
-        result["exp_gained"] = base_exp
-        result["level_up"] = level_result["level_up"]
-        result["level_info"] = level_result
+            record = self._load_latest_completed_record(user_id, experiment_id)
+            if record is None:
+                raise ValueError("no completed record found for experiment_id")
 
-        # 检查成就
-        unlocked_ids = {a.achievement_id for a in data.achievements if a.completed}
-        newly_unlocked = self.achievement_manager.check_all_achievements(
-            data.stats.dict(), unlocked_ids
-        )
+            score = int(record.score.total)
+            duration_seconds = int(record.total_duration_seconds or 0)
+            mistake_count = int(record.total_mistakes)
 
-        for achievement in newly_unlocked:
-            user_achievement = UserAchievement(
-                achievement_id=achievement.id,
-                user_id=user_id,
-                progress=100.0,
-                completed=True,
+            if score < 0 or duration_seconds < 0 or mistake_count < 0:
+                raise ValueError(
+                    "invalid record values: score/duration/mistake_count must be >= 0"
+                )
+
+            # 更新统计数据
+            self._update_stats_on_experiment(
+                data.stats, score, duration_seconds, mistake_count
             )
-            data.achievements.append(user_achievement)
-            result["new_achievements"].append(achievement)
 
-            # 成就奖励经验
-            if achievement.exp_reward > 0:
-                self.level_system.add_exp(data.level, achievement.exp_reward)
-                result["exp_gained"] += achievement.exp_reward
+            # 计算经验值
+            base_exp = int(score)  # 基础经验 = 分数
+            if mistake_count == 0:
+                base_exp = int(base_exp * 1.2)  # 零失误额外20%
+            if duration_seconds < 300:  # 5分钟内完成
+                base_exp = int(base_exp * 1.1)  # 快速完成额外10%
 
-        # 更新任务进度
-        self._update_quest_progress(data, result)
+            # 增加经验值
+            level_result = self.level_system.add_exp(data.level, base_exp)
+            result["exp_gained"] = base_exp
+            result["level_up"] = level_result["level_up"]
+            result["level_info"] = level_result
 
-        # 保存数据
-        self.save_user_data(data)
+            # 检查成就
+            unlocked_ids = {a.achievement_id for a in data.achievements if a.completed}
+            newly_unlocked = self.achievement_manager.check_all_achievements(
+                data.stats.model_dump(), unlocked_ids
+            )
 
-        logger.info(
-            f"实验完成事件: 用户={user_id}, 经验+{result['exp_gained']}, "
-            f"升级={result['level_up']}, 新成就={len(result['new_achievements'])}"
+            for achievement in newly_unlocked:
+                user_achievement = UserAchievement(
+                    achievement_id=achievement.id,
+                    user_id=user_id,
+                    progress=100.0,
+                    completed=True,
+                )
+                data.achievements.append(user_achievement)
+                result["new_achievements"].append(achievement)
+
+                # 成就奖励经验
+                if achievement.exp_reward > 0:
+                    self.level_system.add_exp(data.level, achievement.exp_reward)
+                    result["exp_gained"] += achievement.exp_reward
+
+            # 更新任务进度
+            self._update_quest_progress(data, result)
+
+            data.stats.settled_experiment_ids.append(experiment_id)
+
+            # 保存数据
+            self.save_user_data(data)
+
+            logger.info(
+                f"实验完成事件: 用户={user_id}, 实验={experiment_id}, 经验+{result['exp_gained']}, "
+                f"升级={result['level_up']}, 新成就={len(result['new_achievements'])}"
+            )
+
+            return result
+
+    def _load_latest_completed_record(self, user_id: str, experiment_id: str):
+        entries = self.storage.list_user_records(
+            user_id=user_id, experiment_id=experiment_id, limit=10
         )
-
-        return result
+        for entry in entries:
+            if entry.get("status") != "completed":
+                continue
+            record_id = entry.get("record_id")
+            if not record_id:
+                continue
+            record = self.storage.load_record(user_id, record_id)
+            if record and record.status == "completed":
+                return record
+        return None
 
     def _update_stats_on_experiment(
         self, stats: UserStats, score: float, duration_seconds: int, mistake_count: int
@@ -289,39 +398,53 @@ class GamificationManager:
             ):  # 使用0增量，只检查状态
                 result["completed_quests"].append(quest)
 
-    def claim_quest_reward(self, user_id: str, quest_id: str) -> dict[str, Any]:
+    def claim_quest_reward(
+        self, user_id: str, quest_id: str, expected_version: int | None = None
+    ) -> dict[str, Any]:
         """领取任务奖励
 
         Args:
             user_id: 用户ID
             quest_id: 任务ID
+            expected_version: 期望的版本号（乐观锁）
 
         Returns:
             领取结果
         """
-        data = self.get_or_create_user_data(user_id)
-        result = {"success": False, "exp_gained": 0}
+        with self._get_user_lock(user_id):
+            data = self.get_or_create_user_data(user_id)
+            result: dict[str, Any] = {
+                "success": False,
+                "exp_gained": 0,
+                "version_conflict": False,
+            }
 
-        # 查找任务
-        user_quest = next((q for q in data.quests if q.quest_id == quest_id), None)
-        if not user_quest:
+            # 查找任务
+            user_quest = next((q for q in data.quests if q.quest_id == quest_id), None)
+            if not user_quest:
+                return result
+
+            if expected_version is not None and user_quest.version != expected_version:
+                result["version_conflict"] = True
+                result["current_version"] = user_quest.version
+                return result
+
+            # 领取奖励
+            if self.quest_manager.claim_reward(user_quest):
+                quest = self.quest_manager.get_quest(quest_id)
+                if quest:
+                    # 给予经验奖励
+                    self.level_system.add_exp(data.level, quest.exp_reward)
+                    result["exp_gained"] = quest.exp_reward
+                    result["success"] = True
+                    user_quest.version += 1
+
+                    self.save_user_data(data)
+                    logger.info(
+                        f"领取任务奖励: 用户={user_id}, 任务={quest_id}, 经验+{quest.exp_reward}"
+                    )
+
             return result
-
-        # 领取奖励
-        if self.quest_manager.claim_reward(user_quest):
-            quest = self.quest_manager.get_quest(quest_id)
-            if quest:
-                # 给予经验奖励
-                self.level_system.add_exp(data.level, quest.exp_reward)
-                result["exp_gained"] = quest.exp_reward
-                result["success"] = True
-
-                self.save_user_data(data)
-                logger.info(
-                    f"领取任务奖励: 用户={user_id}, 任务={quest_id}, 经验+{quest.exp_reward}"
-                )
-
-        return result
 
     def get_user_progress(self, user_id: str) -> dict[str, Any]:
         """获取用户进度信息

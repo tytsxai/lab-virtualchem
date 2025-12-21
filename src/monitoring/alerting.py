@@ -21,6 +21,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from .log_safety import sanitize_log_data
+
 logger = logging.getLogger(__name__)
 
 
@@ -115,7 +117,7 @@ class AlertRule:
         try:
             condition_met = self.condition()
         except Exception as e:
-            logger.info(f"告警规则 {self.name} 条件检查失败: {e}")
+            logger.info(sanitize_log_data(f"告警规则 {self.name} 条件检查失败: {e}"))
             return False
 
         if condition_met:
@@ -165,12 +167,14 @@ class ConsoleAlertChannel(AlertChannel):
         }
 
         icon = severity_icon.get(alert.severity, "📢")
-        logger.info(f"\n{icon} 【告警】{alert.rule_name}")
-        logger.info(f"   级别: {alert.severity.value}")
-        logger.info(f"   消息: {alert.message}")
-        logger.info(f"   时间: {alert.timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
+        logger.info(sanitize_log_data(f"\n{icon} 【告警】{alert.rule_name}"))
+        logger.info(sanitize_log_data(f"   级别: {alert.severity.value}"))
+        logger.info(sanitize_log_data(f"   消息: {alert.message}"))
+        logger.info(
+            sanitize_log_data(f"   时间: {alert.timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
+        )
         if alert.labels:
-            logger.info(f"   标签: {alert.labels}")
+            logger.info(sanitize_log_data(f"   标签: {alert.labels}"))
         print()
 
         return True
@@ -193,7 +197,7 @@ class FileAlertChannel(AlertChannel):
                 f.write(json.dumps(alert.to_dict(), ensure_ascii=False) + "\n")
             return True
         except Exception as e:
-            logger.info(f"文件告警渠道发送失败: {e}")
+            logger.info(sanitize_log_data(f"文件告警渠道发送失败: {e}"))
             return False
 
 
@@ -212,10 +216,10 @@ class WebhookAlertChannel(AlertChannel):
             response = requests.post(self.webhook_url, json=payload, timeout=10)
             return response.status_code == 200
         except ImportError:
-            logger.info("需要安装 requests 库来使用 Webhook 渠道")
+            logger.info(sanitize_log_data("需要安装 requests 库来使用 Webhook 渠道"))
             return False
         except Exception as e:
-            logger.info(f"Webhook告警渠道发送失败: {e}")
+            logger.info(sanitize_log_data(f"Webhook告警渠道发送失败: {e}"))
             return False
 
 
@@ -269,10 +273,10 @@ class EmailAlertChannel(AlertChannel):
 
             return True
         except ImportError:
-            logger.info("需要安装 smtplib 来使用邮件告警")
+            logger.info(sanitize_log_data("需要安装 smtplib 来使用邮件告警"))
             return False
         except Exception as e:
-            logger.info(f"邮件告警渠道发送失败: {e}")
+            logger.info(sanitize_log_data(f"邮件告警渠道发送失败: {e}"))
             return False
 
 
@@ -314,16 +318,19 @@ class AlertManager:
 
     def check_rules(self) -> list[Alert]:
         """检查所有规则"""
-        triggered_alerts = []
+        triggered_rules: list[AlertRule] = []
 
+        # 先在锁内挑选需要触发的规则，避免在持锁期间进行告警创建/发送，
+        # 同时避免 `_create_alert` 内部再次获取同一把锁导致死锁。
         with self._lock:
             for rule in self._rules.values():
                 if rule.should_trigger():
-                    alert = self._create_alert(rule)
-                    triggered_alerts.append(alert)
+                    triggered_rules.append(rule)
 
-        # 发送告警
-        for alert in triggered_alerts:
+        triggered_alerts: list[Alert] = []
+        for rule in triggered_rules:
+            alert = self._create_alert(rule)
+            triggered_alerts.append(alert)
             self._send_alert(alert)
 
         return triggered_alerts
@@ -411,7 +418,7 @@ class AlertManager:
             try:
                 self.check_rules()
             except Exception as e:
-                logger.info(f"告警检查错误: {e}")
+                logger.info(sanitize_log_data(f"告警检查错误: {e}"))
 
             time.sleep(interval)
 
@@ -441,7 +448,7 @@ class AlertManager:
             try:
                 channel.send(alert)
             except Exception as e:
-                logger.info(f"告警渠道发送失败: {e}")
+                logger.info(sanitize_log_data(f"告警渠道发送失败: {e}"))
 
 
 # 全局告警管理器

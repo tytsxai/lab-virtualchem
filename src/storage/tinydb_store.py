@@ -5,6 +5,7 @@
 
 import json
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -47,13 +48,45 @@ class TinyDBStore(StorageInterface):
             self.records_table = None
             self._fallback_data: dict[str, Any] = {"records": []}
         else:
+            self._validate_db_path(db_path)
             # 确保目录存在
-            db_path.parent.mkdir(parents=True, exist_ok=True)
+            db_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+            self._chmod_best_effort(db_path.parent, 0o700)
+
+            # 预创建数据库文件，确保权限正确（SQLite/TinyDB 都会自行写入）
+            if not db_path.exists():
+                db_path.touch(exist_ok=True)
+            self._chmod_best_effort(db_path, 0o600)
 
             # 使用缓存中间件提升性能
             self.db = TinyDB(db_path, storage=CachingMiddleware(JSONStorage))
             self.records_table = self.db.table("records")
             logger.info(f"TinyDB已初始化: {db_path}")
+
+    @staticmethod
+    def _chmod_best_effort(path: Path, mode: int) -> None:
+        if os.name != "posix":
+            return
+        try:
+            os.chmod(path, mode)
+        except Exception:  # noqa: BLE001
+            return
+
+    @staticmethod
+    def _validate_db_path(db_path: Path) -> None:
+        """拒绝符号链接数据库路径，避免落盘到意外位置。"""
+        if os.name != "posix":
+            return
+
+        abs_path = Path(os.path.abspath(str(db_path)))
+        # 检查文件本身以及父目录链路（对存在路径使用 lstat 语义）
+        current = abs_path
+        while True:
+            if os.path.islink(str(current)):
+                raise ValueError(f"拒绝符号链接路径: {current}")
+            if current.parent == current:
+                break
+            current = current.parent
 
     def save(self, record_id: str, data: UserRecord) -> None:
         """保存记录

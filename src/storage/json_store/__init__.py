@@ -16,6 +16,7 @@ import dataclasses
 import hashlib
 import json
 import os
+import re
 import shutil
 import tempfile
 import zlib
@@ -26,10 +27,10 @@ from pathlib import Path
 from threading import Lock, RLock
 from typing import Any
 
-from ..core.validation import ValidationError
-from ..models.user_record import UserRecord
-from ..utils.error_handler import safe_execute
-from ..utils.logger import get_logger
+from ...core.validation import ValidationError
+from ...models.user_record import UserRecord
+from ...utils.error_handler import safe_execute
+from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -55,6 +56,10 @@ class DataIntegrityLevel(Enum):
 class JSONStore:
     """JSON文件存储系统"""
 
+    _USER_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+    _DIR_MODE = 0o700
+    _FILE_MODE = 0o600
+
     def __init__(
         self,
         base_dir: str = "data/records",
@@ -67,21 +72,21 @@ class JSONStore:
     ):
         """初始化存储系统"""
         self.base_dir = Path(base_dir)
-        self.base_dir.mkdir(parents=True, exist_ok=True)
+        self._ensure_dir(self.base_dir)
         self._kv_dir = self.base_dir / ".kv_store"
-        self._kv_dir.mkdir(parents=True, exist_ok=True)
+        self._ensure_dir(self._kv_dir)
 
         # 创建备份目录
         self.backup_dir = self.base_dir / ".backups"
-        self.backup_dir.mkdir(exist_ok=True)
+        self._ensure_dir(self.backup_dir)
 
         # 创建缓存目录
         self.cache_dir = self.base_dir / ".cache"
-        self.cache_dir.mkdir(exist_ok=True)
+        self._ensure_dir(self.cache_dir)
 
         # 创建归档目录
         self.archive_dir = self.base_dir / ".archive"
-        self.archive_dir.mkdir(exist_ok=True)
+        self._ensure_dir(self.archive_dir)
 
         # 线程锁,保证并发安全
         self._write_locks: dict[str, Lock] = {}
@@ -115,6 +120,50 @@ class JSONStore:
             f"JSON存储系统初始化完成，目录: {self.base_dir}, 模式: {storage_mode.value}"
         )
 
+    def _safe_path_join(
+        self,
+        base_dir: Path,
+        *parts: str,
+        field: str = "path",
+        require_basename: bool = False,
+    ) -> Path:
+        """安全拼接路径，防止路径遍历。
+
+        规则：
+        - `require_basename=True` 时，`parts` 必须都是纯文件名/目录名（不含路径分隔符）。
+        - 通过 `resolve()` 规范化后，目标路径必须位于 `base_dir` 内。
+        """
+        if not parts:
+            raise ValidationError(field=field, message="路径不能为空")
+
+        clean_parts: list[str] = []
+        for part in parts:
+            if part is None:
+                raise ValidationError(field=field, message="路径不能为空")
+            if not isinstance(part, str):
+                raise ValidationError(field=field, message="路径必须为字符串")
+
+            stripped = part.strip()
+            if not stripped:
+                raise ValidationError(field=field, message="路径不能为空")
+
+            if require_basename:
+                # 纯文件名/目录名：既不能包含分隔符，也不能通过 Path 解析成多段
+                if os.sep in stripped or (os.altsep and os.altsep in stripped):
+                    raise ValidationError(field=field, message="不允许包含路径分隔符")
+                if Path(stripped).name != stripped:
+                    raise ValidationError(field=field, message="必须是纯文件名")
+
+            clean_parts.append(stripped)
+
+        base_resolved = base_dir.resolve()
+        target = base_dir.joinpath(*clean_parts).resolve()
+
+        if not target.is_relative_to(base_resolved):
+            raise ValidationError(field=field, message="检测到路径遍历")
+
+        return target
+
     # ------------------------------------------------------------------
     # IStorage 兼容接口
     # ------------------------------------------------------------------
@@ -123,6 +172,7 @@ class JSONStore:
         """保存任意键值数据"""
         try:
             filepath = self._resolve_key_path(key)
+            self._reject_symlink_path(filepath)
             serialized = self._serialize_value(value)
             payload = {
                 "data": serialized,
@@ -156,7 +206,7 @@ class JSONStore:
     @classmethod
     def _atomic_write_json(cls, path: Path, data: Any) -> None:
         """原子写入 + fsync，避免断电/崩溃导致 JSON 破损。"""
-        path.parent.mkdir(parents=True, exist_ok=True)
+        cls._ensure_dir(path.parent)
         tmp_path: Path | None = None
         try:
             with tempfile.NamedTemporaryFile(
@@ -167,11 +217,13 @@ class JSONStore:
                 suffix=".tmp",
             ) as f:
                 tmp_path = Path(f.name)
+                cls._chmod_best_effort(tmp_path, cls._FILE_MODE)
                 json.dump(data, f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())
 
             os.replace(str(tmp_path), str(path))
+            cls._chmod_best_effort(path, cls._FILE_MODE)
             cls._fsync_dir(path.parent)
         finally:
             if tmp_path is not None and tmp_path.exists():
@@ -184,6 +236,7 @@ class JSONStore:
         """加载任意键值数据"""
         try:
             filepath = self._resolve_key_path(key, ensure_parent=False)
+            self._reject_symlink_path(filepath)
             cache_key = str(filepath)
 
             if self.enable_cache and cache_key in self._cache:
@@ -330,8 +383,113 @@ class JSONStore:
 
         filepath = base_dir / relative_path
         if ensure_parent:
-            filepath.parent.mkdir(parents=True, exist_ok=True)
+            self._ensure_dir(filepath.parent)
         return filepath
+
+    @classmethod
+    def _chmod_best_effort(cls, path: Path, mode: int) -> None:
+        if os.name != "posix":
+            return
+        try:
+            os.chmod(path, mode)
+        except Exception:  # noqa: BLE001
+            return
+
+    @classmethod
+    def _ensure_dir(cls, path: Path) -> None:
+        path.mkdir(parents=True, exist_ok=True, mode=cls._DIR_MODE)
+        cls._chmod_best_effort(path, cls._DIR_MODE)
+
+    def _reject_symlink_path(self, target: Path) -> None:
+        """拒绝任何文件或父目录为符号链接的路径（防 symlink 逃逸）。"""
+        if os.name != "posix":
+            return
+
+        # 优先拒绝“目标文件本身是符号链接”的情况（即使它指向 base_dir 内部也不允许），
+        # 否则 realpath 会把链接解析掉，导致误放行。
+        try:
+            if target.is_symlink():
+                raise ValueError(f"拒绝符号链接路径: {target}")
+        except FileNotFoundError:
+            raise ValueError(f"拒绝符号链接路径: {target}") from None
+
+        def _path_variants(path: Path) -> set[Path]:
+            resolved = Path(os.path.realpath(str(path)))
+            variants = {resolved}
+            # macOS 上 `/var` <-> `/private/var` 可能存在等价映射；
+            # 生成两个候选，避免“同一路径不同表示”导致误判越界。
+            as_posix = str(resolved)
+            if as_posix.startswith("/private/var/"):
+                variants.add(Path(as_posix.replace("/private", "", 1)))
+            elif as_posix.startswith("/var/"):
+                variants.add(Path("/private" + as_posix))
+            return variants
+
+        base_variants = _path_variants(self.base_dir)
+        target_variants = _path_variants(target)
+
+        # 只允许落在 base_dir 下（包括 kv / records 等）。
+        in_base = False
+        matched_base: Path | None = None
+        matched_target: Path | None = None
+        for base in base_variants:
+            for abs_target in target_variants:
+                try:
+                    abs_target.relative_to(base)
+                    in_base = True
+                    matched_base = base
+                    matched_target = abs_target
+                    break
+                except Exception:  # noqa: BLE001
+                    continue
+            if in_base:
+                break
+        if not in_base:
+            raise ValueError(f"非法路径(越界): {target}") from None
+
+        # 用 abspath 逐段检测 symlink：避免 realpath 把中间 symlink 段解析掉而误放行。
+        walk_base = Path(os.path.abspath(str(self.base_dir)))
+        walk_target = Path(os.path.abspath(str(target)))
+
+        def _try_relative_parts(base_path: Path, target_path: Path) -> tuple[Path, tuple[str, ...]] | None:
+            try:
+                return base_path, target_path.relative_to(base_path).parts
+            except Exception:  # noqa: BLE001
+                return None
+
+        relative_info = _try_relative_parts(walk_base, walk_target)
+        if relative_info is None:
+            # 尝试处理 `/var` <-> `/private/var` 的等价映射
+            base_str = str(walk_base)
+            target_str = str(walk_target)
+            candidates = []
+            if base_str.startswith("/private/var/"):
+                candidates.append((Path(base_str.replace("/private", "", 1)), walk_target))
+            elif base_str.startswith("/var/"):
+                candidates.append((Path("/private" + base_str), walk_target))
+            if target_str.startswith("/private/var/"):
+                candidates.append((walk_base, Path(target_str.replace("/private", "", 1))))
+            elif target_str.startswith("/var/"):
+                candidates.append((walk_base, Path("/private" + target_str)))
+
+            for b, t in candidates:
+                relative_info = _try_relative_parts(b, t)
+                if relative_info is not None:
+                    break
+
+        if relative_info is None:
+            # 边界检查已通过，但无法得到可遍历的相对路径表示；直接返回。
+            return
+
+        resolved_walk_base, parts = relative_info
+        current = resolved_walk_base
+        for part in parts:
+            current = current / part
+            try:
+                if current.is_symlink():
+                    raise ValueError(f"拒绝符号链接路径: {current}")
+            except FileNotFoundError:
+                break
 
     def _collect_keys(
         self, base_dir: Path, prefix: str | None, key_prefix: str = ""
@@ -485,7 +643,7 @@ class JSONStore:
 
         try:
             for user_dir in self.base_dir.iterdir():
-                if not user_dir.is_dir():
+                if not user_dir.is_dir() or user_dir.name.startswith("."):
                     continue
 
                 user_id = user_dir.name
@@ -547,13 +705,22 @@ class JSONStore:
                 backup_name = f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
             backup_path = self.backup_dir / backup_name
-            backup_path.mkdir(exist_ok=True)
+            self._ensure_dir(backup_path)
 
             # 复制所有用户数据
             for user_dir in self.base_dir.iterdir():
-                if user_dir.is_dir() and not user_dir.name.startswith("."):
+                if (
+                    user_dir.is_dir()
+                    and not user_dir.name.startswith(".")
+                    and not user_dir.is_symlink()
+                ):
                     user_backup_path = backup_path / user_dir.name
-                    shutil.copytree(user_dir, user_backup_path)
+                    shutil.copytree(
+                        user_dir,
+                        user_backup_path,
+                        symlinks=True,
+                        ignore_dangling_symlinks=True,
+                    )
 
             self._stats["backup_operations"] += 1
             logger.info(f"数据备份完成: {backup_path}")
@@ -575,9 +742,18 @@ class JSONStore:
         if not user_id or not user_id.strip():
             raise ValidationError(field="user_id", message="用户ID不能为空")
 
-        user_dir = self.base_dir / user_id.strip()
+        clean_user_id = user_id.strip()
+        if not self._USER_ID_RE.fullmatch(clean_user_id):
+            raise ValidationError(
+                field="user_id",
+                message="用户ID格式不合法（仅允许字母数字、_、-，长度1-64）",
+            )
+
+        user_dir = self._safe_path_join(
+            self.base_dir, clean_user_id, field="user_id", require_basename=True
+        )
         try:
-            user_dir.mkdir(exist_ok=True)
+            self._ensure_dir(user_dir)
         except Exception as e:
             logger.error(f"创建用户目录失败 {user_dir}: {e}")
             raise
@@ -595,6 +771,7 @@ class JSONStore:
             return {"records": []}
 
         try:
+            self._reject_symlink_path(index_file)
             with open(index_file, encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
@@ -606,6 +783,7 @@ class JSONStore:
         index_file = self._get_index_file(user_id)
 
         try:
+            self._reject_symlink_path(index_file)
             self._atomic_write_json(index_file, index_data)
         except Exception as e:
             logger.error(f"保存索引文件失败: {e}")
@@ -642,16 +820,21 @@ class JSONStore:
             user_dir = self._get_user_dir(record.user_id)
             filename = self._generate_filename(record)
             filepath = user_dir / filename
+            self._reject_symlink_path(filepath)
             payload = record.model_dump(mode="json")
 
             # 备份旧文件(如果存在)
             if filepath.exists():
+                if filepath.is_symlink():
+                    raise ValueError(f"拒绝备份符号链接文件: {filepath}")
                 backup_path = (
                     self.backup_dir
                     / f"{filepath.stem}_{datetime.now().strftime('%Y%m%d%H%M%S')}.json"
                 )
                 try:
+                    self._reject_symlink_path(backup_path)
                     shutil.copy2(filepath, backup_path)
+                    self._chmod_best_effort(backup_path, self._FILE_MODE)
                     logger.debug(f"已备份旧文件: {backup_path}")
                 except Exception as e:
                     logger.warning(f"备份旧文件失败: {e}")
@@ -733,7 +916,11 @@ class JSONStore:
                 return None
 
             # 读取记录文件
-            filepath = self._get_user_dir(user_id) / filename
+            user_dir = self._get_user_dir(user_id)
+            filepath = self._safe_path_join(
+                user_dir, filename, field="filename", require_basename=True
+            )
+            self._reject_symlink_path(filepath)
 
             if not filepath.exists():
                 logger.warning(f"记录文件不存在: {filepath}")
@@ -780,7 +967,11 @@ class JSONStore:
             else:
                 # 所有用户
                 for user_dir in self.base_dir.iterdir():
-                    if user_dir.is_dir():
+                    if (
+                        user_dir.is_dir()
+                        and not user_dir.name.startswith(".")
+                        and not user_dir.is_symlink()
+                    ):
                         uid = user_dir.name
                         index_data = self._load_index(uid)
                         records = index_data.get("records", [])
@@ -852,8 +1043,14 @@ class JSONStore:
                 return False
 
             # 删除文件
-            filepath = self._get_user_dir(user_id) / filename
+            user_dir = self._get_user_dir(user_id)
+            filepath = self._safe_path_join(
+                user_dir, filename, field="filename", require_basename=True
+            )
             if filepath.exists():
+                if filepath.is_symlink():
+                    logger.warning(f"拒绝删除符号链接: {filepath}")
+                    return False
                 filepath.unlink()
 
             # 更新索引
@@ -957,6 +1154,7 @@ class JSONStore:
             # 尝试从用户数据目录读取配置
             config_file = Path(self.base_dir) / "config.json"
             if config_file.exists():
+                self._reject_symlink_path(config_file)
                 with open(config_file, encoding="utf-8") as f:
                     config = json.load(f)
                     return config.get(key, default)
@@ -975,11 +1173,13 @@ class JSONStore:
         try:
             # 确保配置目录存在
             config_file = Path(self.base_dir) / "config.json"
-            config_file.parent.mkdir(parents=True, exist_ok=True)
+            self._ensure_dir(config_file.parent)
+            self._reject_symlink_path(config_file)
 
             # 读取现有配置
             config = {}
             if config_file.exists():
+                self._reject_symlink_path(config_file)
                 with open(config_file, encoding="utf-8") as f:
                     config = json.load(f)
 

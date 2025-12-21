@@ -3,7 +3,61 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
+
+_SAFE_KEY_MAX_LEN = 64
+
+
+def _is_json_primitive(value: Any) -> bool:
+    return value is None or isinstance(value, (str, int, float, bool))
+
+
+def _validate_json_value(value: Any, *, depth: int = 0, max_depth: int = 5) -> None:
+    if depth > max_depth:
+        raise ValueError("嵌套层级过深")
+    if _is_json_primitive(value):
+        return
+    if isinstance(value, list):
+        for item in value:
+            _validate_json_value(item, depth=depth + 1, max_depth=max_depth)
+        return
+    if isinstance(value, dict):
+        for k, v in value.items():
+            if not isinstance(k, str):
+                raise ValueError("字典 key 必须为字符串")
+            _validate_record_key(k)
+            _validate_json_value(v, depth=depth + 1, max_depth=max_depth)
+        return
+    raise ValueError(f"不支持的值类型: {type(value).__name__}")
+
+
+def _validate_record_key(key: str) -> None:
+    if not isinstance(key, str):
+        raise ValueError("字典 key 必须为字符串")
+    if not key or len(key) > _SAFE_KEY_MAX_LEN:
+        raise ValueError("key 长度不合法")
+    if not key.replace("_", "").replace("-", "").isalnum():
+        raise ValueError("key 只能包含字母数字、下划线或连字符")
+
+
+def _validate_record_mapping(value: Any) -> dict[str, Any]:
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise ValueError("必须是对象(dict)")
+    for k, v in value.items():
+        if not isinstance(k, str):
+            raise ValueError("字典 key 必须为字符串")
+        _validate_record_key(k)
+        _validate_json_value(v)
+    return value
 
 
 class Mistake(BaseModel):
@@ -22,6 +76,8 @@ class Mistake(BaseModel):
 class StepRecord(BaseModel):
     """步骤记录"""
 
+    model_config = ConfigDict(validate_assignment=True)
+
     step_id: str = Field(..., description="步骤ID")
     started_at: datetime = Field(default_factory=datetime.now, description="开始时间")
     completed_at: datetime | None = Field(default=None, description="完成时间")
@@ -30,6 +86,11 @@ class StepRecord(BaseModel):
     mistakes: list[Mistake] = Field(default_factory=list, description="错误列表")
     attempts: int = Field(default=1, description="尝试次数")
     score: int = Field(default=0, description="步骤得分")
+
+    @field_validator("user_input", mode="before")
+    @classmethod
+    def validate_user_input(cls, v: Any) -> dict[str, Any]:
+        return _validate_record_mapping(v)
 
     @property
     def duration_seconds(self) -> float | None:
@@ -42,20 +103,85 @@ class StepRecord(BaseModel):
 class ExperimentScore(BaseModel):
     """实验评分"""
 
+    model_config = ConfigDict(validate_assignment=True)
+
     total: int = Field(default=0, description="总分", ge=0, le=100)
     scientific: int = Field(default=0, description="科学性得分", ge=0, le=100)
     procedural: int = Field(default=0, description="流程性得分", ge=0, le=100)
     safety: int = Field(default=0, description="安全性得分", ge=0, le=100)
     details: dict[str, Any] = Field(default_factory=dict, description="评分详情")
 
+    @field_validator("details", mode="before")
+    @classmethod
+    def validate_details(cls, v: Any) -> dict[str, Any]:
+        return _validate_record_mapping(v)
+
+
+class CurvePayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    x: list[float] | None = None
+    y: list[float] | None = None
+    volume: list[float] | None = None
+    ph: list[float] | None = None
+    x_label: str | None = None
+    y_label: str | None = None
+    x_unit: str | None = None
+    y_unit: str | None = None
+
+    @field_validator("x", "y", "volume", "ph", mode="before")
+    @classmethod
+    def validate_numeric_series(cls, v: Any) -> list[float] | None:
+        if v is None:
+            return None
+        if not isinstance(v, list):
+            raise ValueError("必须是数组(list)")
+        try:
+            return [float(item) for item in v]
+        except (TypeError, ValueError) as exc:
+            raise ValueError("数组元素必须为数字") from exc
+
+    @field_validator("y")
+    @classmethod
+    def validate_xy_lengths(cls, y: list[float] | None, info) -> list[float] | None:
+        x = info.data.get("x")
+        if x is not None and y is not None and len(x) != len(y):
+            raise ValueError("x 与 y 长度必须一致")
+        return y
+
+    @field_validator("ph")
+    @classmethod
+    def validate_volume_ph_lengths(
+        cls, ph: list[float] | None, info
+    ) -> list[float] | None:
+        volume = info.data.get("volume")
+        if volume is not None and ph is not None and len(volume) != len(ph):
+            raise ValueError("volume 与 ph 长度必须一致")
+        return ph
+
+    @field_validator("y_unit")
+    @classmethod
+    def validate_payload_has_series(cls, v: str | None, info) -> str | None:
+        return v
+
+    @model_validator(mode="after")
+    def validate_has_series(self) -> "CurvePayload":
+        has_xy = self.x is not None or self.y is not None
+        has_vph = self.volume is not None or self.ph is not None
+        if not (has_xy or has_vph):
+            raise ValueError("曲线数据必须包含 (x,y) 或 (volume,ph)")
+        return self
+
 
 class UserRecord(BaseModel):
     """用户实验记录"""
 
+    model_config = ConfigDict(validate_assignment=True)
+
     record_id: str = Field(..., description="记录唯一标识符")
     user_id: str = Field(..., description="用户ID")
     experiment_id: str = Field(..., description="实验ID")
-    experiment_title: str = Field(..., description="实验名称")
+    experiment_title: str = Field(default="", description="实验名称")
     started_at: datetime = Field(default_factory=datetime.now, description="开始时间")
     completed_at: datetime | None = Field(default=None, description="完成时间")
     status: str = Field(
@@ -72,6 +198,27 @@ class UserRecord(BaseModel):
         default_factory=list, description="错误汇总"
     )
     version: str = Field(default="1.0.0", description="记录格式版本")
+
+    @field_validator("context", mode="before")
+    @classmethod
+    def validate_context(cls, v: Any) -> dict[str, Any]:
+        return _validate_record_mapping(v)
+
+    @field_validator("curve_data", mode="before")
+    @classmethod
+    def validate_curve_data(cls, v: Any) -> dict[str, Any]:
+        mapping = _validate_record_mapping(v)
+        errors: list[Exception] = []
+        normalized: dict[str, Any] = {}
+        for key, payload in mapping.items():
+            try:
+                validated = CurvePayload.model_validate(payload)
+                normalized[key] = validated.model_dump(exclude_none=True)
+            except ValidationError as exc:
+                errors.append(exc)
+        if errors:
+            raise ValueError("curve_data 不符合 schema") from errors[0]
+        return normalized
 
     @property
     def total_duration_seconds(self) -> float | None:

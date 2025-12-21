@@ -25,6 +25,25 @@ class StorageServiceImpl(StorageService):
     def __init__(self, storage: IStorage, config: StorageServiceConfig | None = None):
         self.storage = storage
         self.config = config or StorageServiceConfig()
+        self._closed = False
+
+    def __enter__(self) -> "StorageServiceImpl":
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:  # noqa: ANN001
+        self.close()
+
+    def close(self) -> None:
+        """释放底层 storage 资源（如果支持）。"""
+        if self._closed:
+            return
+        close = getattr(self.storage, "close", None)
+        if callable(close):
+            try:
+                close()
+            except Exception:
+                pass
+        self._closed = True
 
     def save(self, request: SaveRequest) -> SaveResponse:
         """保存实体"""

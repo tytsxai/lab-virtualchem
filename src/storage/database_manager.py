@@ -10,6 +10,7 @@ Maintenance-safety notes:
 """
 
 import logging
+import os
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
@@ -58,8 +59,14 @@ class DatabaseManager:
             pool_size: 连接池大小
             max_overflow: 最大溢出连接数
         """
-        # 确保目录存在
-        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+        # 确保目录/文件权限安全（best-effort，主要针对 POSIX）
+        db_file = Path(db_path)
+        db_dir = db_file.parent
+        db_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+        self._chmod_best_effort(db_dir, 0o700)
+        if not db_file.exists():
+            db_file.touch(exist_ok=True)
+        self._chmod_best_effort(db_file, 0o600)
 
         # 创建引擎
         db_url = f"sqlite:///{db_path}"
@@ -81,11 +88,21 @@ class DatabaseManager:
 
         # 创建所有表
         Base.metadata.create_all(bind=self.engine)
+        self._chmod_best_effort(db_file, 0o600)
 
         # 初始化数据库版本
         self._init_database_version()
 
         logger.info(f"数据库管理器初始化完成: {db_path}")
+
+    @staticmethod
+    def _chmod_best_effort(path: Path, mode: int) -> None:
+        if os.name != "posix":
+            return
+        try:
+            os.chmod(path, mode)
+        except Exception:  # noqa: BLE001
+            return
 
     def _configure_sqlite_pragmas(self) -> None:
         """配置 SQLite 性能/一致性策略（WAL + 同步策略）"""

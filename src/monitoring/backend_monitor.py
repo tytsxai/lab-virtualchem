@@ -23,6 +23,8 @@ from typing import Any
 
 import psutil
 
+from .log_safety import sanitize_log_data
+
 logger = logging.getLogger(__name__)
 
 
@@ -298,7 +300,7 @@ class BackendMonitor:
             try:
                 self._collect_system_metrics()
             except Exception as e:
-                logger.info(f"资源监控错误: {e}")
+                logger.info(sanitize_log_data(f"资源监控错误: {e}"))
 
             time.sleep(interval)
 

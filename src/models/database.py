@@ -12,6 +12,7 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
+    Enum,
     Float,
     ForeignKey,
     Index,
@@ -33,7 +34,19 @@ class User(Base):
     user_id = Column(String(100), unique=True, nullable=False, index=True)
     username = Column(String(100), nullable=False)
     email = Column(String(200), unique=True, index=True)
-    role = Column(String(50), default="student")  # student, teacher, admin
+    role = Column(
+        Enum(
+            "student",
+            "teacher",
+            "admin",
+            name="user_role",
+            native_enum=False,
+            create_constraint=True,
+            validate_strings=True,
+        ),
+        default="student",
+        nullable=False,
+    )
 
     # 元数据
     created_at = Column(DateTime, default=datetime.now, nullable=False)
@@ -225,7 +238,10 @@ class Configuration(Base):
         elif self.value_type == "bool":
             return self.value.lower() in ("true", "1", "yes")
         elif self.value_type == "json":
-            return json.loads(self.value)
+            try:
+                return json.loads(self.value)
+            except json.JSONDecodeError:
+                return self.value
         else:
             return self.value
 
@@ -269,7 +285,7 @@ class License(Base):
     )
 
     def __repr__(self):
-        return f"<License(license_key='{self.license_key[:20]}...', user_id='{self.user_id}')>"
+        return f"<License(user_id='{self.user_id}', device_id='{self.device_id}')>"
 
 
 class CacheEntry(Base):

@@ -11,6 +11,10 @@
 import json
 import logging
 import sys
+import time
+from collections import deque
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
+from hashlib import sha256
 from pathlib import Path
 from typing import Any
 
@@ -38,6 +42,10 @@ except ImportError:
 
 class ChemistryAI:
     """化学AI助手"""
+
+    MAX_INPUT_CHARS = 10_000
+    MAX_REQUESTS_PER_MINUTE = 10
+    REQUEST_TIMEOUT_SECONDS = 30
 
     # 化学专业提示模板
     CHEMISTRY_PROMPT = """你是一位专业的化学实验指导助手。请基于以下化学知识库内容回答学生的问题。
@@ -106,9 +114,40 @@ class ChemistryAI:
         self.llm = None
         self.qa_chain = None
         self.vectorstore = None
+        self._request_timestamps: deque[float] = deque()
+        self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="chem_ai")
 
         self._init_model()
         self._init_knowledge_base()
+
+    def _enforce_input_limits(self, text: str) -> None:
+        if not isinstance(text, str):
+            raise TypeError("question must be a str")
+        if len(text) > self.MAX_INPUT_CHARS:
+            raise ValueError(
+                f"输入过长（{len(text)} 字符），最大允许 {self.MAX_INPUT_CHARS} 字符"
+            )
+
+    def _enforce_rate_limit(self) -> None:
+        now = time.monotonic()
+        window_start = now - 60.0
+        while self._request_timestamps and self._request_timestamps[0] < window_start:
+            self._request_timestamps.popleft()
+        if len(self._request_timestamps) >= self.MAX_REQUESTS_PER_MINUTE:
+            raise RuntimeError("请求过于频繁，请稍后再试")
+        self._request_timestamps.append(now)
+
+    @staticmethod
+    def _input_fingerprint(text: str) -> tuple[int, str]:
+        digest = sha256(text.encode("utf-8")).hexdigest()[:16]
+        return len(text), digest
+
+    def _call_with_timeout(self, func, *args) -> str:
+        future = self._executor.submit(func, *args)
+        try:
+            return future.result(timeout=self.REQUEST_TIMEOUT_SECONDS)
+        except FutureTimeoutError as e:
+            raise TimeoutError("AI请求超时") from e
 
     def _init_model(self):
         """初始化Ollama模型"""
@@ -177,16 +216,23 @@ class ChemistryAI:
             AI回答
         """
         try:
-            # 使用三元运算符简化if-else
-            result = (
-                self.qa_chain.run(question) if self.qa_chain else self.llm(question)
-            )
+            self._enforce_input_limits(question)
+            self._enforce_rate_limit()
 
-            logger.info(f"问答成功: {question[:50]}...")
+            # 使用三元运算符简化if-else
+            if self.qa_chain:
+                result = self._call_with_timeout(self.qa_chain.run, question)
+            else:
+                result = self._call_with_timeout(self.llm, question)
+
+            length, digest = self._input_fingerprint(question)
+            logger.info(f"问答成功: input_len={length} sha256_16={digest}")
             return result
 
         except Exception as e:
-            logger.error(f"问答失败: {e}")
+            q = question if isinstance(question, str) else str(question)
+            length, digest = self._input_fingerprint(q)
+            logger.error(f"问答失败: input_len={length} sha256_16={digest} err={e}")
             return f"抱歉，处理问题时出错: {str(e)}"
 
     def guide_experiment(self, experiment_name: str, question: str) -> str:
@@ -431,3 +477,4 @@ if __name__ == "__main__":
     print("=" * 60)
     explanation = ai.explain_concept("氧化还原反应", level="中学")
     logger.info(f"\n解释:\n{explanation}")
+

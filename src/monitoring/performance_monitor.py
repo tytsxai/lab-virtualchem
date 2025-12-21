@@ -16,6 +16,8 @@ from datetime import datetime
 
 import psutil
 
+from .log_safety import sanitize_log_data
+
 logger = logging.getLogger(__name__)
 
 
@@ -59,7 +61,7 @@ class PerformanceMonitor:
             self.metrics["cpu"].append(metric)
             return metric
         except Exception as e:
-            logger.error("记录CPU使用失败: %s", str(e))
+            logger.error("记录CPU使用失败: %s", sanitize_log_data(str(e)))
             raise
 
     def record_memory_usage(self) -> PerformanceMetric:
@@ -80,7 +82,7 @@ class PerformanceMonitor:
             self.metrics["memory"].append(metric)
             return metric
         except Exception as e:
-            logger.error("记录内存使用失败: %s", str(e))
+            logger.error("记录内存使用失败: %s", sanitize_log_data(str(e)))
             raise
 
     def record_response_time(
@@ -104,7 +106,7 @@ class PerformanceMonitor:
             self.metrics["response_time"].append(metric)
             return metric
         except Exception as e:
-            logger.error("记录响应时间失败: %s", str(e))
+            logger.error("记录响应时间失败: %s", sanitize_log_data(str(e)))
             raise
 
     def get_average_cpu(self) -> float:

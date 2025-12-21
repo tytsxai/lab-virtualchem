@@ -4,6 +4,7 @@
 """
 
 import logging
+import time
 from typing import Any
 
 try:
@@ -18,6 +19,12 @@ from ..models.knowledge import ReagentInfo
 
 logger = logging.getLogger(__name__)
 
+MAX_FIELD_CHARS = 512
+MAX_SYNONYMS = 10
+MAX_SYNONYM_CHARS = 128
+MAX_BATCH_SIZE = 50
+MIN_REQUEST_INTERVAL_SEC = 0.2  # 5 req/sec
+
 
 class PubChemIntegration:
     """PubChem数据库集成类"""
@@ -25,10 +32,64 @@ class PubChemIntegration:
     def __init__(self) -> None:
         """初始化PubChem集成"""
         self.available = PUBCHEM_AVAILABLE
+        self._last_request_ts: float | None = None
         if not self.available:
             logger.warning(
                 "PubChemPy未安装,自动补充功能不可用. 安装: pip install pubchempy"
             )
+
+    def _clean_str(self, value: Any, *, max_len: int = MAX_FIELD_CHARS) -> str:
+        if value is None:
+            return ""
+        if not isinstance(value, str):
+            value = str(value)
+        value = value.replace("\x00", "").strip()
+        if len(value) > max_len:
+            return value[:max_len]
+        return value
+
+    def _clean_float(self, value: Any, *, default: float = 0.0) -> float:
+        try:
+            if value is None:
+                return default
+            return float(value)
+        except Exception:
+            return default
+
+    def _clean_int(self, value: Any, *, default: int = 0) -> int:
+        try:
+            if value is None:
+                return default
+            return int(value)
+        except Exception:
+            return default
+
+    def _clean_synonyms(self, synonyms: Any) -> list[str]:
+        if not synonyms:
+            return []
+        if not isinstance(synonyms, (list, tuple)):
+            synonyms = [synonyms]
+
+        cleaned: list[str] = []
+        for item in synonyms:
+            s = self._clean_str(item, max_len=MAX_SYNONYM_CHARS)
+            if s and s not in cleaned:
+                cleaned.append(s)
+            if len(cleaned) >= MAX_SYNONYMS:
+                break
+        return cleaned
+
+    def _throttle(self) -> None:
+        if not self.available:
+            return
+        now = time.monotonic()
+        if self._last_request_ts is None:
+            self._last_request_ts = now
+            return
+        elapsed = now - self._last_request_ts
+        if elapsed < MIN_REQUEST_INTERVAL_SEC:
+            time.sleep(MIN_REQUEST_INTERVAL_SEC - elapsed)
+        self._last_request_ts = time.monotonic()
 
     def search_compound(
         self, identifier: str, namespace: str = "name"
@@ -47,6 +108,7 @@ class PubChemIntegration:
             return None
 
         try:
+            self._throttle()
             compounds = pcp.get_compounds(identifier, namespace)
 
             if not compounds:
@@ -71,28 +133,49 @@ class PubChemIntegration:
         Returns:
             结构化的化合物数据
         """
+        synonyms_clean = self._clean_synonyms(getattr(compound, "synonyms", None))
+        common_name = synonyms_clean[0] if synonyms_clean else ""
+
         return {
-            "cid": compound.cid,
-            "name": compound.iupac_name or "",
-            "common_name": compound.synonyms[0] if compound.synonyms else "",
-            "molecular_formula": compound.molecular_formula or "",
-            "molecular_weight": compound.molecular_weight or 0.0,
-            "canonical_smiles": compound.canonical_smiles or "",
-            "isomeric_smiles": compound.isomeric_smiles or "",
-            "inchi": compound.inchi or "",
-            "inchikey": compound.inchikey or "",
-            "synonyms": compound.synonyms[:10] if compound.synonyms else [],
+            "cid": self._clean_int(getattr(compound, "cid", None), default=0),
+            "name": self._clean_str(getattr(compound, "iupac_name", "")),
+            "common_name": self._clean_str(common_name, max_len=MAX_SYNONYM_CHARS),
+            "molecular_formula": self._clean_str(
+                getattr(compound, "molecular_formula", "")
+            ),
+            "molecular_weight": self._clean_float(
+                getattr(compound, "molecular_weight", None)
+            ),
+            "canonical_smiles": self._clean_str(getattr(compound, "canonical_smiles", "")),
+            "isomeric_smiles": self._clean_str(getattr(compound, "isomeric_smiles", "")),
+            "inchi": self._clean_str(getattr(compound, "inchi", "")),
+            "inchikey": self._clean_str(getattr(compound, "inchikey", "")),
+            "synonyms": synonyms_clean,
             # 物理化学性质
-            "xlogp": compound.xlogp,
-            "exact_mass": compound.exact_mass,
-            "monoisotopic_mass": compound.monoisotopic_mass,
-            "tpsa": compound.tpsa,  # 拓扑极性表面积
-            "complexity": compound.complexity,
-            "h_bond_donor_count": compound.h_bond_donor_count,
-            "h_bond_acceptor_count": compound.h_bond_acceptor_count,
-            "rotatable_bond_count": compound.rotatable_bond_count,
-            "heavy_atom_count": compound.heavy_atom_count,
-            "charge": compound.charge,
+            "xlogp": self._clean_float(getattr(compound, "xlogp", None), default=0.0),
+            "exact_mass": self._clean_float(
+                getattr(compound, "exact_mass", None), default=0.0
+            ),
+            "monoisotopic_mass": self._clean_float(
+                getattr(compound, "monoisotopic_mass", None), default=0.0
+            ),
+            "tpsa": self._clean_float(getattr(compound, "tpsa", None), default=0.0),  # 拓扑极性表面积
+            "complexity": self._clean_float(
+                getattr(compound, "complexity", None), default=0.0
+            ),
+            "h_bond_donor_count": self._clean_int(
+                getattr(compound, "h_bond_donor_count", None), default=0
+            ),
+            "h_bond_acceptor_count": self._clean_int(
+                getattr(compound, "h_bond_acceptor_count", None), default=0
+            ),
+            "rotatable_bond_count": self._clean_int(
+                getattr(compound, "rotatable_bond_count", None), default=0
+            ),
+            "heavy_atom_count": self._clean_int(
+                getattr(compound, "heavy_atom_count", None), default=0
+            ),
+            "charge": self._clean_int(getattr(compound, "charge", None), default=0),
         }
 
     def get_safety_info(self, identifier: str) -> dict[str, Any]:
@@ -108,6 +191,7 @@ class PubChemIntegration:
             return {"available": False}
 
         try:
+            self._throttle()
             compounds = pcp.get_compounds(identifier, "name")
             if not compounds:
                 return {"available": False, "error": "Compound not found"}
@@ -173,10 +257,12 @@ class PubChemIntegration:
             if existing_data:
                 return existing_data
             return ReagentInfo(
-                name=name,
+                name=self._clean_str(name, max_len=MAX_SYNONYM_CHARS),
                 formula="",
                 cas_number="",
-                description=f"化合物 {name} (PubChem未找到数据)",
+                description=self._clean_str(
+                    f"化合物 {name} (PubChem未找到数据)", max_len=MAX_FIELD_CHARS
+                ),
                 hazards=[],
                 safety_measures=[],
             )
@@ -192,12 +278,21 @@ class PubChemIntegration:
         else:
             # 创建新数据
             return ReagentInfo(
-                name=compound_data["common_name"] or name,
-                formula=compound_data["molecular_formula"],
+                name=self._clean_str(
+                    compound_data.get("common_name") or name, max_len=MAX_SYNONYM_CHARS
+                ),
+                formula=self._clean_str(
+                    compound_data.get("molecular_formula", ""), max_len=MAX_FIELD_CHARS
+                ),
                 cas_number="",  # PubChem不直接提供CAS
-                molecular_weight=compound_data["molecular_weight"],
-                description=f"{compound_data['name']} (PubChem CID: {compound_data['cid']})",
-                smiles=compound_data["canonical_smiles"],
+                molecular_weight=float(compound_data.get("molecular_weight") or 0.0),
+                description=self._clean_str(
+                    f"{compound_data.get('name','')} (PubChem CID: {compound_data.get('cid', 0)})",
+                    max_len=MAX_FIELD_CHARS,
+                ),
+                smiles=self._clean_str(
+                    compound_data.get("canonical_smiles", ""), max_len=MAX_FIELD_CHARS
+                ),
                 hazards=self._generate_hazards(compound_data),
                 safety_measures=self._generate_safety_measures(compound_data),
             )
@@ -239,6 +334,11 @@ class PubChemIntegration:
         Returns:
             试剂名称到ReagentInfo的映射
         """
+        if len(reagent_names) > MAX_BATCH_SIZE:
+            raise ValueError(
+                f"批量更新数量超限: {len(reagent_names)} (max {MAX_BATCH_SIZE})"
+            )
+
         results = {}
 
         for name in reagent_names:

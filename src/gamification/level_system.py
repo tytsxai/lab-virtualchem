@@ -103,6 +103,9 @@ class LevelSystem:
         Returns:
             包含升级信息的字典
         """
+        if exp_gained < 0:
+            raise ValueError("exp_gained must be >= 0")
+
         result = {
             "exp_gained": exp_gained,
             "level_up": False,

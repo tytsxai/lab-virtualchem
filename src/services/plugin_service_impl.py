@@ -14,6 +14,7 @@ from src.contracts.plugin_service import (
     PluginType,
 )
 from src.interfaces.plugin import IPluginLoader, IPluginRegistry
+from src.interfaces.plugin import PluginPriority
 
 
 class PluginServiceImpl(PluginService):
@@ -28,6 +29,38 @@ class PluginServiceImpl(PluginService):
         self.loader = loader
         self.registry = registry
         self.config = config or PluginServiceConfig()
+        self._closed = False
+
+    def __enter__(self) -> "PluginServiceImpl":
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:  # noqa: ANN001
+        self.close()
+
+    def close(self) -> None:
+        """关闭已加载插件并释放 loader/registry 资源（如果支持）。"""
+        if self._closed:
+            return
+        try:
+            for pt in PluginType:
+                for plugin in self.registry.find_by_type(pt):
+                    shutdown = getattr(plugin, "shutdown", None)
+                    if callable(shutdown):
+                        try:
+                            shutdown()
+                        except Exception:
+                            pass
+        except Exception:
+            pass
+
+        for component in (self.registry, self.loader):
+            close = getattr(component, "close", None)
+            if callable(close):
+                try:
+                    close()
+                except Exception:
+                    pass
+        self._closed = True
 
     def execute_plugin(self, request: PluginExecuteRequest) -> PluginExecuteResponse:
         """执行插件"""
@@ -59,10 +92,15 @@ class PluginServiceImpl(PluginService):
         if not plugin:
             return None
 
+        priority = getattr(plugin, "priority", None)
+        if priority is None:
+            priority = PluginPriority.NORMAL
+
         return PluginInfo(
             name=plugin.name,
             version=plugin.version,
             plugin_type=plugin.plugin_type,
+            priority=priority,
             status=PluginStatus.ENABLED
             if plugin.is_available()
             else PluginStatus.DISABLED,
@@ -109,7 +147,10 @@ class PluginServiceImpl(PluginService):
                 )
 
             # 初始化插件
-            if plugin.initialize(request.config):
+            config = getattr(request, "config", None)
+            if config is None:
+                config = {}
+            if plugin.initialize(config):
                 return PluginInstallResponse(
                     success=True,
                     plugin_name=plugin.name,

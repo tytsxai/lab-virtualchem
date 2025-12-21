@@ -16,6 +16,8 @@ from typing import Any
 
 import psutil
 
+from .log_safety import sanitize_log_data
+
 logger = logging.getLogger(__name__)
 
 
@@ -88,7 +90,7 @@ class HealthMonitor:
             )
 
         except Exception as e:
-            logger.error("存储检查失败: %s", str(e))
+            logger.error("存储检查失败: %s", sanitize_log_data(str(e)))
             return HealthStatus(
                 status="unhealthy",
                 message=f"存储检查失败: {str(e)}",
@@ -148,7 +150,7 @@ class HealthMonitor:
             )
 
         except Exception as e:
-            logger.error("内存检查失败: %s", str(e))
+            logger.error("内存检查失败: %s", sanitize_log_data(str(e)))
             return HealthStatus(
                 status="unhealthy",
                 message=f"内存检查失败: {str(e)}",
@@ -219,7 +221,7 @@ class HealthMonitor:
             )
 
         except Exception as e:
-            logger.error("依赖检查失败: %s", str(e))
+            logger.error("依赖检查失败: %s", sanitize_log_data(str(e)))
             return HealthStatus(
                 status="unhealthy",
                 message=f"依赖检查失败: {str(e)}",
@@ -258,7 +260,7 @@ class HealthMonitor:
             )
 
         except Exception as e:
-            logger.error("配置检查失败: %s", str(e))
+            logger.error("配置检查失败: %s", sanitize_log_data(str(e)))
             return HealthStatus(
                 status="unhealthy",
                 message=f"配置检查失败: {str(e)}",
@@ -275,7 +277,11 @@ class HealthMonitor:
             try:
                 results[check_name] = check()
             except Exception as e:
-                logger.error("检查 %s 失败: %s", check_name, str(e))
+                logger.error(
+                    "检查 %s 失败: %s",
+                    sanitize_log_data(check_name),
+                    sanitize_log_data(str(e)),
+                )
                 results[check_name] = HealthStatus(
                     status="unhealthy",
                     message=f"检查失败: {str(e)}",

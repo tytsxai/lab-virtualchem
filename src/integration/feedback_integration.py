@@ -12,6 +12,7 @@ from typing import Any
 
 from PySide6.QtCore import QObject, QTimer, Signal
 
+from ..core.config_loader import get_config
 from ..analytics.feedback_analytics import FeedbackAnalytics
 from ..analytics.feedback_processor import FeedbackProcessor
 from ..product.iteration_manager import IterationManager
@@ -35,6 +36,7 @@ class FeedbackIntegration(QObject):
         analytics: FeedbackAnalytics | None = None,
         ab_testing: ABTestingFramework | None = None,
         iteration_manager: IterationManager | None = None,
+        data_dir: str | Path | None = None,
         parent: QObject | None = None,
     ):
         super().__init__(parent)
@@ -76,10 +78,31 @@ class FeedbackIntegration(QObject):
         self.connect_signals()
 
         # 数据路径
-        self.data_dir = Path("data/integration")
+        if data_dir is not None:
+            base_dir = Path(data_dir)
+        else:
+            try:
+                config = get_config()
+                base_dir = Path(config.paths.user_data) / "integration"
+            except Exception:  # noqa: BLE001
+                base_dir = Path("user_data") / "integration"
+
+        self.data_dir = base_dir
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info("反馈集成系统初始化完成")
+
+    def shutdown(self) -> None:
+        """停止后台定时任务，释放资源。"""
+        if hasattr(self, "sync_timer") and self.sync_timer is not None:
+            try:
+                self.sync_timer.stop()
+            except Exception:  # noqa: BLE001
+                pass
+            try:
+                self.sync_timer.timeout.disconnect(self.sync_data)
+            except Exception:  # noqa: BLE001
+                pass
 
     def connect_signals(self) -> None:
         """连接组件信号"""
@@ -521,20 +544,34 @@ class FeedbackIntegration(QObject):
             logger.error(f"生成集成报告失败: {e}")
             return {}
 
-    def export_integration_report(self, output_path: str | None = None) -> str:
+    def export_integration_report(
+        self, output_path: str | None = None, *, overwrite: bool = False
+    ) -> str:
         """导出集成报告"""
         try:
+            data_root = self.data_dir.resolve()
             if not output_path:
-                output_file = (
-                    self.data_dir
-                    / f"integration_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                output_file = data_root / (
+                    f"integration_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
                 )
             else:
-                output_file = Path(output_path)
+                candidate = Path(output_path)
+                if candidate.is_absolute():
+                    candidate = Path(candidate.name)
+                output_file = (data_root / candidate).resolve()
+
+            if not output_file.is_relative_to(data_root):
+                raise ValueError(f"illegal output_path outside data_dir: {output_path}")
+
+            if output_file.exists() and not overwrite:
+                logger.warning("集成报告已存在且默认不覆盖: %s", output_file)
+                return ""
 
             report = self.generate_integration_report()
 
-            with open(output_file, "w", encoding="utf-8") as f:
+            output_file.parent.mkdir(parents=True, exist_ok=True)
+            mode = "w" if overwrite else "x"
+            with open(output_file, mode, encoding="utf-8") as f:
                 json.dump(report, f, indent=2, ensure_ascii=False)
 
             logger.info(f"集成报告已导出: {output_file}")

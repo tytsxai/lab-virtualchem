@@ -12,10 +12,21 @@ class PluginStatus(str, Enum):
     """插件状态"""
 
     ACTIVE = "active"  # 激活
+    ENABLED = "active"  # 兼容旧枚举命名
     INACTIVE = "inactive"  # 未激活
     ERROR = "error"  # 错误
     DISABLED = "disabled"  # 禁用
     NOT_INSTALLED = "not_installed"  # 未安装
+
+
+class PluginAction(str, Enum):
+    """插件动作（向后兼容）"""
+
+    RUN = "run"
+    EXECUTE = "execute"
+    START = "start"
+    STOP = "stop"
+    STATUS = "status"
 
 
 @dataclass

@@ -53,6 +53,32 @@ class ExperimentServiceImpl(ExperimentService):
         self.record_store = record_store
         self._default_engine = engine
         self._active_experiments: dict[str, dict[str, Any]] = {}
+        self._closed = False
+
+    def __enter__(self) -> "ExperimentServiceImpl":
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:  # noqa: ANN001
+        self.close()
+
+    def close(self) -> None:
+        """释放运行中实验相关资源。"""
+        if self._closed:
+            return
+        for ctx in list(self._active_experiments.values()):
+            engine = ctx.get("engine")
+            if engine is None:
+                continue
+            for method_name in ("stop", "shutdown", "close"):
+                method = getattr(engine, method_name, None)
+                if callable(method):
+                    try:
+                        method()
+                    except Exception:  # noqa: BLE001
+                        logger.debug("engine.%s() 执行失败", method_name)
+                    break
+        self._active_experiments.clear()
+        self._closed = True
 
     # ------------------------------------------------------------------
     # 生命周期管理

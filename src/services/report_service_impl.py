@@ -119,6 +119,26 @@ class ReportServiceImpl(_ReportServiceBase):
         self.config = config or ReportServiceConfig()
         self._report_cache: dict[str, str] = {}  # 报告缓存
         self._template_cache: dict[str, TemplateInfo] = {}
+        self._closed = False
+
+    def __enter__(self) -> "ReportServiceImpl":
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:  # noqa: ANN001
+        self.close()
+
+    def close(self) -> None:
+        """释放 exporter/generator 持有的资源（如果支持）。"""
+        if self._closed:
+            return
+        for component in (self.exporter, self.generator, self.record_repository):
+            close = getattr(component, "close", None)
+            if callable(close):
+                try:
+                    close()
+                except Exception:
+                    pass
+        self._closed = True
 
     def _convert_format(self, export_format: ExportFormat) -> ReportFormat:
         """将ExportFormat转换为ReportFormat"""
@@ -217,7 +237,14 @@ class ReportServiceImpl(_ReportServiceBase):
                 return ReportResponse(success=False, message="报告导出失败")
 
         except Exception as e:
-            logger.exception(f"生成实验报告失败: record_id={record.record_id}")
+            log_exception = getattr(logger, "exception", None)
+            if callable(log_exception):
+                log_exception(f"生成实验报告失败: record_id={record.record_id}")
+            else:
+                logger.error(
+                    f"生成实验报告失败: record_id={record.record_id}",
+                    exc_info=True,
+                )
             return ReportResponse(success=False, message=f"生成实验报告失败: {str(e)}")
 
     def generate_summary_report(

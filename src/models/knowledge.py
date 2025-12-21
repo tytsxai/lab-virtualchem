@@ -52,7 +52,12 @@ class KnowledgeCard(BaseModel):
     type: KnowledgeType = Field(..., description="卡片类型")
     title: str = Field(..., description="标题")
     title_en: str | None = Field(default=None, description="英文标题")
-    content: str = Field(..., description="内容(Markdown格式)")
+    content: str = Field(
+        ...,
+        description="内容(Markdown格式)",
+        min_length=1,
+        max_length=10000,
+    )
     cas: str | None = Field(default=None, description="CAS号(用于试剂)")
     formula: str | None = Field(default=None, description="化学式")
     properties: PhysicalProperties | None = Field(default=None, description="物理性质")
@@ -83,3 +88,29 @@ class KnowledgeCard(BaseModel):
     def has_hazard_type(self, hazard_type: str) -> bool:
         """检查是否包含特定类型的危害"""
         return any(h.type == hazard_type for h in self.hazards)
+
+
+class ReagentInfo(BaseModel):
+    """试剂信息（供 PubChem 自动补充使用）"""
+
+    name: str = Field(..., description="试剂名称")
+    formula: str = Field(default="", description="分子式")
+    cas_number: str = Field(default="", description="CAS号")
+    molecular_weight: float = Field(default=0.0, description="分子量")
+    description: str = Field(default="", description="描述")
+    smiles: str = Field(default="", description="SMILES")
+    hazards: list[str] = Field(default_factory=list, description="危险性提示")
+    safety_measures: list[str] = Field(default_factory=list, description="安全措施")
+
+
+class ReagentInfo(BaseModel):
+    """PubChem 等外部来源的试剂信息（兼容旧接口）。"""
+
+    name: str = Field(default="", max_length=128)
+    formula: str = Field(default="", max_length=512)
+    cas_number: str = Field(default="", max_length=64)
+    molecular_weight: float = Field(default=0.0, ge=0.0)
+    description: str = Field(default="", max_length=1024)
+    smiles: str = Field(default="", max_length=1024)
+    hazards: list[str] = Field(default_factory=list)
+    safety_measures: list[str] = Field(default_factory=list)

@@ -22,7 +22,7 @@ class ReportType(str, Enum):
 class ExportFormat(str, Enum):
     """导出格式"""
 
-    PDF = "pd"
+    PDF = "pdf"
     HTML = "html"
     DOCX = "docx"
     MARKDOWN = "markdown"

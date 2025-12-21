@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import json
 import statistics
 import warnings
@@ -180,7 +181,7 @@ class Reagent(BaseModel):
 class ExperimentTemplate(BaseModel):
     """实验模板"""
 
-    model_config = ConfigDict(validate_assignment=True, extra="allow")
+    model_config = ConfigDict(validate_assignment=True, extra="forbid")
     allow_empty_steps: ClassVar[bool] = False
 
     id: str = Field(
@@ -198,6 +199,7 @@ class ExperimentTemplate(BaseModel):
     duration_min: int = Field(default=45, description="预计时长(分钟)", gt=0)
     duration_minutes: int | None = Field(default=None, description="预计时长(兼容字段)")
     goals: list[Goal] = Field(default_factory=list, description="实验目标")
+    objectives: list[str] = Field(default_factory=list, description="实验目标(兼容字段)")
     prerequisites: list[str] = Field(default_factory=list, description="前置实验ID")
     reagents: list[Reagent] = Field(default_factory=list, description="试剂列表")
     steps: list[Step] = Field(
@@ -478,18 +480,20 @@ class ExperimentTemplate(BaseModel):
         return "\n".join(lines)
 
     def _to_html_report(self, report: dict[str, Any]) -> str:
+        title = html.escape(str(report.get("title", "")))
+        state = html.escape(str(report.get("state", "")))
         rows = "".join(
-            f"<tr><td>{k}</td><td>{v}</td></tr>"
+            f"<tr><td>{html.escape(str(k))}</td><td>{html.escape(str(v))}</td></tr>"
             for k, v in report.get("data", {}).items()
         )
         observations = "".join(
-            f"<li>{obs}</li>" for obs in report.get("observations", [])
+            f"<li>{html.escape(str(obs))}</li>" for obs in report.get("observations", [])
         )
         return f"""
-<html>
+ <html>
   <body>
-    <h1>{report.get("title", "")} - 实验报告</h1>
-    <p>状态: {report.get("state", "")}</p>
+    <h1>{title} - 实验报告</h1>
+    <p>状态: {state}</p>
     <table><thead><tr><th>字段</th><th>值</th></tr></thead><tbody>{rows}</tbody></table>
     <h2>观察</h2>
     <ul>{observations}</ul>
@@ -497,12 +501,22 @@ class ExperimentTemplate(BaseModel):
 </html>
 """.strip()
 
+    @staticmethod
+    def _escape_markdown(value: Any) -> str:
+        text = str(value)
+        text = text.replace("\\", "\\\\")
+        for ch in ("`", "*", "_", "{", "}", "[", "]", "(", ")", "#", "+", "-", ".", "!", "|"):
+            text = text.replace(ch, f"\\{ch}")
+        return text
+
     def _to_markdown_report(self, report: dict[str, Any]) -> str:
         header = "# 实验报告\n\n"
-        info = f"- 实验名称: {report.get('title', '')}\n- 实验类型: {report.get('experiment_type', '')}\n"
+        title = self._escape_markdown(report.get("title", ""))
+        experiment_type = self._escape_markdown(report.get("experiment_type", ""))
+        info = f"- 实验名称: {title}\n- 实验类型: {experiment_type}\n"
         table = "| 字段 | 值 |\n| --- | --- |\n"
         for k, v in report.get("data", {}).items():
-            table += f"| {k} | {v} |\n"
+            table += f"| {self._escape_markdown(k)} | {self._escape_markdown(v)} |\n"
         return header + info + "\n" + table
 
     def export_report(self, format: str = "json", **kwargs: Any) -> str:
@@ -527,7 +541,21 @@ class ExperimentTemplate(BaseModel):
         report = self.generate_report()
         if version is not None:
             report["version"] = version
-        path = Path(output_path)
+
+        unsafe_path = Path(output_path)
+        if unsafe_path.is_absolute():
+            raise ValueError("output_path 不允许使用绝对路径")
+        if ".." in unsafe_path.parts:
+            raise ValueError("output_path 不允许包含 '..'")
+
+        base_dir = Path("data/reports").resolve()
+        base_dir.mkdir(parents=True, exist_ok=True)
+        path = (base_dir / unsafe_path).resolve()
+        try:
+            path.relative_to(base_dir)
+        except ValueError as exc:
+            raise ValueError("output_path 必须位于 data/reports/ 目录下") from exc
+
         path.parent.mkdir(parents=True, exist_ok=True)
         if format.lower() == "json":
             path.write_text(

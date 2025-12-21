@@ -22,6 +22,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from .log_safety import sanitize_log_data
+
 logger = logging.getLogger(__name__)
 
 
@@ -163,7 +165,7 @@ class FrontendMonitor:
             try:
                 handler(error_report)
             except Exception as e:
-                logger.info(f"错误处理器失败: {e}")
+                logger.info(sanitize_log_data(f"错误处理器失败: {e}"))
 
         return error_id
 
@@ -249,7 +251,7 @@ class FrontendMonitor:
             with open(log_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(error.to_dict(), ensure_ascii=False) + "\n")
         except Exception as e:
-            logger.info(f"写入错误日志失败: {e}")
+            logger.info(sanitize_log_data(f"写入错误日志失败: {e}"))
 
 
 class UserBehaviorTracker:
@@ -426,7 +428,7 @@ class UserBehaviorTracker:
             with open(log_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(event.to_dict(), ensure_ascii=False) + "\n")
         except Exception as e:
-            logger.info(f"写入事件日志失败: {e}")
+            logger.info(sanitize_log_data(f"写入事件日志失败: {e}"))
 
 
 # 全局监控实例
