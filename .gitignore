@@ -47,6 +47,7 @@ htmlcov/
 
 # Mypy
 .mypy_cache/
+.claude/
 .dmypy.json
 dmypy.json
 

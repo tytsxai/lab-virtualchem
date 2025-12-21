@@ -22,6 +22,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 import asyncio  # noqa: E402
 import logging  # noqa: E402
+import socket  # noqa: E402
 
 from src.core.license_manager import LicenseManager  # noqa: E402
 from src.core.license_middleware import (  # noqa: E402
@@ -36,6 +37,31 @@ from . import __version__ as APP_VERSION  # noqa: E402
 
 logger = setup_logger("virtualchemlab", logging.INFO)
 DISPLAY_VERSION = f"v{APP_VERSION}"
+
+
+def _is_network_timeout_exception(exc: BaseException) -> bool:
+    """仅识别明确的网络/IO超时异常（用于降级处理）。"""
+
+    def _is_timeout(e: BaseException) -> bool:
+        if isinstance(e, (TimeoutError, asyncio.TimeoutError, socket.timeout)):
+            return True
+        try:
+            import requests  # type: ignore
+
+            if isinstance(e, requests.exceptions.Timeout):
+                return True
+        except Exception:
+            pass
+        return False
+
+    current: BaseException | None = exc
+    seen: set[int] = set()
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        if _is_timeout(current):
+            return True
+        current = current.__cause__ or current.__context__
+    return False
 
 
 def check_license() -> bool:
@@ -53,16 +79,16 @@ def check_license() -> bool:
 
             with open(config_file, encoding="utf-8") as f:
                 config = json.load(f)
-                secret_key = config.get("license", {}).get(
-                    "secret_key", "default_secret_key"
-                )
+                secret_key = config.get("license", {}).get("secret_key")
                 strict_mode = config.get("license", {}).get("strict_mode", False)
                 trial_days = config.get("license", {}).get("trial_days", 7)
         else:
-            logger.warning("未找到许可证配置文件,使用默认配置")
-            secret_key = "default_secret_key"
-            strict_mode = False
-            trial_days = 7
+            logger.error("未找到许可证配置文件,拒绝启动")
+            return False
+
+        if not secret_key:
+            logger.error("许可证密钥缺失,拒绝启动")
+            return False
 
         # 创建许可证管理器
         license_file = PROJECT_ROOT / "data" / "license.json"
@@ -77,9 +103,30 @@ def check_license() -> bool:
 
         # 执行验证
         async def verify():
-            await middleware.process(None, lambda: None)
+            async def _next() -> None:
+                return None
 
-        asyncio.run(verify())
+            await middleware.process(None, _next)
+
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = None
+
+        if loop is not None and loop.is_running():
+            logger.error("检测到运行中的事件循环,无法在同步上下文中执行许可证校验")
+            return False
+
+        if loop is None:
+            loop = asyncio.new_event_loop()
+            try:
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(verify())
+            finally:
+                loop.close()
+                asyncio.set_event_loop(None)
+        else:
+            loop.run_until_complete(verify())
 
         # 获取许可证信息
         current_license = middleware.get_current_license()
@@ -143,9 +190,14 @@ def check_license() -> bool:
         return False
 
     except Exception as e:
+        if _is_network_timeout_exception(e):
+            logger.warning(f"许可证检查网络超时: {e}")
+            logger.warning("⚠️  网络超时降级: 允许继续启动")
+            return True
+
         logger.error(f"许可证检查出错: {e}")
-        logger.warning("跳过许可证检查,继续启动")
-        return True
+        logger.error("fail-closed: 许可证检查异常,拒绝启动")
+        return False
 
 
 def main() -> int:
