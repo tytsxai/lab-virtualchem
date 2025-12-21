@@ -8,7 +8,7 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from functools import wraps
-from typing import Any
+from typing import Any, NamedTuple
 
 logger = logging.getLogger(__name__)
 
@@ -326,8 +326,15 @@ class BFFRouter:
 
     def __init__(self):
         self._routes: dict[str, Callable] = {}
+        self._route_specs: dict[str, "RouteSpec"] = {}
 
-    def route(self, path: str):
+    def route(
+        self,
+        path: str,
+        *,
+        schema: dict[str, type] | None = None,
+        required_roles: tuple[Any, ...] = (),
+    ):
         """
         路由装饰器
 
@@ -336,7 +343,12 @@ class BFFRouter:
         """
 
         def decorator(func):
+            if schema is None:
+                raise ValueError("路由必须提供参数 schema")
             self._routes[path] = func
+            self._route_specs[path] = RouteSpec(
+                schema=schema, required_roles=tuple(required_roles)
+            )
 
             @wraps(func)
             async def wrapper(*args, **kwargs):
@@ -345,6 +357,34 @@ class BFFRouter:
             return wrapper
 
         return decorator
+
+    def _validate_params(self, schema: dict[str, type], params: dict[str, Any]) -> None:
+        extra = set(params.keys()) - set(schema.keys())
+        if extra:
+            raise ValueError(f"存在未声明参数: {sorted(extra)}")
+        missing = set(schema.keys()) - set(params.keys())
+        if missing:
+            raise ValueError(f"缺少必需参数: {sorted(missing)}")
+
+        for key, expected_type in schema.items():
+            value = params.get(key)
+            if expected_type is Any:
+                continue
+            if value is None:
+                raise TypeError(f"参数 {key} 不能为空")
+            if not isinstance(value, expected_type):
+                raise TypeError(
+                    f"参数 {key} 类型错误: 期望 {expected_type.__name__}，实际 {type(value).__name__}"
+                )
+
+    def _require_auth(self, required_roles: tuple[Any, ...], params: dict[str, Any]) -> None:
+        if not required_roles:
+            return
+        context = params.get("context")
+        if context is None or not getattr(context, "has_any_role", None):
+            raise PermissionError("缺少鉴权上下文")
+        if not context.has_any_role(*required_roles):
+            raise PermissionError("权限不足")
 
     async def handle_request(self, path: str, params: dict[str, Any]) -> dict[str, Any]:
         """
@@ -358,10 +398,20 @@ class BFFRouter:
             响应数据
         """
         if path in self._routes:
+            spec = self._route_specs.get(path)
+            if spec is None:
+                raise RuntimeError("路由未配置安全规范")
+            self._require_auth(spec.required_roles, params)
+            self._validate_params(spec.schema, params)
             handler = self._routes[path]
             return await handler(**params)
         else:
             raise ValueError(f"未知路由: {path}")
+
+
+class RouteSpec(NamedTuple):
+    schema: dict[str, type]
+    required_roles: tuple[Any, ...] = ()
 
 
 # 全局BFF组件

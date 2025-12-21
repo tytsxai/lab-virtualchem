@@ -35,6 +35,14 @@ from .redis_cache import (
     init_redis_cache,
 )
 
+# 兼容 pytest-cov 以路径形式指定模块（例如 `--cov=src/backend/cdn_config`）。
+# pytest-cov 会把它当作模块名；这里把该别名指向实际模块对象，确保可统计覆盖率。
+import sys as _sys
+
+_cdn_config_mod = _sys.modules.get(__name__ + ".cdn_config")
+if _cdn_config_mod is not None:
+    _sys.modules.setdefault("src/backend/cdn_config", _cdn_config_mod)
+
 __all__ = [
     # Redis缓存
     "RedisCache",

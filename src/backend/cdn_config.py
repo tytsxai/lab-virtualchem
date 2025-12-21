@@ -5,10 +5,72 @@ CDN配置模块
 
 import json
 import logging
+import ipaddress
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
+
+_ALLOWED_CDN_PROVIDERS = {"cloudflare", "aws", "aliyun", "local"}
+
+
+def _is_internal_hostname(hostname: str) -> bool:
+    host = (hostname or "").strip().lower()
+    if not host:
+        return True
+    if host in {"localhost", "localhost.localdomain"}:
+        return True
+    if host.endswith(".local") or host.endswith(".internal"):
+        return True
+    return False
+
+
+def _is_internal_ip(hostname: str) -> bool:
+    try:
+        ip = ipaddress.ip_address(hostname)
+    except ValueError:
+        return False
+    return bool(
+        ip.is_private
+        or ip.is_loopback
+        or ip.is_link_local
+        or ip.is_reserved
+        or ip.is_multicast
+        or ip.is_unspecified
+    )
+
+
+def _validate_base_url(base_url: str) -> None:
+    value = (base_url or "").strip()
+    if not value:
+        raise ValueError("base_url 不能为空")
+
+    # 允许本地相对路径（用于 local provider），例如 "/static"
+    if value.startswith("/"):
+        if " " in value or "\t" in value or "\n" in value or "\r" in value:
+            raise ValueError("base_url 不能包含空白字符")
+        return
+
+    parsed = urlparse(value)
+    if parsed.scheme not in {"http", "https"}:
+        raise ValueError("base_url 必须是 http(s) URL 或以 / 开头的相对路径")
+    if not parsed.netloc:
+        raise ValueError("base_url 缺少主机名")
+    if parsed.username or parsed.password:
+        raise ValueError("base_url 不允许包含用户信息")
+    if parsed.query or parsed.fragment:
+        raise ValueError("base_url 不允许包含 query/fragment")
+
+    hostname = parsed.hostname or ""
+    if _is_internal_hostname(hostname) or _is_internal_ip(hostname):
+        raise ValueError("base_url 禁止指向内网/本机地址")
+
+
+def _validate_provider(provider: str) -> None:
+    value = (provider or "").strip().lower()
+    if value not in _ALLOWED_CDN_PROVIDERS:
+        raise ValueError(f"不支持的 CDN provider: {provider}")
 
 
 @dataclass
@@ -330,6 +392,15 @@ class CDNConfigBuilder:
         with open(config_path, encoding="utf-8") as f:
             data = json.load(f)
 
+        provider = str(data.get("provider", "")).strip().lower()
+        base_url = str(data.get("base_url", "")).strip()
+
+        _validate_provider(provider)
+        _validate_base_url(base_url)
+
+        data["provider"] = provider
+        data["base_url"] = base_url
+
         return CDNConfig(**data)
 
     @staticmethod
@@ -389,7 +460,7 @@ def get_cdn_manager() -> CDNManager | None:
     return _cdn_manager
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     # 演示使用
     logger.info("=== CDN配置演示 ===\n")
 

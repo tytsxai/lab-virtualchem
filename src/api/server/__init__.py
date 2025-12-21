@@ -48,20 +48,34 @@ except ImportError:
 from src import __version__ as APP_VERSION
 from src.core.build_info import get_build_info
 
-from ..core.error_system import (
+from ...core.error_system import (
     BaseAppException,
+    DataValidationError,
     ErrorCodeRegistry,
     NotificationChannel,
     ResourceNotFoundError,
     error_reporter,
 )
-from ..core.experiment_controller import ExperimentController
-from ..core.template_engine import TemplateEngine
-from ..reporter.html_generator import HTMLGenerator
-from ..storage.json_store import JSONStore
-from ..utils.config import Config
-from ..utils.logger import SensitiveDataFilter, setup_logger
-from .middleware import get_auth_middleware, get_rate_limiter
+from ...core.experiment_controller import ExperimentController
+from ...core.template_engine import TemplateEngine
+from ...reporter.html_generator import HTMLGenerator
+from ...storage.json_store import JSONStore
+from ...utils.config import Config
+from ...utils.logger import SensitiveDataFilter, setup_logger
+from ..middleware import get_auth_middleware, get_rate_limiter, require_auth
+from ..schemas import (
+    FinishExperimentRequest,
+    GenerateReportRequest,
+    GetRecordQuery,
+    ListRecordsQuery,
+    StartExperimentRequest,
+    SubmitStepRequest,
+)
+
+try:
+    from pydantic import ValidationError
+except Exception:  # pragma: no cover
+    ValidationError = Exception  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 access_logger = logging.getLogger("api.access")
@@ -72,7 +86,23 @@ MIN_SECRET_LENGTH = 32  # keep consistent with core startup_preflight/config_loa
 
 def _parse_cors_origins(raw: str) -> list[str]:
     """Parse comma-separated CORS origin allowlist."""
-    return [part.strip() for part in raw.split(",") if part.strip()]
+    parsed: list[str] = []
+    for part in raw.split(","):
+        origin = part.strip()
+        if not origin:
+            continue
+        if origin == "*":
+            logger.warning("忽略不安全的 CORS 配置：VCL_API_CORS_ORIGINS='*'")
+            continue
+        # Only allow http(s) origins; other schemes should never be allowed.
+        try:
+            url = urlparse(origin)
+        except Exception:  # noqa: BLE001
+            continue
+        if url.scheme not in {"http", "https"} or not url.netloc:
+            continue
+        parsed.append(origin)
+    return parsed
 
 
 def _is_local_origin(origin: str) -> bool:
@@ -180,7 +210,7 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Origin", origin)
             self.send_header("Vary", "Origin")
         self.send_header(
-            "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"
+            "Access-Control-Allow-Methods", "GET, POST, OPTIONS"
         )
         self.send_header(
             "Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Key"
@@ -212,10 +242,16 @@ class APIRequestHandler(BaseHTTPRequestHandler):
         if trace_id is None:
             trace_id = getattr(self, "_current_trace_id", None)
 
+        safe_message = message
+        safe_details = details
+        if status >= 500:
+            safe_message = "服务器内部错误"
+            safe_details = None
+
         error_response = {
             "success": False,
             "error": {
-                "message": message,
+                "message": safe_message,
                 "status": status,
                 "timestamp": datetime.now().isoformat(),
             },
@@ -223,12 +259,46 @@ class APIRequestHandler(BaseHTTPRequestHandler):
 
         if error_code:
             error_response["error"]["code"] = error_code
-        if details:
-            error_response["error"]["details"] = details
+        if safe_details:
+            error_response["error"]["details"] = safe_details
         if trace_id:
             error_response["error"]["trace_id"] = trace_id
 
         self._send_json(error_response, status)
+
+    @staticmethod
+    def _flatten_query_params(params: dict[str, list[str]]) -> dict[str, Any]:
+        flattened: dict[str, Any] = {}
+        for key, values in (params or {}).items():
+            flattened[key] = values[0] if values else None
+        return flattened
+
+    @staticmethod
+    def _validation_error_details(exc: Exception) -> dict[str, Any]:
+        if isinstance(exc, ValidationError):
+            errors: list[dict[str, Any]] = []
+            for item in exc.errors(include_url=False, include_context=False):
+                errors.append(
+                    {
+                        "loc": list(item.get("loc") or []),
+                        "type": item.get("type"),
+                        "msg": item.get("msg"),
+                    }
+                )
+            return {"errors": errors}
+        return {"errors": [{"type": "invalid_request"}]}
+
+    @classmethod
+    def _validate_model(cls, model_cls, payload: dict[str, Any]):
+        try:
+            return model_cls.model_validate(payload)
+        except Exception as exc:  # noqa: BLE001
+            raise DataValidationError(
+                message="请求参数无效",
+                error_code=ErrorCodeRegistry.DATA_VALIDATION_FAILED,
+                details=cls._validation_error_details(exc),
+                user_message="请求参数不合法，请检查字段与类型",
+            ) from exc
 
     def _get_cache_key(self, path: str, method: str, params: dict[str, Any]) -> str:
         """生成缓存键"""
@@ -353,9 +423,15 @@ class APIRequestHandler(BaseHTTPRequestHandler):
         idx = int(round(0.95 * (len(values_sorted) - 1)))
         return float(values_sorted[max(0, min(idx, len(values_sorted) - 1))])
 
+    @require_auth
     def _handle_metrics(self, trace_id: str) -> None:
         """Prometheus 风格指标（默认需认证）"""
-        _ = trace_id
+        client_info = getattr(self, "client_info", None)
+        permissions = client_info.get("permissions", []) if isinstance(client_info, dict) else []
+        if "admin" not in permissions:
+            self._send_error(403, "需要管理员权限", trace_id=trace_id)
+            return
+
         metrics = getattr(self.server, "api_metrics", {})
         durations = getattr(self.server, "request_durations_ms", deque())
         p95_ms = self._p95(list(durations)[-500:])
@@ -936,7 +1012,7 @@ class APIRequestHandler(BaseHTTPRequestHandler):
 
             parsed = urlparse(self.path)
             path = parsed.path
-            params = parse_qs(parsed.query)
+            params = self._flatten_query_params(parse_qs(parsed.query))
 
             # 白名单路径(不需要认证)
             whitelist_paths = ["/api/health", "/api/ready", "/api/docs", "/healthz", "/readyz"]
@@ -978,11 +1054,13 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                 exp_id = path.split("/")[-1]
                 self._handle_get_experiment(exp_id, trace_id)
             elif path == "/api/records":
-                user_id = params.get("user_id", [None])[0]
+                query = self._validate_model(ListRecordsQuery, params)
+                user_id = query.user_id
                 self._handle_list_records(user_id, trace_id)
             elif path.startswith("/api/records/"):
                 record_id = path.split("/")[-1]
-                user_id = params.get("user_id", [None])[0]
+                query = self._validate_model(GetRecordQuery, params)
+                user_id = query.user_id
                 self._handle_get_record(record_id, user_id, trace_id)
             elif path == "/api/health":
                 self._handle_health_check(trace_id)
@@ -1144,6 +1222,18 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                 success = False
                 self._send_error(404, f"路径未找到: {path}", trace_id=trace_id)
 
+        except BaseAppException as e:
+            success = False
+            logger.warning(f"[{trace_id}] API error: {e.error_code.name} - {e.message}")
+            error_reporter.report_error(
+                exception=e,
+                context=f"API POST {path}",
+                session_id=trace_id,
+                notify=True,
+                notification_channels=[NotificationChannel.LOG],
+            )
+            self._send_exception(e, trace_id)
+
         except Exception as e:
             success = False
             logger.error(f"[{trace_id}] POST request error: {e}", exc_info=True)
@@ -1240,6 +1330,7 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             status=status,
         )
 
+    @require_auth
     def _handle_list_experiments(self, trace_id: str) -> None:
         """列出所有实验
 
@@ -1279,6 +1370,7 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             "safety_level": getattr(step, "safety_level", None),
         }
 
+    @require_auth
     def _handle_get_experiment(self, exp_id: str, trace_id: str) -> None:
         """获取实验详情
 
@@ -1318,14 +1410,12 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             logger.warning("加载实验详情失败: %s", exc, exc_info=True)
             self._send_error(404, f"Experiment not found: {exp_id}")
 
+    @require_auth
     def _handle_start_experiment(self, body: dict[str, Any]) -> None:
         """开始实验"""
-        exp_id = body.get("experiment_id")
-        user_id = body.get("user_id", "anonymous")
-
-        if not exp_id:
-            self._send_error(400, "Missing experiment_id")
-            return
+        req = self._validate_model(StartExperimentRequest, body)
+        exp_id = req.experiment_id
+        user_id = req.user_id
 
         try:
             engine = self.server.template_engine
@@ -1371,21 +1461,25 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                 },
                 201,
             )
-        except Exception as e:
-            self._send_error(500, f"Failed to start experiment: {str(e)}")
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Failed to start experiment", exc_info=True)
+            raise BaseAppException(
+                message="开始实验失败",
+                error_code=ErrorCodeRegistry.SYS_INTERNAL_ERROR,
+                original_exception=exc,
+                user_message="开始实验失败，请稍后重试",
+            ) from exc
 
+    @require_auth
     def _handle_submit_step(self, body: dict[str, Any]) -> None:
         """提交步骤"""
-        session_id = body.get("session_id")
-        user_data = body.get("data", {})
-
-        if not session_id:
-            self._send_error(400, "Missing session_id")
-            return
+        req = self._validate_model(SubmitStepRequest, body)
+        session_id = req.session_id
+        user_data = req.data
 
         controller = self.server.sessions.get(session_id)
         if not controller:
-            self._send_error(404, f"Session not found: {session_id}")
+            self._send_error(404, "Session not found")
             return
 
         try:
@@ -1395,9 +1489,15 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             message = str(getattr(result, "message", ""))
 
             after_index = getattr(controller, "current_step_index", before_index)
-            has_next = bool(passed and before_index is not None and after_index != before_index)
+            has_next = bool(
+                passed and before_index is not None and after_index != before_index
+            )
 
-            current_step = None if getattr(controller, "is_completed", lambda: False)() else controller.get_current_step()
+            current_step = (
+                None
+                if getattr(controller, "is_completed", lambda: False)()
+                else controller.get_current_step()
+            )
 
             mistake = getattr(result, "mistake", None)
             mistake_payload: dict[str, Any] | None = None
@@ -1424,20 +1524,24 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                     "progress": controller.get_progress(),
                 }
             )
-        except Exception as e:
-            self._send_error(500, f"Failed to submit step: {str(e)}")
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Failed to submit step", exc_info=True)
+            raise BaseAppException(
+                message="提交实验步骤失败",
+                error_code=ErrorCodeRegistry.SYS_INTERNAL_ERROR,
+                original_exception=exc,
+                user_message="提交失败，请稍后重试",
+            ) from exc
 
+    @require_auth
     def _handle_finish_experiment(self, body: dict[str, Any]) -> None:
         """完成实验"""
-        session_id = body.get("session_id")
-
-        if not session_id:
-            self._send_error(400, "Missing session_id")
-            return
+        req = self._validate_model(FinishExperimentRequest, body)
+        session_id = req.session_id
 
         controller = self.server.sessions.get(session_id)
         if not controller:
-            self._send_error(404, f"Session not found: {session_id}")
+            self._send_error(404, "Session not found")
             return
 
         try:
@@ -1469,9 +1573,16 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                     "duration_seconds": record.total_duration_seconds,
                 }
             )
-        except Exception as e:
-            self._send_error(500, f"Failed to finish experiment: {str(e)}")
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Failed to finish experiment", exc_info=True)
+            raise BaseAppException(
+                message="完成实验失败",
+                error_code=ErrorCodeRegistry.SYS_INTERNAL_ERROR,
+                original_exception=exc,
+                user_message="完成实验失败，请稍后重试",
+            ) from exc
 
+    @require_auth
     def _handle_list_records(self, user_id: str | None, trace_id: str) -> None:
         """列出记录
 
@@ -1502,8 +1613,14 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             ]
 
             self._send_json({"records": records, "count": len(records)})
-        except Exception as e:
-            self._send_error(500, f"Failed to list records: {str(e)}")
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Failed to list records", exc_info=True)
+            raise BaseAppException(
+                message="获取实验记录失败",
+                error_code=ErrorCodeRegistry.SYS_INTERNAL_ERROR,
+                original_exception=exc,
+                user_message="无法加载记录列表，请稍后重试",
+            ) from exc
 
     def _find_record_owner(self, record_id: str) -> str | None:
         store = getattr(self.server, "storage", None)
@@ -1531,6 +1648,7 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             return None
         return load_record(resolved_user, record_id)
 
+    @require_auth
     def _handle_get_record(
         self, record_id: str, user_id: str | None, trace_id: str
     ) -> None:
@@ -1556,22 +1674,26 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                 else record
             )
             self._send_json({"record": payload})
-        except Exception as e:
-            self._send_error(500, f"Failed to get record: {str(e)}")
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Failed to get record", exc_info=True)
+            raise BaseAppException(
+                message="获取记录详情失败",
+                error_code=ErrorCodeRegistry.SYS_INTERNAL_ERROR,
+                original_exception=exc,
+                user_message="无法加载记录详情，请稍后重试",
+            ) from exc
 
+    @require_auth
     def _handle_generate_report(self, body: dict[str, Any]) -> None:
         """生成报告"""
-        record_id = body.get("record_id")
-        format_type = body.get("format", "html")
-
-        if not record_id:
-            self._send_error(400, "Missing record_id")
-            return
+        req = self._validate_model(GenerateReportRequest, body)
+        record_id = req.record_id
+        format_type = req.format
 
         try:
             record = self._load_record(record_id)
             if record is None:
-                self._send_error(404, f"Record not found: {record_id}")
+                self._send_error(404, "Record not found")
                 return
 
             # 加载模板
@@ -1594,8 +1716,14 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                     "path": str(report_path),
                 }
             )
-        except Exception as e:
-            self._send_error(500, f"Failed to generate report: {str(e)}")
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Failed to generate report", exc_info=True)
+            raise BaseAppException(
+                message="生成报告失败",
+                error_code=ErrorCodeRegistry.SYS_INTERNAL_ERROR,
+                original_exception=exc,
+                user_message="生成报告失败，请稍后重试",
+            ) from exc
 
     def log_message(self, format: str, *args: Any) -> None:
         """重写日志方法"""
@@ -1705,7 +1833,7 @@ class APIServer:
         )
 
 
-if __name__ == "__main__":
+def main() -> int:
     import os
     import sys
     from logging.handlers import RotatingFileHandler
@@ -1775,3 +1903,9 @@ if __name__ == "__main__":
             time.sleep(1)
     finally:
         server.stop()
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

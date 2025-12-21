@@ -4,6 +4,7 @@
 """
 
 import logging
+import re
 import threading
 import time
 from collections.abc import Callable
@@ -17,10 +18,9 @@ logger = logging.getLogger(__name__)
 
 def _is_safe_identifier(name: str) -> bool:
     """Validate table/index names to prevent injection via PRAGMA strings."""
-    if not name:
+    if not isinstance(name, str) or not name:
         return False
-    # Allow letters, digits, and underscores only
-    return name.replace("_", "").isalnum()
+    return re.fullmatch(r"[A-Za-z0-9_]+", name) is not None
 
 
 @dataclass
@@ -354,6 +354,12 @@ class IndexAnalyzer:
             index_name = f"idx_{table_name}_{column_name}"
 
         try:
+            if not _is_safe_identifier(index_name):
+                raise ValueError("Invalid index name")
+            if not _is_safe_identifier(table_name):
+                raise ValueError("Invalid table name")
+            if not _is_safe_identifier(column_name):
+                raise ValueError("Invalid column name")
             cursor = self.connection.cursor()
             sql = f"CREATE INDEX IF NOT EXISTS {index_name} ON {table_name}({column_name})"
             cursor.execute(sql)
@@ -365,7 +371,7 @@ class IndexAnalyzer:
             return False
 
     def auto_optimize_table(
-        self, table_name: str, query_patterns: list[str]
+        self, table_name: str, query_patterns: list[str], context: Any | None = None
     ) -> dict[str, Any]:
         """
         自动优化表（分析并创建建议的索引）
@@ -377,6 +383,22 @@ class IndexAnalyzer:
         Returns:
             优化报告
         """
+        from src.core.auth import Role
+
+        if context is None or not getattr(context, "has_role", None) or not context.has_role(Role.ADMIN):
+            raise PermissionError("仅管理员可执行自动优化")
+
+        now = time.time()
+        if not hasattr(self, "_auto_optimize_call_times"):
+            self._auto_optimize_call_times = []
+        self._auto_optimize_call_times = [
+            ts for ts in self._auto_optimize_call_times if now - ts < 60
+        ]
+        max_calls_per_minute = 5
+        if len(self._auto_optimize_call_times) >= max_calls_per_minute:
+            raise RuntimeError("自动优化调用过于频繁，请稍后再试")
+        self._auto_optimize_call_times.append(now)
+
         report = {
             "table": table_name,
             "suggestions": [],
@@ -390,12 +412,24 @@ class IndexAnalyzer:
         report["suggestions"] = suggestions
 
         # 自动创建高优先级索引
+        max_indexes_per_call = 3
+        created_count = 0
+
         for suggestion in suggestions:
             if suggestion["priority"] == "high":
+                if created_count >= max_indexes_per_call:
+                    report["skipped"].append(
+                        {
+                            "column": suggestion["column"],
+                            "reason": "本次自动优化已达配额上限，建议稍后或手动创建",
+                        }
+                    )
+                    continue
                 col_name = suggestion["column"]
                 success = self.create_index(table_name, col_name)
 
                 if success:
+                    created_count += 1
                     report["created"].append(
                         {"column": col_name, "reason": suggestion["reason"]}
                     )

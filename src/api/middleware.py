@@ -22,6 +22,7 @@ from functools import wraps
 from typing import Any
 
 from ..utils.config import Config
+from ..core.error_system import AuthenticationError, AuthorizationError, ErrorCodeRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -116,11 +117,16 @@ class AuthMiddleware:
 
         # 1) 环境变量优先（支持多把密钥，用逗号分隔）
         raw = (os.getenv("VCL_API_KEYS") or "").strip()
+        admin_raw = (os.getenv("VCL_API_ADMIN_KEYS") or "").strip()
+        admin_keys = {p.strip() for p in admin_raw.split(",") if p.strip()} if admin_raw else set()
         if raw:
             for idx, key in enumerate([p.strip() for p in raw.split(",") if p.strip()]):
+                perms = ["read", "write"]
+                if key in admin_keys:
+                    perms = [*perms, "admin"]
                 self._api_keys[key] = {
                     "name": f"Env Client {idx + 1}",
-                    "permissions": ["read", "write"],
+                    "permissions": perms,
                     "created_at": datetime.now().isoformat(),
                 }
             return
@@ -245,31 +251,80 @@ class RequestValidator:
         return True, None
 
 
-def require_auth(auth_middleware: AuthMiddleware):
-    """需要认证的装饰器
+def _extract_api_key(headers: Any) -> str:
+    """Extract API key from handler headers.
 
-    Args:
-        auth_middleware: 认证中间件实例
+    Supports:
+    - `X-API-Key: <key>`
+    - `Authorization: Bearer <key>`
     """
+    api_key = (getattr(headers, "get", lambda _k, _d=None: None)("X-API-Key") or "").strip()
+    if api_key:
+        return api_key
+
+    auth_header = (
+        getattr(headers, "get", lambda _k, _d=None: None)("Authorization", "") or ""
+    ).strip()
+    if auth_header.lower().startswith("bearer "):
+        return auth_header[7:].strip()
+    return ""
+
+
+def require_auth(func: Callable) -> Callable:
+    """API Key 认证装饰器（stdlib HTTPServer handler 专用）.
+
+    约定：
+    - 认证通过后在 handler 上设置 `client_info`
+    - 认证失败抛出 `AuthenticationError`（由上层统一转换为响应）
+    """
+
+    @wraps(func)
+    def wrapper(handler, *args, **kwargs):
+        auth = getattr(getattr(handler, "server", None), "auth_middleware", None)
+        if auth is None or not getattr(auth, "enabled", False):
+            raise AuthenticationError(
+                message="认证中间件未启用",
+                error_code=ErrorCodeRegistry.SYS_SERVICE_UNAVAILABLE,
+            )
+
+        api_key = _extract_api_key(getattr(handler, "headers", {}))
+        if not api_key:
+            raise AuthenticationError(message="未授权: 缺少API密钥")
+
+        client_info = auth.verify_api_key(api_key)
+        if not client_info:
+            raise AuthenticationError(message="未授权: 无效的API密钥")
+
+        handler.client_info = client_info
+        return func(handler, *args, **kwargs)
+
+    return wrapper
+
+
+def require_role(roles: list[str] | tuple[str, ...] | set[str]):
+    """角色授权装饰器。
+
+    约定：`client_info.roles` 为字符串列表；缺省为空。
+    """
+    required = {str(role).strip() for role in roles if str(role).strip()}
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)
+        @require_auth
         def wrapper(handler, *args, **kwargs):
-            # 提取API密钥
-            api_key = handler.headers.get("X-API-Key") or handler.headers.get(
-                "Authorization", ""
-            ).replace("Bearer ", "")
+            client_info = getattr(handler, "client_info", None) or {}
+            client_roles = client_info.get("roles") or []
+            if isinstance(client_roles, str):
+                client_roles = [client_roles]
+            client_roles_set = {str(r).strip() for r in client_roles if str(r).strip()}
 
-            # 验证API密钥
-            client_info = auth_middleware.verify_api_key(api_key)
-            if not client_info:
-                handler._send_error(401, "未授权: 无效的API密钥")
-                return
+            if required and not (client_roles_set & required):
+                raise AuthorizationError(
+                    message="权限不足",
+                    error_code=ErrorCodeRegistry.AUTH_INSUFFICIENT_PERMISSION,
+                    details={"required_roles": sorted(required)},
+                )
 
-            # 将客户端信息附加到handler
-            handler.client_info = client_info
-
-            # 调用原函数
             return func(handler, *args, **kwargs)
 
         return wrapper

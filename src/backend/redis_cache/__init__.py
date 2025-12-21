@@ -5,6 +5,7 @@ Redis缓存实现
 
 import json
 import logging
+import hashlib
 from collections.abc import Callable
 from functools import wraps
 from typing import Any
@@ -34,6 +35,7 @@ class RedisCache:
         password: str | None = None,
         prefix: str = "vcl:",
         serializer: str = "json",
+        clear_allowed_prefixes: tuple[str, ...] = ("cache:",),
     ):
         """
         初始化Redis缓存
@@ -48,6 +50,7 @@ class RedisCache:
         """
         self.prefix = prefix
         self.serializer = serializer.lower().strip()
+        self.clear_allowed_prefixes = tuple(p.strip() for p in clear_allowed_prefixes)
         if self.serializer != "json":
             raise ValueError(
                 "RedisCache only supports JSON serialization. "
@@ -297,11 +300,56 @@ class RedisCache:
             return 0
 
         try:
-            full_pattern = self._make_key(pattern)
-            keys = self.client.keys(full_pattern)
-            if keys:
-                return self.client.delete(*keys)
-            return 0
+            cleaned = (pattern or "").strip()
+            if not cleaned:
+                return 0
+
+            # 限制可清理的前缀范围：仅允许显式声明的命名空间
+            # 注意：pattern 传入的是“相对键”（不含 self.prefix）
+            if not any(cleaned.startswith(p) for p in self.clear_allowed_prefixes):
+                logger.warning("拒绝清理不在允许范围的前缀: %s", cleaned.split(":", 1)[0])
+                return 0
+
+            # 使用 SCAN 替代 KEYS，避免阻塞 Redis
+            full_pattern = self._make_key(cleaned)
+
+            total_deleted = 0
+            cursor = 0
+            pending: list[str] = []
+
+            scan_count = 1000
+            unlink_batch_size = 500
+
+            unlink_func = getattr(self.client, "unlink", None)
+            delete_func = getattr(self.client, "delete", None)
+            if not callable(unlink_func) and not callable(delete_func):
+                return 0
+
+            while True:
+                cursor, keys = self.client.scan(
+                    cursor=cursor, match=full_pattern, count=scan_count
+                )
+                if keys:
+                    pending.extend(keys)
+
+                while len(pending) >= unlink_batch_size:
+                    batch = pending[:unlink_batch_size]
+                    del pending[:unlink_batch_size]
+                    if callable(unlink_func):
+                        total_deleted += int(unlink_func(*batch) or 0)
+                    else:
+                        total_deleted += int(delete_func(*batch) or 0)
+
+                if cursor == 0:
+                    break
+
+            if pending:
+                if callable(unlink_func):
+                    total_deleted += int(unlink_func(*pending) or 0)
+                else:
+                    total_deleted += int(delete_func(*pending) or 0)
+
+            return total_deleted
         except Exception as e:
             logger.error(f"Redis模式删除失败: {e}")
             return 0
@@ -329,6 +377,22 @@ class RedisCacheDecorator:
     def __init__(self, cache: RedisCache):
         self.cache = cache
 
+    @staticmethod
+    def _safe_preview(text: str, max_len: int = 32) -> str:
+        if len(text) <= max_len:
+            return text
+        return text[:max_len] + "…"
+
+    @staticmethod
+    def _truncate(text: str, max_len: int) -> str:
+        if len(text) <= max_len:
+            return text
+        return text[:max_len]
+
+    @staticmethod
+    def _hash_key(raw_key: str) -> str:
+        return hashlib.sha256(raw_key.encode("utf-8", errors="replace")).hexdigest()
+
     def cached(
         self,
         ttl: int | None = None,
@@ -347,28 +411,50 @@ class RedisCacheDecorator:
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
+                # 限制 key 的原始长度，避免日志/内存异常放大
+                max_raw_key_length = 2048
+                max_part_length = 256
+                max_prefix_length = 64
+
                 # 生成缓存键
                 if key_builder:
                     cache_key = key_builder(*args, **kwargs)
                 else:
                     # 默认键生成
-                    key_parts = [key_prefix or func.__name__]
-                    key_parts.extend(str(arg) for arg in args)
-                    key_parts.extend(f"{k}={v}" for k, v in sorted(kwargs.items()))
+                    safe_prefix = (key_prefix or func.__name__).strip()
+                    safe_prefix = self._truncate(safe_prefix, max_prefix_length)
+
+                    key_parts: list[str] = [safe_prefix]
+                    key_parts.extend(
+                        self._truncate(str(arg), max_part_length) for arg in args
+                    )
+                    key_parts.extend(
+                        self._truncate(f"{k}={v}", max_part_length)
+                        for k, v in sorted(kwargs.items())
+                    )
                     cache_key = ":".join(key_parts)
 
+                cache_key = str(cache_key)
+                cache_key = self._truncate(cache_key, max_raw_key_length)
+
+                # 对 cache_key 做 hash 处理，避免泄露敏感信息 & 限制键长度
+                digest = self._hash_key(cache_key)
+                hashed_key = f"{(key_prefix or func.__name__)[:max_prefix_length]}:{digest}"
+                hashed_key = self._truncate(hashed_key, 128)
+                key_id = digest[:12]
+
                 # 尝试从缓存获取
-                cached_value = self.cache.get(cache_key)
+                cached_value = self.cache.get(hashed_key)
                 if cached_value is not None:
-                    logger.debug(f"缓存命中: {cache_key}")
+                    logger.debug("缓存命中: %s", f"{(key_prefix or func.__name__)}:{key_id}")
                     return cached_value
 
                 # 执行函数
                 result = func(*args, **kwargs)
 
                 # 存入缓存
-                self.cache.set(cache_key, result, ttl)
-                logger.debug(f"缓存存入: {cache_key}")
+                self.cache.set(hashed_key, result, ttl)
+                logger.debug("缓存存入: %s", f"{(key_prefix or func.__name__)}:{key_id}")
 
                 return result
 
@@ -406,7 +492,7 @@ def init_redis_cache(host: str = "localhost", port: int = 6379, **kwargs) -> Red
     return _redis_cache
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     # 演示使用
     logger.info("=== Redis缓存演示 ===\n")
 

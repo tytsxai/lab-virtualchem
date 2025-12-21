@@ -89,7 +89,10 @@ class AdminAPI:
             CORS(
                 self.app,
                 resources={
-                    r"/api/*": {"origins": _parse_cors_origins(cors_origins_env)}
+                    r"/api/*": {
+                        "origins": _parse_cors_origins(cors_origins_env),
+                        "methods": ["GET", "POST"],
+                    }
                 },
             )
         else:
@@ -130,6 +133,9 @@ class AdminAPI:
                 return jsonify({"error": "无效的管理后台密钥"}), 403
             return None
 
+        def _internal_error():
+            return jsonify({"error": "服务器内部错误"}), 500
+
         @self.app.route("/api/health", methods=["GET"])
         def health_check():
             """健康检查"""
@@ -158,8 +164,8 @@ class AdminAPI:
 
                 return jsonify({"licenses": [info], "total": 1})
             except Exception as e:
-                logger.error(f"获取许可证列表失败: {e}")
-                return jsonify({"error": str(e)}), 500
+                logger.error("获取许可证列表失败", exc_info=True)
+                return _internal_error()
 
         @self.app.route("/api/licenses/<license_key>", methods=["GET"])
         def get_license(license_key):
@@ -177,8 +183,8 @@ class AdminAPI:
                 return jsonify({"license": info})
 
             except Exception as e:
-                logger.error(f"获取许可证详情失败: {e}")
-                return jsonify({"error": str(e)}), 500
+                logger.error("获取许可证详情失败", exc_info=True)
+                return _internal_error()
 
         @self.app.route("/api/licenses/<license_key>/validate", methods=["POST"])
         def validate_license(license_key):
@@ -213,8 +219,8 @@ class AdminAPI:
                 )
 
             except Exception as e:
-                logger.error(f"验证许可证失败: {e}")
-                return jsonify({"error": str(e)}), 500
+                logger.error("验证许可证失败", exc_info=True)
+                return _internal_error()
 
         @self.app.route("/api/licenses/<license_key>/revoke", methods=["POST"])
         def revoke_license(license_key):
@@ -233,8 +239,8 @@ class AdminAPI:
                     return jsonify({"error": "撤销失败"}), 500
 
             except Exception as e:
-                logger.error(f"撤销许可证失败: {e}")
-                return jsonify({"error": str(e)}), 500
+                logger.error("撤销许可证失败", exc_info=True)
+                return _internal_error()
 
         @self.app.route("/api/devices", methods=["GET"])
         def list_devices():
@@ -277,8 +283,8 @@ class AdminAPI:
                 return jsonify({"devices": device_list, "total": len(device_list)})
 
             except Exception as e:
-                logger.error(f"获取设备列表失败: {e}")
-                return jsonify({"error": str(e)}), 500
+                logger.error("获取设备列表失败", exc_info=True)
+                return _internal_error()
 
         @self.app.route("/api/devices/<device_id>", methods=["GET"])
         def get_device(device_id):
@@ -320,8 +326,8 @@ class AdminAPI:
                 return jsonify({"device": device_info})
 
             except Exception as e:
-                logger.error(f"获取设备详情失败: {e}")
-                return jsonify({"error": str(e)}), 500
+                logger.error("获取设备详情失败", exc_info=True)
+                return _internal_error()
 
         @self.app.route("/api/devices/<device_id>/block", methods=["POST"])
         def block_device(device_id):
@@ -347,8 +353,8 @@ class AdminAPI:
                     return jsonify({"error": "封控失败"}), 500
 
             except Exception as e:
-                logger.error(f"封控设备失败: {e}")
-                return jsonify({"error": str(e)}), 500
+                logger.error("封控设备失败", exc_info=True)
+                return _internal_error()
 
         @self.app.route("/api/devices/<device_id>/unblock", methods=["POST"])
         def unblock_device(device_id):
@@ -367,8 +373,8 @@ class AdminAPI:
                     return jsonify({"error": "该设备未被封控"}), 400
 
             except Exception as e:
-                logger.error(f"解除封控失败: {e}")
-                return jsonify({"error": str(e)}), 500
+                logger.error("解除封控失败", exc_info=True)
+                return _internal_error()
 
         @self.app.route("/api/licenses/<license_key>/usage", methods=["GET"])
         def get_license_usage(license_key):
@@ -381,8 +387,8 @@ class AdminAPI:
                 return jsonify({"usage": stats})
 
             except Exception as e:
-                logger.error(f"获取使用统计失败: {e}")
-                return jsonify({"error": str(e)}), 500
+                logger.error("获取使用统计失败", exc_info=True)
+                return _internal_error()
 
         @self.app.route("/api/licenses/<license_key>/report", methods=["GET"])
         def get_usage_report(license_key):
@@ -395,8 +401,8 @@ class AdminAPI:
                 return jsonify({"report": report})
 
             except Exception as e:
-                logger.error(f"获取使用报告失败: {e}")
-                return jsonify({"error": str(e)}), 500
+                logger.error("获取使用报告失败", exc_info=True)
+                return _internal_error()
 
         @self.app.route("/api/licenses/<license_key>/anomalies", methods=["GET"])
         def detect_anomalies(license_key):
@@ -409,8 +415,8 @@ class AdminAPI:
                 return jsonify({"anomalies": anomalies, "total": len(anomalies)})
 
             except Exception as e:
-                logger.error(f"检测异常失败: {e}")
-                return jsonify({"error": str(e)}), 500
+                logger.error("检测异常失败", exc_info=True)
+                return _internal_error()
 
         @self.app.route("/api/dashboard/stats", methods=["GET"])
         def get_dashboard_stats():
@@ -453,8 +459,8 @@ class AdminAPI:
                 return jsonify({"stats": stats})
 
             except Exception as e:
-                logger.error(f"获取统计数据失败: {e}")
-                return jsonify({"error": str(e)}), 500
+                logger.error("获取统计数据失败", exc_info=True)
+                return _internal_error()
 
         @self.app.route("/api/activities", methods=["GET"])
         def get_activities():
@@ -483,8 +489,8 @@ class AdminAPI:
                 return jsonify({"activities": activities, "total": len(activities)})
 
             except Exception as e:
-                logger.error(f"获取活动记录失败: {e}")
-                return jsonify({"error": str(e)}), 500
+                logger.error("获取活动记录失败", exc_info=True)
+                return _internal_error()
 
     def run(self, debug: bool = False):
         """运行API服务器
