@@ -30,6 +30,12 @@ from src import __version__ as APP_VERSION  # noqa: E402
 DISPLAY_VERSION = f"v{APP_VERSION}"
 
 
+def pause_before_exit() -> None:
+    """只在交互终端中暂停，避免 CI/脚本环境卡死。"""
+    if sys.stdin is not None and sys.stdin.isatty():
+        input("\n按回车键退出...")
+
+
 def setup_performance_optimizations() -> None:
     """配置性能优化（懒加载、Numba、对象池）"""
     print("\n正在启用性能优化...")
@@ -165,12 +171,12 @@ def main() -> int:
 
     # 1. 检查依赖
     if not check_dependencies():
-        input("\n按回车键退出...")
+        pause_before_exit()
         return 1
 
     # 2. 检查配置
     if not check_configuration():
-        input("\n按回车键退出...")
+        pause_before_exit()
         return 1
 
     try:
@@ -366,7 +372,7 @@ def main() -> int:
         print("\n解决方案:")
         print("   1. 运行: pip install -r requirements.txt")
         print("   2. 确保使用 Python 3.10 或更高版本")
-        input("\n按回车键退出...")
+        pause_before_exit()
         return 1
 
     except Exception as e:
@@ -374,7 +380,7 @@ def main() -> int:
         import traceback
 
         traceback.print_exc()
-        input("\n按回车键退出...")
+        pause_before_exit()
         return 1
 
 

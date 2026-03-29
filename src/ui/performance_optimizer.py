@@ -542,7 +542,3 @@ def get_cached_resource(key: str) -> Any | None:
     """获取缓存的资源"""
     manager = get_resource_manager()
     return manager.get_cached_resource(key)
-
-
-# 全局实例
-performance_optimizer = get_performance_optimizer()
