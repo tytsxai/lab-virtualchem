@@ -15,7 +15,7 @@ from .experiment_history import ExperimentHistory
 from .experiment_state_manager import ExperimentStateManager
 from .interactive_scene import InteractiveExperimentScene
 from .keyboard_shortcuts import KeyboardShortcutManager
-from .performance_optimizer import performance_optimizer
+from .performance_optimizer import get_performance_optimizer
 
 logger = get_logger(__name__)
 
@@ -37,16 +37,15 @@ class IntegrationManager(QObject):
         self.validator: InteractiveValidator | None = None
         self.shortcuts: KeyboardShortcutManager | None = None
         self.scene: InteractiveExperimentScene | None = None
+        self._timers_started = False
 
         # 优化定时器
         self.optimization_timer = QTimer(self)
         self.optimization_timer.timeout.connect(self._perform_optimization)
-        self.optimization_timer.start(300000)  # 5分钟
 
         # 缓存清理定时器
         self.cache_cleanup_timer = QTimer(self)
         self.cache_cleanup_timer.timeout.connect(self._cleanup_cache)
-        self.cache_cleanup_timer.start(600000)  # 10分钟
 
         # 连接错误处理器信号
         error_handler.error_occurred.connect(self.error_occurred)
@@ -75,8 +74,17 @@ class IntegrationManager(QObject):
                 assert isinstance(parent_widget, QWidget)
                 self.shortcuts.register_shortcuts(parent_widget)
 
+            self._ensure_timers_started()
             logger.info("所有组件已初始化")
             self.system_ready.emit()
+
+    def _ensure_timers_started(self) -> None:
+        """在组件完成初始化后再启动后台定时器，避免模块导入副作用。"""
+        if self._timers_started:
+            return
+        self.optimization_timer.start(300000)  # 5分钟
+        self.cache_cleanup_timer.start(600000)  # 10分钟
+        self._timers_started = True
 
     def save_experiment_state(self, experiment_id: str) -> str | None:
         """保存实验状态"""
@@ -203,8 +211,9 @@ class IntegrationManager(QObject):
 
     def get_system_statistics(self) -> dict[str, Any]:
         """获取系统统计"""
+        optimizer = get_performance_optimizer()
         stats = {
-            "performance": performance_optimizer.check_performance(),
+            "performance": optimizer.check_performance(),
             "cache": cache_manager.get_statistics(),
             "scene_cache": scene_cache_manager.get_statistics(),
             "errors": error_handler.get_statistics(),
@@ -221,7 +230,8 @@ class IntegrationManager(QObject):
     def _perform_optimization(self) -> None:
         """执行性能优化"""
         with ErrorContext(error_handler, "性能优化"):
-            performance_optimizer.full_optimization(
+            optimizer = get_performance_optimizer()
+            optimizer.full_optimization(
                 scene=self.scene, history=self.history, state_manager=self.state_manager
             )
 
@@ -252,7 +262,8 @@ class IntegrationManager(QObject):
             scene_cache_manager.save_to_file("scene_cache.json")
 
             # 清理内存
-            performance_optimizer.cleanup_memory()
+            optimizer = get_performance_optimizer()
+            optimizer.cleanup_memory()
 
             logger.info("集成管理器清理完成")
 
@@ -264,6 +275,7 @@ class IntegrationManager(QObject):
             error_handler.set_dialog_enabled(False)  # 调试时不显示对话框
 
             # 减少优化间隔
+            self._ensure_timers_started()
             self.optimization_timer.setInterval(60000)  # 1分钟
 
             logger.info("调试模式已启用")

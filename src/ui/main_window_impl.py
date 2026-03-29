@@ -64,6 +64,8 @@ from .qt_event_utils import process_events_safely
 from .quick_tips import show_quick_tip
 from .record_browser import RecordBrowser
 from .settings_dialog import SettingsDialog
+from .themes import ThemeManager as AppThemeManager
+from .themes import ThemeType as AppThemeType
 
 logger = get_logger(__name__)
 
@@ -134,6 +136,8 @@ class MainWindow(QMainWindow):
             self.current_game_view: GameExperimentView | None = None
             self.user_id = "student_001"  # 默认用户ID
             # 测试模式下禁用游戏化/复杂子视图，降低 headless Qt 崩溃风险。
+            # 兼容历史代码路径：部分方法仍引用 current_user_id
+            self.current_user_id = self.user_id
             self.game_mode_enabled = not self._test_mode  # 游戏模式开关
 
             # 新增状态管理
@@ -143,6 +147,14 @@ class MainWindow(QMainWindow):
             self.performance_monitoring = True  # 性能监控
             self.user_preferences: dict[str, Any] = {}  # 用户偏好
             self.max_user_preferences = 100  # 限制用户偏好数量
+            self._workers: list[Any] = []  # 后台任务引用，防止线程提前销毁
+            self._key_sequence = ""
+            self._last_key_time = 0.0
+            self.dev_console: DeveloperConsole | None = None
+            self.dev_menu = None
+            self.performance_timer = QTimer(self)
+            self.auto_save_timer = QTimer(self)
+            self.theme_manager = AppThemeManager()
 
             self.init_ui()
 
@@ -310,6 +322,8 @@ class MainWindow(QMainWindow):
 
         # 中间面板 - 实验视图
         self.main_stack = QStackedWidget()
+        # 兼容历史代码路径（show_experiment/_enter_main_interface 使用 content_stack）
+        self.content_stack = self.main_stack
         self.welcome_page = self.create_welcome_page()
         self.main_stack.addWidget(self.welcome_page)
         splitter.addWidget(self.main_stack)
@@ -461,12 +475,13 @@ class MainWindow(QMainWindow):
         app = QApplication.instance()
         if app:
             try:
-                self.theme_manager.set_theme(app, theme_type)
-                self.theme_changed.emit(theme_type.value)
-                logger.info(f"主题已切换为: {theme_type.value}")
+                mapped_type = AppThemeType(theme_type.value)
+                self.theme_manager.set_theme(app, mapped_type)
+                self.theme_changed.emit(mapped_type.value)
+                logger.info(f"主题已切换为: {mapped_type.value}")
 
                 # 保存用户偏好（限制大小）
-                self.user_preferences["theme"] = theme_type.value
+                self.user_preferences["theme"] = mapped_type.value
                 if len(self.user_preferences) > self.max_user_preferences:
                     # 保留最新的偏好设置
                     keys_to_remove = list(self.user_preferences.keys())[
@@ -474,7 +489,7 @@ class MainWindow(QMainWindow):
                     ]
                     for key in keys_to_remove:
                         del self.user_preferences[key]
-                self.store.set("user_preferences", self.user_preferences)
+                self.save_user_preferences()
             except Exception as e:
                 logger.error(f"设置主题失败: {e}")
                 QMessageBox.warning(self, "主题错误", f"无法应用主题: {e}")
@@ -1274,6 +1289,10 @@ class MainWindow(QMainWindow):
     def show_performance_dialog(self) -> None:
         """显示性能监控对话框"""
         try:
+            if not hasattr(self, "performance_dialog") or self.performance_dialog is None:
+                from .performance_dialog import PerformanceDialog
+
+                self.performance_dialog = PerformanceDialog(self)
             self.performance_dialog.show()
             self.performance_dialog.raise_()
             self.performance_dialog.activateWindow()
@@ -1284,6 +1303,10 @@ class MainWindow(QMainWindow):
     def show_tutorial(self) -> None:
         """显示交互式教程"""
         try:
+            if not hasattr(self, "tutorial_manager") or self.tutorial_manager is None:
+                from .tutorial_system import get_tutorial_manager
+
+                self.tutorial_manager = get_tutorial_manager()
             self.tutorial_manager.start_tutorial("basic", self)
         except Exception as e:
             logger.error(f"显示教程失败: {e}")
@@ -1305,6 +1328,10 @@ class MainWindow(QMainWindow):
     def show_help(self) -> None:
         """显示帮助文档"""
         try:
+            if not hasattr(self, "help_manager") or self.help_manager is None:
+                from .help_system import get_help_manager
+
+                self.help_manager = get_help_manager()
             self.help_manager.show_help(parent=self)
         except Exception as e:
             logger.error(f"显示帮助失败: {e}")
@@ -1408,13 +1435,17 @@ class MainWindow(QMainWindow):
             from .themes import ThemeManager, ThemeType
 
             theme_manager = ThemeManager()
+            app = QApplication.instance()
+            if app is None:
+                logger.warning("无法应用主题预览: QApplication 未初始化")
+                return
             if theme == "light":
-                theme_manager.set_theme(self.qApp, ThemeType.LIGHT)
+                theme_manager.set_theme(app, ThemeType.LIGHT)
             elif theme == "dark":
-                theme_manager.set_theme(self.qApp, ThemeType.DARK)
+                theme_manager.set_theme(app, ThemeType.DARK)
             elif theme == "auto":
                 system_theme = theme_manager.get_system_theme()
-                theme_manager.set_theme(self.qApp, system_theme)
+                theme_manager.set_theme(app, system_theme)
 
             logger.info(f"主题预览已应用: {theme}")
         except Exception as e:
@@ -1743,7 +1774,8 @@ class MainWindow(QMainWindow):
     def _activate_dev_mode(self) -> None:
         """激活开发者模式"""
         # 显示开发者菜单
-        self.dev_menu.menuAction().setVisible(True)
+        if self.dev_menu is not None:
+            self.dev_menu.menuAction().setVisible(True)
 
         # 更新状态栏
         self.status_bar.showMessage("🛠️ 开发者模式已激活", 3000)
@@ -2402,6 +2434,8 @@ class MainWindow(QMainWindow):
 
     def _cleanup_worker(self, worker) -> None:
         """移除已完成的线程引用"""
+        with contextlib.suppress(Exception):
+            worker.cleanup()
         with contextlib.suppress(ValueError):
             self._workers.remove(worker)
 
@@ -3032,9 +3066,7 @@ class MainWindow(QMainWindow):
                 feedback_type = "feature"
 
             # 提交反馈
-            success = feedback_system.submit_feedback(
-                self, self.current_user_id, feedback_type, "用户反馈", text, "medium"
-            )
+            success = feedback_system.submit_feedback(self, self.user_id, feedback_type, "用户反馈", text, "medium")
 
             if success:
                 logger.info(f"用户反馈已提交: {text[:50]}...")
@@ -3105,7 +3137,10 @@ class MainWindow(QMainWindow):
 
             # 应用偏好设置
             if "theme" in self.user_preferences:
-                self.theme_manager.set_theme(self.user_preferences["theme"])
+                theme_raw = self.user_preferences["theme"]
+                app = QApplication.instance()
+                if app:
+                    self.theme_manager.set_theme(app, AppThemeType(str(theme_raw)))
 
             if "language" in self.user_preferences:
                 self.i18n.set_language(self.user_preferences["language"])
@@ -3451,6 +3486,7 @@ class MainWindow(QMainWindow):
 
             # 更新用户ID
             self.user_id = session.user_id
+            self.current_user_id = session.user_id
 
             # 更新标题栏
             self.setWindowTitle(f"{self.i18n.t('app.title')} - {session.display_name}")

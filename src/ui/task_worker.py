@@ -18,7 +18,8 @@ class TaskWorker(QObject):
     # 信号定义
     progress = Signal(int)  # 进度信号 (0-100)
     message = Signal(str)  # 消息信号
-    finished = Signal(object)  # 完成信号
+    finished = Signal(object)  # 完成信号（兼容旧调用）
+    finished_with_result = Signal(object)  # 完成信号（兼容新调用）
     error = Signal(str)  # 错误信号
 
     def __init__(self, task_func, *args, **kwargs):
@@ -39,6 +40,7 @@ class TaskWorker(QObject):
         # 连接信号
         self.thread.started.connect(self.run_task)
         self.finished.connect(self.thread.quit)
+        self.finished_with_result.connect(self.thread.quit)
         self.error.connect(self.thread.quit)
 
     def run_task(self):
@@ -47,6 +49,12 @@ class TaskWorker(QObject):
             logger.info("任务开始执行")
             self.message.emit("任务开始执行")
 
+            # 为任务注入可选进度/消息回调（与 background_worker 保持一致）
+            if "progress_emit" not in self.kwargs:
+                self.kwargs["progress_emit"] = self.progress.emit
+            if "message_emit" not in self.kwargs:
+                self.kwargs["message_emit"] = self.message.emit
+
             # 执行任务
             result = self.task_func(*self.args, **self.kwargs)
 
@@ -54,6 +62,7 @@ class TaskWorker(QObject):
             self.message.emit("任务执行完成")
             self.progress.emit(100)
             self.finished.emit(result)
+            self.finished_with_result.emit(result)
 
         except Exception as e:
             error_msg = f"任务执行失败: {e}"
