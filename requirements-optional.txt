@@ -16,7 +16,7 @@ pubchempy>=1.0.0
 # Visualization and 3D
 py3Dmol==2.1.0
 plotly==5.18.0
-dash==2.14.2
+dash==2.15.0
 kaleido==0.2.1
 seaborn==0.13.0
 
