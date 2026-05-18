@@ -1,0 +1,59 @@
+# VirtualChemLab · 游戏化虚拟化学实验室
+
+> Open-source gamified virtual chemistry lab for teaching and simulation. Runs locally on macOS / Windows / Linux as a desktop application. Supports multiple experiment types (titration, synthesis, crystal growth, electrochemistry), 60 FPS physics simulation (gravity, friction, collision), interactive drag/click/swipe controls, particle effects with five-tier rarity (common → legendary), score + combo system, achievement progression, modern dark UI with theme switching, and importable/exportable configuration. Designed for **classroom and lab use** — not a public web simulation.
+
+## Key docs
+
+- [README.md](README.md): Full feature list, navigation index.
+- [QUICK_START.md](QUICK_START.md): English shortest-path getting-started guide.
+- [README_快速开始.md](README_快速开始.md): Chinese quick start.
+- [QUICK_START_GUIDE.md](QUICK_START_GUIDE.md): Longer guided onboarding.
+- [QUICK_START_COMPLETION.md](QUICK_START_COMPLETION.md): Post-setup verification checklist.
+- [DEPLOY.md](DEPLOY.md): Deployment notes including macOS `.app` packaging.
+- [build_macos.sh](build_macos.sh): macOS app build script.
+
+## Recommended deployment
+
+- ✅ **Local desktop, single machine** (teaching / lab / intranet) — macOS, Windows, Linux all supported
+- ✅ **macOS `.app` bundle** for distribution to lab users (see `DEPLOY.md`)
+- ⚠️ **Optional API / admin backend** for intranet integration and ops, **binds to loopback by default** — do not expose directly to the public internet
+
+## What VirtualChemLab provides
+
+- **Multiple experiment types**: titration, synthesis, crystal growth, electrochemistry, etc., with detailed step guidance and automated verification
+- **60 FPS physics simulation**: gravity, friction, collision detection
+- **Interactive controls**: drag / click / swipe gestures
+- **Particle effects**: 8 distinct particle types, 5-tier rarity (common / uncommon / rare / epic / legendary)
+- **Score + combo system**: real-time score updates and combo counters
+- **Achievement system**: experiment completion + experience points
+- **Modern UI**: dark theme with glow effects, responsive layout, theme switching, smooth transitions
+- **Configuration management**: flexible options, import/export, instant apply, robust error handling
+- **Synchronized versioning** across modules (see "版本号同步" section in README)
+
+## What VirtualChemLab is NOT
+
+- ❌ A public hosted simulation website — local desktop tool, classroom/lab use case
+- ❌ A high-school chemistry curriculum — it's the simulation engine; curricula are built on top by teachers
+- ❌ A research-grade chemistry simulator — gamified physics, not quantum-accurate
+- ❌ A safety-critical tool — purely educational; never replace real PPE training
+- ❌ Multi-tenant SaaS — single-user runtime
+
+## Common questions
+
+- **Can students play this from home?** Yes — it's a local desktop app; bundle a `.app` / `.exe` and distribute it. There's no required server.
+- **Does the API backend need to be open?** No — by design it binds to loopback (127.0.0.1) and is for intranet/ops use only. Do not expose to the public internet.
+- **macOS Apple Silicon vs Intel?** Both supported. See `DEPLOY.md` + `build_macos.sh` for packaging.
+- **How accurate is the chemistry?** Gamified physics + curated chemistry — fine for visualization and engagement, not for research or analytical computation.
+- **Can teachers add new experiments?** Experiment types are defined via configuration; see the configuration import/export docs and project structure in README.
+
+## Repository
+
+- GitHub: https://github.com/tytsxai/lab-virtualchem
+- License: see LICENSE
+- Platforms: macOS, Windows, Linux (desktop)
+- Stack: see README for full tech-stack listing
+- Author: tytsxai
+
+## Useful search phrases
+
+- 虚拟化学实验室, 化学实验模拟器, 化学游戏化教学, 滴定模拟, 晶体生长模拟, 电化学实验模拟, 化学课堂工具, 化学实验 PWA, virtual chemistry lab, gamified chemistry simulator, titration simulator open source, crystal growth simulation, electrochemistry simulator, classroom chemistry app, science teaching gamification, 60 FPS physics chemistry, particle effects chemistry sim

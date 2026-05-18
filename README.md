@@ -1,4 +1,10 @@
-# VirtualChemLab
+# VirtualChemLab · 游戏化虚拟化学实验室
+
+[![Release](https://img.shields.io/github/v/release/tytsxai/lab-virtualchem)](https://github.com/tytsxai/lab-virtualchem/releases) · [llms.txt](llms.txt) · [Changelog](CHANGELOG.md) · [Quick Start (EN)](QUICK_START.md) · [快速开始 (中)](README_快速开始.md) · [Issues](https://github.com/tytsxai/lab-virtualchem/issues)
+
+> **关键词**:虚拟化学实验室 · 化学实验模拟器 · 化学游戏化教学 · 滴定模拟 · 晶体生长模拟 · 电化学实验模拟 · 化学课堂工具 · 化学游戏化 60 FPS 物理 · 五级稀有度粒子系统 · macOS 化学实验 .app
+>
+> **Keywords**: virtual chemistry lab · gamified chemistry simulator · titration simulator open source · crystal growth simulation · electrochemistry simulator · classroom chemistry app · science teaching gamification · 60 FPS physics chemistry · cross-platform desktop chem lab
 
 VirtualChemLab · 游戏化虚拟化学实验室 | Gamified virtual chemistry lab for teaching & simulation.
 
