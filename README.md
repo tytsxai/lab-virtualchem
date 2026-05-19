@@ -435,3 +435,7 @@ VirtualChemLab/
 ---
 
 **VirtualChemLab** - 让化学实验变得更有趣！ 🧪✨
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=tytsxai/lab-virtualchem&type=Date)](https://www.star-history.com/#tytsxai/lab-virtualchem&Date)
