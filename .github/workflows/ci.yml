@@ -29,10 +29,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # requirements.lock is regenerated with --generate-hashes via:
+          # requirements.lock is regenerated as a universal lock so platform-
+          # specific transitive deps (e.g. greenlet on Linux for sqlalchemy)
+          # are pinned with hashes:
           #   uv pip compile pyproject.toml --extra admin --extra dev \
           #     --extra docs --extra ops --extra performance --extra plugins \
-          #     --extra redis --generate-hashes -o requirements.lock
+          #     --extra redis --universal --generate-hashes -o requirements.lock
           pip install --require-hashes -r requirements.lock
           pip install -r requirements-dev.txt
 
