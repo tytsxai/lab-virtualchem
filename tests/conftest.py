@@ -7,6 +7,13 @@ from __future__ import annotations
 import os
 import sys
 import time
+
+# 让 pytest 在收集阶段忽略 tests/ui 子目录。
+# 这里走 pytest 原生的 `collect_ignore` 机制（在 conftest 所在目录解析），
+# 因为 pytest 9.x 下 `--ignore=tests/ui` 命令行 flag 对存在 __init__.py 的
+# 子包不再可靠（CI 上仍会被收集到，触发 Qt offscreen 段错误）。
+# 本地需要跑 UI 测试时显式 `pytest tests/ui` 即可绕过此项。
+collect_ignore = ["ui"]
 from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
