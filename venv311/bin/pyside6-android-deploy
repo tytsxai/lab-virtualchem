@@ -1,7 +1,0 @@
-#!/Users/jiesen23378/Library/CloudStorage/GoogleDrive-jiesen23378@gmail.com/我的云端硬盘/项目/VirtualChemLab开发/venv311/bin/python
-import sys
-from PySide6.scripts.pyside_tool import android_deploy
-if __name__ == '__main__':
-    if sys.argv[0].endswith('.exe'):
-        sys.argv[0] = sys.argv[0][:-4]
-    sys.exit(android_deploy())
