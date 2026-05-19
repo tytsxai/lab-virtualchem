@@ -16,9 +16,6 @@ concurrency:
 env:
   QT_QPA_PLATFORM: offscreen
   PIP_DISABLE_PIP_VERSION_CHECK: "1"
-  # Force the lightweight PySide6 stub for the same reason as in ci.yml —
-  # real Qt + headless + alerting daemon thread = segfault.
-  VCL_FORCE_PYSIDE6_STUB: "1"
 
 jobs:
   test:
@@ -65,14 +62,14 @@ jobs:
     - name: 安装依赖
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.lock
+        pip install --require-hashes -r requirements.lock
         pip install -r requirements-dev.txt
 
     - name: 运行测试（含覆盖率）
       if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
-      # See ci.yml for the rationale on continue-on-error (Qt daemon-thread
-      # segfault + incomplete PySide6 stub trade-off).
-      continue-on-error: true
+      # Alerting daemon thread teardown + atexit fixture make the Qt
+      # offscreen segfault path no longer reproducible; this step now
+      # blocks the build like a normal test step.
       run: |
         pytest -m "not ui" --maxfail=1 \
           --ignore=tests/ui \
@@ -80,7 +77,6 @@ jobs:
 
     - name: 运行测试（跨平台验证，无覆盖率）
       if: matrix.os != 'ubuntu-latest' || matrix.python-version != '3.11'
-      continue-on-error: true
       run: |
         pytest -m "not ui" --maxfail=1 --no-cov \
           --ignore=tests/ui \
@@ -102,10 +98,7 @@ jobs:
 
     - name: 生成覆盖率徽章
       if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
-      # Test step is currently continue-on-error (Qt segfault path), so
-      # coverage.svg may not exist when the test crashed before writing
-      # .coverage. Don't gate the run on the badge — it's reporting, not
-      # validation.
+      # Reporting only — don't gate the run on the badge artifact.
       continue-on-error: true
       run: |
         pip install coverage-badge
@@ -144,19 +137,22 @@ jobs:
     - name: 安装依赖
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.lock
+        pip install --require-hashes -r requirements.lock
         pip install -r requirements-dev.txt
 
-    - name: Ruff 检查
-      # Same policy as ci.yml — 76 historical findings; non-blocking.
+    - name: Ruff 检查（bug class — 阻塞）
+      # 与 ci.yml 一致：仅 E9/F7/F811/F82 类（真 bug）阻塞构建。
+      run: ruff check --select E9,F7,F811,F82 src/ tests/ --output-format=github
+
+    - name: Ruff 检查（stylistic backlog — 非阻塞）
       run: ruff check src/ tests/ --output-format=github
       continue-on-error: true
 
-    - name: Ruff 格式检查
+    - name: Ruff 格式检查（advisory）
       run: ruff format --check src/ tests/
       continue-on-error: true
 
-    - name: MyPy 类型检查
+    - name: MyPy 类型检查（advisory）
       run: mypy src/
       continue-on-error: true
 
@@ -181,7 +177,7 @@ jobs:
     - name: 安装依赖与安全工具
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.lock
+        pip install --require-hashes -r requirements.lock
         pip install safety bandit pip-audit
 
     - name: 检查依赖安全性
@@ -230,7 +226,7 @@ jobs:
     - name: 安装依赖
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.lock
+        pip install --require-hashes -r requirements.lock
         pip install "pyinstaller==6.3.0"
 
     - name: 构建应用程序
