@@ -87,10 +87,16 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Run tests with coverage gate
+        env:
+          # Force the lightweight PySide6 stub (tests/fixtures/pyside6_stub).
+          # The real PySide6 + Qt offscreen backend + the alerting module's
+          # daemon thread interact in a way that segfaults under
+          # tests/ui/test_main_window.py::test_window_close. The stub is
+          # already maintained by the project for exactly this case; the
+          # conftest auto-uses it when PySide6 is missing — we make that
+          # explicit here.
+          VCL_FORCE_PYSIDE6_STUB: "1"
         run: |
-          # Ignore tests/ui (Qt GUI) and tests/test_tools_integration.py
-          # (CI-fragile shell-out integration tests). The 695+ unit tests
-          # still gate this step.
           pytest --maxfail=1 \
             --ignore=tests/ui \
             --ignore=tests/test_tools_integration.py

@@ -16,6 +16,9 @@ concurrency:
 env:
   QT_QPA_PLATFORM: offscreen
   PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  # Force the lightweight PySide6 stub for the same reason as in ci.yml —
+  # real Qt + headless + alerting daemon thread = segfault.
+  VCL_FORCE_PYSIDE6_STUB: "1"
 
 jobs:
   test:
