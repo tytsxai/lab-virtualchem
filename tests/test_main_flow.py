@@ -228,17 +228,14 @@ def test_main_happy_path_installs_cleanup_and_runs_event_loop(
 
 
 def test_main_returns_1_when_pyside6_missing(monkeypatch: pytest.MonkeyPatch) -> None:
-    sys.modules.pop("PySide6.QtCore", None)
-    sys.modules.pop("PySide6.QtWidgets", None)
-    sys.modules.pop("PySide6", None)
-    # tests/conftest.py prepends a PySide6 stub to sys.path; remove it here to
-    # ensure the import truly fails and we hit the ImportError branch.
-    monkeypatch.setattr(
-        sys,
-        "path",
-        [p for p in sys.path if "tests/fixtures/pyside6_stub" not in p],
-        raising=False,
-    )
+    # Simulate "PySide6 not installed" without unloading the live C extension.
+    # `sys.modules[name] = None` is the documented sentinel that makes any
+    # subsequent `import name` raise ModuleNotFoundError. The previous approach
+    # — `sys.modules.pop(...)` plus stripping the stub from sys.path — re-ran
+    # PySide6's extension module init on systems with the real wheel installed
+    # (Linux runners) and segfaulted; this avoids touching loaded native code.
+    for _qt_name in ("PySide6", "PySide6.QtCore", "PySide6.QtWidgets"):
+        monkeypatch.setitem(sys.modules, _qt_name, None)
 
     qt_sanity = ModuleType("src.ui.qt_sanity")
     qt_sanity.ensure_single_qt_binding = lambda *, abort: None  # type: ignore[attr-defined]
