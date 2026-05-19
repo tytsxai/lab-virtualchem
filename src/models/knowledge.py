@@ -91,26 +91,17 @@ class KnowledgeCard(BaseModel):
 
 
 class ReagentInfo(BaseModel):
-    """试剂信息（供 PubChem 自动补充使用）"""
+    """PubChem 等外部来源的试剂信息（兼容旧接口）。
 
-    name: str = Field(..., description="试剂名称")
-    formula: str = Field(default="", description="分子式")
-    cas_number: str = Field(default="", description="CAS号")
-    molecular_weight: float = Field(default=0.0, description="分子量")
-    description: str = Field(default="", description="描述")
-    smiles: str = Field(default="", description="SMILES")
+    历史上同文件内存在两份同名定义；这里以更安全的「全部可选 + 长度上限」版本为准，
+    同时保留旧版的字段描述。
+    """
+
+    name: str = Field(default="", max_length=128, description="试剂名称")
+    formula: str = Field(default="", max_length=512, description="分子式")
+    cas_number: str = Field(default="", max_length=64, description="CAS号")
+    molecular_weight: float = Field(default=0.0, ge=0.0, description="分子量")
+    description: str = Field(default="", max_length=1024, description="描述")
+    smiles: str = Field(default="", max_length=1024, description="SMILES")
     hazards: list[str] = Field(default_factory=list, description="危险性提示")
     safety_measures: list[str] = Field(default_factory=list, description="安全措施")
-
-
-class ReagentInfo(BaseModel):
-    """PubChem 等外部来源的试剂信息（兼容旧接口）。"""
-
-    name: str = Field(default="", max_length=128)
-    formula: str = Field(default="", max_length=512)
-    cas_number: str = Field(default="", max_length=64)
-    molecular_weight: float = Field(default=0.0, ge=0.0)
-    description: str = Field(default="", max_length=1024)
-    smiles: str = Field(default="", max_length=1024)
-    hazards: list[str] = Field(default_factory=list)
-    safety_measures: list[str] = Field(default_factory=list)

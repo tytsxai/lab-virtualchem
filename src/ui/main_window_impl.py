@@ -19,7 +19,11 @@ import os
 import sys
 import traceback
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from .experiment_view import ExperimentView
+    from .game_experiment_view import GameExperimentView
 
 from PySide6.QtCore import QEvent, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import (

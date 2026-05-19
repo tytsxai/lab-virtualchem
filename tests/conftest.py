@@ -9,9 +9,12 @@ import sys
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
+
+if TYPE_CHECKING:
+    from PySide6.QtCore import QEventLoop, QTimer
 
 # Headless safety: ensure Qt uses an offscreen backend before importing PySide6.
 # This avoids common segfault/bus-error crashes in CI or sandboxed environments.
@@ -138,6 +141,33 @@ class SimpleQtBot:
                 return
             time.sleep(interval / 1000)
         raise AssertionError("Condition not met before timeout")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _stop_alerting_daemon():
+    """停掉 alerting 模块在 import 时自动起来的后台 daemon。
+
+    src.monitoring.alerting:455 处 `alert_manager = AlertManager()` 走 __init__
+    的 enable_auto_check=True 默认值，模块 import 时就 spawn 了 60s 周期的
+    _auto_check_loop daemon。在 headless Qt + PySide6 unload 场景下，残留
+    daemon 触碰已卸载的 Qt 引用会 segfault（见 test_main_flow.py 的历史 skipif）。
+
+    pytest 进程几乎不需要这个守护线程，session 开始就停掉、结束再兜一次。
+    """
+    try:
+        from src.monitoring.alerting import alert_manager
+
+        alert_manager.stop_auto_check()
+    except Exception:
+        # 测试环境可能没装监控依赖，静默忽略
+        pass
+    yield
+    try:
+        from src.monitoring.alerting import alert_manager
+
+        alert_manager.stop_auto_check()
+    except Exception:
+        pass
 
 
 @pytest.fixture(scope="session")

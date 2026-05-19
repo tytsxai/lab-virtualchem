@@ -8,6 +8,7 @@
 - 告警历史记录
 """
 
+import atexit
 import json
 import logging
 import threading
@@ -453,6 +454,10 @@ class AlertManager:
 
 # 全局告警管理器
 alert_manager = AlertManager()
+
+# 进程退出时停止后台守护线程，避免在 headless Qt 测试场景下解释器关闭时
+# 仍残留运行中的 _auto_check_loop 导致 segfault（见 tests/test_main_flow.py 的历史 skipif）。
+atexit.register(alert_manager.stop_auto_check)
 
 
 # 便捷函数
