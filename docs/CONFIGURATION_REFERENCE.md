@@ -34,7 +34,8 @@
 
 ### 3.1 启动/环境
 
-- `ENVIRONMENT`：`development`/`staging`/`production`
+- `ENVIRONMENT`：`development`/`staging`/`production`/`test`
+- `--env` CLI 别名：`dev` -> `development`，`stage` -> `staging`，`prod` -> `production`
 - `DEBUG`：覆盖 `app.debug`
 - `LOG_LEVEL`：覆盖日志级别
 - `APP_ENV`：环境别名（主要影响日志级别下限判定；生产环境日志不会低于 INFO）
