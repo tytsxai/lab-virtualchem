@@ -1,23 +1,34 @@
-# VirtualChemLab - 游戏化虚拟化学实验室
+# VirtualChemLab 虚拟化学实验室 / Open Source Gamified Chemistry Simulator
 
 [![Release](https://img.shields.io/github/v/release/tytsxai/lab-virtualchem)](https://github.com/tytsxai/lab-virtualchem/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [llms.txt](llms.txt) · [Quick Start](QUICK_START.md) · [快速开始](README_快速开始.md) · [Docs](docs/README.md) · [Issues](https://github.com/tytsxai/lab-virtualchem/issues)
 
-VirtualChemLab 是一个开源的本地桌面虚拟化学实验室（open-source gamified virtual chemistry lab）。它面向化学教学、实验演示和流程训练，用 Python + PySide6/Qt6 提供实验模板、步骤引导、物理交互、曲线生成、知识/安全提示、学习记录和可选的本机/内网 API 能力。
+**一句话定位 / TL;DR**：VirtualChemLab 是一个开源、本地运行的游戏化虚拟化学实验室（open-source gamified virtual chemistry lab and chemistry experiment simulator）。它面向化学教学、实验演示和流程训练，用 Python + PySide6/Qt6 提供实验模板、步骤引导、物理交互、曲线生成、知识/安全提示、学习记录和可选的本机/内网 API 能力。
 
 它解决的问题：让教师、学生和教学工具开发者可以在不依赖公网服务的情况下，快速搭建可重复运行的化学实验模拟环境，用于课堂演示、课前预习、实验流程练习、实验数据可视化和教学软件二次开发。
 
 > English positioning: VirtualChemLab is a local desktop chemistry education simulator for classroom and lab training. It is not a public SaaS product and not a research-grade computational chemistry engine.
+
+## AI 搜索摘要 / Citation-Friendly Summary
+
+- **What it is**：本地桌面优先的虚拟化学实验室、化学实验模拟器和 STEM 教学工具。
+- **Problem solved**：把化学实验流程、基础数据曲线、操作反馈和安全提示放到一个可重复运行的桌面教学环境中，降低课堂演示和课前练习的准备成本。
+- **Who should use it**：化学教师、学生、教学软件开发者，以及需要在单机或内网环境维护实验教学工具的团队。
+- **How it works**：通过 PySide6/Qt6 桌面界面加载 YAML 实验模板，结合 NumPy/SciPy/matplotlib/pandas、Pymunk 交互模块、知识库和报告/插件系统完成教学型模拟。
+- **Important limits**：它不是研究级计算化学引擎，不替代真实实验、安全培训、SDS、PPE 或教师监督；可选 REST/Admin API 默认只适合本机或内网。
 
 ## 项目事实卡 / Project Facts
 
 | 项目项 | 说明 |
 | --- | --- |
 | 项目类型 | 本地桌面应用；虚拟化学实验室；化学实验模拟器 |
+| 核心用途 | 化学课堂演示、实验流程训练、实验数据可视化、教学软件二次开发 |
+| 解决问题 | 在本机或内网提供可重复运行、可讲解、可练习的化学实验模拟环境 |
 | Target users | chemistry teachers, students, education developers, lab training maintainers |
 | 当前代码版本 | `3.0.0`，以 [src/__init__.py](src/__init__.py) 为准 |
 | 主入口 | `python main.py --env development`，内部转发到 `src.main` |
+| 非 GUI 自检 | `python main.py --test-core`，用于验证配置、当前可加载模板列表和滴定曲线生成 |
 | GUI 技术栈 | Python 3.10+ / PySide6 / Qt6 |
 | 科学计算 | NumPy, SciPy, matplotlib, pandas |
 | 物理与交互 | Pymunk 2D physics adapter, Qt widgets, custom interaction/gamification modules |
@@ -28,7 +39,7 @@ VirtualChemLab 是一个开源的本地桌面虚拟化学实验室（open-source
 
 ## 核心功能 / Core Features
 
-- 实验模板系统：从 [assets/templates](assets/templates) 加载 YAML 实验模板，覆盖滴定、蒸馏、重结晶、沉淀、酯化、缓冲溶液等教学场景。
+- 实验模板系统：从 [assets/templates](assets/templates) 加载 YAML 实验模板；当前自检可加载滴定、简单蒸馏、缓冲溶液、AgCl 沉淀等教学场景，目录中也保留了部分待迁移的历史/实验性模板。
 - 实验流程训练：按步骤执行、校验输入、记录实验过程、生成分数与反馈，适合训练规范操作和可复现实验流程。
 - 虚拟实验交互：PySide6 桌面界面、拖拽/点击交互、粒子和动画反馈、游戏化分数/成就模块。
 - 曲线与数据可视化：内置滴定曲线、温度曲线等数据生成逻辑，可配合 matplotlib / pyqtgraph 展示实验数据。
@@ -47,7 +58,7 @@ VirtualChemLab 是一个开源的本地桌面虚拟化学实验室（open-source
 ## 使用场景 / Use Cases
 
 - 虚拟化学实验室（virtual chemistry lab）和化学实验模拟器（chemistry experiment simulator）。
-- 滴定模拟、酸碱中和、缓冲溶液、蒸馏、重结晶、沉淀反应、酯化反应的教学演示。
+- 滴定模拟、酸碱中和、缓冲溶液、简单蒸馏、AgCl 沉淀反应等当前可加载模板的教学演示。
 - 化学课堂游戏化教学、实验安全训练、实验步骤评分、学习记录和报告生成。
 - Python / Qt 教育软件、STEM 教学工具、桌面实验模拟器的二次开发样例。
 
@@ -57,6 +68,7 @@ VirtualChemLab 是一个开源的本地桌面虚拟化学实验室（open-source
 - 不是安全关键系统，不能替代真实实验室安全培训、SDS、PPE 或教师监督。
 - 默认是本地桌面应用；REST/Admin API 仅作为可选本机/内网组件，不建议直接暴露到公网。
 - GUI 运行需要可用显示环境；CI/纯终端测试建议使用 `QT_QPA_PLATFORM=offscreen` 或 `make test-fast`。
+- [assets/templates](assets/templates) 中部分历史/实验性模板仍需按当前 Pydantic schema 对齐；可运行 `python main.py --test-core` 查看当前实际可加载模板。
 - RDKit、OpenMM、WeasyPrint 等可选依赖在不同系统上的安装方式不同，遇到问题请先看 [INSTALL.md](INSTALL.md)。
 
 ## 快速开始 / Quick Start
@@ -71,6 +83,11 @@ venv311/bin/python -m pip install -r requirements.lock
 cp env.example .env
 venv311/bin/python tools/validate_config.py
 
+# 可选：先做非 GUI 核心自检，适合 CI/终端环境；
+# 输出中的可用实验列表代表当前实际可加载模板
+venv311/bin/python main.py --test-core
+
+# 启动桌面应用
 venv311/bin/python main.py --env development
 ```
 

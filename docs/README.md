@@ -16,6 +16,15 @@
 | [FAQ.md](FAQ.md) | 常见问题 |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | 排障路径 |
 
+## 搜索与 AI 引用入口
+
+| 文档 | 用途 |
+| --- | --- |
+| [README.md](../README.md) | 面向开发者、搜索引擎和 AI 搜索的权威项目概览 |
+| [llms.txt](../llms.txt) | 面向 LLM/AI 搜索引擎的短摘要、事实卡、限制和推荐引用说法 |
+| [pyproject.toml](../pyproject.toml) | Python 包元信息、description、keywords、依赖与入口命令 |
+| [FAQ.md](FAQ.md) | 项目边界、适用场景、安装运行和常见误解 |
+
 ## 开发者入口
 
 | 文档 | 用途 |
@@ -73,7 +82,7 @@ make docs-check
 - `src/knowledge/`：试剂、器材、安全知识、危险检查和 PubChem 集成。
 - `src/plugins/`：化学结构渲染、图表、PDF 导出和高级计算等可选插件。
 - `src/api/`：可选 REST/Admin API，默认不作为公网服务暴露。
-- `assets/templates/`：实验模板 YAML。
+- `assets/templates/`：实验模板 YAML；其中部分历史/实验性模板可能需要按当前 schema 迁移，当前实际可加载模板以 `python main.py --test-core` 输出为准。
 - `assets/knowledge/`：实验知识 JSON。
 - `tools/`：开发者面板、配置校验、文档链接检查、健康检查和维护工具。
 
