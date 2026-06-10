@@ -4,17 +4,23 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "virtualchemlab"
-description = "Open-source gamified virtual chemistry lab for local desktop chemistry teaching, experiment simulation, and STEM education."
+description = "Open-source local desktop virtual chemistry lab and gamified chemistry experiment simulator for teaching, lab procedure training, and STEM education."
 keywords = [
     "virtual chemistry lab",
+    "virtual lab",
     "chemistry simulator",
+    "chemistry experiment simulator",
+    "chemistry teaching",
     "chemistry education",
     "gamified learning",
     "titration simulator",
+    "lab procedure training",
+    "education simulation",
     "stem education",
     "pyside6",
     "qt6",
     "desktop app",
+    "offline desktop app",
 ]
 authors = [
     {name = "VirtualChemLab Team", email = "team@virtualchemlab.com"}
