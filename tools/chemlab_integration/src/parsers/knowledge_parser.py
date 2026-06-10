@@ -81,54 +81,67 @@ class KnowledgeParser:
     def _parse_python_data(self, file_path: Path) -> list[dict[str, Any]]:
         """解析 Python 数据文件
 
-        提取 Python 文件中的字典、列表等数据结构。
+        静态提取 Python 文件中的字典、列表等字面量数据结构。
+
+        ChemLab 数据源来自外部仓库，不能在导入工具里执行其 Python 文件。
+        这里仅解析模块顶层赋值，并使用 ast.literal_eval 接受纯字面量。
         """
         with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
-        items = []
-
         try:
-            # 尝试执行并提取全局变量
-            local_vars: dict[str, Any] = {}
-            exec(content, {}, local_vars)
+            tree = ast.parse(content)
+        except SyntaxError as exc:
+            logger.warning(f"Python 数据文件语法无效: {file_path}: {exc}")
+            return []
 
-            # 提取字典和列表
-            for name, value in local_vars.items():
-                if isinstance(value, (dict, list)) and not name.startswith("_"):
-                    if isinstance(value, dict):
-                        items.append({"id": name, **value})
-                    else:
-                        items.extend(value if isinstance(value, list) else [value])
+        items: list[dict[str, Any]] = []
+        for node in tree.body:
+            assignment_name: str | None = None
+            value_node: ast.AST | None = None
 
-        except Exception as e:
-            logger.warning(f"执行 Python 文件失败: {e}")
+            if isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if isinstance(target, ast.Name):
+                        assignment_name = target.id
+                        value_node = node.value
+                        break
+            elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+                assignment_name = node.target.id
+                value_node = node.value
 
-            # 尝试静态分析
+            if (
+                not assignment_name
+                or assignment_name.startswith("_")
+                or value_node is None
+            ):
+                continue
+
             try:
-                tree = ast.parse(content)
-                for node in ast.walk(tree):
-                    if isinstance(node, ast.Assign) and isinstance(node.value, ast.Dict):
-                        # 提取字典赋值
-                        items.append(self._extract_dict_from_ast(node.value))
-            except Exception:  # noqa: BLE001
-                pass
+                value = ast.literal_eval(value_node)
+            except (ValueError, TypeError):
+                logger.debug("跳过非字面量 Python 赋值: %s", assignment_name)
+                continue
+
+            items.extend(self._coerce_literal_items(assignment_name, value))
 
         return items
 
-    def _extract_dict_from_ast(self, node: ast.Dict) -> dict[str, Any]:
-        """从 AST 节点提取字典数据"""
-        result = {}
+    def _coerce_literal_items(self, name: str, value: Any) -> list[dict[str, Any]]:
+        """Normalize literal Python data into knowledge item dictionaries."""
+        if isinstance(value, dict):
+            return [{"id": name, **value}]
+        if not isinstance(value, list):
+            return []
 
-        for key, value in zip(node.keys, node.values, strict=False):
-            if isinstance(key, ast.Constant):
-                key_str = str(key.value)
-                if isinstance(value, ast.Constant):
-                    result[key_str] = value.value
-                elif isinstance(value, ast.List):
-                    result[key_str] = [elem.value for elem in value.elts if isinstance(elem, ast.Constant)]
-
-        return result
+        items: list[dict[str, Any]] = []
+        for index, entry in enumerate(value):
+            if isinstance(entry, dict):
+                if "id" in entry:
+                    items.append(entry)
+                else:
+                    items.append({"id": f"{name}_{index}", **entry})
+        return items
 
     def extract_molecule_info(self, data: dict[str, Any]) -> dict[str, Any]:
         """提取分子信息
@@ -165,7 +178,9 @@ class KnowledgeParser:
 
         return molecule
 
-    def categorize_knowledge(self, items: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    def categorize_knowledge(
+        self, items: list[dict[str, Any]]
+    ) -> dict[str, list[dict[str, Any]]]:
         """分类知识条目
 
         Args:
