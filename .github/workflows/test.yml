@@ -145,6 +145,9 @@ jobs:
       # 与 ci.yml 一致：仅 E9/F7/F811/F82 类（真 bug）阻塞构建。
       run: ruff check --select E9,F7,F811,F82 src/ tests/ --output-format=github
 
+    - name: 文档链接检查
+      run: python tools/check_docs_links.py
+
     - name: Ruff 检查（stylistic backlog — 非阻塞）
       run: ruff check src/ tests/ --output-format=github
       continue-on-error: true

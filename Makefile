@@ -63,9 +63,9 @@ run:  ## 运行应用程序
 build:  ## 构建可执行文件
 	PYTHON_BIN=$(PYTHON) bash build.sh
 
-all-checks: lint type-check test  ## 运行所有检查（mypy为非阻塞）
+all-checks: lint type-check test docs-check  ## 运行所有检查（mypy为非阻塞）
 
-all-checks-strict: lint type-check-strict test  ## 运行所有检查（含严格类型门禁）
+all-checks-strict: lint type-check-strict test docs-check  ## 运行所有检查（含严格类型门禁）
 
 ci: all-checks  ## CI流程
 	@echo "✅ 所有检查通过！"

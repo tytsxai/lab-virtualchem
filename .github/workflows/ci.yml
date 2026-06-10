@@ -44,6 +44,9 @@ jobs:
         # These have all been driven to zero; regressions must fail the build.
         run: ruff check --select E9,F7,F811,F82 src tests
 
+      - name: Docs link check
+        run: python tools/check_docs_links.py
+
       - name: Ruff (stylistic backlog — advisory)
         # Remaining ~290 findings are stylistic: W293 whitespace,
         # I001 import sort, F401 unused imports, F541 empty f-strings, etc.
