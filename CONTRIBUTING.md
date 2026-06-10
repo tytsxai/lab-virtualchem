@@ -73,15 +73,15 @@
 ```bash
 # Fork项目到您的GitHub账号
 # 然后克隆您的Fork
-git clone https://github.com/YOUR_USERNAME/virtualchemlab.git
-cd virtualchemlab
+git clone https://github.com/YOUR_USERNAME/lab-virtualchem.git
+cd lab-virtualchem
 ```
 
 ### 2. 设置开发环境
 
 ```bash
 # 添加upstream远程仓库
-git remote add upstream https://github.com/ORIGINAL_OWNER/virtualchemlab.git
+git remote add upstream https://github.com/tytsxai/lab-virtualchem.git
 
 # 创建虚拟环境
 python -m venv venv

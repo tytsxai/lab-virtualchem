@@ -4,7 +4,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "virtualchemlab"
-description = "A virtual chemistry laboratory with gamified interactions"
+description = "Open-source gamified virtual chemistry lab for local desktop chemistry teaching, experiment simulation, and STEM education."
+keywords = [
+    "virtual chemistry lab",
+    "chemistry simulator",
+    "chemistry education",
+    "gamified learning",
+    "titration simulator",
+    "stem education",
+    "pyside6",
+    "qt6",
+    "desktop app",
+]
 authors = [
     {name = "VirtualChemLab Team", email = "team@virtualchemlab.com"}
 ]
@@ -86,10 +97,10 @@ plugins = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/tytsxai/virtualchemlab"
-Documentation = "https://virtualchemlab.readthedocs.io"
-Repository = "https://github.com/tytsxai/virtualchemlab.git"
-Issues = "https://github.com/tytsxai/virtualchemlab/issues"
+Homepage = "https://github.com/tytsxai/lab-virtualchem"
+Documentation = "https://github.com/tytsxai/lab-virtualchem/tree/main/docs"
+Repository = "https://github.com/tytsxai/lab-virtualchem.git"
+Issues = "https://github.com/tytsxai/lab-virtualchem/issues"
 
 [tool.setuptools.dynamic]
 version = {attr = "src.__version__"}

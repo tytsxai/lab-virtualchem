@@ -1,8 +1,8 @@
 # 🚀 快速开始指南 - 改进版
 
-## 欢迎使用 VirtualChemLab v2.0.0
+## 欢迎使用 VirtualChemLab
 
-本指南将帮助您快速上手最新改进的虚拟化学实验室。
+本指南将帮助您快速上手当前仓库版本的虚拟化学实验室；准确版本号以 `src/__init__.py` 为准。
 
 ## ✅ 适用场景
 
@@ -37,8 +37,8 @@
 ### 1. 克隆或下载项目
 
 ```bash
-git clone https://github.com/tytsxai/virtualchemlab.git
-cd virtualchemlab
+git clone https://github.com/tytsxai/lab-virtualchem.git
+cd lab-virtualchem
 ```
 
 ### 2. 准备环境并安装依赖

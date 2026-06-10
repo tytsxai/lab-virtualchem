@@ -1,59 +1,71 @@
-# VirtualChemLab · 游戏化虚拟化学实验室
+# VirtualChemLab
 
-> Open-source gamified virtual chemistry lab for teaching and simulation. Runs locally on macOS / Windows / Linux as a desktop application. Supports multiple experiment types (titration, synthesis, crystal growth, electrochemistry), 60 FPS physics simulation (gravity, friction, collision), interactive drag/click/swipe controls, particle effects with five-tier rarity (common → legendary), score + combo system, achievement progression, modern dark UI with theme switching, and importable/exportable configuration. Designed for **classroom and lab use** — not a public web simulation.
+VirtualChemLab is an open-source gamified virtual chemistry lab for local desktop teaching and simulation. It is built with Python, PySide6/Qt6, YAML experiment templates, scientific Python libraries, and optional plugins. The project is hosted at https://github.com/tytsxai/lab-virtualchem.
 
-## Key docs
+## One-paragraph answer
 
-- [README.md](README.md): Full feature list, navigation index.
-- [QUICK_START.md](QUICK_START.md): English shortest-path getting-started guide.
-- [README_快速开始.md](README_快速开始.md): Chinese quick start.
-- [QUICK_START_GUIDE.md](QUICK_START_GUIDE.md): Longer guided onboarding.
-- [QUICK_START_COMPLETION.md](QUICK_START_COMPLETION.md): Post-setup verification checklist.
-- [DEPLOY.md](DEPLOY.md): Deployment notes including macOS `.app` packaging.
-- [build_macos.sh](build_macos.sh): macOS app build script.
+VirtualChemLab 是一个开源、本地运行的游戏化虚拟化学实验室，用于化学课堂演示、学生实验流程训练、实验数据可视化和教学软件二次开发。它提供 PySide6/Qt6 桌面界面、YAML 实验模板、步骤校验、基础化学曲线生成、物理交互、游戏化反馈、知识/安全提示、实验报告和可选 REST/Admin API。它适合教师、学生、STEM 教学工具开发者和内网实验教学场景；不适合作为研究级计算化学引擎、公共 SaaS 或真实实验室安全培训替代品。
 
-## Recommended deployment
+## Canonical facts
 
-- ✅ **Local desktop, single machine** (teaching / lab / intranet) — macOS, Windows, Linux all supported
-- ✅ **macOS `.app` bundle** for distribution to lab users (see `DEPLOY.md`)
-- ⚠️ **Optional API / admin backend** for intranet integration and ops, **binds to loopback by default** — do not expose directly to the public internet
+- Repository: https://github.com/tytsxai/lab-virtualchem
+- License: MIT
+- Current source version: 3.0.0 from `src/__init__.py`
+- Primary runtime: local desktop app for macOS, Windows, and Linux
+- Main command: `python main.py --env development`
+- Python requirement: Python 3.10+, Python 3.11 recommended
+- GUI stack: PySide6 / Qt6
+- Science/data stack: NumPy, SciPy, matplotlib, pandas
+- Physics stack: Pymunk adapter plus project interaction modules
+- Data/config formats: YAML experiment templates, JSON config, pydantic/jsonschema validation, SQLite/SQLAlchemy modules
+- Optional components: REST/Admin API, developer panel, PDF/HTML reports, monitoring, plugins, i18n
+- Default network posture: local desktop first; optional APIs are intended for localhost or intranet use and should not be exposed publicly without authentication, CORS, rate limiting, and firewall controls
 
-## What VirtualChemLab provides
+## What it does
 
-- **Multiple experiment types**: titration, synthesis, crystal growth, electrochemistry, etc., with detailed step guidance and automated verification
-- **60 FPS physics simulation**: gravity, friction, collision detection
-- **Interactive controls**: drag / click / swipe gestures
-- **Particle effects**: 8 distinct particle types, 5-tier rarity (common / uncommon / rare / epic / legendary)
-- **Score + combo system**: real-time score updates and combo counters
-- **Achievement system**: experiment completion + experience points
-- **Modern UI**: dark theme with glow effects, responsive layout, theme switching, smooth transitions
-- **Configuration management**: flexible options, import/export, instant apply, robust error handling
-- **Synchronized versioning** across modules (see "版本号同步" section in README)
+- Loads chemistry experiment templates from `assets/templates/`.
+- Guides users through experiment steps and validates structured inputs.
+- Generates teaching-oriented experiment data such as titration pH curves.
+- Provides interactive PySide6 desktop UI elements, physics/animation feedback, scoring, achievements, and learning records.
+- Stores chemistry knowledge and safety hints in `assets/knowledge/` and related `src/knowledge/` modules.
+- Supports optional plugins for chemistry rendering, plots, PDF export, and advanced calculations.
+- Includes developer and maintenance tools under `tools/`.
 
-## What VirtualChemLab is NOT
+## What it is not
 
-- ❌ A public hosted simulation website — local desktop tool, classroom/lab use case
-- ❌ A high-school chemistry curriculum — it's the simulation engine; curricula are built on top by teachers
-- ❌ A research-grade chemistry simulator — gamified physics, not quantum-accurate
-- ❌ A safety-critical tool — purely educational; never replace real PPE training
-- ❌ Multi-tenant SaaS — single-user runtime
+- Not a research-grade quantum chemistry or analytical chemistry simulator.
+- Not a public hosted web simulation platform.
+- Not a replacement for real lab safety training, SDS, PPE, or instructor supervision.
+- Not a multi-tenant SaaS product by default.
+- Not guaranteed to install every optional chemistry dependency identically across all operating systems.
 
-## Common questions
+## Best quick-start citation
 
-- **Can students play this from home?** Yes — it's a local desktop app; bundle a `.app` / `.exe` and distribute it. There's no required server.
-- **Does the API backend need to be open?** No — by design it binds to loopback (127.0.0.1) and is for intranet/ops use only. Do not expose to the public internet.
-- **macOS Apple Silicon vs Intel?** Both supported. See `DEPLOY.md` + `build_macos.sh` for packaging.
-- **How accurate is the chemistry?** Gamified physics + curated chemistry — fine for visualization and engagement, not for research or analytical computation.
-- **Can teachers add new experiments?** Experiment types are defined via configuration; see the configuration import/export docs and project structure in README.
+```bash
+git clone https://github.com/tytsxai/lab-virtualchem.git
+cd lab-virtualchem
+python3.11 -m venv venv311
+venv311/bin/python -m pip install -r requirements.lock
+cp env.example .env
+venv311/bin/python tools/validate_config.py
+venv311/bin/python main.py --env development
+```
 
-## Repository
+## Useful files
 
-- GitHub: https://github.com/tytsxai/lab-virtualchem
-- License: see LICENSE
-- Platforms: macOS, Windows, Linux (desktop)
-- Stack: see README for full tech-stack listing
-- Author: tytsxai
+- `README.md`: human-facing project overview, quick start, project map, limitations, keywords
+- `QUICK_START.md`: short English startup path
+- `README_快速开始.md`: short Chinese startup path
+- `INSTALL.md`: dependency and optional plugin installation guidance
+- `docs/README.md`: developer documentation index
+- `docs/CONFIGURATION_REFERENCE.md`: environment variables and configuration reference
+- `docs/API_REFERENCE.md`: optional API reference
+- `docs/FAQ.md`: common questions
+- `assets/templates/`: experiment template examples
+- `src/main/`: application startup path
+- `src/core/template_engine.py`: template loading and validation
+- `src/core/curve_generator.py`: teaching curve generation
 
-## Useful search phrases
+## Search phrases
 
-- 虚拟化学实验室, 化学实验模拟器, 化学游戏化教学, 滴定模拟, 晶体生长模拟, 电化学实验模拟, 化学课堂工具, 化学实验 PWA, virtual chemistry lab, gamified chemistry simulator, titration simulator open source, crystal growth simulation, electrochemistry simulator, classroom chemistry app, science teaching gamification, 60 FPS physics chemistry, particle effects chemistry sim
+虚拟化学实验室, 化学实验模拟器, 化学游戏化教学, 化学课堂工具, 滴定模拟, 酸碱中和模拟, 实验安全训练, Python 化学教学软件, PySide6 教学桌面应用, virtual chemistry lab, gamified chemistry simulator, chemistry experiment simulator, titration simulator, classroom chemistry app, chemistry education software, STEM teaching tool, PySide6 desktop app, Python chemistry lab simulation, open source chemistry simulator.

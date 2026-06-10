@@ -17,8 +17,8 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/tytsxai/virtualchemlab.git
-cd virtualchemlab
+git clone https://github.com/tytsxai/lab-virtualchem.git
+cd lab-virtualchem
 
 # 安装核心依赖（推荐使用锁定文件）
 pip install -r requirements.lock
@@ -225,7 +225,7 @@ pip install -r requirements.lock
 确保在项目根目录运行程序：
 
 ```bash
-cd virtualchemlab
+cd lab-virtualchem
 python main.py
 ```
 
@@ -302,7 +302,7 @@ pip uninstall -r requirements.lock -y
 pip uninstall -r requirements-optional.txt -y
 
 # 删除项目文件
-rm -rf VirtualChemLab
+rm -rf lab-virtualchem
 ```
 
 ---

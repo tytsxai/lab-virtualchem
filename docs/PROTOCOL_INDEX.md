@@ -337,7 +337,7 @@ ws.onmessage = (event) => {
 | API 集成 | [api_integration_example.py](../examples/api_integration_example.py) | API 调用示例 |
 | 系统示例 | [refactored_system_examples.py](../examples/refactored_system_examples.py) | 模块调用示例 |
 | API客户端 | [src/api/client.py](../src/api/client.py) | API客户端实现 |
-| API服务器 | [src/api/server.py](../src/api/server.py) | API服务器实现 |
+| API服务器 | [src/api/server/__init__.py](../src/api/server/__init__.py) | API服务器实现 |
 
 ---
 
