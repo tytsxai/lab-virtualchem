@@ -42,6 +42,18 @@ from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+_VIEWPORT_UPDATE_MODE = getattr(QGraphicsView, "ViewportUpdateMode", None)
+_FULL_VIEWPORT_UPDATE = getattr(
+    _VIEWPORT_UPDATE_MODE,
+    "FullViewportUpdate",
+    getattr(QGraphicsView, "FullViewportUpdate", None),
+)
+_SMART_VIEWPORT_UPDATE = getattr(
+    _VIEWPORT_UPDATE_MODE,
+    "SmartViewportUpdate",
+    getattr(QGraphicsView, "SmartViewportUpdate", None),
+)
+
 
 class PhysicsState(str, Enum):
     """物理状态"""
@@ -645,8 +657,8 @@ class GamePhysicsView(QGraphicsView):
     """游戏化物理视图"""
 
     RenderHint = getattr(QPainter, "RenderHint", object)
-    ViewportUpdateMode = QGraphicsView.ViewportUpdateMode
-    FullViewportUpdate = QGraphicsView.ViewportUpdateMode.FullViewportUpdate
+    ViewportUpdateMode = _VIEWPORT_UPDATE_MODE
+    FullViewportUpdate = _FULL_VIEWPORT_UPDATE
 
     def __init__(
         self, scene: GamePhysicsScene | None = None, parent: QWidget | None = None
@@ -664,14 +676,15 @@ class GamePhysicsView(QGraphicsView):
         # 默认为 FullViewportUpdate（与历史行为保持一致）
         # 如需降低整屏重绘开销，可设置环境变量 VCL_VIEWPORT_UPDATE_MODE=smart
         viewport_mode = os.getenv("VCL_VIEWPORT_UPDATE_MODE", "").strip().lower()
-        if viewport_mode in {"smart", "smartviewportupdate"}:
-            self.setViewportUpdateMode(
-                QGraphicsView.ViewportUpdateMode.SmartViewportUpdate
-            )
+        if (
+            viewport_mode in {"smart", "smartviewportupdate"}
+            and _SMART_VIEWPORT_UPDATE is not None
+        ):
+            self.setViewportUpdateMode(_SMART_VIEWPORT_UPDATE)
+        elif _FULL_VIEWPORT_UPDATE is not None:
+            self.setViewportUpdateMode(_FULL_VIEWPORT_UPDATE)
         else:
-            self.setViewportUpdateMode(
-                QGraphicsView.ViewportUpdateMode.FullViewportUpdate
-            )
+            logger.debug("当前 Qt 绑定未暴露 ViewportUpdateMode，跳过视口更新模式设置")
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 

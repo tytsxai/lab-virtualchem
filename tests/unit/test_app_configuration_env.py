@@ -19,6 +19,17 @@ def test_production_requires_env_secrets(monkeypatch: pytest.MonkeyPatch) -> Non
         AppConfiguration(app=AppConfig(environment="production"))
 
 
+def test_explicit_environment_is_not_overridden_by_env_var(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """显式传入的环境优先级高于 ENVIRONMENT。"""
+    monkeypatch.setenv("ENVIRONMENT", "development")
+
+    config = AppConfiguration(app=AppConfig(environment="test"))
+
+    assert config.app.environment == "test"
+
+
 def test_developer_mode_forced_off_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
     """生产环境默认关闭开发者模式，并强制关闭debug。"""
     monkeypatch.setenv("JWT_SECRET_KEY", "x" * 48)

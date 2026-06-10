@@ -132,7 +132,9 @@ def _import_main_with_core_stubs(
 
     service_registration = ModuleType("src.core.service_registration")
     service_registration.configure_container = configure_container_impl  # type: ignore[attr-defined]
-    monkeypatch.setitem(sys.modules, "src.core.service_registration", service_registration)
+    monkeypatch.setitem(
+        sys.modules, "src.core.service_registration", service_registration
+    )
 
     startup_preflight = ModuleType("src.core.startup_preflight")
     startup_preflight.ensure_secure_startup = ensure_secure_startup_impl  # type: ignore[attr-defined]
@@ -209,7 +211,9 @@ def test_main_happy_path_installs_cleanup_and_runs_event_loop(
 
     assert result == 42
     assert _DummyApp.last_instance is not None
-    assert _DummyApp.last_instance.aboutToQuit._connected, "aboutToQuit should connect cleanup"
+    assert _DummyApp.last_instance.aboutToQuit._connected, (
+        "aboutToQuit should connect cleanup"
+    )
     assert ui_calls["abort"] is True
     assert ui_calls["window_shown"] is True
     assert os.environ.get("ENVIRONMENT") == "development"
@@ -222,7 +226,9 @@ def test_main_happy_path_installs_cleanup_and_runs_event_loop(
     assert registered, "atexit.register should be called to install cleanup hook"
 
     shutdown_calls: list[str] = []
-    monkeypatch.setattr(main_mod.logging, "shutdown", lambda: shutdown_calls.append("shutdown"))
+    monkeypatch.setattr(
+        main_mod.logging, "shutdown", lambda: shutdown_calls.append("shutdown")
+    )
     registered[0]()
     assert shutdown_calls == ["shutdown"]
 
@@ -261,7 +267,9 @@ def test_main_returns_1_when_pyside6_missing(monkeypatch: pytest.MonkeyPatch) ->
     assert main_mod.main() == 1
 
 
-def test_helpers_cover_log_path_and_cli_and_redaction(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_helpers_cover_log_path_and_cli_and_redaction(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     main_mod = _import_main_with_core_stubs(
         monkeypatch,
         get_config_impl=lambda: SimpleNamespace(),
@@ -270,22 +278,31 @@ def test_helpers_cover_log_path_and_cli_and_redaction(monkeypatch: pytest.Monkey
         setup_logger_impl=lambda *a, **k: None,
     )
 
-    cfg = SimpleNamespace(paths=SimpleNamespace(logs="logs"), log=SimpleNamespace(file="/abs/pwn.log"))
+    cfg = SimpleNamespace(
+        paths=SimpleNamespace(logs="logs"), log=SimpleNamespace(file="/abs/pwn.log")
+    )
     resolved = main_mod._resolve_log_file_path(cfg, project_root=tmp_path)
     assert resolved.name == "pwn.log"
 
-    cfg2 = SimpleNamespace(paths=SimpleNamespace(logs="logs"), log=SimpleNamespace(file="logs/app.log"))
+    cfg2 = SimpleNamespace(
+        paths=SimpleNamespace(logs="logs"), log=SimpleNamespace(file="logs/app.log")
+    )
     resolved2 = main_mod._resolve_log_file_path(cfg2, project_root=tmp_path)
     assert resolved2.as_posix().endswith("/logs/app.log")
 
-    cfg3 = SimpleNamespace(paths=SimpleNamespace(logs="logs"), log=SimpleNamespace(file="../escape.log"))
+    cfg3 = SimpleNamespace(
+        paths=SimpleNamespace(logs="logs"), log=SimpleNamespace(file="../escape.log")
+    )
     resolved3 = main_mod._resolve_log_file_path(cfg3, project_root=tmp_path)
     assert resolved3.name == "app.log"
 
     assert main_mod._apply_cli_environment_overrides(["prog"]) == ["prog"]
     os.environ.pop("ENVIRONMENT", None)
-    assert main_mod._apply_cli_environment_overrides(["prog", "--env=dev", "--x"]) == ["prog", "--x"]
-    assert os.environ.get("ENVIRONMENT") == "dev"
+    assert main_mod._apply_cli_environment_overrides(["prog", "--env=dev", "--x"]) == [
+        "prog",
+        "--x",
+    ]
+    assert os.environ.get("ENVIRONMENT") == "development"
 
     assert main_mod._redact_startup_error(RuntimeError("secret")) == "RuntimeError"
 
@@ -305,9 +322,13 @@ def test_exception_hooks_emit_critical(
     main_mod._install_global_exception_hooks()
     sys.excepthook(RuntimeError, RuntimeError("x"), None)  # type: ignore[arg-type]
     if hasattr(threading, "excepthook"):
-        args = SimpleNamespace(exc_type=RuntimeError, exc_value=RuntimeError("x"), exc_traceback=None)
+        args = SimpleNamespace(
+            exc_type=RuntimeError, exc_value=RuntimeError("x"), exc_traceback=None
+        )
         threading.excepthook(args)  # type: ignore[arg-type]
-    critical_records = [r for r in caplog.records if r.levelno >= main_mod.logging.CRITICAL]
+    critical_records = [
+        r for r in caplog.records if r.levelno >= main_mod.logging.CRITICAL
+    ]
     assert len(critical_records) >= 2
 
 
@@ -409,7 +430,9 @@ def test_main_returns_0_on_keyboard_interrupt(monkeypatch: pytest.MonkeyPatch) -
     assert main_mod.main() == 0
 
 
-def test_main_returns_1_on_unexpected_exception(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_main_returns_1_on_unexpected_exception(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     _install_fake_qt_modules(monkeypatch)
     _install_fake_ui_modules(monkeypatch)
 
@@ -443,7 +466,9 @@ def test_test_core_only_exercises_template_and_curve_paths(
             if cls.__name__ == "TemplateEngine":
                 return SimpleNamespace(list_available_experiments=lambda: [])
             if cls.__name__ == "CurveGenerator":
-                return SimpleNamespace(generate_titration_curve=lambda **_: ([1, 2, 3],))
+                return SimpleNamespace(
+                    generate_titration_curve=lambda **_: ([1, 2, 3],)
+                )
             raise KeyError(cls)
 
     def fake_configure_container(*, config):  # noqa: ANN001
@@ -476,7 +501,9 @@ def test_test_core_only_exercises_template_and_curve_paths(
     assert main_mod.test_core_only() == 0
 
 
-def test_import_on_win32_sets_utf8_io_env_and_sys_path(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_import_on_win32_sets_utf8_io_env_and_sys_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(sys, "platform", "win32", raising=False)
     monkeypatch.delenv("PYTHONIOENCODING", raising=False)
 
@@ -534,7 +561,9 @@ def test_main_win32_taskbar_app_id_and_abouttoquit_connect_failure_is_ignored(
     ctypes_mod = ModuleType("ctypes")
     ctypes_mod.windll = SimpleNamespace(
         shell32=SimpleNamespace(
-            SetCurrentProcessExplicitAppUserModelID=lambda _appid: called.append("appid")
+            SetCurrentProcessExplicitAppUserModelID=lambda _appid: called.append(
+                "appid"
+            )
         )
     )
     monkeypatch.setitem(sys.modules, "ctypes", ctypes_mod)
@@ -557,7 +586,9 @@ def test_main_win32_taskbar_app_id_and_abouttoquit_connect_failure_is_ignored(
     assert called == ["appid"]
 
 
-def test_main_win32_app_id_exception_is_swallowed(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_main_win32_app_id_exception_is_swallowed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(sys, "platform", "win32", raising=False)
     _install_fake_qt_modules(monkeypatch)
     _install_fake_ui_modules(monkeypatch)
@@ -565,9 +596,9 @@ def test_main_win32_app_id_exception_is_swallowed(monkeypatch: pytest.MonkeyPatc
     ctypes_mod = ModuleType("ctypes")
     ctypes_mod.windll = SimpleNamespace(
         shell32=SimpleNamespace(
-            SetCurrentProcessExplicitAppUserModelID=lambda _appid: (_ for _ in ()).throw(
-                RuntimeError("boom")
-            )
+            SetCurrentProcessExplicitAppUserModelID=lambda _appid: (
+                _ for _ in ()
+            ).throw(RuntimeError("boom"))
         )
     )
     monkeypatch.setitem(sys.modules, "ctypes", ctypes_mod)
@@ -610,7 +641,9 @@ def test_cleanup_shutdown_exception_is_swallowed(
     )
     monkeypatch.setattr(main_mod, "PROJECT_ROOT", tmp_path)
     monkeypatch.setattr(main_mod.atexit, "register", lambda fn: registered.append(fn))
-    monkeypatch.setattr(main_mod.logging, "shutdown", lambda: (_ for _ in ()).throw(RuntimeError("x")))
+    monkeypatch.setattr(
+        main_mod.logging, "shutdown", lambda: (_ for _ in ()).throw(RuntimeError("x"))
+    )
 
     assert main_mod.main() == 42
     assert registered

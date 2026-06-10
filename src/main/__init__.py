@@ -114,18 +114,29 @@ def _apply_cli_environment_overrides(argv: list[str]) -> list[str]:
         if token == "--env":
             value = argv[idx + 1] if idx + 1 < len(argv) else ""
             if value:
-                os.environ["ENVIRONMENT"] = value.strip()
+                os.environ["ENVIRONMENT"] = _normalize_environment_name(value)
             idx += 2
             continue
         if token.startswith("--env="):
             value = token.split("=", 1)[1].strip()
             if value:
-                os.environ["ENVIRONMENT"] = value
+                os.environ["ENVIRONMENT"] = _normalize_environment_name(value)
             idx += 1
             continue
         cleaned.append(token)
         idx += 1
     return cleaned
+
+
+def _normalize_environment_name(value: str) -> str:
+    """Normalize common CLI aliases to config-supported environment names."""
+    normalized = value.strip().lower()
+    aliases = {
+        "dev": "development",
+        "prod": "production",
+        "stage": "staging",
+    }
+    return aliases.get(normalized, normalized)
 
 
 def main() -> int:
@@ -174,8 +185,12 @@ def main() -> int:
             datetime.now(timezone.utc).isoformat(),
         )
         logger.info("✅ 配置加载完成")
-        logger.info("   环境: %s", getattr(getattr(config, "app", object()), "environment", ""))
-        logger.info("   调试模式: %s", getattr(getattr(config, "app", object()), "debug", ""))
+        logger.info(
+            "   环境: %s", getattr(getattr(config, "app", object()), "environment", "")
+        )
+        logger.info(
+            "   调试模式: %s", getattr(getattr(config, "app", object()), "debug", "")
+        )
 
         ensure_secure_startup(config=config)
 
@@ -294,4 +309,3 @@ def test_core_only() -> int:
     except Exception as exc:  # noqa: BLE001
         logger.exception("❌ 测试失败: %s", exc)
         return 1
-
