@@ -5,6 +5,7 @@ VirtualChemLab 健康检查脚本
 """
 
 import sys
+import importlib
 from pathlib import Path
 
 # 添加项目根目录到路径
@@ -23,9 +24,30 @@ def check_imports():
     """检查核心模块导入"""
     print_header("检查1: 核心模块导入")
 
-    try:
+    required_modules = [
+        "src.core.config_loader",
+        "src.core.di_container",
+        "src.core.event_bus",
+        "src.core.service_registration",
+        "src.interfaces.storage",
+        "src.utils.logger",
+    ]
 
-        print("✅ 所有核心模块导入成功")
+    failed: list[tuple[str, str]] = []
+    try:
+        for module_name in required_modules:
+            try:
+                importlib.import_module(module_name)
+            except Exception as exc:  # noqa: BLE001
+                failed.append((module_name, str(exc)))
+
+        if failed:
+            print("❌ 核心模块导入失败:")
+            for module_name, error in failed:
+                print(f"   - {module_name}: {error}")
+            return False
+
+        print(f"✅ 所有核心模块导入成功 ({len(required_modules)} 个)")
         return True
     except Exception as e:
         print(f"❌ 模块导入失败: {e}")
@@ -100,7 +122,9 @@ def check_service_registration():
         container.resolve(Config)
         container.resolve(EventBus)
 
-        print(f"✅ 服务注册系统正常 (已注册 {len(container.get_all_services())} 个服务)")
+        print(
+            f"✅ 服务注册系统正常 (已注册 {len(container.get_all_services())} 个服务)"
+        )
         return True
     except Exception as e:
         print(f"❌ 服务注册失败: {e}")
